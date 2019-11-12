@@ -1,0 +1,6 @@
+javac \
+-cp /storage/emulated/0/AppProjects/java2cpp/lib/antlr-runtime-4.7.2.jar:/storage/emulated/0/AppProjects/java2cpp/src \
+-d /storage/emulated/0/AppProjects/java2cpp/out \
+/storage/emulated/0/AppProjects/java2cpp/src/com/mesut/j2cpp/Main.java
+
+sh /storage/emulated/0/AppProjects/java2cpp/run
