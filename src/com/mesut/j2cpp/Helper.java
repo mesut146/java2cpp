@@ -22,6 +22,7 @@ public class Helper {
     static boolean is(String ty){
         return java_prims.contains(ty)||java_wr.contains(ty);
     }
+
     
     static String getType(String ty){
         if(java_prims.contains(ty)){

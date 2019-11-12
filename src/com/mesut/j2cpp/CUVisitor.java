@@ -32,8 +32,11 @@ public class CUVisitor extends JavaParserBaseVisitor {
     @Override
     public Object visitTypeDeclaration(JavaParser.TypeDeclarationContext ctx) {
         //System.out.println("type="+ctx.classDeclaration().toStringTree());
-
-        this.visit(ctx.classDeclaration());
+        if(ctx.classDeclaration()!=null){
+            this.visit(ctx.classDeclaration());
+        }else if(ctx.interfaceDeclaration()!=null){
+            
+        }
         //visitClassDeclaration(ctx.classDeclaration());
         return null;
     }
@@ -44,8 +47,17 @@ public class CUVisitor extends JavaParserBaseVisitor {
         writer.print(ctx.IDENTIFIER().getText());
         writer.println("{");
         
-        visit(ctx.classBody().classBodyDeclaration(0).memberDeclaration().fieldDeclaration());
-        writer.println("};");
+        if(ctx.typeType()!=null){
+            
+        }
+        if(ctx.typeList()!=null){
+            
+        }
+        for(ClassBodyDeclarationContext cbdc:ctx.classBody().classBodyDeclaration()){
+            visit(cbdc);
+        }
+        //visit(ctx.classBody().classBodyDeclaration(0).memberDeclaration().fieldDeclaration());
+        writer.println("}");
         //System.out.println("asasa");
         //writer.write("test");
         
@@ -53,15 +65,29 @@ public class CUVisitor extends JavaParserBaseVisitor {
     }
 
     @Override
+    public Object visitClassBodyDeclaration(JavaParser.ClassBodyDeclarationContext ctx)
+    {
+        
+        return super.visitClassBodyDeclaration(ctx);
+    }
+    
+    
+
+    @Override
     public Object visitFieldDeclaration(JavaParser.FieldDeclarationContext ctx)
     {
-        String type=ctx.typeType().getText();
-        if(Helper.is(type)){
-            String tc=Helper.getType(type);
-            writer.print(tc);
+        String jtype=ctx.typeType().getText();
+        
+        if(Helper.is(jtype)){
+            String ctype=Helper.getType(jtype);
+            writer.print(ctype);
             writer.print(" ");
-        }else{
+            writer.print(ctx.variableDeclarators().getText());
             
+            
+            
+        }else{
+            System.out.println("else="+jtype);
         }
         
         writer.println(";");

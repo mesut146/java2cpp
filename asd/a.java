@@ -4,7 +4,7 @@ import java.util.*;
 
 public class a{
 
-    public int myInt=5;
+    public int myInt=5,eint;
     private static final Runnable r=null;
     String str[][]={{"test"},{"asd"}};
     long mylong[];
@@ -13,6 +13,7 @@ public class a{
     byte mybyte;
     float myFloat;
     double myDouble;
+    Object myObj=new Type("type");
     
     public static void main(){
         //comment

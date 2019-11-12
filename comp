@@ -1,6 +1,28 @@
-javac \
--cp /storage/emulated/0/AppProjects/java2cpp/lib/antlr-runtime-4.7.2.jar:/storage/emulated/0/AppProjects/java2cpp/src \
--d /storage/emulated/0/AppProjects/java2cpp/out \
-/storage/emulated/0/AppProjects/java2cpp/src/com/mesut/j2cpp/Main.java
+mkdir out
+antlr=/storage/emulated/0/AppProjects/java2cpp/lib/antlr-runtime-4.7.2.jar
+src=/storage/emulated/0/AppProjects/java2cpp/src
+out=/storage/emulated/0/AppProjects/java2cpp/out
 
-sh /storage/emulated/0/AppProjects/java2cpp/run
+all(){
+echo javac -verbose \
+-cp ${antlr}:${out} \
+-d ${out} \
+${src}/com/mesut/j2cpp/Main.java
+}
+
+fast(){
+javac \
+-cp ${antlr}:${out} \
+-d ${out} \
+/storage/emulated/0/AppProjects/java2cpp/src/com/mesut/j2cpp/Main.java
+}
+
+run(){
+  java -cp ${antlr}:${out} com.mesut.j2cpp.Main
+}
+
+all
+
+echo "running"
+
+run
