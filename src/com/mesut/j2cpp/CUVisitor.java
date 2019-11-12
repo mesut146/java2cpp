@@ -18,28 +18,29 @@ public class CUVisitor extends JavaParserBaseVisitor {
 
     @Override
     public Object visitPackageDeclaration(JavaParser.PackageDeclarationContext ctx) {
-        //System.out.println("pkg");
+        System.out.println("pkg");
+        //namespace
         return null;
     }
 
     @Override
     public Object visitImportDeclaration(JavaParser.ImportDeclarationContext ctx) {
-        //System.out.println("imp");
+        System.out.println("imp");
         //writer.println("include \""+str+"\"");
         return null;
     }
 
-    @Override
+    /*@Override
     public Object visitTypeDeclaration(JavaParser.TypeDeclarationContext ctx) {
         //System.out.println("type="+ctx.classDeclaration().toStringTree());
         if(ctx.classDeclaration()!=null){
-            this.visit(ctx.classDeclaration());
+            visit(ctx.classDeclaration());
         }else if(ctx.interfaceDeclaration()!=null){
             
         }
         //visitClassDeclaration(ctx.classDeclaration());
         return null;
-    }
+    }*/
 
     @Override
     public Object visitClassDeclaration(JavaParser.ClassDeclarationContext ctx) {
@@ -54,7 +55,7 @@ public class CUVisitor extends JavaParserBaseVisitor {
             
         }
         for(ClassBodyDeclarationContext cbdc:ctx.classBody().classBodyDeclaration()){
-            visit(cbdc);
+            visitChildren(cbdc);
         }
         //visit(ctx.classBody().classBodyDeclaration(0).memberDeclaration().fieldDeclaration());
         writer.println("}");
@@ -67,8 +68,19 @@ public class CUVisitor extends JavaParserBaseVisitor {
     @Override
     public Object visitClassBodyDeclaration(JavaParser.ClassBodyDeclarationContext ctx)
     {
-        
+        if(ctx.STATIC()!=null){
+            //TODO
+        }
+        visit(ctx.memberDeclaration());
         return super.visitClassBodyDeclaration(ctx);
+    }
+
+    @Override
+    public Object visitMemberDeclaration(JavaParser.MemberDeclarationContext ctx)
+    {
+        // TODO: Implement this method
+        System.out.println("mem="+ctx.getText());
+        return super.visitMemberDeclaration(ctx);
     }
     
     

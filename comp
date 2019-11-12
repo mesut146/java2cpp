@@ -1,28 +1,24 @@
 mkdir out
-antlr=/storage/emulated/0/AppProjects/java2cpp/lib/antlr-runtime-4.7.2.jar
-src=/storage/emulated/0/AppProjects/java2cpp/src
-out=/storage/emulated/0/AppProjects/java2cpp/out
+base=/storage/emulated/0/AppProjects/java2cpp
+antlr=${base}/lib/antlr-runtime-4.7.2.jar
+src=${base}/src
+out=${base}/out
 
-all(){
-echo javac -verbose \
--cp ${antlr}:${out} \
--d ${out} \
-${src}/com/mesut/j2cpp/Main.java
-}
-
-fast(){
+comp(){
 javac \
 -cp ${antlr}:${out} \
 -d ${out} \
-/storage/emulated/0/AppProjects/java2cpp/src/com/mesut/j2cpp/Main.java
+${src}/com/mesut/j2cpp/Main.java
 }
 
 run(){
   java -cp ${antlr}:${out} com.mesut.j2cpp.Main
 }
 
-all
+ant(){
+ ant build
+ java -cp ${antlr}:${base}/build/classes com.mesut.j2cpp.Main
+}
 
 echo "running"
-
-run
+ant
