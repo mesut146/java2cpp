@@ -2,7 +2,7 @@ package com.pkg;
 
 import java.util.*;
 
-public class a{
+public class a extends Object implements Runnable{
 
     public int myInt=5,eint;
     private static final Runnable r=null;
@@ -14,6 +14,14 @@ public class a{
     float myFloat;
     double myDouble;
     Object myObj=new Type("type");
+
+    class innerface{
+        int c=4;
+        void innermeth(){}
+        class most{
+            void deep(){}
+        }
+    }
     
     public static void main(){
         //comment
@@ -25,6 +33,11 @@ public class a{
         return null;
     }
     
+    @Override
+    public void run(){
+        
+    }
+    
     int[][] sec(int[] asd){
         return null;
     }
@@ -34,4 +47,6 @@ public class a{
     }
     
 }
-
+class second{
+    int x;
+}
