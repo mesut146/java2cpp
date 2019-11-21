@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.*;
 
 public class Helper {
     static List<String> java_prims=Arrays.asList("byte","char","short","float","int","double","long","boolean");
@@ -19,11 +21,11 @@ public class Helper {
         put("boolean","bool");
     }};
     
-    static boolean is(String ty){
+    public static boolean is(String ty){
         return java_prims.contains(ty)||java_wr.contains(ty);
     }
 
-    static String getType(String ty){
+    public static String getType(String ty){
         if(java_prims.contains(ty)){
             return prims.get(ty);
         }else if(java_wr.contains(ty)){
@@ -33,4 +35,23 @@ public class Helper {
         return ty;
     }
 
+    static Parser parser;
+    public static void debug(ParserRuleContext prc){
+        if(prc==null){
+            return;
+        }
+        System.out.println(parser.getRuleInvocationStack(prc));
+        //tree(prc);
+        //parser.getVocabulary().getSymbolicName(prc.);
+        //System.out.println(parser.getRuleNames()[prc.getRuleIndex()]);
+    }
+    
+    static void tree(ParseTree pt){
+        System.out.print("<");
+        System.out.println(pt.getClass());
+        for(int i=0;i<pt.getChildCount();i++){
+            tree(pt.getChild(i));
+        }
+        System.out.println(">");
+    }
 }

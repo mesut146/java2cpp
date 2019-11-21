@@ -26,7 +26,6 @@ public class CHeader extends Node
         }
         for(CClass cc:classes){
             cc.ns=ns;
-            cc.print();
             append(cc.toString());
         }
     }

@@ -1,23 +1,28 @@
 package com.mesut.j2cpp.ast;
-import java.util.*;
-import java.io.*;
+import com.mesut.j2cpp.*;
 
 public class CField extends Node
 {
     public String type,name,right;
     public boolean isPublic=false,isStatic=false;
-    public boolean isPointer=false;
     
     
     public void print(){
-        print("");
+        line("");
         if(isPublic){
             append("public: ");
         }
         append(type);
+        if(isPointer()){
+            append("*");
+        }
         append(" ");
         append(name);
-        append(";\n");
+        appendln(";");
         //TODO right
+    }
+    
+    boolean isPointer(){
+        return !Helper.is(type);
     }
 }

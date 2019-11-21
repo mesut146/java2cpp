@@ -1,13 +1,13 @@
 package com.mesut.j2cpp;
 
-import com.mesut.j2cpp.parser.JavaLexer;
-import com.mesut.j2cpp.parser.JavaParser;
+import com.mesut.j2cpp.parser.*;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import com.mesut.j2cpp.ast.*;
 
 
 //in a method a param must be pointer but reassignmet cwnt change its org value
@@ -23,22 +23,25 @@ public class Main {
 			//a="/storage/emulated/0/AppProjects/java2cpp/asd/a.java";
             a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/Annotation.java";
 			
-            JavaLexer lexer= new JavaLexer(CharStreams.fromFileName(a));
-            JavaParser parser=new JavaParser(new CommonTokenStream(lexer));
+            Java8Lexer lexer= new Java8Lexer(CharStreams.fromFileName(a));
+            Java8Parser parser=new Java8Parser(new CommonTokenStream(lexer));
+            
+            Helper.parser=parser;
 
-            JavaParser.CompilationUnitContext cu=parser.compilationUnit();
+            Java8Parser.CompilationUnitContext cu=parser.compilationUnit();
    
             CUVisitor visitor=new CUVisitor();
           
             CHeader h=new CHeader();
             CSource cs=new CSource();
             h.rpath="com/asd/test.h";
+            cs.h=h;
             visitor.h=h;
             
             visitor.visit(cu);
-            h.print();
             
-            System.out.println(h.toString());
+            //System.out.println(h.toString());
+            System.out.println(cs);
             //h.printSource(cs);
         } catch (IOException e) {
             e.printStackTrace();

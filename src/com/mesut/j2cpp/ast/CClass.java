@@ -54,11 +54,11 @@ public class CClass extends Node
     public void print()
     {
         if(parent==null&&ns!=null){
-            print(ns.all);
-            append("{\n");
+            line(ns.all);
+            appendln("{");
             up();
         }
-        print("class ");
+        line("class ");
         append(name);
         if(base.size()>0){
             append(":");
@@ -69,30 +69,27 @@ public class CClass extends Node
                 }
             }
         }
-        append("{\n");
+        appendln("{");
         
         for(CField cf:fields){
             up(cf);
-            cf.print();
             append(cf.toString());
         }
-        pw.println();
+        println();
         for(CMethod cm:methods){
             up(cm);
-            cm.print();
             append(cm.toString());
         }
-        pw.println();
+        println();
         for(CClass cc:classes){
             up(cc);
-            cc.print();
             append(cc.toString());
         }
         
-        println("};//"+name);
+        lineln("};//"+name);
         
         if(parent==null&&ns!=null){
-            append("}//ns\n");
+            appendln("}//ns");
         }
     }
     

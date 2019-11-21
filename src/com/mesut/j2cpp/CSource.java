@@ -10,29 +10,28 @@ public class CSource extends Node
     {
         append("#include \"");
         append(h.getInclude());
-        append("\"\n");
+        appendln("\"").println();
         
         for(CClass cc:h.classes){
             for(CMethod cm:cc.methods){
-                print("");
+                line("");
                 if(!cm.isCons){
-                    append(cm.type);
-                    append(" ");
+                    append(cm.type).append(" ");
                 }
-                append(cc.name).append("::");
-                append(cm.name);
+                append(cc.name).
+                append("::").
+                append(cm.name).
                 append("(");
                 for(int i=0;i<cm.params.size();i++){
                     CParameter cp=cm.params.get(i);
-                    cp.pw=pw;
-                    cp.print();
+                    append(cp.toString());
                     if(i<cm.params.size()-1){
                         append(",");
                     }
                 }
-                append("){\n");
-
-                append("}\n");
+                appendln("){");
+                append(cm.body.toString());
+                appendln("}").println();
             }
         }
     }

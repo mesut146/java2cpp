@@ -18,16 +18,18 @@ public class CMethod extends Node
     
     public void print()
     {
-        print("");
+        line("");
         if(!isCons){
-            append(type);
+            append(type).
             append(" ");
         }
         append(name);
+        if(isPointer()){
+            append("*");
+        }
         append("(");
         for(int i=0;i<params.size();i++){
             CParameter cp=params.get(i);
-            cp.print();
             append(cp.toString());
             if(i<params.size()-1){
                 append(",");
@@ -36,37 +38,19 @@ public class CMethod extends Node
         append(")");
         
         if(parent.inHeader){
-            append(";\n");
+            appendln(";");
         }
         else{
-            append("{\n");
+            appendln("{");
             //TODO
             append(body.toString());
-            println("}");
+            lineln("}");
         }
         
     }
-    public void getDecl(PrintWriter pw){
-        print("");
-        if(!isCons){
-            pw.append(type);
-            pw.append(" ");
-        }
-        append(name);
-        append("(");
-        for(int i=0;i<params.size();i++){
-            CParameter cp=params.get(i);
-            cp.print();
-            append(cp.toString());
-            if(i<params.size()-1){
-                append(",");
-            }
-        }
-        append(")");
-
-        if(parent.inHeader){
-            println(";");
-        }
+    
+    boolean isPointer(){
+        return !isCons&&!Helper.is(type);
     }
     
     

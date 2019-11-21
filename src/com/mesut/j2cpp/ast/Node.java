@@ -5,7 +5,7 @@ public abstract class Node
 {
     public String indention="";
     public ByteArrayOutputStream baos=new ByteArrayOutputStream();
-    public PrintWriter pw=new PrintWriter(baos);;
+    boolean isPrinted=false;
     
     /*public Node(PrintWriter p){
         pw=p;
@@ -14,18 +14,37 @@ public abstract class Node
     public abstract void print();
         
     
-    public void print(String str){
-        pw.append(indention).print(str);
+    //indention level
+    public Node line(String str){
+        append(indention).append(str);
+        return this;
     }
-    public void println(String str){
-        pw.append(indention).println(str);
+    public Node lineln(String str){
+        line(str).println();
+        return this;
     }
     public void println(){
-        pw.println();
+        write("\n");
     }
     public Node append(String str){
-        pw.print(str);
+        write(str);
         return this;
+    }
+    public Node appendln(String str){
+        append(str).println();
+        return this;
+    }
+    
+    public void write(String str){
+        try
+        {
+            baos.write(str.getBytes());
+            baos.flush();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
     }
     
     void up(Node n){
@@ -34,13 +53,14 @@ public abstract class Node
     void up(){
         indention+="    ";
     }
-    void tab(PrintWriter pw){
-        pw.print("    ");
-    }
 
     @Override
     public String toString()
     {
+        if(!isPrinted){
+            print();
+            isPrinted=true;
+        }
         return baos.toString();
     }
     
