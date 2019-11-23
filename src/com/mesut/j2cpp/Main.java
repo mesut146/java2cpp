@@ -22,6 +22,7 @@ public class Main {
 			String a;
 			//a="/storage/emulated/0/AppProjects/java2cpp/asd/a.java";
             a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/Annotation.java";
+            //a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/ClassData.java";
 			
             Java8Lexer lexer= new Java8Lexer(CharStreams.fromFileName(a));
             Java8Parser parser=new Java8Parser(new CommonTokenStream(lexer));
@@ -29,7 +30,7 @@ public class Main {
             Helper.parser=parser;
 
             Java8Parser.CompilationUnitContext cu=parser.compilationUnit();
-   
+            
             CUVisitor visitor=new CUVisitor();
           
             CHeader h=new CHeader();
@@ -40,8 +41,11 @@ public class Main {
             
             visitor.visit(cu);
             
-            //System.out.println(h.toString());
+            System.out.println(h);
+            System.out.println("----------------");
             System.out.println(cs);
+            
+            //System.out.println(cu.toStringTree(parser));
             //h.printSource(cs);
         } catch (IOException e) {
             e.printStackTrace();

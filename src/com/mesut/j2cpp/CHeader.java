@@ -20,9 +20,10 @@ public class CHeader extends Node
 
     public void print()
     {
+        append("#pragma once\n\n");
         for(String imp:includes){
             append("#include \"");
-            append(imp).append("\"\n");
+            append(imp).appendln("\"");
         }
         for(CClass cc:classes){
             cc.ns=ns;

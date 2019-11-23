@@ -1,7 +1,7 @@
 package com.mesut.j2cpp;
 import com.mesut.j2cpp.ast.*;
 
-public class Writer extends Node
+public class FWriter extends Node
 {
 
     @Override

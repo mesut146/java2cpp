@@ -6,52 +6,61 @@ import com.mesut.j2cpp.*;
 public class CMethod extends Node
 {
     public String name;
-    public String type;
+    public TypeName type;
     public List<CParameter> params=new ArrayList<>();
     public List<String> modifiers=new ArrayList<>();
     public List<String> throwList=new ArrayList<>();
     public boolean empty=false;
     public boolean isCons=false;
-    //public MethodVisitor visitor;
     public CClass parent;
     public Body body=new Body();
+    public FWriter decl;
     
     public void print()
     {
-        line("");
-        if(!isCons){
-            append(type).
-            append(" ");
-        }
-        append(name);
-        if(isPointer()){
-            append("*");
-        }
-        append("(");
-        for(int i=0;i<params.size();i++){
-            CParameter cp=params.get(i);
-            append(cp.toString());
-            if(i<params.size()-1){
-                append(",");
+        baos.reset();
+        if(decl==null){
+            decl=new FWriter();
+            decl.line("");
+            if(!isCons){
+                decl.append(type.toString());
+                if(isPointer()&&!type.isArray()){
+                    decl.append("*");
+                }
+                decl.append(" ");
             }
+            decl.append(name);
+
+            decl.append("(");
+            for(int i=0;i<params.size();i++){
+                CParameter cp=params.get(i);
+                decl.append(cp.toString());
+                if(i<params.size()-1){
+                    decl.append(",");
+                }
+            }
+            decl.append(")");
         }
-        append(")");
+        
+        append(decl.toString());
         
         if(parent.inHeader){
             appendln(";");
         }
         else{
-            appendln("{");
+            //appendln("{");
             //TODO
             append(body.toString());
-            lineln("}");
+            println();
+            //lineln("}");
         }
         
     }
     
     boolean isPointer(){
-        return !isCons&&!Helper.is(type);
+        return !isCons&&!Helper.is(type.toString())&&!type.toString().equals("void");
     }
+    
     
     
 }

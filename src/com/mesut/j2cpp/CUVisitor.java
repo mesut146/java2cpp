@@ -101,7 +101,7 @@ public class CUVisitor extends Java8ParserBaseVisitor
         for (VariableDeclaratorContext cdc:ctx.variableDeclaratorList().variableDeclarator())
         {
             CField cf=new CField();
-            cf.type = ctx.unannType().getText();
+            cf.type = new TypeName(ctx.unannType().getText());
             cf.name = cdc.variableDeclaratorId().getText();
             cf.right = cdc.variableInitializer().getText();
             last().addField(cf);
@@ -121,11 +121,12 @@ public class CUVisitor extends Java8ParserBaseVisitor
         {
             cm.modifiers.add(immc.getText());
         }
-        cm.type = ctx.methodHeader().result().getText();
+        cm.type = new TypeName(ctx.methodHeader().result().getText());
         cm.name = ctx.methodHeader().methodDeclarator().Identifier().getText();
 
         param(ctx.methodHeader().methodDeclarator().formalParameterList(), cm);
 
+        //TODO could be static
         //visit(ctx.methodBody());
         return cm;
     }
@@ -160,7 +161,7 @@ public class CUVisitor extends Java8ParserBaseVisitor
                     //TODO could be array
                     CParameter cp=new CParameter();
                     //System.out.println("lfpc=" + lfpc.unannType());
-                    cp.type = lfpc.unannType().getText();
+                    cp.type = new TypeName(lfpc.unannType().getText());
                     cp.name = lfpc.variableDeclaratorId().getText();
                     cm.params.add(cp);
                 }
@@ -182,22 +183,22 @@ public class CUVisitor extends Java8ParserBaseVisitor
         //System.out.println("field");
         String jtype=ctx.unannType().getText();
 
-        String ctype;
+        String ctype=jtype;
         if (Helper.is(jtype))
         {
             ctype = Helper.getType(jtype);
-
         }
-        else
-        {
-            ctype = jtype;
-        }
+       
         for (VariableDeclaratorContext vdc:ctx.variableDeclaratorList().variableDeclarator())
         {
             CField cf=new CField();
             cf.name = vdc.variableDeclaratorId().getText();
-            cf.type = ctype;
+            cf.type = new TypeName(ctype);
             cf.isPublic = true;
+            MethodVisitor mv=new MethodVisitor();
+            if(vdc.variableInitializer()!=null){
+                cf.right=(String)mv.visit(vdc.variableInitializer());
+            }
             last().addField(cf);
         }
         return null;
@@ -208,7 +209,7 @@ public class CUVisitor extends Java8ParserBaseVisitor
     {
         CMethod cm=new CMethod();
         last().addMethod(cm);
-        cm.type = ctx.methodHeader().result().getText();
+        cm.type = new TypeName(ctx.methodHeader().result().getText());
         cm.name = ctx.methodHeader().methodDeclarator().Identifier().getText();
         param(ctx.methodHeader().methodDeclarator().formalParameterList(), cm);
         //visit(ctx.methodBody());
@@ -234,7 +235,7 @@ public class CUVisitor extends Java8ParserBaseVisitor
         mv.body=cm.body;
         //cm.visitor=mv;
         //Helper.debug(ctx.constructorBody());
-        mv.visit(ctx.constructorBody());
+        mv.visitConstructorBody(ctx.constructorBody());
         return cm;
     }
 

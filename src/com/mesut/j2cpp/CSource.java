@@ -13,26 +13,36 @@ public class CSource extends Node
         appendln("\"").println();
         
         for(CClass cc:h.classes){
-            for(CMethod cm:cc.methods){
-                line("");
-                if(!cm.isCons){
-                    append(cm.type).append(" ");
-                }
-                append(cc.name).
-                append("::").
-                append(cm.name).
-                append("(");
-                for(int i=0;i<cm.params.size();i++){
-                    CParameter cp=cm.params.get(i);
-                    append(cp.toString());
-                    if(i<cm.params.size()-1){
-                        append(",");
-                    }
-                }
-                appendln("){");
-                append(cm.body.toString());
-                appendln("}").println();
-            }
+            printClass(cc);
+        }
+    }
+    
+    public void printClass(CClass cc){
+        cc.inHeader=false;
+        for(CMethod cm:cc.methods){
+            //line("");
+            /*if(!cm.isCons){
+             append(cm.type).append(" ");
+             }
+             append(cc.name).
+             append("::").
+             append(cm.name).
+             append("(");
+             for(int i=0;i<cm.params.size();i++){
+             CParameter cp=cm.params.get(i);
+             append(cp.toString());
+             if(i<cm.params.size()-1){
+             append(",");
+             }
+             }
+             appendln("){");
+             append(cm.body.toString());
+             appendln("}").println();*/
+
+            append(cm.toString());
+        }
+        for(CClass in:cc.classes){
+            printClass(in);
         }
     }
     

@@ -3,7 +3,8 @@ import com.mesut.j2cpp.*;
 
 public class CField extends Node
 {
-    public String type,name,right;
+    public TypeName type;
+    public String name,right;
     public boolean isPublic=false,isStatic=false;
     
     
@@ -12,8 +13,8 @@ public class CField extends Node
         if(isPublic){
             append("public: ");
         }
-        append(type);
-        if(isPointer()){
+        append(type.toString());
+        if(isPointer()&&!type.isArray()){
             append("*");
         }
         append(" ");
@@ -23,6 +24,6 @@ public class CField extends Node
     }
     
     boolean isPointer(){
-        return !Helper.is(type);
+        return !Helper.is(type.toString());
     }
 }

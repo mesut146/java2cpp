@@ -10,7 +10,7 @@ public class Common extends Java8ParserBaseVisitor
     public Object visitReceiverParameter(Java8Parser.ReceiverParameterContext ctx)
     {
         CParameter cp=new CParameter();
-        cp.type=ctx.unannType().getText();
+        cp.type=new TypeName(ctx.unannType().getText());
         if(ctx.Identifier()!=null){
             cp.name=ctx.Identifier().getText();
         }
@@ -30,8 +30,8 @@ public class Common extends Java8ParserBaseVisitor
     public Object visitFormalParameter(Java8Parser.FormalParameterContext ctx)
     {
         CParameter cp=new CParameter();
-        cp.type=ctx.unannType().getText();
-        if(Helper.is(cp.type)){
+        cp.type=new TypeName(ctx.unannType().getText());
+        if(Helper.is(cp.type.toString())){
             cp.isPointer=false;
         }
         cp.name=ctx.variableDeclaratorId().getText();

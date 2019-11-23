@@ -7,12 +7,7 @@ public abstract class Node
     public ByteArrayOutputStream baos=new ByteArrayOutputStream();
     boolean isPrinted=false;
     
-    /*public Node(PrintWriter p){
-        pw=p;
-    }*/
-    
     public abstract void print();
-        
     
     //indention level
     public Node line(String str){
@@ -57,10 +52,12 @@ public abstract class Node
     @Override
     public String toString()
     {
-        if(!isPrinted){
+        /*if(!isPrinted){
             print();
             isPrinted=true;
-        }
+        }*/
+        //baos.reset();
+        print();
         return baos.toString();
     }
     
