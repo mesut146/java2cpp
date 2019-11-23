@@ -54,7 +54,7 @@ public class CClass extends Node
     public void print()
     {
         if(parent==null&&ns!=null){
-            line(ns.all);
+            append(ns.all);
             appendln("{");
             up();
         }
@@ -72,17 +72,17 @@ public class CClass extends Node
         appendln("{");
         
         for(CField cf:fields){
-            up(cf);
+            upTo(cf);
             append(cf.toString());
         }
         println();
         for(CMethod cm:methods){
-            up(cm);
+            upTo(cm);
             append(cm.toString());
         }
         println();
         for(CClass cc:classes){
-            up(cc);
+            upTo(cc);
             append(cc.toString());
         }
         

@@ -13,7 +13,7 @@ public class CMethod extends Node
     public boolean empty=false;
     public boolean isCons=false;
     public CClass parent;
-    public Body body=new Body();
+    public Body body=new Body(){{level=1;init();}};
     public FWriter decl;
     
     public void print()

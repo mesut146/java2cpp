@@ -11,7 +11,7 @@ public class MethodVisitor extends Java8ParserBaseVisitor
 
     CMethod cm;
     Body body;
-    Node tmp=new FWriter();
+    //Node tmp=new FWriter();
 
     @Override
     public Object visitLocalVariableDeclarationStatement(Java8Parser.LocalVariableDeclarationStatementContext ctx)
@@ -634,7 +634,7 @@ public class MethodVisitor extends Java8ParserBaseVisitor
         }
         if (ctx.blockStatements() != null)
         {
-            body.line(((String)visitBlockStatements(ctx.blockStatements())));
+            body.append(((String)visitBlockStatements(ctx.blockStatements())));
         }
         body.appendln("}");
         return null;

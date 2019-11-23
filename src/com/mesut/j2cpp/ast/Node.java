@@ -4,14 +4,24 @@ import java.io.*;
 public abstract class Node
 {
     public String indention="";
+    public boolean useTab=false;
+    public int level=0;
     public ByteArrayOutputStream baos=new ByteArrayOutputStream();
     boolean isPrinted=false;
     
     public abstract void print();
     
+    void init(){
+        indention="";
+        String str=useTab?"\t":"    ";
+        for(int i=0;i<level;i++){
+            indention=indention+str;
+        }
+    }
+    
     //indention level
     public Node line(String str){
-        append(indention).append(str);
+        write(indention).write(indention).write(str);
         return this;
     }
     public Node lineln(String str){
@@ -22,7 +32,7 @@ public abstract class Node
         write("\n");
     }
     public Node append(String str){
-        write(str);
+        write(indention).write(str);
         return this;
     }
     public Node appendln(String str){
@@ -30,7 +40,7 @@ public abstract class Node
         return this;
     }
     
-    public void write(String str){
+    public Node write(String str){
         try
         {
             baos.write(str.getBytes());
@@ -40,13 +50,16 @@ public abstract class Node
         {
             e.printStackTrace();
         }
+        return this;
     }
     
-    void up(Node n){
-        n.indention=indention+"    ";
+    public void upTo(Node n){
+        n.level=this.level+1;
+        n.init();
     }
-    void up(){
-        indention+="    ";
+    public void up(){
+        level++;
+        init();
     }
 
     @Override
