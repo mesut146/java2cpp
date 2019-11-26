@@ -19,9 +19,10 @@ public class CMethod extends Node
     public void print()
     {
         baos.reset();
+        list.clear();
         if(decl==null){
             decl=new FWriter();
-            decl.line("");
+            //decl.line("");
             if(!isCons){
                 decl.append(type.toString());
                 if(isPointer()&&!type.isArray()){
@@ -29,7 +30,7 @@ public class CMethod extends Node
                 }
                 decl.append(" ");
             }
-            decl.append(name);
+            decl.append(parent.getNamespace().all+"::"+name);
 
             decl.append("(");
             for(int i=0;i<params.size();i++){
@@ -45,12 +46,12 @@ public class CMethod extends Node
         append(decl.toString());
         
         if(parent.inHeader){
-            appendln(";");
+            append(";\n");
         }
         else{
             //appendln("{");
             //TODO
-            append(body.toString());
+            append(body);
             println();
             //lineln("}");
         }

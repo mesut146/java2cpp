@@ -8,9 +8,9 @@ public class CSource extends Node
     @Override
     public void print()
     {
-        append("#include \"");
+        line("#include \"");
         append(h.getInclude());
-        appendln("\"").println();
+        append("\"\n").println();
         
         for(CClass cc:h.classes){
             printClass(cc);
@@ -21,25 +21,8 @@ public class CSource extends Node
         cc.inHeader=false;
         for(CMethod cm:cc.methods){
             //line("");
-            /*if(!cm.isCons){
-             append(cm.type).append(" ");
-             }
-             append(cc.name).
-             append("::").
-             append(cm.name).
-             append("(");
-             for(int i=0;i<cm.params.size();i++){
-             CParameter cp=cm.params.get(i);
-             append(cp.toString());
-             if(i<cm.params.size()-1){
-             append(",");
-             }
-             }
-             appendln("){");
-             append(cm.body.toString());
-             appendln("}").println();*/
 
-            append(cm.toString());
+            append(cm);
         }
         for(CClass in:cc.classes){
             printClass(in);

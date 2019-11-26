@@ -9,9 +9,9 @@ public class CField extends Node
     
     
     public void print(){
-        line("");
+        //line("");
         if(isPublic){
-            append("public: ");
+            line("public: ");
         }
         append(type.toString());
         if(isPointer()&&!type.isArray()){
@@ -19,7 +19,7 @@ public class CField extends Node
         }
         append(" ");
         append(name);
-        appendln(";");
+        append(";\n");
         //TODO right
     }
     

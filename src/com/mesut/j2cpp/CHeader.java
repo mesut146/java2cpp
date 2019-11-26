@@ -23,7 +23,7 @@ public class CHeader extends Node
         append("#pragma once\n\n");
         for(String imp:includes){
             append("#include \"");
-            append(imp).appendln("\"");
+            append(imp).append("\"").println();
         }
         for(CClass cc:classes){
             cc.ns=ns;

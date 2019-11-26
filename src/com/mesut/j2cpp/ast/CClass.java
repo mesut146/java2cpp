@@ -55,7 +55,7 @@ public class CClass extends Node
     {
         if(parent==null&&ns!=null){
             append(ns.all);
-            appendln("{");
+            append("{\n");
             up();
         }
         line("class ");
@@ -69,7 +69,7 @@ public class CClass extends Node
                 }
             }
         }
-        appendln("{");
+        append("{\n");
         
         for(CField cf:fields){
             upTo(cf);
@@ -78,18 +78,18 @@ public class CClass extends Node
         println();
         for(CMethod cm:methods){
             upTo(cm);
-            append(cm.toString());
+            append(cm);
         }
         println();
         for(CClass cc:classes){
             upTo(cc);
-            append(cc.toString());
+            append(cc);
         }
         
-        lineln("};//"+name);
+        lineln("};//class "+name);
         
         if(parent==null&&ns!=null){
-            appendln("}//ns");
+            append("}//ns\n");
         }
     }
     

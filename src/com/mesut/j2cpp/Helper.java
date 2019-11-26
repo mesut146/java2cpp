@@ -36,22 +36,15 @@ public class Helper {
     }
 
     static Parser parser;
-    public static void debug(ParserRuleContext prc){
-        if(prc==null){
+    public static void debug(ParserRuleContext ctx){
+        if(ctx==null){
             return;
         }
-        System.out.println(parser.getRuleInvocationStack(prc));
+        System.out.println(ctx.toStringTree(parser));
         //tree(prc);
         //parser.getVocabulary().getSymbolicName(prc.);
         //System.out.println(parser.getRuleNames()[prc.getRuleIndex()]);
     }
     
-    static void tree(ParseTree pt){
-        System.out.print("<");
-        System.out.println(pt.getClass());
-        for(int i=0;i<pt.getChildCount();i++){
-            tree(pt.getChild(i));
-        }
-        System.out.println(">");
-    }
+    
 }

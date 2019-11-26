@@ -21,8 +21,8 @@ public class Main {
             Resolver.srcPath="/home/mesut/Desktop/tmp";
 			String a;
 			//a="/storage/emulated/0/AppProjects/java2cpp/asd/a.java";
-            a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/Annotation.java";
-            //a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/ClassData.java";
+            //a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/Annotation.java";
+            a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/ClassData.java";
 			
             Java8Lexer lexer= new Java8Lexer(CharStreams.fromFileName(a));
             Java8Parser parser=new Java8Parser(new CommonTokenStream(lexer));

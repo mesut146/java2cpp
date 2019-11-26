@@ -303,7 +303,15 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     {
         if (ctx != null)
         {
-            sb.append(visitArgumentList(ctx));
+            List<ExpressionContext> l=ctx.expression();
+            int i=0;
+            for(ExpressionContext exp:l){
+                sb.append(visitExpression(exp));
+                if(i<l.size()-1){
+                    sb.append(",");
+                }
+                i++;
+            }
         }
     }
     
@@ -619,6 +627,7 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     {
         if (ctx.block() != null)
         {
+            Helper.debug(ctx);
             body.append((String)visitBlock(ctx.block()));
         }
         return null;
@@ -627,7 +636,7 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     @Override
     public Object visitConstructorBody(Java8Parser.ConstructorBodyContext ctx)
     {
-        body.appendln("{");
+        body.append("{\n");
         if (ctx.explicitConstructorInvocation() != null)
         {
             //TODO 
@@ -636,7 +645,7 @@ public class MethodVisitor extends Java8ParserBaseVisitor
         {
             body.append(((String)visitBlockStatements(ctx.blockStatements())));
         }
-        body.appendln("}");
+        body.append("}");
         return null;
     }
 

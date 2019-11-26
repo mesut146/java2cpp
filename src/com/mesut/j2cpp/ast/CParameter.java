@@ -9,7 +9,7 @@ public class CParameter extends Node
 
     public void print()
     {
-        append(type.toString().replace(".","::"));//normalize the type(base::type)
+        line(type.toString().replace(".","::"));//normalize the type(base::type)
         if(isPointer&&!type.isArray()){
             append("*");
         }
