@@ -54,6 +54,7 @@ public class CClass extends Node
     public void print()
     {
         if(parent==null&&ns!=null){
+            append("namespace ");
             append(ns.all);
             append("{\n");
             up();

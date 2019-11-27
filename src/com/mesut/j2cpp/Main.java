@@ -22,8 +22,9 @@ public class Main {
 			String a;
 			//a="/storage/emulated/0/AppProjects/java2cpp/asd/a.java";
             //a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/Annotation.java";
-            a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/ClassData.java";
-			
+            //a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/ClassData.java";
+			//a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/ClassDef.java";
+            a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/Dex.java";
             Java8Lexer lexer= new Java8Lexer(CharStreams.fromFileName(a));
             Java8Parser parser=new Java8Parser(new CommonTokenStream(lexer));
             

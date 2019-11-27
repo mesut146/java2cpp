@@ -29,7 +29,8 @@ public class MethodVisitor extends Java8ParserBaseVisitor
             String name=vdc.variableDeclaratorId().getText();
             //System.out.printf("type=%s name=%s rs=%s%n",type,name,right);
             sb.append(type);
-            if(!type.isArray()){
+            if (!type.isArray())
+            {
                 sb.append("*");
             }
             sb.append(" ").append(name);
@@ -60,9 +61,29 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     @Override
     public Object visitExpressionName(Java8Parser.ExpressionNameContext ctx)
     {
-        return ctx.Identifier().getText();
+        StringBuilder sb=new StringBuilder();
+        if(ctx.ambiguousName()!=null){
+            sb.append(visit(ctx.ambiguousName()));
+            sb.append(".");
+        }
+        sb.append(ctx.Identifier().getText());
+        return sb.toString();
     }
 
+    @Override
+    public Object visitAmbiguousName(Java8Parser.AmbiguousNameContext ctx)
+    {
+        StringBuilder sb=new StringBuilder();
+        if(ctx.ambiguousName()!=null){
+            sb.append(visit(ctx.ambiguousName()));
+            sb.append(".");
+        }
+        sb.append(ctx.Identifier().getText());
+        return sb.toString();
+    }
+
+    
+    
     @Override
     public Object visitFieldAccess(Java8Parser.FieldAccessContext ctx)
     {
@@ -229,7 +250,7 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     public Object visitMethodInvocation_nop_type1(Java8Parser.MethodInvocation_nop_type1Context ctx)
     {
         //System.out.println("nop1="+ctx.getText());
-        
+
         StringBuilder sb=new StringBuilder();
         sb.append(ctx.methodName().getText());
         sb.append("(");
@@ -294,28 +315,30 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     }
 
     /*@Override
-    public Object visitMethodInvocation_lfno_primary(Java8Parser.MethodInvocation_lfno_primaryContext ctx)
-    {
-        //System.out.println("ifnop="+ctx.getText());
-        return super.visitMethodInvocation_lfno_primary(ctx);
-    }*/
+     public Object visitMethodInvocation_lfno_primary(Java8Parser.MethodInvocation_lfno_primaryContext ctx)
+     {
+     //System.out.println("ifnop="+ctx.getText());
+     return super.visitMethodInvocation_lfno_primary(ctx);
+     }*/
     void arg(StringBuilder sb, ArgumentListContext ctx)
     {
         if (ctx != null)
         {
             List<ExpressionContext> l=ctx.expression();
             int i=0;
-            for(ExpressionContext exp:l){
+            for (ExpressionContext exp:l)
+            {
                 sb.append(visitExpression(exp));
-                if(i<l.size()-1){
+                if (i < l.size() - 1)
+                {
                     sb.append(",");
                 }
                 i++;
             }
         }
     }
-    
-    
+
+
     @Override
     public Object visitPrimaryNoNewArray(Java8Parser.PrimaryNoNewArrayContext ctx)
     {
@@ -345,7 +368,7 @@ public class MethodVisitor extends Java8ParserBaseVisitor
         {
             return visitTypeName(ctx.typeName()) + "->this";
         }
-        
+
         return super.visitPrimaryNoNewArray_lfno_primary(ctx);
     }
 
@@ -379,18 +402,22 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     public Object visitPrimary(Java8Parser.PrimaryContext ctx)
     {
         StringBuilder sb=new StringBuilder();
-        if(ctx.primaryNoNewArray_lfno_primary()!=null){
+        if (ctx.primaryNoNewArray_lfno_primary() != null)
+        {
             sb.append(visitPrimaryNoNewArray_lfno_primary(ctx.primaryNoNewArray_lfno_primary()));
-        }else if(ctx.arrayCreationExpression()!=null){
+        }
+        else if (ctx.arrayCreationExpression() != null)
+        {
             sb.append(visit(ctx.arrayCreationExpression()));
         }
-        for(PrimaryNoNewArray_lf_primaryContext p:ctx.primaryNoNewArray_lf_primary()){
+        for (PrimaryNoNewArray_lf_primaryContext p:ctx.primaryNoNewArray_lf_primary())
+        {
             sb.append(visitPrimaryNoNewArray_lf_primary(p));
         }
         return sb.toString();
     }
 
-    
+
 
     /*@Override
      public Object visitClassInstanceCreationExpression(Java8Parser.ClassInstanceCreationExpressionContext ctx)
@@ -513,7 +540,8 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     public Object visitMultiplicativeExpression(Java8Parser.MultiplicativeExpressionContext ctx)
     {
         StringBuilder sb=new StringBuilder();
-        if(ctx.multiplicativeExpression()!=null){
+        if (ctx.multiplicativeExpression() != null)
+        {
             sb.append(visitMultiplicativeExpression(ctx.multiplicativeExpression()));
         }
         if (ctx.MUL() != null)
@@ -537,14 +565,18 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     public Object visitUnaryExpression(Java8Parser.UnaryExpressionContext ctx)
     {
         StringBuilder sb=new StringBuilder();
-        if(ctx.ADD()!=null){
+        if (ctx.ADD() != null)
+        {
             sb.append("+");
             sb.append(visitUnaryExpression(ctx.unaryExpression()));
         }
-        else if(ctx.SUB()!=null){
+        else if (ctx.SUB() != null)
+        {
             sb.append("-");
             sb.append(visitUnaryExpression(ctx.unaryExpression()));
-        }else{
+        }
+        else
+        {
             sb.append(super.visitUnaryExpression(ctx));
         }
         return sb.toString();
@@ -554,24 +586,41 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     public Object visitUnaryExpressionNotPlusMinus(Java8Parser.UnaryExpressionNotPlusMinusContext ctx)
     {
         StringBuilder sb=new StringBuilder();
-        if(ctx.TILDE()!=null){
+        if (ctx.TILDE() != null)
+        {
             sb.append("~");
             sb.append(visitUnaryExpression(ctx.unaryExpression()));
-        }else if(ctx.BANG()!=null){
+        }
+        else if (ctx.BANG() != null)
+        {
             sb.append("!");
             sb.append(visitUnaryExpression(ctx.unaryExpression()));
-        }else{
+        }
+        else
+        {
             sb.append(super.visitUnaryExpressionNotPlusMinus(ctx));
         }
         return sb.toString();
     }
 
-    /*@Override
-    public Object visitPostfixExpression(Java8Parser.PostfixExpressionContext ctx)
-    {
-        System.out.println("post="+ctx.getText()+","+ctx.children.get(0).getClass());
-        return "post";
-    }*/
+    @Override
+     public Object visitPostfixExpression(Java8Parser.PostfixExpressionContext ctx)
+     {
+         StringBuilder sb=new StringBuilder();
+         if(ctx.primary()!=null){
+             sb.append(visitPrimary(ctx.primary()));
+         }else{
+             sb.append(visitExpressionName(ctx.expressionName()));
+         }
+         //TODO
+         if(ctx.postIncrementExpression_lf_postfixExpression().size()>0){
+             sb.append("++");
+         }
+         if(ctx.postDecrementExpression_lf_postfixExpression().size()>0){
+             sb.append("--");
+         }
+         return sb.toString();
+     }
 
     @Override
     public Object visitLiteral(Java8Parser.LiteralContext ctx)
@@ -605,6 +654,131 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     }
 
     @Override
+    public Object visitClassOrInterfaceType(Java8Parser.ClassOrInterfaceTypeContext ctx)
+    {
+        StringBuilder sb=new StringBuilder();
+        List<ClassType_lf_classOrInterfaceTypeContext> l1=ctx.classType_lf_classOrInterfaceType();
+        if (ctx.classType_lfno_classOrInterfaceType() != null)
+        {
+            sb.append(visit(ctx.classType_lfno_classOrInterfaceType()));
+        }
+        else
+        {
+            sb.append(visit(ctx.interfaceType_lfno_classOrInterfaceType()));
+        }
+        //TODO
+        if (l1 != null)
+        {
+            for (int i=0;i < l1.size();i++)
+            {
+                sb.append(visit(l1.get(i)));
+            }
+        }
+        //sb.append("clsType");
+        return sb.toString();
+    }
+
+    @Override
+    public Object visitClassType_lf_classOrInterfaceType(Java8Parser.ClassType_lf_classOrInterfaceTypeContext ctx)
+    {
+        StringBuilder sb=new StringBuilder();
+        sb.append(".");
+        sb.append(ctx.Identifier().getText());
+        if (ctx.typeArguments() != null)
+        {
+            sb.append(visit(ctx.typeArguments()));
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public Object visitClassType_lfno_classOrInterfaceType(Java8Parser.ClassType_lfno_classOrInterfaceTypeContext ctx)
+    {
+        StringBuilder sb=new StringBuilder();
+        sb.append(ctx.Identifier().getText());
+        if (ctx.typeArguments() != null)
+        {
+            sb.append(visit(ctx.typeArguments()));
+        }
+        return sb.toString();
+    }
+
+    
+
+    @Override
+    public Object visitArrayCreationExpression(Java8Parser.ArrayCreationExpressionContext ctx)
+    {
+        StringBuilder sb=new StringBuilder();
+        sb.append("new ");
+        DimsContext dims=ctx.dims();
+        DimExprsContext dc=ctx.dimExprs();
+        if (ctx.primitiveType() != null)
+        {
+            sb.append(visit(ctx.primitiveType()));
+            if (dc != null)
+            {
+                sb.append(visit(dc));
+                if (dims != null)
+                {
+                    sb.append(visit(dims));
+                }
+            }
+            else
+            {//arrayinit
+                if (dims != null)
+                {
+                    sb.append(visit(dims));
+                }
+                sb.append(visit(ctx.arrayInitializer()));
+            }
+        }
+        else
+        {
+            sb.append(visit(ctx.classOrInterfaceType()));
+            if (dc != null)
+            {
+                sb.append(visit(dc));
+                if (dims != null)
+                {
+                    sb.append(visit(dims));
+                }
+            }
+            else
+            {
+                sb.append(visit(dims));
+                sb.append(visit(ctx.arrayInitializer()));
+            }
+        }
+
+        return sb.toString();
+    }
+
+    @Override
+    public Object visitDimExprs(Java8Parser.DimExprsContext ctx)
+    {
+        StringBuilder sb=new StringBuilder();
+        for (DimExprContext dec:ctx.dimExpr())
+        {
+            sb.append(visitDimExpr(dec));
+        }
+        return sb.toString();
+    }
+
+
+
+    @Override
+    public Object visitDimExpr(Java8Parser.DimExprContext ctx)
+    {
+        StringBuilder sb=new StringBuilder();
+        sb.append("[");
+        sb.append(visitExpression(ctx.expression()));
+        sb.append("]");
+        return sb.toString();
+    }
+
+
+
+    @Override
     public Object visitBlock(Java8Parser.BlockContext ctx)
     {
         return "{\n" + visitBlockStatements(ctx.blockStatements()) + "}\n";
@@ -627,7 +801,7 @@ public class MethodVisitor extends Java8ParserBaseVisitor
     {
         if (ctx.block() != null)
         {
-            Helper.debug(ctx);
+            //Helper.debug(ctx);
             body.append((String)visitBlock(ctx.block()));
         }
         return null;
@@ -648,7 +822,6 @@ public class MethodVisitor extends Java8ParserBaseVisitor
         body.append("}");
         return null;
     }
-
 
 
     /*@Override

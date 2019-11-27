@@ -8,7 +8,7 @@ public class Namespace extends Node
 
     public void pkg(String str){
         int i=0;
-        all=str;
+        all=str.replace(".","::");
         for(String ns:str.split("::")){
             split.add(ns);
         }

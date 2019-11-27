@@ -41,6 +41,7 @@ public class Helper {
             return;
         }
         System.out.println(ctx.toStringTree(parser));
+        System.out.println("-----------------------");
         //tree(prc);
         //parser.getVocabulary().getSymbolicName(prc.);
         //System.out.println(parser.getRuleNames()[prc.getRuleIndex()]);
