@@ -2,18 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="74c0cebe-1d5d-4445-8c95-cd48b15840ca" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/java2cpp.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.project" beforeDir="false" afterPath="$PROJECT_DIR$/.project" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/CHeader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/CHeader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/CSource.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/CSource.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Resolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Resolver.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CClass.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CClass.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CMethod.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CMethod.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Namespace.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Namespace.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MainVisitor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MainVisitor.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,7 +61,19 @@
       <option name="presentableId" value="Default" />
       <updated>1575302765087</updated>
     </task>
+    <task id="LOCAL-00001" summary="idea init">
+      <created>1575305877902</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1575305877902</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="idea init" />
+    <option name="LAST_COMMIT_MESSAGE" value="idea init" />
   </component>
   <component name="WindowStateProjectService">
     <state x="138" y="24" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1575303199334">
@@ -79,25 +84,33 @@
       <screen x="0" y="0" width="1360" height="734" />
     </state>
     <state x="412" y="152" width="525" height="425" key="#com.intellij.ide.util.TreeClassChooserDialog/0.0.1360.734@0.0.1360.734" timestamp="1575303183716" />
-    <state width="1314" height="212" key="GridCell.Tab.0.bottom" timestamp="1575305723559">
+    <state x="327" y="0" width="695" height="732" key="CommitChangelistDialog2" timestamp="1575305877613">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.bottom/0.0.1360.734@0.0.1360.734" timestamp="1575305723559" />
-    <state width="1314" height="212" key="GridCell.Tab.0.center" timestamp="1575305723558">
+    <state x="327" y="0" width="695" height="732" key="CommitChangelistDialog2/0.0.1360.734@0.0.1360.734" timestamp="1575305877613" />
+    <state width="1314" height="212" key="GridCell.Tab.0.bottom" timestamp="1575306423910">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.center/0.0.1360.734@0.0.1360.734" timestamp="1575305723558" />
-    <state width="1314" height="212" key="GridCell.Tab.0.left" timestamp="1575305723557">
+    <state width="1314" height="212" key="GridCell.Tab.0.bottom/0.0.1360.734@0.0.1360.734" timestamp="1575306423910" />
+    <state width="1314" height="212" key="GridCell.Tab.0.center" timestamp="1575306423909">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.left/0.0.1360.734@0.0.1360.734" timestamp="1575305723557" />
-    <state width="1314" height="212" key="GridCell.Tab.0.right" timestamp="1575305723558">
+    <state width="1314" height="212" key="GridCell.Tab.0.center/0.0.1360.734@0.0.1360.734" timestamp="1575306423909" />
+    <state width="1314" height="212" key="GridCell.Tab.0.left" timestamp="1575306423909">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.right/0.0.1360.734@0.0.1360.734" timestamp="1575305723558" />
+    <state width="1314" height="212" key="GridCell.Tab.0.left/0.0.1360.734@0.0.1360.734" timestamp="1575306423909" />
+    <state width="1314" height="212" key="GridCell.Tab.0.right" timestamp="1575306423910">
+      <screen x="0" y="0" width="1360" height="734" />
+    </state>
+    <state width="1314" height="212" key="GridCell.Tab.0.right/0.0.1360.734@0.0.1360.734" timestamp="1575306423910" />
     <state x="163" y="0" width="1024" height="732" key="SettingsEditor" timestamp="1575302850444">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
     <state x="163" y="0" width="1024" height="732" key="SettingsEditor/0.0.1360.734@0.0.1360.734" timestamp="1575302850444" />
+    <state x="275" y="102" width="800" height="526" key="Vcs.Push.Dialog.v2" timestamp="1575305881464">
+      <screen x="0" y="0" width="1360" height="734" />
+    </state>
+    <state x="275" y="102" width="800" height="526" key="Vcs.Push.Dialog.v2/0.0.1360.734@0.0.1360.734" timestamp="1575305881464" />
   </component>
 </project>

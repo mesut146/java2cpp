@@ -5,7 +5,7 @@ import java.io.*;
 public class CClass extends Node
 {
     public String name;
-    public List<String> base=new ArrayList<>();
+    public List<TypeName> base=new ArrayList<>();
     public List<CField> fields=new ArrayList<>();
     public List<CMethod> methods=new ArrayList<>();
     public List<CClass> classes=new ArrayList<>();
@@ -64,7 +64,7 @@ public class CClass extends Node
         if(base.size()>0){
             append(":");
             for(int i=0;i<base.size();i++){
-                append(base.get(i));
+                append(base.get(i).toString());
                 if(i<base.size()-1){
                     append(",");
                 }

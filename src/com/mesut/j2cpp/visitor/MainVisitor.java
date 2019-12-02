@@ -57,14 +57,8 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
         stack.push(cc);
         cc.name=n.getName().asString();
         cc.isInterface=n.isInterface();
-        /*for(ClassOrInterfaceType ex:n.getExtendedTypes()){
-            cc.base.add(ex.getName().asString());
-        }*/
-        n.getExtendedTypes().forEach(ex->cc.base.add(ex.getName().asString()));
-        /*for(ClassOrInterfaceType iface:n.getImplementedTypes()){
-            cc.base.add(iface.getName().asString());
-        }*/
-        n.getImplementedTypes().forEach(iface->cc.base.add(iface.getName().asString()));
+        n.getExtendedTypes().forEach(ex->cc.base.add(new TypeName(ex.getNameAsString())));
+        n.getImplementedTypes().forEach(iface->cc.base.add(new TypeName(iface.getNameAsString())));
         n.getMembers().forEach(p->p.accept(this,null));
         stack.pop();
     }

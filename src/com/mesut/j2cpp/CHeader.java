@@ -29,9 +29,11 @@ public class CHeader extends Node
             append(imp).append("\"").println();
         }
         println();
+        append("using namespace ").append(ns.all).append(";");
+        println();
         for(CClass cc:classes){
             cc.forHeader=true;
-            append(cc.toString());
+            append(cc);
         }
     }
     
