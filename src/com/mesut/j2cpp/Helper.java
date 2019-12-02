@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.*;
 
 public class Helper {
     static List<String> java_prims=Arrays.asList("byte","char","short","float","int","double","long","boolean");
@@ -33,18 +31,6 @@ public class Helper {
             return prims.get(pr);
         }
         return ty;
-    }
-
-    static Parser parser;
-    public static void debug(ParserRuleContext ctx){
-        if(ctx==null){
-            return;
-        }
-        System.out.println(ctx.toStringTree(parser));
-        System.out.println("-----------------------");
-        //tree(prc);
-        //parser.getVocabulary().getSymbolicName(prc.);
-        //System.out.println(parser.getRuleNames()[prc.getRuleIndex()]);
     }
     
     

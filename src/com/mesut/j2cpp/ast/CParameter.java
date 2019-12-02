@@ -5,12 +5,13 @@ public class CParameter extends Node
 {
     public TypeName type;
     public String name;
-    public boolean isPointer=true;
+    //public boolean isPointer=true;
 
     public void print()
     {
-        line(type.toString().replace(".","::"));//normalize the type(base::type)
-        if(isPointer&&!type.isArray()){
+        list.clear();
+        append(type.toString().replace(".","::"));//normalize the type(base::type)
+        if(type.isPointer()&&!type.isArray()){
             append("*");
         }
         append(" ");

@@ -13,55 +13,62 @@ public class CMethod extends Node
     public boolean empty=false;
     public boolean isCons=false;
     public CClass parent;
-    public Body body=new Body(){{level=1;init();}};
-    public FWriter decl;
+    public Nodew body=new Nodew();
+    //public Nodew decl;
     
     public void print()
     {
-        baos.reset();
         list.clear();
-        if(decl==null){
-            decl=new FWriter();
-            //decl.line("");
-            if(!isCons){
-                decl.append(type.toString());
-                if(isPointer()&&!type.isArray()){
-                    decl.append("*");
-                }
-                decl.append(" ");
-            }
-            decl.append(parent.getNamespace().all+"::"+name);
-
-            decl.append("(");
-            for(int i=0;i<params.size();i++){
-                CParameter cp=params.get(i);
-                decl.append(cp.toString());
-                if(i<params.size()-1){
-                    decl.append(",");
-                }
-            }
-            decl.append(")");
-        }
         
-        append(decl.toString());
+        printDecl();
         
         if(parent.inHeader){
-            append(";\n");
+            append(";");
         }
         else{
-            //appendln("{");
-            //TODO
             append(body);
             println();
-            //lineln("}");
         }
         
+    }
+    
+    public void printDecl(){
+        if(!isCons){
+            if(isStatic()){
+                append("static ");
+            }
+            append(type.toString());
+            if(isPointer()&&!type.isArray()){
+                append("*");
+            }
+            append(" ");
+        }
+        if(!parent.inHeader){
+            append(parent.getNamespaceFull()+"::");
+        }
+
+        append(name);
+        append("(");
+        for(int i=0;i<params.size();i++){
+            CParameter cp=params.get(i);
+            append(cp.toString());
+            if(i<params.size()-1){
+                append(",");
+            }
+        }
+        append(")");
     }
     
     boolean isPointer(){
         return !isCons&&!Helper.is(type.toString())&&!type.toString().equals("void");
     }
     
+    boolean isVoid(){
+        return !isCons&&type.isVoid();
+    }
     
+    boolean isStatic(){
+        return modifiers.contains("static");
+    }
     
 }

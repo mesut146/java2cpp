@@ -15,18 +15,21 @@ public class CHeader extends Node
     
     public void addClass(CClass cc){
         cc.inHeader=true;
+        cc.ns=ns;
         classes.add(cc);
     }
 
     public void print()
     {
-        append("#pragma once\n\n");
+        append("#pragma once");
+        println();
+        println();
         for(String imp:includes){
             append("#include \"");
             append(imp).append("\"").println();
         }
+        println();
         for(CClass cc:classes){
-            cc.ns=ns;
             append(cc.toString());
         }
     }

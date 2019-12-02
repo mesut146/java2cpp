@@ -1,56 +1,4 @@
-/*
- * [The "BSD license"]
- *  Copyright (c) 2014 Terence Parr
- *  Copyright (c) 2014 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 
-/**
- * A Java 8 grammar for ANTLR 4 derived from the Java Language Specification
- * chapter 19.
- *
- * NOTE: This grammar results in a generated parser that is much slower
- *       than the Java 7 grammar in the grammars-v4/java directory. This
- *     one is, however, extremely close to the spec.
- *
- * You can test with
- *
- *  $ antlr4 Java8.g4
- *  $ javac *.java
- *  $ grun Java8 compilationUnit *.java
- *
- * Or,
-~/antlr/code/grammars-v4/java8 $ java Test .
-/Users/parrt/antlr/code/grammars-v4/java8/./Java8BaseListener.java
-/Users/parrt/antlr/code/grammars-v4/java8/./Java8Lexer.java
-/Users/parrt/antlr/code/grammars-v4/java8/./Java8Listener.java
-/Users/parrt/antlr/code/grammars-v4/java8/./Java8Parser.java
-/Users/parrt/antlr/code/grammars-v4/java8/./Test.java
-Total lexer+parser time 30844ms.
- */
 parser grammar Java8Parser;
 
 options {
@@ -74,8 +22,7 @@ literal
  */
 
 primitiveType
-	:	annotation* numericType
-	|	annotation* 'boolean'
+	:	annotation* numericType | 'boolean'
 	;
 
 numericType
@@ -97,43 +44,21 @@ floatingPointType
 	;
 
 referenceType
-	:	classOrInterfaceType
+	:	classOrclassType
 	|	typeVariable
 	|	arrayType
 	;
 
-classOrInterfaceType
-	:	(	classType_lfno_classOrInterfaceType
-		|	interfaceType_lfno_classOrInterfaceType
-		)
-		(	classType_lf_classOrInterfaceType
-		|	interfaceType_lf_classOrInterfaceType
-		)*
+classOrclassType
+	:	classType_lf_classOrclassType*
 	;
 
 classType
-	:	annotation* Identifier typeArguments?
-	|	classOrInterfaceType '.' annotation* Identifier typeArguments?
+	:	(classOrclassType '.')? annotation* Identifier typeArguments?
 	;
 
-classType_lf_classOrInterfaceType
-	:	'.' annotation* Identifier typeArguments?
-	;
-
-classType_lfno_classOrInterfaceType
-	:	annotation* Identifier typeArguments?
-	;
-
-interfaceType
-	:	classType
-	;
-
-interfaceType_lf_classOrInterfaceType
-	:	classType_lf_classOrInterfaceType
-	;
-
-interfaceType_lfno_classOrInterfaceType
-	:	classType_lfno_classOrInterfaceType
+classType_lf_classOrclassType
+	:	'.'? annotation* Identifier typeArguments?
 	;
 
 typeVariable
@@ -142,7 +67,7 @@ typeVariable
 
 arrayType
 	:	primitiveType dims
-	|	classOrInterfaceType dims
+	|	classOrclassType dims
 	|	typeVariable dims
 	;
 
@@ -151,20 +76,16 @@ dims
 	;
 
 typeParameter
-	:	typeParameterModifier* Identifier typeBound?
-	;
-
-typeParameterModifier
-	:	annotation
+	:	annotation* Identifier typeBound?
 	;
 
 typeBound
 	:	'extends' typeVariable
-	|	'extends' classOrInterfaceType additionalBound*
+	|	'extends' classOrclassType additionalBound*
 	;
 
 additionalBound
-	:	'&' interfaceType
+	:	'&' classType
 	;
 
 typeArguments
@@ -185,8 +106,7 @@ wildcard
 	;
 
 wildcardBounds
-	:	'extends' referenceType
-	|	'super' referenceType
+	:	'extends' | 'super' referenceType
 	;
 
 /*
@@ -194,32 +114,15 @@ wildcardBounds
  */
 
 packageName
-	:	Identifier
-	|	packageName '.' Identifier
+	:	(packageName '.')? Identifier
 	;
 
 typeName
-	:	Identifier
-	|	packageOrTypeName '.' Identifier
-	;
-
-packageOrTypeName
-	:	Identifier
-	|	packageOrTypeName '.' Identifier
+	:	(typeName '.')? Identifier
 	;
 
 expressionName
-	:	Identifier
-	|	ambiguousName '.' Identifier
-	;
-
-methodName
-	:	Identifier
-	;
-
-ambiguousName
-	:	Identifier
-	|	ambiguousName '.' Identifier
+	:	(ambiguousName '.')? Identifier
 	;
 
 /*
@@ -231,11 +134,7 @@ compilationUnit
 	;
 
 packageDeclaration
-	:	packageModifier* 'package' packageName ';'
-	;
-
-packageModifier
-	:	annotation
+	:	annotation* 'package' packageName ';'
 	;
 
 importDeclaration
@@ -304,11 +203,11 @@ superclass
 	;
 
 superinterfaces
-	:	'implements' interfaceTypeList
+	:	'implements' classTypeList
 	;
 
-interfaceTypeList
-	:	interfaceType (',' interfaceType)*
+classTypeList
+	:	classType (',' classType)*
 	;
 
 classBody
@@ -373,52 +272,36 @@ unannPrimitiveType
 	;
 
 unannReferenceType
-	:	unannClassOrInterfaceType
+	:	unannClassOrclassType
 	|	unannTypeVariable
 	|	unannArrayType
 	;
 
-unannClassOrInterfaceType
-	:	(	unannClassType_lfno_unannClassOrInterfaceType
-		|	unannInterfaceType_lfno_unannClassOrInterfaceType
+unannClassOrclassType
+	:	(	unannClassType_lfno_unannClassOrclassType
+		|	unannclassType_lfno_unannClassOrclassType
 		)
-		(	unannClassType_lf_unannClassOrInterfaceType
-		|	unannInterfaceType_lf_unannClassOrInterfaceType
+		(	unannClassType_lf_unannClassOrclassType
+		|	unannclassType_lf_unannClassOrclassType
 		)*
 	;
 
 unannClassType
 	:	Identifier typeArguments?
-	|	unannClassOrInterfaceType '.' annotation* Identifier typeArguments?
+	|	unannClassOrclassType '.' annotation* Identifier typeArguments?
 	;
 
-unannClassType_lf_unannClassOrInterfaceType
+unannClassType_lf_unannClassOrclassType
 	:	'.' annotation* Identifier typeArguments?
 	;
 
-unannClassType_lfno_unannClassOrInterfaceType
+unannClassType_lfno_unannClassOrclassType
 	:	Identifier typeArguments?
-	;
-
-unannInterfaceType
-	:	unannClassType
-	;
-
-unannInterfaceType_lf_unannClassOrInterfaceType
-	:	unannClassType_lf_unannClassOrInterfaceType
-	;
-
-unannInterfaceType_lfno_unannClassOrInterfaceType
-	:	unannClassType_lfno_unannClassOrInterfaceType
-	;
-
-unannTypeVariable
-	:	Identifier
 	;
 
 unannArrayType
 	:	unannPrimitiveType dims
-	|	unannClassOrInterfaceType dims
+	|	unannClassOrclassType dims
 	|	unannTypeVariable dims
 	;
 
@@ -440,8 +323,7 @@ methodModifier
 	;
 
 methodHeader
-	:	result methodDeclarator throws_?
-	|	typeParameters annotation* result methodDeclarator throws_?
+	:	(typeParameters annotation*)? result methodDeclarator throws_?
 	;
 
 result
@@ -500,10 +382,6 @@ methodBody
 	|	';'
 	;
 
-instanceInitializer
-	:	block
-	;
-
 staticInitializer
 	:	'static' block
 	;
@@ -521,10 +399,6 @@ constructorModifier
 
 constructorDeclarator
 	:	typeParameters? simpleTypeName '(' formalParameterList? ')'
-	;
-
-simpleTypeName
-	:	Identifier
 	;
 
 constructorBody
@@ -552,10 +426,6 @@ enumConstantList
 
 enumConstant
 	:	enumConstantModifier* Identifier ('(' argumentList? ')')? classBody?
-	;
-
-enumConstantModifier
-	:	annotation
 	;
 
 enumBodyDeclarations
@@ -586,7 +456,7 @@ interfaceModifier
 	;
 
 extendsInterfaces
-	:	'extends' interfaceTypeList
+	:	'extends' classTypeList
 	;
 
 interfaceBody
@@ -712,11 +582,7 @@ variableInitializerList
  */
 
 block
-	:	'{' blockStatements? '}'
-	;
-
-blockStatements
-	:	blockStatement+
+	:	'{' (blockStatement+)? '}'
 	;
 
 blockStatement
@@ -1110,7 +976,7 @@ methodInvocation
 	;
 	
 methodInvocation_type1
-   :  methodName '(' argumentList? ')'
+   :  Identifier '(' argumentList? ')'
    ;
    
 methodInvocation_type2
@@ -1146,7 +1012,7 @@ methodInvocation_lfno_primary
 	;
 	
 methodInvocation_nop_type1
-   :  methodName '(' argumentList? ')'
+   :  Identifier '(' argumentList? ')'
    ;
    
 methodInvocation_nop_type2
@@ -1194,9 +1060,9 @@ methodReference_lfno_primary
 
 arrayCreationExpression
 	:	'new' primitiveType dimExprs dims?
-	|	'new' classOrInterfaceType dimExprs dims?
+	|	'new' classOrclassType dimExprs dims?
 	|	'new' primitiveType dims arrayInitializer
-	|	'new' classOrInterfaceType dims arrayInitializer
+	|	'new' classOrclassType dims arrayInitializer
 	;
 
 dimExprs

@@ -10,7 +10,7 @@ public class CSource extends Node
     {
         line("#include \"");
         append(h.getInclude());
-        append("\"\n").println();
+        appendln("\"").println();
         
         for(CClass cc:h.classes){
             printClass(cc);
@@ -20,8 +20,8 @@ public class CSource extends Node
     public void printClass(CClass cc){
         cc.inHeader=false;
         for(CMethod cm:cc.methods){
-            //line("");
-
+            cm.level=0;
+            cm.init();
             append(cm);
         }
         for(CClass in:cc.classes){

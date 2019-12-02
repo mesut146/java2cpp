@@ -5,6 +5,10 @@ public class Namespace extends Node
 {
     public String all;
     public List<String> split=new ArrayList<>();
+    
+    public Namespace(String ns){
+        all=ns.replace(".","::");
+    }
 
     public void pkg(String str){
         int i=0;
@@ -15,7 +19,9 @@ public class Namespace extends Node
         
     }
     
-    
+    public Namespace append(String str){
+        
+    }
     @Override
     public void print()
     {

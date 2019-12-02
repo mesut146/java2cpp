@@ -7,13 +7,14 @@ public abstract class Node
     public String indention="";
     public boolean useTab=false;
     public int level=0;
-    public ByteArrayOutputStream baos=new ByteArrayOutputStream();
+    //public ByteArrayOutputStream baos=new ByteArrayOutputStream();
     public List<String> list=new ArrayList<>();
     boolean isPrinted=false;
+    public boolean firstBlock=false;
     
     public abstract void print();
     
-    void init(){
+    public void init(){
         indention="";
         String str=getIndent();
         for(int i=0;i<level;i++){
@@ -27,7 +28,7 @@ public abstract class Node
     
     public Node line(String str){
         //write(indention).write(indention).write(str);
-        list.add(str);
+        list.add(indention+str);
         return this;
     }
     public Node lineln(String str){
@@ -43,65 +44,69 @@ public abstract class Node
     }
     public void println(){
         //write("\n");
-        list.add("\n");
+        list.add("");
     }
     public Node append(String str){
         //write(indention).write(str);
+        
         if(list.size()==0){
-            list.add(str);
+            list.add(indention+str);
         }else{
             int idx=list.size()-1;
-            list.set(idx,list.get(idx)+str);
+            String last=list.get(idx);
+            if(last.length()==0){
+                str=indention+str;
+            }
+            list.remove(idx);
+            list.add(last+str);
+            //list.set(idx,last+str);
         }
+        
         return this;
     }
-    public Node append(Node n){
-        n.print();
-        for(String s:n.list){
-            list.add(s);
-        }
-        return this;
-    }
-    /*
+    
     public Node appendln(String str){
         append(str).println();
         return this;
-    }*/
+    }
     
-    public Node write(String str){
-        try
-        {
-            baos.write(str.getBytes());
-            baos.flush();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
+    public Node append(Node n){
+        n.print();
+        boolean flag=true;
+        for(String s:n.list){
+            if(flag&&n.firstBlock){
+                flag=false;
+                append(s);
+            }else{
+                list.add(s);
+            }
         }
         return this;
     }
     
-    public void upTo(Node n){
-        n.level=this.level+1;
+    public void setTo(Node n){
+        n.level=this.level;
         n.init();
     }
     public void up(){
         level++;
         init();
     }
+    public void down(){
+        level--;
+        init();
+    }
 
     @Override
     public String toString()
     {
-        /*if(!isPrinted){
-            print();
-            isPrinted=true;
-        }*/
-        //baos.reset();
         print();
         StringBuilder sb=new StringBuilder();
-        for(String s:list){
-            sb.append(s);
+        for(int i=0;i<list.size();i++){
+            sb.append(list.get(i));
+            if(i<list.size()-1){
+                sb.append("\n");
+            }
         }
         return sb.toString();
     }

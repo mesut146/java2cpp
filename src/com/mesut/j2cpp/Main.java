@@ -1,14 +1,11 @@
 package com.mesut.j2cpp;
 
-import com.mesut.j2cpp.parser.*;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import com.mesut.j2cpp.ast.*;
-
+import com.github.javaparser.*;
+import java.io.*;
+import com.github.javaparser.ast.*;
+import com.mesut.j2cpp.visitor.*;
+import com.github.javaparser.ast.visitor.*;
+import com.github.javaparser.printer.*;
 
 //in a method a param must be pointer but reassignmet cwnt change its org value
 //if a param assign happens turn it into local var
@@ -25,30 +22,31 @@ public class Main {
             //a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/ClassData.java";
 			//a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/ClassDef.java";
             a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/Dex.java";
-            Java8Lexer lexer= new Java8Lexer(CharStreams.fromFileName(a));
-            Java8Parser parser=new Java8Parser(new CommonTokenStream(lexer));
             
-            Helper.parser=parser;
-
-            Java8Parser.CompilationUnitContext cu=parser.compilationUnit();
+            CompilationUnit cu=StaticJavaParser.parse(new File(a));
             
-            CUVisitor visitor=new CUVisitor();
-          
+            if(args.length>0){
+                if(args[0].equals("tree")){
+                    YamlPrinter.print(cu);
+                    return;
+                }
+            }
+            
+            MainVisitor vi=new MainVisitor();
             CHeader h=new CHeader();
-            CSource cs=new CSource();
-            h.rpath="com/asd/test.h";
-            cs.h=h;
-            visitor.h=h;
+            CSource cpp=new CSource();
+            h.rpath="test.h";
+            vi.h=h;
+            cu.accept(vi,null);
+            //YamlPrinter.print(cu);
+            System.out.println(vi.h);
+            System.out.println("---------------");
             
-            visitor.visit(cu);
-            
-            System.out.println(h);
-            System.out.println("----------------");
-            System.out.println(cs);
-            
+            cpp.h=vi.h;
+            System.out.println(cpp);
             //System.out.println(cu.toStringTree(parser));
             //h.printSource(cs);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

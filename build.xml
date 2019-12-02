@@ -7,6 +7,8 @@
     <property name="main-class"  value="com.mesut.j2cpp.Main"/>
     <property name="lib.dir" value="lib"/>
     <property name="antlr" value="${lib.dir}/antlr-runtime-4.7.2.jar"/>
+    <property name="core" value="${lib.dir}/javaparser-core-3.15.5.jar"/>
+
 
     <path id="classpath">
         <fileset dir="${lib.dir}" includes="**.jar"/>
@@ -32,6 +34,16 @@
 
     <target name="run">
         <java fork="true" classname="${main-class}">
+            <classpath>
+                <path refid="classpath"/>
+                <path location="${classes.dir}"/>
+            </classpath>
+        </java>
+    </target>
+    
+    <target name="tree">
+        <java fork="true" classname="${main-class}">
+            <arg value="tree"/>
             <classpath>
                 <path refid="classpath"/>
                 <path location="${classes.dir}"/>

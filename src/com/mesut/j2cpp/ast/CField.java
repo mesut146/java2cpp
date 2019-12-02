@@ -13,13 +13,20 @@ public class CField extends Node
         if(isPublic){
             line("public: ");
         }
+        if(isStatic){
+            append("static ");
+        }
         append(type.toString());
         if(isPointer()&&!type.isArray()){
             append("*");
         }
         append(" ");
         append(name);
-        append(";\n");
+        if(right!=null){
+            append("=");
+            append(right);
+        }
+        append(";");
         //TODO right
     }
     

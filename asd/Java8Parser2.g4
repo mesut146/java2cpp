@@ -74,8 +74,7 @@ literal
  */
 
 primitiveType
-	:	annotation* numericType
-	|	annotation* 'boolean'
+	:	annotation* numericType | 'boolean'
 	;
 
 numericType

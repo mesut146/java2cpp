@@ -44,9 +44,8 @@ public class CClass extends Node
         if(parent!=null){
             str=parent.getNamespace().all+"::";
             n.pkg(str);
-        }
-        else{
-            return ns;
+        }else{
+            return ns.all+;
         }
         return n;
     }
@@ -54,9 +53,9 @@ public class CClass extends Node
     public void print()
     {
         if(parent==null&&ns!=null){
-            append("namespace ");
+            line("namespace ");
             append(ns.all);
-            append("{\n");
+            append("{");
             up();
         }
         line("class ");
@@ -70,27 +69,30 @@ public class CClass extends Node
                 }
             }
         }
-        append("{\n");
+        appendln("{");
+        up();
         
         for(CField cf:fields){
-            upTo(cf);
-            append(cf.toString());
+            setTo(cf);
+            append(cf);
         }
+        
         println();
         for(CMethod cm:methods){
-            upTo(cm);
+            setTo(cm);
             append(cm);
         }
         println();
         for(CClass cc:classes){
-            upTo(cc);
+            setTo(cc);
             append(cc);
         }
-        
+        down();
         lineln("};//class "+name);
         
         if(parent==null&&ns!=null){
-            append("}//ns\n");
+            down();
+            appendln("}//ns");
         }
     }
     
