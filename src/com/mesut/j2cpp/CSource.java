@@ -18,7 +18,8 @@ public class CSource extends Node
     }
     
     public void printClass(CClass cc){
-        cc.inHeader=false;
+        //cc.inHeader=false;
+        cc.forHeader=false;
         for(CMethod cm:cc.methods){
             cm.level=0;
             cm.init();

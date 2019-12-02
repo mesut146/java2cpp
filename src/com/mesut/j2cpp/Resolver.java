@@ -6,8 +6,6 @@ public class Resolver {
     static String srcPath;
 
     public static String resolve(String fullname){
-
-
         return null;
 
     }

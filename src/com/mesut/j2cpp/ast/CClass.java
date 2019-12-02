@@ -12,11 +12,12 @@ public class CClass extends Node
     public boolean isInterface=false;
     public CClass parent;
     public Namespace ns=null;
-    public boolean inHeader=false;
+    public boolean forHeader=true;
+    //public boolean inHeader=false;
     
     public void addInner(CClass cc){
         cc.parent=this;
-        cc.inHeader=inHeader;
+        //cc.inHeader=inHeader;
         classes.add(cc);
     }
     public void addMethod(CMethod cm){
@@ -45,7 +46,7 @@ public class CClass extends Node
             str=parent.getNamespace().all+"::";
             n.pkg(str);
         }else{
-            return ns.all+;
+            n.pkg(ns.all+"::"+name);
         }
         return n;
     }

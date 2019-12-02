@@ -14,7 +14,7 @@ public class CHeader extends Node
     
     
     public void addClass(CClass cc){
-        cc.inHeader=true;
+        //cc.inHeader=true;
         cc.ns=ns;
         classes.add(cc);
     }
@@ -30,6 +30,7 @@ public class CHeader extends Node
         }
         println();
         for(CClass cc:classes){
+            cc.forHeader=true;
             append(cc.toString());
         }
     }

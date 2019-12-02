@@ -22,7 +22,7 @@ public class CMethod extends Node
         
         printDecl();
         
-        if(parent.inHeader){
+        if(parent.forHeader){
             append(";");
         }
         else{
@@ -43,8 +43,11 @@ public class CMethod extends Node
             }
             append(" ");
         }
-        if(!parent.inHeader){
+        /*if(!parent.inHeader){
             append(parent.getNamespaceFull()+"::");
+        }*/
+        if(!parent.forHeader){
+            append(parent.getNamespaceFull().all+"::");
         }
 
         append(name);

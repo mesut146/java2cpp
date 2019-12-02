@@ -2,6 +2,9 @@ package com.mesut.j2cpp;
 
 import com.github.javaparser.*;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import com.github.javaparser.ast.*;
 import com.mesut.j2cpp.visitor.*;
 import com.github.javaparser.ast.visitor.*;
@@ -15,15 +18,18 @@ public class Main {
 
     public static void main(String[] args) {
         try {
-            Resolver.srcPath="/home/mesut/Desktop/tmp";
-			String a;
+            Resolver.srcPath="/home/mesut/Desktop/dx-org/src";
+            String destPath="/home/mesut/Desktop/dx-cpp";
+			String cls;
+			String path;
 			//a="/storage/emulated/0/AppProjects/java2cpp/asd/a.java";
-            //a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/Annotation.java";
-            //a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/ClassData.java";
-			//a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/ClassDef.java";
-            a="/storage/extSdCard/asd/dx/dex/src/com/android/dex/Dex.java";
-            
-            CompilationUnit cu=StaticJavaParser.parse(new File(a));
+            //cls="com/android/dex/Annotation.java";
+            //cls="com/android/dex/ClassData.java";
+            //cls="com/android/dex/ClassDef.java";
+            cls="com/android/dex/Dex.java";
+            path=Resolver.srcPath+"/"+cls;
+
+            CompilationUnit cu=StaticJavaParser.parse(new File(path));
             
             if(args.length>0){
                 if(args[0].equals("tree")){
@@ -44,10 +50,12 @@ public class Main {
             
             cpp.h=vi.h;
             System.out.println(cpp);
-            //System.out.println(cu.toStringTree(parser));
-            //h.printSource(cs);
+            File f=new File(destPath+"/"+cls.replace(".java",".cpp"));
+            f.getParentFile().mkdirs();
+            Files.write(Paths.get(f.getAbsolutePath()),cpp.toString().getBytes());
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 }

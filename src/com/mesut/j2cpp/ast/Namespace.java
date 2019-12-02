@@ -10,6 +10,10 @@ public class Namespace extends Node
         all=ns.replace(".","::");
     }
 
+    public Namespace(){
+
+    }
+
     public void pkg(String str){
         int i=0;
         all=str.replace(".","::");
@@ -20,7 +24,10 @@ public class Namespace extends Node
     }
     
     public Namespace append(String str){
-        
+        if (all==null||all.length()==0){
+            return new Namespace(str);
+        }
+        return new Namespace(all+"::"+str);
     }
     @Override
     public void print()
