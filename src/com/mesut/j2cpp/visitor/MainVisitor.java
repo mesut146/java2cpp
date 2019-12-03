@@ -62,6 +62,10 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
         n.getMembers().forEach(p->p.accept(this,null));
         stack.pop();
     }
+
+    public void visit(EnumDeclaration n,Nodew w){
+
+    }
     
     public void visit(FieldDeclaration n,Nodew s){
         
