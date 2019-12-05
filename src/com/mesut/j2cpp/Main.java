@@ -18,8 +18,10 @@ public class Main {
 
     public static void main(String[] args) {
         try {
-            Resolver.srcPath="/home/mesut/Desktop/dx-org/src";
-            String destPath="/home/mesut/Desktop/dx-cpp";
+            //Resolver.srcPath="/home/mesut/Desktop/dx-org/src";
+            Resolver.srcPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/java";
+            //String destPath="/home/mesut/Desktop/dx-cpp";
+            String destPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
 			String cls;
 			String path;
 			//a="/storage/emulated/0/AppProjects/java2cpp/asd/a.java";
@@ -27,6 +29,7 @@ public class Main {
             //cls="com/android/dex/ClassData.java";
             //cls="com/android/dex/ClassDef.java";
             cls="com/android/dex/Dex.java";
+            //cls="MyEnum.java";
             path=Resolver.srcPath+"/"+cls;
 
             CompilationUnit cu=StaticJavaParser.parse(new File(path));
@@ -50,9 +53,12 @@ public class Main {
             
             cpp.h=vi.h;
             System.out.println(cpp);
-            File f=new File(destPath+"/"+cls.replace(".java",".cpp"));
-            f.getParentFile().mkdirs();
-            Files.write(Paths.get(f.getAbsolutePath()),cpp.toString().getBytes());
+            File fcpp=new File(destPath+"/"+cls.replace(".java",".cpp"));
+            fcpp.getParentFile().mkdirs();
+            Files.write(Paths.get(fcpp.getAbsolutePath()),cpp.toString().getBytes());
+            
+            File fh=new File(destPath+"/"+cls.replace(".java",".h"));
+            Files.write(Paths.get(fh.getAbsolutePath()),h.toString().getBytes());
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -24,13 +24,14 @@ public class CHeader extends Node
         append("#pragma once");
         println();
         println();
+        //append("#include \"com/java/lang\"");
         for(String imp:includes){
             append("#include \"");
             append(imp).append("\"").println();
         }
         println();
-        append("using namespace ").append(ns.all).append(";");
-        println();
+        appendln("using namespace com::java::lang;");
+        append("using namespace ").append(ns.all).appendln(";");
         for(CClass cc:classes){
             cc.forHeader=true;
             append(cc);

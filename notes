@@ -1,6 +1,29 @@
-todo
+todo list
 
-array.length
-cast
+#array.length
+array to pointer
 
-call super
+#cast
+
+#call super
+
+#anonymous class
+
+#try finally
+try{
+int var;
+if(exp){
+goto finally;
+return var;
+}else{
+goto finally;
+throw exception;
+}
+}
+finally:{
+stmt;
+}
+if return,run finally first then return
+if throw exception,run finally again
+be sure both try&finally cant have return or throw
+

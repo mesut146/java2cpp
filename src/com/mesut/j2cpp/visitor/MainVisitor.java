@@ -64,7 +64,30 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
     }
 
     public void visit(EnumDeclaration n,Nodew w){
-
+        CClass cc=new CClass();
+        cc.isEnum=true;
+        cc.name=n.getNameAsString();
+        cc.base.add(new TypeName("Enum"));
+        n.getImplementedTypes().forEach(iface->cc.base.add(new TypeName(iface.getNameAsString())));
+        for(EnumConstantDeclaration ec:n.getEntries()){
+            CField cf=new CField();
+            cf.isPublic=cf.isStatic=true;
+            cf.name=ec.getNameAsString();
+            Nodew rh=new Nodew();
+            rh.append("new ").append(cc.name);
+            
+            if(!ec.getArguments().isEmpty()){
+                MethodVisitor mv=new MethodVisitor();
+                mv.args(ec.getArguments(),rh);
+            }
+            /*if(ec.getBody()!=null){
+                throw new RuntimeException("enum body");
+            }*/
+            cf.right=rh.toString();
+        }
+        if(!n.getMembers().isEmpty()){
+            
+        }
     }
     
     public void visit(FieldDeclaration n,Nodew s){

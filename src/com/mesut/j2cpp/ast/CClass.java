@@ -9,7 +9,7 @@ public class CClass extends Node
     public List<CField> fields=new ArrayList<>();
     public List<CMethod> methods=new ArrayList<>();
     public List<CClass> classes=new ArrayList<>();
-    public boolean isInterface=false;
+    public boolean isInterface=false,isEnum=false;
     public CClass parent;
     public Namespace ns=null;
     public boolean forHeader=true;

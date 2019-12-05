@@ -8,6 +8,7 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import java.io.*;
+import java.util.*;
 
 public class MethodVisitor extends VoidVisitorAdapter<Nodew>
 {
@@ -185,7 +186,18 @@ public class MethodVisitor extends VoidVisitorAdapter<Nodew>
         }
     }
     
-    void args(NodeList<Expression> l,Nodew w){
+    public void visit(NodeList n,Nodew w){
+        w.append("(");
+        for(Iterator<Expression> i=n.iterator();i.hasNext();){
+            i.next().accept(this,w);
+            if(i.hasNext()){
+                w.append(",");
+            }
+        }
+        w.append(")");
+    }
+    
+    public void args(NodeList<Expression> l,Nodew w){
         w.append("(");
         for(int i=0;i<l.size();i++){
             l.get(i).accept(this,w);
