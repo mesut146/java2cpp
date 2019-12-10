@@ -31,7 +31,10 @@ public class CHeader extends Node
         }
         println();
         appendln("using namespace com::java::lang;");
-        append("using namespace ").append(ns.all).appendln(";");
+        if(ns!=null){
+            append("using namespace ").append(ns.all).appendln(";");
+        }
+        
         for(CClass cc:classes){
             cc.forHeader=true;
             append(cc);

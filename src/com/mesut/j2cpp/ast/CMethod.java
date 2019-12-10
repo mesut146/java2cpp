@@ -13,8 +13,19 @@ public class CMethod extends Node
     public boolean empty=false;
     public boolean isCons=false;
     public CClass parent;
+    public Call call;
     public Nodew body=new Nodew();
     //public Nodew decl;
+    
+    public CClass getParent(){
+        return parent;
+    }
+    public String getName(){
+        return name;
+    }
+    public TypeName getType(){
+        return type;
+    }
     
     public void print()
     {
@@ -26,6 +37,10 @@ public class CMethod extends Node
             append(";");
         }
         else{
+            if(call!=null){
+                append(":");
+                append(call.str);
+            }
             append(body);
             println();
         }
@@ -46,7 +61,7 @@ public class CMethod extends Node
         /*if(!parent.inHeader){
             append(parent.getNamespaceFull()+"::");
         }*/
-        if(!parent.forHeader){
+        if(!parent.forHeader&&parent.ns!=null){
             append(parent.getNamespaceFull().all+"::");
         }
 

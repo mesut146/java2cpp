@@ -45,7 +45,7 @@ public class CClass extends Node
         if(parent!=null){
             str=parent.getNamespace().all+"::";
             n.pkg(str);
-        }else{
+        }else if(ns!=null){
             n.pkg(ns.all+"::"+name);
         }
         return n;
@@ -97,5 +97,40 @@ public class CClass extends Node
         }
     }
     
+    public boolean hasField(String fname){
+        for(CField cf:fields){
+            if(cf.name.equals(fname)){
+                return true;
+            }
+        }
+        return false;
+    }
     
+    public boolean hasFieldAny(String fname){
+        for(CField cf:fields){
+            if(cf.name.equals(fname)){
+                return true;
+            }
+        }
+        for(CClass cc:classes){
+            if(cc.hasFieldAny(fname)){
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public boolean hasMethodAny(String mname){
+        for(CMethod cm:methods){
+            if(cm.name.equals(mname)){
+                return true;
+            }
+        }
+        for(CClass cc:classes){
+            if(cc.hasMethodAny(mname)){
+                return true;
+            }
+        }
+        return false;
+    }
 }

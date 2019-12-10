@@ -11,6 +11,7 @@ public abstract class Node
     public List<String> list=new ArrayList<>();
     boolean isPrinted=false;
     public boolean firstBlock=false;
+    public String cache=null;
     
     public abstract void print();
     
@@ -94,12 +95,16 @@ public abstract class Node
     }
     public void down(){
         level--;
+        if(level<0) level=0;
         init();
     }
 
     @Override
     public String toString()
     {
+        if(cache!=null){
+            return cache;
+        }
         print();
         StringBuilder sb=new StringBuilder();
         for(int i=0;i<list.size();i++){
@@ -108,7 +113,7 @@ public abstract class Node
                 sb.append("\n");
             }
         }
-        return sb.toString();
+        return cache=sb.toString();
     }
     
     

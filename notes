@@ -7,6 +7,8 @@ array to pointer
 
 #call super
 
+#static member access should has namespace not pointer
+
 #anonymous class
 
 #try finally

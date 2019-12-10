@@ -65,29 +65,40 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
 
     public void visit(EnumDeclaration n,Nodew w){
         CClass cc=new CClass();
+        if(stack.size()==0){
+            h.addClass(cc);
+        }else{
+            last().addInner(cc);
+        }
+        stack.push(cc);
         cc.isEnum=true;
         cc.name=n.getNameAsString();
         cc.base.add(new TypeName("Enum"));
         n.getImplementedTypes().forEach(iface->cc.base.add(new TypeName(iface.getNameAsString())));
         for(EnumConstantDeclaration ec:n.getEntries()){
             CField cf=new CField();
+            cc.addField(cf);
             cf.isPublic=cf.isStatic=true;
+            cf.type=new TypeName(cc.name);
             cf.name=ec.getNameAsString();
             Nodew rh=new Nodew();
             rh.append("new ").append(cc.name);
             
-            if(!ec.getArguments().isEmpty()){
+            /*if(!ec.getArguments().isEmpty()){
                 MethodVisitor mv=new MethodVisitor();
                 mv.args(ec.getArguments(),rh);
-            }
+            }*/
+            MethodVisitor mv=new MethodVisitor();
+            mv.args(ec.getArguments(),rh);
             /*if(ec.getBody()!=null){
                 throw new RuntimeException("enum body");
             }*/
             cf.right=rh.toString();
         }
         if(!n.getMembers().isEmpty()){
-            
+            n.getMembers().forEach(p->p.accept(this,null));
         }
+        stack.pop();
     }
     
     public void visit(FieldDeclaration n,Nodew s){
@@ -101,7 +112,9 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
             cf.isStatic=n.isStatic();
             if(vd.getInitializer().isPresent()){
                 Nodew nw=new Nodew();
-                vd.getInitializer().get().accept(new MethodVisitor(),nw);
+                MethodVisitor mv=new MethodVisitor();
+                //System.out.println("init="+vd.getInitializer().get());
+                vd.getInitializer().get().accept(mv,nw);
                 cf.right=nw.toString();
             }
             
@@ -127,6 +140,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
             //cm.body.level=1;
             cm.body.init();
             MethodVisitor mv=new MethodVisitor();
+            mv.method=cm;
             n.getBody().get().accept(mv,cm.body);
         }
     }
@@ -146,6 +160,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
         //cm.body.level=1;
         cm.body.init();
         MethodVisitor mv=new MethodVisitor();
+        mv.method=cm;
         //mv.body=cm.body;
         n.getBody().accept(mv,cm.body);
     }
