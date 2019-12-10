@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.ast;
 import java.util.*;
 import java.io.*;
+import java.util.stream.Collectors;
 
 public class CClass extends Node
 {
@@ -70,18 +71,49 @@ public class CClass extends Node
                 }
             }
         }
-        appendln("{");
+        append("{");
         up();
-        
-        for(CField cf:fields){
-            setTo(cf);
-            append(cf);
+        List<CField> fpub=fields.stream().filter(CField::isPublic).collect(Collectors.toList());
+        if (fpub.size()>0){
+            line("public:");
+            up();
+            for(CField cf:fpub){
+                setTo(cf);
+                append(cf);
+            }
+            down();
+        }
+        List<CField> fpriv=fields.stream().filter(CField::isPrivate).collect(Collectors.toList());
+        if (fpriv.size()>0){
+            line("private:");
+            up();
+            for(CField cf:fpriv){
+                setTo(cf);
+                append(cf);
+            }
+            down();
         }
         
         println();
-        for(CMethod cm:methods){
-            setTo(cm);
-            append(cm);
+        List<CMethod> mpub=methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
+        if (mpub.size()>0){
+            line("public:");
+            up();
+            for(CMethod cm:mpub){
+                setTo(cm);
+                append(cm);
+            }
+            down();
+        }
+        List<CMethod> mpriv=methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
+        if (mpriv.size()>0){
+            line("private:");
+            up();
+            for(CMethod cm:mpriv){
+                setTo(cm);
+                append(cm);
+            }
+            down();
         }
         println();
         for(CClass cc:classes){

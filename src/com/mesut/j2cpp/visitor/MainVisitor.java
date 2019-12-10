@@ -29,10 +29,10 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
     
     public void visit(ImportDeclaration n,Nodew w){
         String imp=n.getNameAsString();
-        imp=imp.replace(".","::");
+        imp=imp.replace(".","/");
         if(n.isStatic()){
             //base.cls.var;
-            int idx=imp.lastIndexOf("::");
+            int idx=imp.lastIndexOf("/");
             if(idx!=-1){
                 imp=imp.substring(0,idx-1);
             }
@@ -78,16 +78,14 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
         for(EnumConstantDeclaration ec:n.getEntries()){
             CField cf=new CField();
             cc.addField(cf);
-            cf.isPublic=cf.isStatic=true;
+            cf.setPublic(true);
+            cf.setStatic(true);
             cf.type=new TypeName(cc.name);
             cf.name=ec.getNameAsString();
             Nodew rh=new Nodew();
             rh.append("new ").append(cc.name);
             
-            /*if(!ec.getArguments().isEmpty()){
-                MethodVisitor mv=new MethodVisitor();
-                mv.args(ec.getArguments(),rh);
-            }*/
+
             MethodVisitor mv=new MethodVisitor();
             mv.args(ec.getArguments(),rh);
             /*if(ec.getBody()!=null){
@@ -109,11 +107,12 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
             last().addField(cf);
             cf.type=new TypeName(vd.getType().asString());
             cf.name=vd.getName().asString();
-            cf.isStatic=n.isStatic();
+            cf.setStatic(n.isStatic());
+            cf.setPublic(n.isPublic());
+
             if(vd.getInitializer().isPresent()){
                 Nodew nw=new Nodew();
                 MethodVisitor mv=new MethodVisitor();
-                //System.out.println("init="+vd.getInitializer().get());
                 vd.getInitializer().get().accept(mv,nw);
                 cf.right=nw.toString();
             }
@@ -126,9 +125,9 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
         last().addMethod(cm);
         cm.type=new TypeName(n.getType().asString());
         cm.name=n.getName().asString();
-        if(n.isStatic()){
-            cm.modifiers.add("static");
-        }
+        cm.setStatic(n.isStatic());
+        cm.setPublic(n.isPublic());
+        cm.setNative(n.isNative());
         
         for(Parameter p:n.getParameters()){
             CParameter cp=new CParameter();
@@ -150,7 +149,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew>
         last().addMethod(cm);
         cm.isCons=true;
         cm.name=n.getName().asString();
-
+        cm.setPublic(n.isPublic());
         for(Parameter p:n.getParameters()){
             CParameter cp=new CParameter();
             cp.type=new TypeName(p.getTypeAsString());

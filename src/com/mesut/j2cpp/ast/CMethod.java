@@ -3,12 +3,11 @@ import java.util.*;
 import java.io.*;
 import com.mesut.j2cpp.*;
 
-public class CMethod extends Node
+public class CMethod extends HasModifier
 {
     public String name;
     public TypeName type;
     public List<CParameter> params=new ArrayList<>();
-    public List<String> modifiers=new ArrayList<>();
     public List<String> throwList=new ArrayList<>();
     public boolean empty=false;
     public boolean isCons=false;
@@ -84,9 +83,6 @@ public class CMethod extends Node
     boolean isVoid(){
         return !isCons&&type.isVoid();
     }
-    
-    boolean isStatic(){
-        return modifiers.contains("static");
-    }
+
     
 }

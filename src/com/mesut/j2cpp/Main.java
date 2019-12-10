@@ -14,11 +14,19 @@ public class Main {
 
     public static void main(String[] args) {
         try {
-            //Resolver.srcPath="/home/mesut/Desktop/dx-org/src";
-            Resolver.srcPath="/storage/extSdCard/asd/dx/dex/src";
+            String destPath;
+            boolean android=false;
+            if (android){
+                Resolver.srcPath="/storage/extSdCard/asd/dx/dex/src";
+                destPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
+            }else {
+                Resolver.srcPath="/home/mesut/Desktop/dx-org/src";
+                destPath="/home/mesut/Desktop/dx-cpp";
+
+            }
+
             //Resolver.srcPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/java";
-            //String destPath="/home/mesut/Desktop/dx-cpp";
-            String destPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
+
 			String cls;
 			String path;
 			//a="/storage/emulated/0/AppProjects/java2cpp/asd/a.java";

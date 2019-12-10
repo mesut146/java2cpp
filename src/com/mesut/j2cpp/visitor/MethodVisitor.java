@@ -7,12 +7,10 @@ import com.mesut.j2cpp.ast.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
-import java.io.*;
 import java.util.*;
 
 public class MethodVisitor extends VoidVisitorAdapter<Nodew>
 {
-    //public boolean firstBlock=false;
     public CMethod method;
     boolean hasReturn=false,hasThrow=false,hasBreak=false;
     
@@ -26,7 +24,6 @@ public class MethodVisitor extends VoidVisitorAdapter<Nodew>
         }
         w.down();
         w.append("}");
-        //body.append(w);
     }
     
     public void visit(ExpressionStmt n,Nodew w){
@@ -93,8 +90,11 @@ public class MethodVisitor extends VoidVisitorAdapter<Nodew>
     
     public void visit(ReturnStmt n,Nodew w){
         hasReturn=true;
-        w.append("return ");
-        n.getExpression().get().accept(this,w);
+        w.append("return");
+        if (n.getExpression().isPresent()){
+            w.append(" ");
+            n.getExpression().get().accept(this,w);
+        }
         w.append(";");
     }
     
@@ -191,7 +191,7 @@ public class MethodVisitor extends VoidVisitorAdapter<Nodew>
             if(n.getExpression().isPresent()){
                 return;
             }else{
-                p.line(method.getParent().base.get(0));
+                p.line(method.getParent().base.get(0).type);
             }
             
         }
