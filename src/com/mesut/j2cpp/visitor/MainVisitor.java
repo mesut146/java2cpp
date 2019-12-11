@@ -104,10 +104,12 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         for (VariableDeclarator vd : n.getVariables()) {
             CField cf = new CField();
             last().addField(cf);
-            cf.type = new TypeName(vd.getType().asString());
-            cf.name = vd.getName().asString();
+            cf.type = new TypeName(vd.getType().getElementType().asString());
+            cf.type.arrayLevel=vd.getType().getArrayLevel();
+            cf.name = vd.getNameAsString();
             cf.setStatic(n.isStatic());
             cf.setPublic(n.isPublic());
+
             if (vd.getInitializer().isPresent()) {
                 Nodew nw = new Nodew();
                 MethodVisitor mv = new MethodVisitor();

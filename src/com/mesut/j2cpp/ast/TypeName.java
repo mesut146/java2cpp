@@ -5,6 +5,7 @@ public class TypeName
 {
     public Namespace ns;
     public String type;
+    public int arrayLevel=0;
     
     public TypeName(String s){
         type=s;
@@ -18,7 +19,7 @@ public class TypeName
     }
     
     public boolean isArray(){
-        return type.endsWith("[]");
+        return arrayLevel>0;
     }
     
     public boolean isPointer(){
@@ -32,8 +33,17 @@ public class TypeName
     @Override
     public String toString()
     {
+        if (isArray()){
+           return strLevel(arrayLevel);
+        }
         return type;
     }
-    
+
+    String strLevel(int level){
+        if (level==0){
+            return type;
+        }
+        return "java_array<"+strLevel(level-1)+">";
+    }
     
 }
