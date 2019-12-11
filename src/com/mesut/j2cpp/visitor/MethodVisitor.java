@@ -343,7 +343,9 @@ public class MethodVisitor extends VoidVisitorAdapter<Nodew>
     
     public void visit(ArrayCreationExpr n,Nodew w){
         w.append("new ");
-        w.append(n.getElementType().asString());
+        TypeName typeName=new TypeName(n.getElementType().asString());
+        typeName.arrayLevel=n.getLevels().size();
+        w.append(typeName.toString());
         for(ArrayCreationLevel cl:n.getLevels()){
             w.append("[");
             if(cl.getDimension().isPresent()){
@@ -354,6 +356,10 @@ public class MethodVisitor extends VoidVisitorAdapter<Nodew>
         if(n.getInitializer().isPresent()){
             //TODO
         }
+    }
+
+    public void visit(ArrayInitializerExpr n,Nodew w){
+
     }
     
 }

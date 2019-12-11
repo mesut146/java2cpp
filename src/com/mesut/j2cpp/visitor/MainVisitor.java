@@ -116,6 +116,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
                 vd.getInitializer().get().accept(mv, nw);
                 cf.right = nw.toString();
             }
+
         }
     }
 
