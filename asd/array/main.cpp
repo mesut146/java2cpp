@@ -26,7 +26,8 @@ void arr_test(java_array<int> arr){
 
 void arr_prim(){
     //int[][] arr=new int[][]{{1,2},{3,4}}
-    int** arr=new int[2][3]{{1,2,3},{4,5,6}};
+    int arr0[2][3]=int[2][3]{{1,2,3},{4,5,6}};
+    int **arr=arr0;
 
     int l1=sizeof(arr);
     int l2=sizeof(arr[0]);
