@@ -24,7 +24,6 @@ public class Main {
                 destPath="/home/mesut/Desktop/dx-cpp";
 
             }
-
             //Resolver.srcPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/java";
 
 			String cls;

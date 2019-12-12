@@ -26,14 +26,18 @@ void arr_test(java_array<int> arr){
 
 void arr_prim(){
     //int[][] arr=new int[][]{{1,2},{3,4}}
-    array<int,5> arr={1,2,3,4,5};
-    //arr_test(arr);
-    cout<<arr[0]<<endl;
-    cout<<"size1="<<sizeof(arr)<<endl;//data size*size
-    cout<<"size2="<<sizeof(arr[0])<<endl;//data size
-    cout<<"size3="<<arr.size()<<endl;
-    for(int i=0;i<7;i++){
-        cout<<"i="<<i<<" "<<arr[i]<<endl;
+    int** arr=new int[2][3]{{1,2,3},{4,5,6}};
+
+    int l1=sizeof(arr);
+    int l2=sizeof(arr[0]);
+    cout<<"size1="<<l1<<endl;//data size*size
+    cout<<"size2="<<l2<<endl;//data size
+    //cout<<"size3="<<arr.size()<<endl;
+    for(int i=0;i<2;i++){
+        for(int j=0;j<3;j++){
+            cout<<"i="<<i<<" "<<arr[i][j]<<endl;
+        }
+        
     }
 }
 
@@ -44,9 +48,11 @@ void arr_single(int x){
 void arr(){
     java_array<int> single=java_array<int>({10,20,30});
     //int[][] arr=new int[][]{{1,2,3},{4,5,6}}
-    java_array<java_array<int>> multi=java_array<java_array<int>>({{1,2,3},{4,5,6}});
+    java_array<java_array<int>> multi={{1,2,3},{4,5,6}};
     //multi[0]=java_array<int>({1,2,3});
     //multi[1]=java_array<int>({4,5,6});
+    //multi2[0]={9,8,7};
+    //multi2[1]={77,88,99};
 
     single={11,22,33};
     arr_single(multi[0][0]);
@@ -55,11 +61,18 @@ void arr(){
         //cout<<single[i]<<endl;
     }
 
-    for(int i=0;i<multi.length;i++){
-        for(int j=0;j<multi[0].length;j++){
-            cout<<multi[i][j]<<endl;
+    /*for(int i=0;i<multi2.length;i++){
+            for(int j=0;j<multi2[0].length;j++){
+                cout<<multi2[i][j]<<endl;
+            }
+        }*/
+
+    /*for(int i=0;i<multi2.length;i++){
+        for(int j=0;j<multi2[0].length;j++){
+        for(int k=0;k<multi2[0][0].length;k++)
+            cout<<multi2[i][j][k]<<endl;
         }
-    }
+    }*/
 }
 
 /*
@@ -74,6 +87,6 @@ int main(void){
     //car::inner* in=new ns1::car::inner(500);
     //print(in);
     
-    arr();
-    //arr_prim();
+    //arr();
+    arr_prim();
 }
