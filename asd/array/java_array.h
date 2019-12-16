@@ -1,4 +1,9 @@
 #include <iostream>
+#include <vector>
+#include <string>
+#include <memory>
+
+using namespace std;
 
 template <class T, class B = T>
 class java_array
@@ -10,19 +15,19 @@ public:
     java_array()
     {
         length = 0;
-        elems = nullptr;
+        //elems = nullptr;
     }
 
     java_array(int size)
     {
         if (size < 0)
         {
-            throw "negative array size";
+            throw std::runtime_error("negative array size");
         }
         else if (size == 0)
         {
             length = 0;
-            elems = nullptr;
+            //elems = nullptr;
         }
         else
         {
@@ -38,66 +43,39 @@ public:
         std::copy(list.begin(), list.end(), elems);
     }
 
-    java_array(T list[], int size)
+    /*(T* list, int size)
     {
         if (size < 0)
         {
-            throw "negative array size";
+            throw std::runtime_error("negative array size");
         }
         length = size;
         elems = new T[length];
-        //T elems[length];
         for (int i = 0; i < length; i++)
         {
             elems[i] = list[i];
         }
-    }
+    }*/
 
-    void initDims(int size[], int n,int xx)
+    java_array(int* size,int n)
     {
-        //skip first
-        //lvl becomes 0 init int otherwise call initDims recursively
+        //cout << "init n=" << n << " size=" << size << endl;
         length = size[0];
+        elems = new T[length];
         if (n == 1)
         {
             //already initialized
-            elems = new T[length];
+            //elems = new T[length];
             return;
         }
-        else if (n == 2)
+        else if (typeid(T) != typeid(B))
         {
-            elems = new T[length];
-            //elems=new java_array<B>[length];
+            //elems = new T[length];
             for (int i = 0; i < length; i++)
             {
-                elems[i] = java_array<B, B>(size[1]);
-            }
-            return;
-        }
-        /*else if (n == 3)
-        {
-            elems = new T[length];
-            //elems = new java_array<java_array<B>>[length];
-            for (int i = 0; i < length; i++)
-            {
-                elems[i] = java_array<java_array<B>>(size[1]);
-                for (int j = 0; j < size[1]; j++)
-                {
-                    elems[i][j] = java_array<B>(size[2]);
-                }
-            }
-        }*/
-        else
-        {
-            elems=new T[length];
-            int size2[n - 1];
-            for (int i = 0; i < n - 1; i++)
-            {
-                size2[i] = size[i + 1];
-            }
-            for (int i = 0; i < length; i++)
-            {
-                elems[i].initDims(size2, n - 1,xx);
+                cout<<"type="<<typeid(T).name()<<endl;
+                //cout<<"elem="<<elems[i]<<endl;
+                elems[i]=T(size+1,1);
             }
         }
     }
@@ -108,7 +86,7 @@ public:
         {
             return elems[index];
         }
-        throw "array index out of bounds exception";
+        throw std::runtime_error(format("array index out of bounds exception: index=%d size=%d", index, length));
     }
 
     java_array<T> operator=(std::initializer_list<T> rhs)
@@ -116,6 +94,15 @@ public:
         length = rhs.size();
         elems = new T[length];
         std::copy(rhs.begin(), rhs.end(), elems);
-        return *this;
+        return this;
+    }
+
+    template <typename... Args>
+    static std::string format(const std::string &format, Args... args)
+    {
+        size_t size = snprintf(nullptr, 0, format.c_str(), args...) + 1; // Extra space for '\0'
+        std::unique_ptr<char[]> buf(new char[size]);
+        snprintf(buf.get(), size, format.c_str(), args...);
+        return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
     }
 };
