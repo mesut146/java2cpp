@@ -5,7 +5,7 @@
 
 using namespace std;
 
-template <class T, class B = T>
+template <typename T, typename B = T>
 class java_array
 {
 public:
@@ -75,7 +75,7 @@ public:
             {
                 cout<<"type="<<typeid(T).name()<<endl;
                 //cout<<"elem="<<elems[i]<<endl;
-                elems[i]=T(size+1,1);
+                //elems[i]=T(size,1);
             }
         }
     }

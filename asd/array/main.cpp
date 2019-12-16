@@ -45,14 +45,13 @@ void arr_single(int x)
 void arr()
 {
     java_array<int> single = java_array<int>({10, 20, 30});
-    java_array<java_array<int, int>, int> multi(new int[2]{2,3},2));
-    //java_array<java_array<java_array<int, int>, int>, int> multi(new int[3]{2, 3, 1}, 3);
+    java_array<java_array<int, int>, int> multi(new int[2]{2,3},2);
+    //java_array<java_array<int, int>, int> multi2(2);
 
 
-    //multi[0]=java_array<int>({1,2,3});
-    //multi[1]=java_array<int>({4,5,6});
+   /*multi2[0]=java_array<int>(3);
+    multi2[1]=java_array<int>(3);*/
 
-    //cout<<java_array<int,int>::string_format("array index out of bounds exception: index=%d size=%d", 0, 10)<<endl;
 
     //arr_test(single);
     for (int i = 0; i < single.length + 1; i++)
