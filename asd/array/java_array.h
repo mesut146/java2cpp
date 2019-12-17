@@ -15,7 +15,7 @@ public:
     java_array()
     {
         length = 0;
-        //elems = nullptr;
+        elems = nullptr;
     }
 
     java_array(int size)
@@ -27,7 +27,7 @@ public:
         else if (size == 0)
         {
             length = 0;
-            //elems = nullptr;
+            elems = nullptr;
         }
         else
         {
@@ -57,9 +57,9 @@ public:
         }
     }*/
 
-    java_array(int* size,int n)
+    java_array(int *size, int n)
     {
-        //cout << "init n=" << n << " size=" << size << endl;
+        cout << "init n=" << n << " size=" << size[0] << endl;
         length = size[0];
         elems = new T[length];
         if (n == 1)
@@ -68,15 +68,21 @@ public:
             //elems = new T[length];
             return;
         }
-        else if (typeid(T) != typeid(B))
+        else if (n==2)
         {
-            //elems = new T[length];
+            elems = new java_array<>[length];
             for (int i = 0; i < length; i++)
             {
-                cout<<"type="<<typeid(T).name()<<endl;
+                cout << "type=" << typeid(T).name() << endl;
                 //cout<<"elem="<<elems[i]<<endl;
-                //elems[i]=T(size,1);
+                //elems[i]=java_array<B>(size,1);
             }
+        }
+    }
+
+    void initSub(int n){
+        for (int i = 0; i < length; i++){
+            
         }
     }
 

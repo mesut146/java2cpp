@@ -1,6 +1,7 @@
 #include "car.h"
+//#include "java_array_single.h"
+#include "java_array_multi.h"
 #include "java_array.h"
-#include "lin_array.h"
 #include <iostream>
 #include <array>
 #include <typeinfo>
@@ -30,33 +31,36 @@ void arr_test(java_array<int> arr)
     arr = java_array<int>({66, 99});
 }
 
-void arr_prim()
-{
-    //lin_array<lin_array<lin_array<int>>> arr;
-    lin_array<lin_array<lin_array<int>>> arr;
-    arr.init();
-}
-
 void arr_single(int x)
 {
     x = 555;
 }
 
-void arr()
+void arr(){
+    //java_array<java_array<int>, int> multi2(new int[2]{3, 1}, 2);
+    java_array<java_array<int>> multi2(3);
+    multi2.initSub(1,java_array<int>);
+
+    for(int i=0;i<multi2.length;i++){
+        for(int j=0;j<0;j++){
+
+        }
+    }
+}
+
+void arr0()
 {
-    java_array<int> single = java_array<int>({10, 20, 30});
-    java_array<java_array<int, int>, int> multi(new int[2]{2,3},2);
-    //java_array<java_array<int, int>, int> multi2(2);
+    java_array_multi<int> *single = new java_array_single<int>({10, 20, 30});
+    java_array_multi<int> *multi = new java_array_multi<int>(new int[2]{2, 3}, 2);
+    
 
-
-   /*multi2[0]=java_array<int>(3);
+    /*multi2[0]=java_array<int>(3);
     multi2[1]=java_array<int>(3);*/
-
-
     //arr_test(single);
-    for (int i = 0; i < single.length + 1; i++)
+    cout << "single len="<<single->length << endl;
+    for (int i = 0; i < single->length; i++)
     {
-        //cout<<single[i]<<endl;
+        cout << (*single)[i].length << endl;
     }
 
     /*for (int i = 0; i < 2; i++)
@@ -67,8 +71,10 @@ void arr()
             cout << multi[i][j] << endl;
         }
     }*/
-    cout << multi.length << endl;
-    cout << multi[0].length << endl;
+    cout << "multi len="<<multi->length << endl;
+    java_array_multi<int> *m1 = &multi[1];
+    java_array_single<int> *s1 = (java_array_single<int> *)m1;
+    cout << m1->length << endl;
     //cout << multi[0][0].length << endl;
     for (int i = 0; i < 2; i++)
     {
@@ -92,7 +98,7 @@ int main(void)
     mycar.print();*/
     //car::inner* in=new ns1::car::inner(500);
     //print(in);
- 
+
     arr();
     //arr_prim();
 }
