@@ -1,5 +1,4 @@
 #include "car.h"
-//#include "java_array_single.h"
 #include "java_array_multi.h"
 #include "java_array.h"
 #include <iostream>
