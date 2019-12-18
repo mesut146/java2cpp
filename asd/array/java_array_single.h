@@ -17,10 +17,11 @@ public:
     //int length;
     T *elems;
     int x = 146;
+    using java_array_multi<T>::length;
 
     java_array_single()
     {
-        java_array_multi<T>::length = 0;
+        length = 0;
         elems = nullptr;
     }
 
@@ -32,28 +33,37 @@ public:
         }
         else if (size == 0)
         {
-            java_array_multi<T>::length = 0;
+            length = 0;
             elems = nullptr;
         }
         else
         {
-            java_array_multi<T>::length = size;
-            elems = new T[java_array_multi<T>::length];
+            length = size;
+            elems = new T[length];
+            for (size_t i = 0; i < length; i++)
+            {
+                elems[i] = 0;
+            }
         }
+    }
+
+    void init(int *sizes, int n)
+    {
+        cout << "error in single" << endl;
     }
 
     java_array_single(std::initializer_list<T> list)
     {
-        java_array_multi<T>::length = list.size();
-        elems = new T[java_array_multi<T>::length];
+        length = list.size();
+        elems = new T[length];
         std::copy(list.begin(), list.end(), elems);
     }
 
     T &operator[](int index) const
     {
-        if (index < java_array_multi<T>::length && index >= 0)
+        if (index < length && index >= 0)
         {
-            cout << "access single " << index << endl;
+            //cout << "access single " << index << endl;
             return elems[index];
         }
         throw std::runtime_error(format("array index out of bounds exception: index=%d size=%d", index, java_array_multi<T>::length));
@@ -61,8 +71,8 @@ public:
 
     java_array_single<T> operator=(std::initializer_list<T> rhs)
     {
-        java_array_multi<T>::length = rhs.size();
-        elems = new T[java_array_multi<T>::length];
+        length = rhs.size();
+        elems = new T[length];
         std::copy(rhs.begin(), rhs.end(), elems);
         return this;
     }

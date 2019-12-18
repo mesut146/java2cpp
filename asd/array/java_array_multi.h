@@ -99,6 +99,10 @@ public:
         }
     }
 
+    void init(int* sizes,int n){
+
+    }
+
     java_array_multi<T> &operator[](int index) const
     {
         if (index < length && index >= 0)

@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <typeinfo>
+#include <typeindex>
 
 using namespace std;
 
@@ -11,6 +13,7 @@ class java_array
 public:
     int length;
     T *elems;
+    java_array *map;
 
     java_array()
     {
@@ -33,6 +36,7 @@ public:
         {
             length = size;
             elems = new T[length];
+            map = new java_array[length];
         }
     }
 
@@ -68,9 +72,9 @@ public:
             //elems = new T[length];
             return;
         }
-        else if (n==2)
+        else if (n == 2)
         {
-            elems = new java_array<>[length];
+            //elems = new java_array<>[length];
             for (int i = 0; i < length; i++)
             {
                 cout << "type=" << typeid(T).name() << endl;
@@ -80,9 +84,43 @@ public:
         }
     }
 
-    void initSub(int n){
-        for (int i = 0; i < length; i++){
-            
+    bool isArray()
+    {
+        return string(typeid(T).name()).find("java_array") != string::npos;
+    }
+
+    bool isSingleArray()
+    {
+        return string(typeid(T).name()).find("java_array_single") != string::npos;
+    }
+
+    void init(int *sizes, int n)
+    {
+        cout << "n=" << n << endl;
+        cout << "t is=" << typeid(T).name() << endl;
+        //sizes++;
+        length = sizes[0];
+        elems = new T[length];
+        if (n > 2)
+        {
+            //T obj(3);
+
+            //cout << "obj=" << obj.length << endl;
+            //obj.init(sizes + 1, n - 1);
+            //map[0]=java_array
+            for (int i = 0; i < length; i++)
+            {
+                elems[i] = T(sizes[1]);
+                elems[i].init(sizes + 1, n - 1);
+            }
+        }
+        else
+        {
+            cout << "t is prim" << endl;
+            for (int i = 0; i < length; i++)
+            {
+                elems[i] = T(sizes[1]);
+            }
         }
     }
 
