@@ -1,23 +1,18 @@
 #pragma once
 
-#include <iostream>
-#include <vector>
-#include <string>
-#include <memory>
+#include "java_array.h"
 
 using namespace std;
 
 template <typename T>
-class java_array_multi;
+class java_array;
 
 template <typename T>
-class java_array_single : public java_array_multi<T>
+class java_array_single : java_array<T>
 {
 public:
-    //int length;
+    int length;
     T *elems;
-    int x = 146;
-    using java_array_multi<T>::length;
 
     java_array_single()
     {
@@ -47,7 +42,8 @@ public:
         }
     }
 
-    void init(int *sizes, int n)
+    //just to trick compiler,never called
+    java_array_single(int *sizes, int n)
     {
         cout << "error in single" << endl;
     }
@@ -63,10 +59,9 @@ public:
     {
         if (index < length && index >= 0)
         {
-            //cout << "access single " << index << endl;
             return elems[index];
         }
-        throw std::runtime_error(format("array index out of bounds exception: index=%d size=%d", index, java_array_multi<T>::length));
+        throw std::runtime_error(this->format("array index out of bounds exception: index=%d size=%d", index, length));
     }
 
     java_array_single<T> operator=(std::initializer_list<T> rhs)
@@ -75,14 +70,5 @@ public:
         elems = new T[length];
         std::copy(rhs.begin(), rhs.end(), elems);
         return this;
-    }
-
-    template <typename... Args>
-    static std::string format(const std::string &format, Args... args)
-    {
-        size_t size = snprintf(nullptr, 0, format.c_str(), args...) + 1; // Extra space for '\0'
-        std::unique_ptr<char[]> buf(new char[size]);
-        snprintf(buf.get(), size, format.c_str(), args...);
-        return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
     }
 };
