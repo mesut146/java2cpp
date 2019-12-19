@@ -385,6 +385,44 @@ root(Type=CompilationUnit):
                                 componentType(Type=PrimitiveType): 
                                     type: "SHORT"
                 - member(Type=FieldDeclaration): 
+                    comment(Type=LineComment): 
+                        content: "int[][] aaaa=new int[][]{{1,2,3},{4,5,6}},bbbb={{10,20},{50,60}},cccc=new int[10][];//java_array<java_array<int>>(10)"
+                    variables: 
+                        - variable(Type=VariableDeclarator): 
+                            initializer(Type=ArrayCreationExpr): 
+                                elementType(Type=ClassOrInterfaceType): 
+                                    name(Type=SimpleName): 
+                                        identifier: "Object"
+                                levels: 
+                                    - level(Type=ArrayCreationLevel): 
+                                        dimension(Type=IntegerLiteralExpr): 
+                                            value: "1"
+                                    - level(Type=ArrayCreationLevel): 
+                                        dimension(Type=IntegerLiteralExpr): 
+                                            value: "2"
+                                    - level(Type=ArrayCreationLevel): 
+                            name(Type=SimpleName): 
+                                identifier: "obj3"
+                            type(Type=ArrayType): 
+                                origin: "TYPE"
+                                componentType(Type=ArrayType): 
+                                    origin: "TYPE"
+                                    componentType(Type=ArrayType): 
+                                        origin: "TYPE"
+                                        componentType(Type=ClassOrInterfaceType): 
+                                            name(Type=SimpleName): 
+                                                identifier: "Object"
+                - member(Type=FieldDeclaration): 
+                    variables: 
+                        - variable(Type=VariableDeclarator): 
+                            name(Type=SimpleName): 
+                                identifier: "str"
+                            type(Type=ArrayType): 
+                                origin: "NAME"
+                                componentType(Type=ClassOrInterfaceType): 
+                                    name(Type=SimpleName): 
+                                        identifier: "String"
+                - member(Type=FieldDeclaration): 
                     modifiers: 
                         - modifier(Type=Modifier): 
                             keyword: "PRIVATE"
@@ -6507,6 +6545,9 @@ root(Type=CompilationUnit):
                                     type(Type=ClassOrInterfaceType): 
                                         name(Type=SimpleName): 
                                             identifier: "Section"
+                                        scope(Type=ClassOrInterfaceType): 
+                                            name(Type=SimpleName): 
+                                                identifier: "Dex"
                         - member(Type=FieldDeclaration): 
                             modifiers: 
                                 - modifier(Type=Modifier): 

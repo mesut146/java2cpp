@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.visitor;
 
+import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.*;
 import com.mesut.j2cpp.*;
 import com.github.javaparser.ast.expr.*;
@@ -7,123 +8,131 @@ import com.mesut.j2cpp.ast.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
+import com.mesut.j2cpp.ast.Node;
+
 import java.util.*;
 
-public class MethodVisitor extends VoidVisitorAdapter<Nodew>
-{
+public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     public CMethod method;
-    boolean hasReturn=false,hasThrow=false,hasBreak=false;
-    
-    public void visit(BlockStmt n,Nodew w){
-        w.firstBlock=true;
+    boolean hasReturn = false, hasThrow = false, hasBreak = false;
+
+    public Object visit(BlockStmt n, Nodew w) {
+        w.firstBlock = true;
         w.appendln("{");
         w.up();
-        for(Statement st:n.getStatements()){
-            st.accept(this,w);
+        for (Statement st : n.getStatements()) {
+            st.accept(this, w);
             w.println();
         }
         w.down();
         w.append("}");
+        return null;
     }
-    
-    public void visit(ExpressionStmt n,Nodew w){
-        n.getExpression().accept(this,w);
+
+    public Object visit(ExpressionStmt n, Nodew w) {
+        n.getExpression().accept(this, w);
         w.append(";");
+        return null;
     }
-    
-    public void visit(IfStmt n,Nodew w){
+
+    public Object visit(IfStmt n, Nodew w) {
         w.append("if(");
-        n.getCondition().accept(this,w);
+        n.getCondition().accept(this, w);
         w.append(")");
-        n.getThenStmt().accept(this,w);
-        if(n.hasElseBranch()){
+        n.getThenStmt().accept(this, w);
+        if (n.getElseStmt().isPresent()) {
             w.append("else");
-            if(n.hasCascadingIfStmt()){
+            if (n.hasCascadingIfStmt()) {
                 w.append(" ");
             }
-            n.getElseStmt().get().accept(this,w);
+            n.getElseStmt().get().accept(this, w);
         }
+        return null;
     }
-    
-    public void visit(WhileStmt n,Nodew w){
+
+    public Object visit(WhileStmt n, Nodew w) {
         w.append("while(");
-        n.getCondition().accept(this,w);
+        n.getCondition().accept(this, w);
         w.append(")");
-        n.getBody().accept(this,w); 
+        n.getBody().accept(this, w);
+        return null;
     }
-    
-    public void visit(ForStmt n,Nodew w){
+
+    public Object visit(ForStmt n, Nodew w) {
         w.append("for(");
-        int i=0,l=n.getInitialization().size()-1;
-        for(Expression e:n.getInitialization()){
-            e.accept(this,w);
-            if(i<l){
+        int i = 0, l = n.getInitialization().size() - 1;
+        for (Expression e : n.getInitialization()) {
+            e.accept(this, w);
+            if (i < l) {
                 w.append(",");
                 i++;
             }
         }
         w.append(";");
-        if(n.getCompare().isPresent()){
-            n.getCompare().get().accept(this,w);
+        if (n.getCompare().isPresent()) {
+            n.getCompare().get().accept(this, w);
         }
         w.append(";");
-        int j=0,l2=n.getUpdate().size()-1;
-        for(Expression e:n.getUpdate()){
-            e.accept(this,w);
-            if(j<l2){
+        int j = 0, l2 = n.getUpdate().size() - 1;
+        for (Expression e : n.getUpdate()) {
+            e.accept(this, w);
+            if (j < l2) {
                 w.append(",");
                 j++;
             }
         }
         w.append(")");
-        n.getBody().accept(this,w);
+        n.getBody().accept(this, w);
+        return null;
     }
-    
-    public void visit(ForEachStmt n,Nodew w){
+
+    public Object visit(ForEachStmt n, Nodew w) {
         w.append("for(");
-        n.getVariable().accept(this,w);
+        n.getVariable().accept(this, w);
         w.append(":");
-        n.getIterable().accept(this,w);
+        n.getIterable().accept(this, w);
         w.append(")");
-        n.getBody().accept(this,w);
+        n.getBody().accept(this, w);
+        return null;
     }
-    
-    public void visit(ReturnStmt n,Nodew w){
-        hasReturn=true;
+
+    public Object visit(ReturnStmt n, Nodew w) {
+        hasReturn = true;
         w.append("return");
-        if (n.getExpression().isPresent()){
+        if (n.getExpression().isPresent()) {
             w.append(" ");
-            n.getExpression().get().accept(this,w);
+            n.getExpression().get().accept(this, w);
         }
         w.append(";");
+        return null;
     }
-    
-    public void visit(TryStmt n,Nodew w){
-        boolean tryRet,tryTh,finRet,finTh;
-        if(n.getFinallyBlock().isPresent()){
+
+    public Object visit(TryStmt n, Nodew w) {
+        boolean tryRet, tryTh, finRet, finTh;
+        if (n.getFinallyBlock().isPresent()) {
             //String to=method.type.type;
-            Nodew fin=new Nodew();
-            Nodew tn=new Nodew();
-            n.getTryBlock().accept(this,tn);
+            Nodew fin = new Nodew();
+            Nodew tn = new Nodew();
+            n.getTryBlock().accept(this, tn);
             //tryRet=hasReturn;hasReturn=false;
-            n.getFinallyBlock().get().accept(this,fin);
+            n.getFinallyBlock().get().accept(this, fin);
             //finRet=hasReturn;hasReturn=false;
             w.line("bool tryReturned=true,finReturned=true;");
             w.line("void* res_tryBlock=with_finally([&](){");
             w.up();
             w.line("try");
             w.append(tn);
-            if(n.getCatchClauses().size()>0){
-                for(CatchClause cc:n.getCatchClauses()){
+            if (n.getCatchClauses().size() > 0) {
+                for (CatchClause cc : n.getCatchClauses()) {
                     w.append("catch(");
-                    Parameter p=cc.getParameter();
+                    Parameter p = cc.getParameter();
                     w.append(p.getTypeAsString());
                     w.append(" ");
                     w.append(p.getNameAsString());
                     w.append(")");
-                    cc.getBody().accept(this,w);
+                    cc.getBody().accept(this, w);
                 }
-            }else{
+            } else {
                 w.line("catch(int x){}");
             }
             w.line("if(0){return nullptr;}");
@@ -136,232 +145,316 @@ public class MethodVisitor extends VoidVisitorAdapter<Nodew>
             w.line("finReturned=false");
             w.down();
             w.line("});");
-            
+
             w.line("if(tryReturned||finReturned){");
             w.up();
             w.line("return res_tryBlock;");
             w.line("}");
-        }else{
+        } else {
             w.append("try");
-            int len=n.getResources().size();
-            if(len>0){
+            int len = n.getResources().size();
+            if (len > 0) {
                 w.append("(");
-                for(int i=0;i<len;i++){
-                    n.getResources().get(i).accept(this,w);
-                    if(i<len-1){
+                for (int i = 0; i < len; i++) {
+                    n.getResources().get(i).accept(this, w);
+                    if (i < len - 1) {
                         w.append(",");
                     }
                 }
                 w.append(")");
             }
-            n.getTryBlock().accept(this,w);
-            for(CatchClause cc:n.getCatchClauses()){
+            n.getTryBlock().accept(this, w);
+            for (CatchClause cc : n.getCatchClauses()) {
                 w.append("catch(");
-                Parameter p=cc.getParameter();
+                Parameter p = cc.getParameter();
                 w.append(p.getTypeAsString());
                 w.append(" ");
                 w.append(p.getNameAsString());
                 w.append(")");
-                cc.getBody().accept(this,w);
+                cc.getBody().accept(this, w);
             }
         }
-        
-        
+
+        return null;
     }
-    
-    void makeLambda(BlockStmt n,Nodew w){
+
+    void makeLambda(BlockStmt n, Nodew w) {
         w.append("auto finally=[&]()");
-        n.accept(this,w);
+        n.accept(this, w);
         w.append(";");
     }
-    
-    public void visit(ThrowStmt n,Nodew w){
-        hasThrow=true;
+
+    public Object visit(ThrowStmt n, Nodew w) {
+        hasThrow = true;
         w.append("throw ");
-        n.getExpression().accept(this,w);
+        n.getExpression().accept(this, w);
+        return null;
     }
-    
-    public void visit(ExplicitConstructorInvocationStmt n,Nodew w){
-        Nodew p=new Nodew();
-        Call c=new Call();
-        c.isThis=n.isThis();
-        if(n.isThis()){
+
+    public Object visit(ExplicitConstructorInvocationStmt n, Nodew w) {
+        Nodew p = new Nodew();
+        Call c = new Call();
+        c.isThis = n.isThis();
+        if (n.isThis()) {
             p.line(method.getName());
-        }else{
-            if(n.getExpression().isPresent()){
-                return;
-            }else{
+        } else {
+            if (n.getExpression().isPresent()) {
+                return null;
+            } else {
                 p.line(method.getParent().base.get(0).type);
             }
-            
+
         }
-        args(n.getArguments(),p);
-        c.str=p.toString();
-        method.call=c;
+        args(n.getArguments(), p);
+        c.str = p.toString();
+        method.call = c;
+        return null;
     }
-    
-    public void visit(MethodCallExpr n,Nodew w){
-        if(n.getScope().isPresent()){
-            n.getScope().get().accept(this,w);
-            Nodew scp=new Nodew();
-            n.getScope().get().accept(this,scp);
-            if(method!=null){
-                if(method.getParent().hasMethodAny(scp.toString())){
+
+    public Object visit(MethodCallExpr n, Nodew w) {
+        if (n.getScope().isPresent()) {
+            n.getScope().get().accept(this, w);
+            Nodew scp = new Nodew();
+            n.getScope().get().accept(this, scp);
+            if (method != null) {
+                if (method.getParent().hasMethodAny(scp.toString())) {
                     w.append("->");
-                }else{
+                } else {
                     w.append("::");
                 }
-            }else{
+            } else {
                 //ns
                 w.append("->");
             }
             //TODO: if static access,make ns
         }
         w.append(n.getNameAsString());
-        args(n.getArguments(),w);
+        args(n.getArguments(), w);
+        return null;
     }
-    
-    public void visit(AssignExpr n,Nodew w){
-        n.getTarget().accept(this,w);
+
+    public Object visit(AssignExpr n, Nodew w) {
+        n.getTarget().accept(this, w);
         w.append(n.getOperator().asString());
-        n.getValue().accept(this,w);
+        n.getValue().accept(this, w);
+        return null;
     }
-    
-    public void visit(FieldAccessExpr n,Nodew w){
-        n.getScope().accept(this,w);
+
+    public Object visit(FieldAccessExpr n, Nodew w) {
+        n.getScope().accept(this, w);
         //TODO:if scope is not object,ns
-        Nodew scp=new Nodew();
-        n.getScope().accept(this,scp);
-        if(method!=null){
-            if(method.getParent().hasFieldAny(scp.toString())||scp.cache.equals("this")){
+        Nodew scp = new Nodew();
+        n.getScope().accept(this, scp);
+        if (method != null) {
+            if (method.getParent().hasFieldAny(scp.toString()) || scp.cache.equals("this")) {
                 w.append("->");
-            }else{
+            } else {
                 w.append("::");
             }
-        }else{
+        } else {
             //ns
             w.append("->");
         }
         //w.append("->");
         w.append(n.getNameAsString());
+        return null;
     }
-    
-    public void visit(ThisExpr n,Nodew w){
+
+    public Object visit(ThisExpr n, Nodew w) {
         w.append("this");
+        return null;
     }
-    
-    public void visit(NameExpr n,Nodew w){
+
+    public Object visit(NameExpr n, Nodew w) {
         w.append(n.getNameAsString());
+        return null;
     }
-    
-    public void visit(ObjectCreationExpr n,Nodew w){
+
+    public Object visit(ObjectCreationExpr n, Nodew w) {
         if (n.getScope().isPresent()) {
             n.getScope().get().accept(this, w);
             w.append("->");
         }
-        
+
         w.append("new ");
         //typearg
         w.append(n.getTypeAsString());
-        args(n.getArguments(),w);
-        if(n.getAnonymousClassBody().isPresent()){
-            
+        args(n.getArguments(), w);
+        if (n.getAnonymousClassBody().isPresent()) {
+
         }
+        return null;
     }
-    
-    public void visit(NodeList n,Nodew w){
+
+    public Object visit(NodeList n, Nodew w) {
         w.append("(");
-        for(Iterator<Expression> i=n.iterator();i.hasNext();){
-            i.next().accept(this,w);
-            if(i.hasNext()){
+        for (Iterator<Expression> i = n.iterator(); i.hasNext(); ) {
+            i.next().accept(this, w);
+            if (i.hasNext()) {
                 w.append(",");
             }
         }
         w.append(")");
+        return null;
     }
-    
-    public void args(NodeList<Expression> l,Nodew w){
+
+    public Object args(NodeList<Expression> l, Nodew w) {
         w.append("(");
-        for(int i=0;i<l.size();i++){
-            l.get(i).accept(this,w);
-            if(i<l.size()-1){
+        for (int i = 0; i < l.size(); i++) {
+            l.get(i).accept(this, w);
+            if (i < l.size() - 1) {
                 w.append(",");
             }
         }
         w.append(")");
+        return null;
     }
-    
-    public void visit(VariableDeclarationExpr n,Nodew w){
-        boolean first=true;
-        for(VariableDeclarator vd:n.getVariables()){
-            if(first){
-                first=false;
-                TypeName t=new TypeName(vd.getTypeAsString());
+
+    public Object visit(VariableDeclarationExpr n, Nodew w) {
+        boolean first = true;
+        for (VariableDeclarator vd : n.getVariables()) {
+            if (first) {
+                first = false;
+                TypeName t = (TypeName) vd.getType().accept(this, null);
                 w.append(t.full());
-                if(t.isPointer()){
+                if (t.isPointer()) {
                     w.append("*");
                 }
                 w.append(" ");
-            }else{
+            } else {
                 w.append(",");
             }
-            
+
             w.append(vd.getNameAsString());
-            if(vd.getInitializer().isPresent()){
+            if (vd.getInitializer().isPresent()) {
                 w.append("=");
-                vd.getInitializer().get().accept(this,w);
+                vd.getInitializer().get().accept(this, w);
             }
-            
+
         }
+        return null;
     }
-    
-    public void visit(ConditionalExpr n,Nodew w){
-        n.getCondition().accept(this,w);
+
+    public Object visit(ConditionalExpr n, Nodew w) {
+        n.getCondition().accept(this, w);
         w.append("?");
-        n.getThenExpr().accept(this,w);
+        n.getThenExpr().accept(this, w);
         w.append(":");
-        n.getElseExpr().accept(this,w);
+        n.getElseExpr().accept(this, w);
+        return null;
     }
-    
-    public void visit(BinaryExpr n,Nodew w){
-        n.getLeft().accept(this,w);
+
+    public Object visit(BinaryExpr n, Nodew w) {
+        n.getLeft().accept(this, w);
         w.append(n.getOperator().asString());
-        n.getRight().accept(this,w);
+        n.getRight().accept(this, w);
+        return null;
     }
-    
-    public void visit(NullLiteralExpr n,Nodew w){
+
+    public Object visit(UnaryExpr n, Nodew w) {
+        if (n.isPostfix()) {
+            n.getExpression().accept(this, w);
+            w.append(n.getOperator().asString());
+        } else {
+            w.append(n.getOperator().asString());
+            n.getExpression().accept(this, w);
+        }
+        return null;
+    }
+
+    public Object visit(NullLiteralExpr n, Nodew w) {
         w.append("nullptr");
+        return null;
     }
-    public void visit(IntegerLiteralExpr n,Nodew w){
+
+    public Object visit(IntegerLiteralExpr n, Nodew w) {
         w.append(n.getValue());
+        return null;
     }
-    public void visit(StringLiteralExpr n,Nodew w){
+
+    public Object visit(StringLiteralExpr n, Nodew w) {
         w.append("new String(\"");
         w.append(n.getValue());
         w.append("\")");
+        return null;
     }
+
     //int[]{}
-    public void visit(ArrayCreationExpr n,Nodew w){
-        if(n.getInitializer().isPresent()){
-            n.getInitializer().get().accept(this,w);
-        }else {
-            TypeName typeName=new TypeName(n.getElementType().asString());
-            typeName.arrayLevel=n.getLevels().size();
+    public Object visit(ArrayCreationExpr n, Nodew w) {
+        if (n.getInitializer().isPresent()) {
+            n.getInitializer().get().accept(this, w);
+        } else {
+            //only dimensions
+            w.append("new ");
+            TypeName typeName = new TypeName(n.getElementType().asString());
+            typeName.arrayLevel = n.getLevels().size();
             w.append(typeName.toString());
             w.append("(");
-            w.append(")");
-            for(ArrayCreationLevel cl:n.getLevels()){
-                w.append("[");
-                if(cl.getDimension().isPresent()){
-                    cl.getDimension().get().accept(this,w);
+            int i = 0;
+            w.append("new int[]{");
+            for (ArrayCreationLevel cl : n.getLevels()) {
+                if (cl.getDimension().isPresent()) {
+                    cl.getDimension().get().accept(this, w);
+                } else {
+                    w.append("0");
                 }
-                w.append("]");
+                if (i < typeName.arrayLevel - 1) {
+                    w.append(",");
+                    i++;
+                }
+            }
+            w.append("},");
+            w.append(String.valueOf(typeName.arrayLevel));
+            w.append(")");
+        }
+        return null;
+    }
+
+    //{{1,2,3},{4,5,6}}
+    public Object visit(ArrayInitializerExpr n, Nodew w) {
+        w.append("{");
+        for (Iterator<Expression> iterator = n.getValues().iterator(); iterator.hasNext(); ) {
+            iterator.next().accept(this, w);
+            if (iterator.hasNext()) {
+                w.append(",");
             }
         }
+        w.append("}");
+        return null;
     }
-    //{{1,2,3},{4,5,6}}
-    /*public void visit(ArrayInitializerExpr n,Nodew w){
-        //let as it is
+
+    /*public Object visit(Type n, Nodew w){
+        return n.accept(this,w);
     }*/
-    
+
+    public Object visit(ArrayType n, Nodew w) {
+        TypeName typeName = new TypeName(n.getComponentType().asString());
+        //typeName.arrayLevel=1;
+        //System.out.println("arr type="+typeName);
+        return typeName;
+    }
+
+    public Object visit(VoidType n, Nodew w) {
+        TypeName typeName = new TypeName("void");
+        //w.append(typeName.toString());
+        return typeName;
+    }
+
+    public Object visit(ClassOrInterfaceType n, Nodew w) {
+        TypeName typeName = new TypeName(n.getNameAsString());
+        //w.append(typeName.toString());
+        return typeName;
+    }
+
+    public Object visit(SimpleName n, Nodew w) {
+        TypeName typeName = new TypeName(n.getIdentifier());
+        //w.append(typeName.toString());
+        return typeName;
+    }
+
+    public Object visit(PrimitiveType n, Nodew w) {
+        TypeName typeName = new TypeName(n.asString());
+        //w.append(typeName.toString());
+        return typeName;
+    }
 }

@@ -1,8 +1,8 @@
 #include "test.h"
 
 
-com::android::dex::Dex::Dex(byte[] data){
-    ByteBuffer::wrap(data)
+com::android::dex::Dex::Dex(byte data):Dex(ByteBuffer::wrap(data)){
+
 }
 
 com::android::dex::Dex::Dex(ByteBuffer* data){
@@ -12,7 +12,7 @@ com::android::dex::Dex::Dex(ByteBuffer* data){
 }
 
 com::android::dex::Dex::Dex(int byteCount){
-    this->data=ByteBuffer::wrap(new byte[byteCount]);
+    this->data=ByteBuffer::wrap(new java_array_single<byte>(new int[]{byteCount},1));
     this->data::order(ByteOrder::LITTLE_ENDIAN);
 }
 
@@ -60,9 +60,9 @@ com::android::dex::Dex::Dex(File* file){
 
 void com::android::dex::Dex::loadFrom(InputStream* in){
     ByteArrayOutputStream* bytesOut=new ByteArrayOutputStream();
-    byte[] buffer=new byte[8192];
+    byte buffer=new java_array_single<byte>(new int[]{8192},1);
     int count;
-    while(count=in::read(buffer)!=1){
+    while(count=in::read(buffer)!=-1){
         bytesOut::write(buffer,0,count);
     }
     this->data=ByteBuffer::wrap(bytesOut::toByteArray());
@@ -77,7 +77,7 @@ static void com::android::dex::Dex::checkBounds(int index,int length){
 }
 
 void com::android::dex::Dex::writeTo(OutputStream* out){
-    byte[] buffer=new byte[8192];
+    byte buffer=new java_array_single<byte>(new int[]{8192},1);
     ByteBuffer* data=this->data::duplicate();
     data::clear();
     while(data::hasRemaining()){
@@ -130,39 +130,39 @@ int com::android::dex::Dex::getNextSectionStart(){
     return nextSectionStart;
 }
 
-byte[] com::android::dex::Dex::getBytes(){
+byte com::android::dex::Dex::getBytes(){
     ByteBuffer* data=this->data::duplicate();
-    byte[] result=new byte[data::capacity()];
+    byte result=new java_array_single<byte>(new int[]{data::capacity()},1);
     data::position(0);
     data::get(result);
     return result;
 }
 
-List<String>* com::android::dex::Dex::strings(){
+List* com::android::dex::Dex::strings(){
     return strings;
 }
 
-List<Integer>* com::android::dex::Dex::typeIds(){
+List* com::android::dex::Dex::typeIds(){
     return typeIds;
 }
 
-List<String>* com::android::dex::Dex::typeNames(){
+List* com::android::dex::Dex::typeNames(){
     return typeNames;
 }
 
-List<ProtoId>* com::android::dex::Dex::protoIds(){
+List* com::android::dex::Dex::protoIds(){
     return protoIds;
 }
 
-List<FieldId>* com::android::dex::Dex::fieldIds(){
+List* com::android::dex::Dex::fieldIds(){
     return fieldIds;
 }
 
-List<MethodId>* com::android::dex::Dex::methodIds(){
+List* com::android::dex::Dex::methodIds(){
     return methodIds;
 }
 
-Iterable<ClassDef>* com::android::dex::Dex::classDefs(){
+Iterable* com::android::dex::Dex::classDefs(){
     return new ClassDefIterable();
 }
 
@@ -181,7 +181,7 @@ ClassData* com::android::dex::Dex::readClassData(ClassDef* classDef){
     return open(offset)::readClassData();
 }
 
-Code* com::android::dex::Dex::readCode(ClassData::Method* method){
+Code* com::android::dex::Dex::readCode(Method* method){
     int offset=method::getCodeOffset();
     if(offset==0){
         throw new IllegalArgumentException(new String("offset == 0"))
@@ -189,14 +189,14 @@ Code* com::android::dex::Dex::readCode(ClassData::Method* method){
     return open(offset)::readCode();
 }
 
-byte[] com::android::dex::Dex::computeSignature(){
+byte com::android::dex::Dex::computeSignature(){
     MessageDigest* digest;
     try{
         digest=MessageDigest::getInstance(new String("SHA-1"));
     }catch(NoSuchAlgorithmException e){
         throw new AssertionError()
     }
-    byte[] buffer=new byte[8192];
+    byte buffer=new java_array_single<byte>(new int[]{8192},1);
     ByteBuffer* data=this->data::duplicate();
     data::limit(data::capacity());
     data::position(SIGNATURE_OFFSET+SIGNATURE_SIZE);
@@ -210,7 +210,7 @@ byte[] com::android::dex::Dex::computeSignature(){
 
 int com::android::dex::Dex::computeChecksum(){
     Adler32* adler32=new Adler32();
-    byte[] buffer=new byte[8192];
+    byte buffer=new java_array_single<byte>(new int[]{8192},1);
     ByteBuffer* data=this->data::duplicate();
     data::limit(data::capacity());
     data::position(CHECKSUM_OFFSET+CHECKSUM_SIZE);
@@ -259,18 +259,18 @@ byte readByte(){
     return data::get();
 }
 
-byte[] readByteArray(int length){
-    byte[] result=new byte[length];
+byte readByteArray(int length){
+    byte result=new java_array_single<byte>(new int[]{length},1);
     data::get(result);
     return result;
 }
 
-short[] readShortArray(int length){
+short readShortArray(int length){
     if(length==0){
         return EMPTY_SHORT_ARRAY;
     }
-    short[] result=new short[length];
-    for(int i=0;i<length;i){
+    short result=new java_array_single<short>(new int[]{length},1);
+    for(int i=0;i<length;i++){
         iresult=readShort();
     }
     return result;
@@ -294,7 +294,7 @@ void writeUleb128p1(int i){
 
 TypeList* readTypeList(){
     int size=readInt();
-    short[] types=readShortArray(size);
+    short types=readShortArray(size);
     alignToFourBytes();
     return new TypeList(this,types);
 }
@@ -310,7 +310,7 @@ String* readString(){
     void* res_tryBlock=with_finally([&](){
         try{
     int expectedLength=readUleb128();
-    String* result=Mutf8::decode(this,new char[expectedLength]);
+    String* result=Mutf8::decode(this,new java_array_single<char>(new int[]{expectedLength},1));
     if(result::length()!=expectedLength){
         throw new DexException(new String("Declared length ")+expectedLength+new String(" doesn't match decoded length of ")+result::length())
     }
@@ -386,9 +386,9 @@ Code* readCode(){
     int triesSize=readUnsignedShort();
     int debugInfoOffset=readInt();
     int instructionsSize=readInt();
-    short[] instructions=readShortArray(instructionsSize);
-    Try[] tries;
-    CatchHandler[] catchHandlers;
+    short instructions=readShortArray(instructionsSize);
+    Try* tries;
+    CatchHandler* catchHandlers;
     if(triesSize>0){
         if(instructions::length%2==1){
             readShort();
@@ -398,26 +398,26 @@ Code* readCode(){
         catchHandlers=readCatchHandlers();
         tries=triesSection::readTries(triesSize,catchHandlers);
     }else{
-        tries=new Try[0];
-        catchHandlers=new CatchHandler[0];
+        tries=new java_array_single<Try>(new int[]{0},1);
+        catchHandlers=new java_array_single<CatchHandler>(new int[]{0},1);
     }
     return new Code(registersSize,insSize,outsSize,debugInfoOffset,instructions,tries,catchHandlers);
 }
 
-CatchHandler[] readCatchHandlers(){
+CatchHandler* readCatchHandlers(){
     int baseOffset=data::position();
     int catchHandlersSize=readUleb128();
-    CatchHandler[] result=new CatchHandler[catchHandlersSize];
-    for(int i=0;i<catchHandlersSize;i){
+    CatchHandler* result=new java_array_single<CatchHandler>(new int[]{catchHandlersSize},1);
+    for(int i=0;i<catchHandlersSize;i++){
         int offset=data::position()-baseOffset;
         iresult=readCatchHandler(offset);
     }
     return result;
 }
 
-Try[] readTries(int triesSize,CatchHandler[] catchHandlers){
-    Try[] result=new Try[triesSize];
-    for(int i=0;i<triesSize;i){
+Try* readTries(int triesSize,CatchHandler* catchHandlers){
+    Try* result=new java_array_single<Try>(new int[]{triesSize},1);
+    for(int i=0;i<triesSize;i++){
         int startAddress=readInt();
         int instructionCount=readUnsignedShort();
         int handlerOffset=readUnsignedShort();
@@ -427,8 +427,8 @@ Try[] readTries(int triesSize,CatchHandler[] catchHandlers){
     return result;
 }
 
-int findCatchHandlerIndex(CatchHandler[] catchHandlers,int offset){
-    for(int i=0;i<catchHandlers::length;i){
+int findCatchHandlerIndex(CatchHandler* catchHandlers,int offset){
+    for(int i=0;i<catchHandlers::length;i++){
         CatchHandler* catchHandler=icatchHandlers;
         if(catchHandler::getOffset()==offset){
             return i;
@@ -440,13 +440,13 @@ int findCatchHandlerIndex(CatchHandler[] catchHandlers,int offset){
 CatchHandler* readCatchHandler(int offset){
     int size=readSleb128();
     int handlersCount=Math::abs(size);
-    int[] typeIndexes=new int[handlersCount];
-    int[] addresses=new int[handlersCount];
-    for(int i=0;i<handlersCount;i){
+    int typeIndexes=new java_array_single<int>(new int[]{handlersCount},1);
+    int addresses=new java_array_single<int>(new int[]{handlersCount},1);
+    for(int i=0;i<handlersCount;i++){
         itypeIndexes=readUleb128();
         iaddresses=readUleb128();
     }
-    int catchAllAddress=size<=0?readUleb128():1;
+    int catchAllAddress=size<=0?readUleb128():-1;
     return new CatchHandler(typeIndexes,addresses,catchAllAddress,offset);
 }
 
@@ -455,17 +455,17 @@ ClassData* readClassData(){
     int instanceFieldsSize=readUleb128();
     int directMethodsSize=readUleb128();
     int virtualMethodsSize=readUleb128();
-    ClassData.Field[] staticFields=readFields(staticFieldsSize);
-    ClassData.Field[] instanceFields=readFields(instanceFieldsSize);
-    ClassData.Method[] directMethods=readMethods(directMethodsSize);
-    ClassData.Method[] virtualMethods=readMethods(virtualMethodsSize);
+    ClassData.Field* staticFields=readFields(staticFieldsSize);
+    ClassData.Field* instanceFields=readFields(instanceFieldsSize);
+    ClassData.Method* directMethods=readMethods(directMethodsSize);
+    ClassData.Method* virtualMethods=readMethods(virtualMethodsSize);
     return new ClassData(staticFields,instanceFields,directMethods,virtualMethods);
 }
 
-ClassData.Field[] readFields(int count){
-    ClassData.Field[] result=new ClassData.Field[count];
+ClassData.Field* readFields(int count){
+    ClassData.Field* result=new java_array_single<ClassData.Field>(new int[]{count},1);
     int fieldIndex=0;
-    for(int i=0;i<count;i){
+    for(int i=0;i<count;i++){
         fieldIndex+=readUleb128();
         int accessFlags=readUleb128();
         iresult=new ClassData.Field(fieldIndex,accessFlags);
@@ -473,10 +473,10 @@ ClassData.Field[] readFields(int count){
     return result;
 }
 
-ClassData.Method[] readMethods(int count){
-    ClassData.Method[] result=new ClassData.Method[count];
+ClassData.Method* readMethods(int count){
+    ClassData.Method* result=new java_array_single<ClassData.Method>(new int[]{count},1);
     int methodIndex=0;
-    for(int i=0;i<count;i){
+    for(int i=0;i<count;i++){
         methodIndex+=readUleb128();
         int accessFlags=readUleb128();
         int codeOff=readUleb128();
@@ -485,9 +485,9 @@ ClassData.Method[] readMethods(int count){
     return result;
 }
 
-byte[] getBytesFrom(int start){
+byte getBytesFrom(int start){
     int end=data::position();
-    byte[] result=new byte[end-start];
+    byte result=new java_array_single<byte>(new int[]{end-start},1);
     data::position(start);
     data::get(result);
     return result;
@@ -514,7 +514,7 @@ void skip(int count){
 }
 
 void alignToFourBytes(){
-    data::position(data::position()+3&3);
+    data::position(data::position()+3&~3);
 }
 
 void alignToFourBytesWithZeroFill(){
@@ -529,7 +529,7 @@ void assertFourByteAligned(){
     }
 }
 
-void write(byte[] bytes){
+void write(byte bytes){
     this->data::put(bytes);
 }
 
@@ -549,7 +549,7 @@ void writeUnsignedShort(int i){
     writeShort(s);
 }
 
-void write(short[] shorts){
+void write(short shorts){
     for(short s:shorts){
         writeShort(s);
     }
@@ -587,7 +587,7 @@ void writeStringData(String* value){
 }
 
 void writeTypeList(TypeList* typeList){
-    short[] types=typeList::getTypes();
+    short types=typeList::getTypes();
     writeInt(types::length);
     for(short type:types){
         writeShort(type);
@@ -656,10 +656,10 @@ boolean hasNext(){
 }
 
 ClassDef* next(){
-    if(hasNext()){
+    if(!hasNext()){
         throw new NoSuchElementException()
     }
-    count;
+    count++;
     return in::readClassDef();
 }
 
@@ -667,6 +667,6 @@ void remove(){
     throw new UnsupportedOperationException()
 }
 
-Iterator<ClassDef>* iterator(){
-    return tableOfContents::classDefs::exists()?Collections::emptySet()::iterator():new ClassDefIterator();
+Iterator* iterator(){
+    return !tableOfContents::classDefs::exists()?Collections::emptySet()::iterator():new ClassDefIterator();
 }

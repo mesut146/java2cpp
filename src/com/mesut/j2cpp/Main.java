@@ -29,7 +29,8 @@ public class Main {
                 destPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
             }else {
                 Resolver.srcPath="/home/mesut/Desktop/dx-org/src";
-                destPath="/home/mesut/Desktop/dx-cpp";
+                //destPath="/home/mesut/Desktop/dx-cpp";
+                destPath="/home/mesut/IdeaProjects/java2cpp/asd/test/cpp";
 
             }
             //Resolver.srcPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/java";

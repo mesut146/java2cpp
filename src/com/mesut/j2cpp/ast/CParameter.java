@@ -10,8 +10,11 @@ public class CParameter extends Node
     public void print()
     {
         list.clear();
+        if (type==null){
+            System.out.println("name="+name);
+        }
         append(type.toString().replace(".","::"));//normalize the type(base::type)
-        if(type.isPointer()&&!type.isArray()){
+        if(type.isPointer()){
             append("*");
         }
         append(" ");

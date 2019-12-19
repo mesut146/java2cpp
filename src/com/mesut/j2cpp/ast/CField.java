@@ -12,7 +12,7 @@ public class CField extends HasModifier
             append("static ");
         }
         append(type.toString());
-        if(isPointer()&&!type.isArray()){
+        if(isPointer()){
             append("*");
         }
         append(" ");

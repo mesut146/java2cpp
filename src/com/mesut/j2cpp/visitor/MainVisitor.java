@@ -122,7 +122,8 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     public void visit(MethodDeclaration n, Nodew w) {
         CMethod cm = new CMethod();
         last().addMethod(cm);
-        cm.type = new TypeName(n.getType().asString());
+        MethodVisitor methodVisitor=new MethodVisitor();
+        cm.type = (TypeName) n.getType().accept(methodVisitor,new Nodew());
         cm.name = n.getName().asString();
         cm.setStatic(n.isStatic());
         cm.setPublic(n.isPublic());
@@ -130,7 +131,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
 
         for (Parameter p : n.getParameters()) {
             CParameter cp = new CParameter();
-            cp.type = new TypeName(p.getTypeAsString());
+            cp.type = (TypeName) p.getType().accept(methodVisitor,new Nodew());
             cp.name = p.getNameAsString();
             cm.params.add(cp);
         }
@@ -145,12 +146,13 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     public void visit(ConstructorDeclaration n, Nodew w) {
         CMethod cm = new CMethod();
         last().addMethod(cm);
+        MethodVisitor methodVisitor=new MethodVisitor();
         cm.isCons = true;
         cm.name = n.getName().asString();
         cm.setPublic(n.isPublic());
         for (Parameter p : n.getParameters()) {
             CParameter cp = new CParameter();
-            cp.type = new TypeName(p.getTypeAsString());
+            cp.type = (TypeName) p.getType().accept(methodVisitor,new Nodew());
             cp.name = p.getNameAsString();
             cm.params.add(cp);
         }
