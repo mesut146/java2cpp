@@ -14,6 +14,8 @@ import java.util.*;
 
 public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     public CMethod method;
+    public CHeader header;
+    public SymbolTable table;
     boolean hasReturn = false, hasThrow = false, hasBreak = false;
 
     public Object visit(BlockStmt n, Nodew w) {
@@ -213,30 +215,28 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
     public Object visit(MethodCallExpr n, Nodew w) {
         if (n.getScope().isPresent()) {
-            n.getScope().get().accept(this, w);
+            Expression scope = n.getScope().get();
+            scope.accept(this, w);
             Nodew scp = new Nodew();
-            n.getScope().get().accept(this, scp);
-            if (method != null) {
-                if (method.getParent().hasMethodAny(scp.toString())) {
-                    w.append("->");
-                } else {
+            scope.accept(this, scp);
+
+            if (scope.isNameExpr()){//field or class
+                if (Resolver.isClass(scope.asNameExpr().getNameAsString())){
                     w.append("::");
+                }else{
+                    w.append("->");
                 }
-            } else {
-                //ns
+            }else {
                 w.append("->");
             }
+            /*if (scope.isFieldAccessExpr()||scope.isMethodCallExpr()){
+                w.append("->");
+            }
+            */
             //TODO: if static access,make ns
         }
         w.append(n.getNameAsString());
         args(n.getArguments(), w);
-        return null;
-    }
-
-    public Object visit(AssignExpr n, Nodew w) {
-        n.getTarget().accept(this, w);
-        w.append(n.getOperator().asString());
-        n.getValue().accept(this, w);
         return null;
     }
 
@@ -257,6 +257,13 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         }
         //w.append("->");
         w.append(n.getNameAsString());
+        return null;
+    }
+
+    public Object visit(AssignExpr n, Nodew w) {
+        n.getTarget().accept(this, w);
+        w.append(n.getOperator().asString());
+        n.getValue().accept(this, w);
         return null;
     }
 
@@ -286,7 +293,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(NodeList n, Nodew w) {
+    public Object visit(NodeList<Expression> n, Nodew w) {
         w.append("(");
         for (Iterator<Expression> i = n.iterator(); i.hasNext(); ) {
             i.next().accept(this, w);

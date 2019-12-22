@@ -10,6 +10,9 @@ array to pointer
 #call super
 
 #static member access should has namespace not pointer
+cls.obj.meth();       cls::obj->meth();
+cls.stv().meth();     cls::stv()->meth();
+mem.obj.meth();       mem->obj->meth();
 
 #anonymous class
 

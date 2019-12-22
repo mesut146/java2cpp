@@ -15,6 +15,11 @@ public class Resolver {
 
     }
 
+    public static boolean isClass(String name){
+
+        return false;
+    }
+
     public static void init(){
 
     }

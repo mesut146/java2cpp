@@ -1,19 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="74c0cebe-1d5d-4445-8c95-cd48b15840ca" name="Default Changelist" comment="array finish">
-      <change afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Config.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Scope.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Template.java" afterDir="false" />
+    <list default="true" id="74c0cebe-1d5d-4445-8c95-cd48b15840ca" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/SymbolTable.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.h" beforeDir="false" afterPath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notes" beforeDir="false" afterPath="$PROJECT_DIR$/notes" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CField.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CField.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CParameter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CParameter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/TypeName.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/TypeName.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MainVisitor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MainVisitor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Resolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Resolver.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MethodVisitor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MethodVisitor.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -44,7 +37,7 @@
     <property name="project.structure.last.edited" value="Artifacts" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.2" />
-    <property name="settings.editor.selected.configurable" value="copyright.filetypes.JAVA" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -172,7 +165,14 @@
       <option name="project" value="LOCAL" />
       <updated>1576759073396</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="array,type">
+      <created>1576775454885</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1576775454885</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -184,9 +184,14 @@
     <MESSAGE value="init" />
     <MESSAGE value="array" />
     <MESSAGE value="array finish" />
-    <option name="LAST_COMMIT_MESSAGE" value="array finish" />
+    <MESSAGE value="array,type" />
+    <option name="LAST_COMMIT_MESSAGE" value="array,type" />
   </component>
   <component name="WindowStateProjectService">
+    <state x="275" y="27" width="800" height="675" key="#Notifications" timestamp="1577026317362">
+      <screen x="0" y="0" width="1360" height="734" />
+    </state>
+    <state x="275" y="27" width="800" height="675" key="#Notifications/0.0.1360.734@0.0.1360.734" timestamp="1577026317362" />
     <state x="138" y="24" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1576072902063">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
@@ -199,26 +204,26 @@
       <screen x="0" y="0" width="1360" height="734" />
     </state>
     <state x="412" y="152" width="525" height="425" key="#com.intellij.ide.util.TreeClassChooserDialog/0.0.1360.734@0.0.1360.734" timestamp="1576072870041" />
-    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2" timestamp="1576761596463">
+    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2" timestamp="1576775453733">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2/0.0.1360.734@0.0.1360.734" timestamp="1576761596463" />
-    <state width="1314" height="212" key="GridCell.Tab.0.bottom" timestamp="1576774328512">
+    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2/0.0.1360.734@0.0.1360.734" timestamp="1576775453732" />
+    <state width="1314" height="212" key="GridCell.Tab.0.bottom" timestamp="1577025054162">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.bottom/0.0.1360.734@0.0.1360.734" timestamp="1576774328512" />
-    <state width="1314" height="212" key="GridCell.Tab.0.center" timestamp="1576774328511">
+    <state width="1314" height="212" key="GridCell.Tab.0.bottom/0.0.1360.734@0.0.1360.734" timestamp="1577025054162" />
+    <state width="1314" height="212" key="GridCell.Tab.0.center" timestamp="1577025054162">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.center/0.0.1360.734@0.0.1360.734" timestamp="1576774328511" />
-    <state width="1314" height="212" key="GridCell.Tab.0.left" timestamp="1576774328511">
+    <state width="1314" height="212" key="GridCell.Tab.0.center/0.0.1360.734@0.0.1360.734" timestamp="1577025054162" />
+    <state width="1314" height="212" key="GridCell.Tab.0.left" timestamp="1577025054161">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.left/0.0.1360.734@0.0.1360.734" timestamp="1576774328511" />
-    <state width="1314" height="212" key="GridCell.Tab.0.right" timestamp="1576774328512">
+    <state width="1314" height="212" key="GridCell.Tab.0.left/0.0.1360.734@0.0.1360.734" timestamp="1577025054161" />
+    <state width="1314" height="212" key="GridCell.Tab.0.right" timestamp="1577025054162">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.right/0.0.1360.734@0.0.1360.734" timestamp="1576774328512" />
+    <state width="1314" height="212" key="GridCell.Tab.0.right/0.0.1360.734@0.0.1360.734" timestamp="1577025054162" />
     <state width="1314" height="207" key="GridCell.Tab.1.bottom" timestamp="1575989035324">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
@@ -235,14 +240,18 @@
       <screen x="0" y="0" width="1360" height="734" />
     </state>
     <state width="1314" height="207" key="GridCell.Tab.1.right/0.0.1360.734@0.0.1360.734" timestamp="1575989035323" />
-    <state x="163" y="0" width="1024" height="732" key="SettingsEditor" timestamp="1576775075062">
+    <state x="88" y="0" width="1024" height="732" key="SettingsEditor" timestamp="1577026349480">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state x="163" y="0" width="1024" height="732" key="SettingsEditor/0.0.1360.734@0.0.1360.734" timestamp="1576775075062" />
-    <state x="275" y="102" width="800" height="526" key="Vcs.Push.Dialog.v2" timestamp="1576759076875">
+    <state x="88" y="0" width="1024" height="732" key="SettingsEditor/0.0.1360.734@0.0.1360.734" timestamp="1577026349480" />
+    <state x="527" y="72" width="296" height="585" key="VCS.ChangeListViewerDialog" timestamp="1577031089622">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state x="275" y="102" width="800" height="526" key="Vcs.Push.Dialog.v2/0.0.1360.734@0.0.1360.734" timestamp="1576759076875" />
+    <state x="527" y="72" width="296" height="585" key="VCS.ChangeListViewerDialog/0.0.1360.734@0.0.1360.734" timestamp="1577031089622" />
+    <state x="275" y="102" width="800" height="526" key="Vcs.Push.Dialog.v2" timestamp="1576775457836">
+      <screen x="0" y="0" width="1360" height="734" />
+    </state>
+    <state x="275" y="102" width="800" height="526" key="Vcs.Push.Dialog.v2/0.0.1360.734@0.0.1360.734" timestamp="1576775457836" />
     <state x="470" y="286" width="419" height="160" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1575970304111">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
