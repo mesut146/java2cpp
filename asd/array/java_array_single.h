@@ -42,10 +42,18 @@ public:
         }
     }
 
-    //just to trick compiler,never called
+  
     java_array_single(int *sizes, int n)
     {
-        cout << "error in single" << endl;
+        if(n>1){
+            throw "error: single dim expected";
+        }
+        length = sizes[0];
+            elems = new T[length];
+            for (size_t i = 0; i < length; i++)
+            {
+                elems[i] = 0;
+            }
     }
 
     java_array_single(std::initializer_list<T> list)
