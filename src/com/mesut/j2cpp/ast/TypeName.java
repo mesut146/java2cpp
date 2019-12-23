@@ -26,9 +26,13 @@ public class TypeName
     public boolean isArray(){
         return arrayLevel>0;
     }
+
+    public boolean isPrim(){
+        return Helper.isPrim(type);
+    }
     
     public boolean isPointer(){
-        return !isVoid()&&!Helper.is(type);
+        return !isVoid()&&(!isPrim()||isArray());
     }
 
     public boolean isVoid(){

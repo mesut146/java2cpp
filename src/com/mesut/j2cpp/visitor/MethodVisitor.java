@@ -217,8 +217,6 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         if (n.getScope().isPresent()) {
             Expression scope = n.getScope().get();
             scope.accept(this, w);
-            Nodew scp = new Nodew();
-            scope.accept(this, scp);
 
             if (scope.isNameExpr()){//field or class
                 if (Resolver.isClass(scope.asNameExpr().getNameAsString())){
@@ -241,21 +239,18 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     public Object visit(FieldAccessExpr n, Nodew w) {
-        n.getScope().accept(this, w);
+        Expression scope = n.getScope();
+        scope.accept(this, w);
         //TODO:if scope is not object,ns
-        Nodew scp = new Nodew();
-        n.getScope().accept(this, scp);
-        if (method != null) {
-            if (method.getParent().hasFieldAny(scp.toString()) || scp.cache.equals("this")) {
-                w.append("->");
-            } else {
+        if (scope.isNameExpr()){//field/var or class
+            if (Resolver.isClass(scope.asNameExpr().getNameAsString())){
                 w.append("::");
+            }else{
+                w.append("->");
             }
-        } else {
-            //ns
+        }else {
             w.append("->");
         }
-        //w.append("->");
         w.append(n.getNameAsString());
         return null;
     }
@@ -269,11 +264,6 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
     public Object visit(ThisExpr n, Nodew w) {
         w.append("this");
-        return null;
-    }
-
-    public Object visit(NameExpr n, Nodew w) {
-        w.append(n.getNameAsString());
         return null;
     }
 
@@ -435,8 +425,8 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }*/
 
     public Object visit(ArrayType n, Nodew w) {
-        TypeName typeName = new TypeName(n.getComponentType().asString());
-        //typeName.arrayLevel=1;
+        TypeName typeName = (TypeName) n.getElementType().accept(this,w);
+        typeName.arrayLevel=n.getArrayLevel();
         //System.out.println("arr type="+typeName);
         return typeName;
     }
@@ -449,8 +439,18 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
     public Object visit(ClassOrInterfaceType n, Nodew w) {
         TypeName typeName = new TypeName(n.getNameAsString());
+        if (n.getTypeArguments().isPresent()){
+            for(Iterator<Type> iterator=n.getTypeArguments().get().iterator();iterator.hasNext();){
+                typeName.typeNames.add((TypeName)iterator.next().accept(this,w));
+            }
+        }
         //w.append(typeName.toString());
         return typeName;
+    }
+
+    public Object visit(NameExpr n, Nodew w) {
+        w.append(n.getNameAsString());
+        return null;
     }
 
     public Object visit(SimpleName n, Nodew w) {

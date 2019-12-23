@@ -52,7 +52,8 @@ namespace com::android::dex{
             MethodIdTable* methodIds=new MethodIdTable();
 
         public:
-            Dex(byte data);
+            Dex(java_array_single<byte>* data);
+            Dex(java_array<java_array<java_array_single<int>>>* myarr);
             Dex(int byteCount);
             Dex(InputStream* in);
             Dex(File* file);
@@ -63,18 +64,18 @@ namespace com::android::dex{
             Section* appendSection(int maxByteCount,String* name);
             int getLength();
             int getNextSectionStart();
-            byte getBytes();
-            List* strings();
-            List* typeIds();
-            List* typeNames();
-            List* protoIds();
-            List* fieldIds();
-            List* methodIds();
-            Iterable* classDefs();
+            java_array_single<byte>* getBytes();
+            List<String>* strings();
+            List<Integer>* typeIds();
+            List<String>* typeNames();
+            List<ProtoId>* protoIds();
+            List<FieldId>* fieldIds();
+            List<MethodId>* methodIds();
+            Iterable<ClassDef>* classDefs();
             TypeList* readTypeList(int offset);
             ClassData* readClassData(ClassDef* classDef);
             Code* readCode(Method* method);
-            byte computeSignature();
+            java_array_single<byte>* computeSignature();
             int computeChecksum();
             void writeHashes();
             int descriptorIndexFromTypeIndex(int typeIndex);
@@ -95,8 +96,8 @@ namespace com::android::dex{
                 short readShort();
                 int readUnsignedShort();
                 byte readByte();
-                byte readByteArray(int length);
-                short readShortArray(int length);
+                java_array_single<byte>* readByteArray(int length);
+                java_array_single<short>* readShortArray(int length);
                 int readUleb128();
                 int readUleb128p1();
                 int readSleb128();
@@ -115,11 +116,11 @@ namespace com::android::dex{
                 void alignToFourBytes();
                 void alignToFourBytesWithZeroFill();
                 void assertFourByteAligned();
-                void write(byte bytes);
+                void write(java_array_single<byte>* bytes);
                 void writeByte(int b);
                 void writeShort(short i);
                 void writeUnsignedShort(int i);
-                void write(short shorts);
+                void write(java_array_single<short>* shorts);
                 void writeInt(int i);
                 void writeUleb128(int i);
                 void writeSleb128(int i);
@@ -129,14 +130,14 @@ namespace com::android::dex{
             private:
                 Section(String* name,ByteBuffer* data);
                 Code* readCode();
-                CatchHandler* readCatchHandlers();
-                Try* readTries(int triesSize,CatchHandler* catchHandlers);
-                int findCatchHandlerIndex(CatchHandler* catchHandlers,int offset);
+                java_array_single<CatchHandler>* readCatchHandlers();
+                java_array_single<Try>* readTries(int triesSize,java_array_single<CatchHandler>* catchHandlers);
+                int findCatchHandlerIndex(java_array_single<CatchHandler>* catchHandlers,int offset);
                 CatchHandler* readCatchHandler(int offset);
                 ClassData* readClassData();
-                ClassData.Field* readFields(int count);
-                ClassData.Method* readMethods(int count);
-                byte getBytesFrom(int start);
+                java_array_single<Field>* readFields(int count);
+                java_array_single<Method>* readMethods(int count);
+                java_array_single<byte>* getBytesFrom(int start);
 
         };//class Section
 
@@ -203,7 +204,7 @@ namespace com::android::dex{
         class ClassDefIterable:Iterable{
 
             public:
-                Iterator* iterator();
+                Iterator<ClassDef>* iterator();
 
         };//class ClassDefIterable
 

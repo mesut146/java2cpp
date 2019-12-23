@@ -52,7 +52,7 @@ public class CMethod extends HasModifier
                 append("static ");
             }
             append(type.toString());
-            if(isPointer()&&!type.isArray()){
+            if(isPointer()){
                 append("*");
             }
             append(" ");
@@ -77,7 +77,7 @@ public class CMethod extends HasModifier
     }
     
     boolean isPointer(){
-        return !isCons&&!Helper.is(type.toString())&&!type.toString().equals("void");
+        return !isCons&&type.isPointer();
     }
     
     boolean isVoid(){

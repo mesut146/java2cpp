@@ -19,7 +19,7 @@ public class Helper {
         put("boolean","bool");
     }};
     
-    public static boolean is(String ty){
+    public static boolean isPrim(String ty){
         return java_prims.contains(ty)||java_wr.contains(ty);
     }
 

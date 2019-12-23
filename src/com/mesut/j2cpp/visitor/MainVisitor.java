@@ -148,11 +148,12 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         last().addMethod(cm);
         MethodVisitor methodVisitor=new MethodVisitor();
         cm.isCons = true;
-        cm.name = n.getName().asString();
+        cm.name = n.getNameAsString();
         cm.setPublic(n.isPublic());
         for (Parameter p : n.getParameters()) {
             CParameter cp = new CParameter();
             cp.type = (TypeName) p.getType().accept(methodVisitor,new Nodew());
+            System.out.println("type="+p.getType().getClass());
             cp.name = p.getNameAsString();
             cm.params.add(cp);
         }

@@ -418,10 +418,9 @@ root(Type=CompilationUnit):
                             name(Type=SimpleName): 
                                 identifier: "str"
                             type(Type=ArrayType): 
-                                origin: "NAME"
-                                componentType(Type=ClassOrInterfaceType): 
-                                    name(Type=SimpleName): 
-                                        identifier: "String"
+                                origin: "TYPE"
+                                componentType(Type=PrimitiveType): 
+                                    type: "BYTE"
                 - member(Type=FieldDeclaration): 
                     modifiers: 
                         - modifier(Type=Modifier): 
@@ -600,6 +599,34 @@ root(Type=CompilationUnit):
                         - thrownException(Type=ClassOrInterfaceType): 
                             name(Type=SimpleName): 
                                 identifier: "IOException"
+                - member(Type=ConstructorDeclaration): 
+                    body(Type=BlockStmt): 
+                        statements: 
+                            - statement(Type=ExpressionStmt): 
+                                expression(Type=FieldAccessExpr): 
+                                    name(Type=SimpleName): 
+                                        identifier: "length"
+                                    scope(Type=NameExpr): 
+                                        name(Type=SimpleName): 
+                                            identifier: "myarr"
+                    name(Type=SimpleName): 
+                        identifier: "Dex"
+                    modifiers: 
+                        - modifier(Type=Modifier): 
+                            keyword: "PUBLIC"
+                    parameters: 
+                        - parameter(Type=Parameter): 
+                            isVarArgs: "false"
+                            name(Type=SimpleName): 
+                                identifier: "myarr"
+                            type(Type=ArrayType): 
+                                origin: "TYPE"
+                                componentType(Type=ArrayType): 
+                                    origin: "TYPE"
+                                    componentType(Type=ArrayType): 
+                                        origin: "TYPE"
+                                        componentType(Type=PrimitiveType): 
+                                            type: "INT"
                 - member(Type=ConstructorDeclaration): 
                     body(Type=BlockStmt): 
                         statements: 
