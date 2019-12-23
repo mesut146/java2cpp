@@ -24,8 +24,8 @@ public class Main {
                 destPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
             }else {
                 Resolver.srcPath="/home/mesut/Desktop/dx-org/src";
-                //destPath="/home/mesut/Desktop/dx-cpp";
-                destPath="/home/mesut/IdeaProjects/java2cpp/asd/test/cpp";
+                destPath="/home/mesut/Desktop/dx-cpp";
+                //destPath="/home/mesut/IdeaProjects/java2cpp/asd/test/cpp";
 
             }
             //Resolver.srcPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/java";
@@ -58,7 +58,9 @@ public class Main {
             CHeader h=new CHeader();
             CSource cpp=new CSource();
             h.rpath="test.h";
-            visitor.h=h;
+            visitor.header=h;
+            visitor.mv=new MethodVisitor();
+            visitor.mv.header=h;
             cpp.h=h;
             cu.accept(visitor,null);
             

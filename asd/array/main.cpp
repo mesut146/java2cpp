@@ -57,6 +57,12 @@ void arr()
     }
 }
 
+template <typename type> int prim(){
+
+    
+    return 0;
+}
+
 /*
 (1) java local var could be normal var but becomes ref/ptr(&var) when pass and return
 (2) or just pointer everywhere except prims
@@ -69,8 +75,9 @@ int main(void)
     mycar.print();*/
     //car::inner* in=new ns1::car::inner(500);
     //print(in);
-
-    arr();
+    prim<void>();
+    
+    //arr();
     //arr0();
     //arr_prim();
 }

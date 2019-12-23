@@ -110,20 +110,29 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     public Object visit(TryStmt n, Nodew w) {
+
         boolean tryRet, tryTh, finRet, finTh;
         if (n.getFinallyBlock().isPresent()) {
-            //String to=method.type.type;
+            header.addRuntime();
+            String retStr="if(0){return";
+            TypeName type=method.type;
+            if (!method.isCons&&!method.type.isVoid()){
+                retStr+=""+type.toString();
+            }else {
+                type=new TypeName("void");
+            }
+            retStr+=";}";
             Nodew fin = new Nodew();
-            Nodew tn = new Nodew();
-            n.getTryBlock().accept(this, tn);
             //tryRet=hasReturn;hasReturn=false;
             n.getFinallyBlock().get().accept(this, fin);
             //finRet=hasReturn;hasReturn=false;
-            w.line("bool tryReturned=true,finReturned=true;");
-            w.line("void* res_tryBlock=with_finally([&](){");
+            w.append("bool tryReturned=true,finReturned=true;");
+            w.line(type.toString()).append("* res_tryBlock=with_finally<"+type.toString()+">([&](){");
             w.up();
             w.line("try");
-            w.append(tn);
+            Nodew tn = new Nodew();
+            n.getTryBlock().accept(this, tn);
+            w.appendi(tn);
             if (n.getCatchClauses().size() > 0) {
                 for (CatchClause cc : n.getCatchClauses()) {
                     w.append("catch(");
@@ -137,21 +146,23 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             } else {
                 w.line("catch(int x){}");
             }
-            w.line("if(0){return nullptr;}");
-            w.line("tryReturned=false");
+            w.line(retStr);
+            w.line("tryReturned=false;");
             w.down();
-            w.line("},[&](){");
+            w.lineln("},[&](){");
             w.up();
-            w.append(fin);
-            w.line("if(0){return nullptr;}");
-            w.line("finReturned=false");
+            w.appendi(fin);
+            w.line(retStr);
+            w.line("finReturned=false;");
             w.down();
             w.line("});");
-
-            w.line("if(tryReturned||finReturned){");
-            w.up();
-            w.line("return res_tryBlock;");
-            w.line("}");
+            if(!method.isCons&&!method.type.isVoid()){
+                w.line("if(tryReturned||finReturned){");
+                w.up();
+                w.line("return res_tryBlock;");
+                w.down();
+                w.line("}");
+            }
         } else {
             w.append("try");
             int len = n.getResources().size();
@@ -205,7 +216,6 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             } else {
                 p.line(method.getParent().base.get(0).type);
             }
-
         }
         args(n.getArguments(), p);
         c.str = p.toString();
@@ -219,7 +229,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             scope.accept(this, w);
 
             if (scope.isNameExpr()){//field or class
-                if (Resolver.isClass(scope.asNameExpr().getNameAsString())){
+                if (Resolver.isClass(scope.asNameExpr().getNameAsString(),header)){
                     w.append("::");
                 }else{
                     w.append("->");
@@ -243,7 +253,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         scope.accept(this, w);
         //TODO:if scope is not object,ns
         if (scope.isNameExpr()){//field/var or class
-            if (Resolver.isClass(scope.asNameExpr().getNameAsString())){
+            if (Resolver.isClass(scope.asNameExpr().getNameAsString(),header)){
                 w.append("::");
             }else{
                 w.append("->");

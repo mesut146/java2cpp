@@ -3,13 +3,13 @@
   <component name="ChangeListManager">
     <list default="true" id="74c0cebe-1d5d-4445-8c95-cd48b15840ca" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.h" beforeDir="false" afterPath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/asd/test/cpp/com/android/dex/Dex.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Helper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Helper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CMethod.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CMethod.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CParameter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CParameter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/TypeName.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/TypeName.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/asd/array/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/asd/array/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/asd/array/main.o" beforeDir="false" afterPath="$PROJECT_DIR$/asd/array/main.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/CHeader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/CHeader.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Resolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Resolver.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Node.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Node.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MainVisitor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MainVisitor.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MethodVisitor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MethodVisitor.java" afterDir="false" />
     </list>
@@ -183,7 +183,14 @@
       <option name="project" value="LOCAL" />
       <updated>1577036292551</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="fix pointer type and isPointer method">
+      <created>1577100964261</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1577100964261</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -197,7 +204,8 @@
     <MESSAGE value="array finish" />
     <MESSAGE value="array,type" />
     <MESSAGE value="scope" />
-    <option name="LAST_COMMIT_MESSAGE" value="scope" />
+    <MESSAGE value="fix pointer type and isPointer method" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix pointer type and isPointer method" />
   </component>
   <component name="WindowStateProjectService">
     <state x="275" y="27" width="800" height="675" key="#Notifications" timestamp="1577026317362">
@@ -216,46 +224,46 @@
       <screen x="0" y="0" width="1360" height="734" />
     </state>
     <state x="412" y="152" width="525" height="425" key="#com.intellij.ide.util.TreeClassChooserDialog/0.0.1360.734@0.0.1360.734" timestamp="1576072870041" />
-    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2" timestamp="1577036291497">
+    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2" timestamp="1577100963204">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2/0.0.1360.734@0.0.1360.734" timestamp="1577036291497" />
+    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2/0.0.1360.734@0.0.1360.734" timestamp="1577100963204" />
     <state x="100" y="99" width="1160" height="534" key="DiffContextDialog" timestamp="1577036348549">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
     <state x="100" y="99" width="1160" height="534" key="DiffContextDialog/0.0.1360.734@0.0.1360.734" timestamp="1577036348549" />
-    <state width="1314" height="212" key="GridCell.Tab.0.bottom" timestamp="1577100909734">
+    <state width="1314" height="212" key="GridCell.Tab.0.bottom" timestamp="1577105301676">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.bottom/0.0.1360.734@0.0.1360.734" timestamp="1577100909734" />
-    <state width="1314" height="212" key="GridCell.Tab.0.center" timestamp="1577100909733">
+    <state width="1314" height="212" key="GridCell.Tab.0.bottom/0.0.1360.734@0.0.1360.734" timestamp="1577105301676" />
+    <state width="1314" height="212" key="GridCell.Tab.0.center" timestamp="1577105301676">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.center/0.0.1360.734@0.0.1360.734" timestamp="1577100909733" />
-    <state width="1314" height="212" key="GridCell.Tab.0.left" timestamp="1577100909733">
+    <state width="1314" height="212" key="GridCell.Tab.0.center/0.0.1360.734@0.0.1360.734" timestamp="1577105301676" />
+    <state width="1314" height="212" key="GridCell.Tab.0.left" timestamp="1577105301675">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.left/0.0.1360.734@0.0.1360.734" timestamp="1577100909733" />
-    <state width="1314" height="212" key="GridCell.Tab.0.right" timestamp="1577100909734">
+    <state width="1314" height="212" key="GridCell.Tab.0.left/0.0.1360.734@0.0.1360.734" timestamp="1577105301675" />
+    <state width="1314" height="212" key="GridCell.Tab.0.right" timestamp="1577105301676">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.right/0.0.1360.734@0.0.1360.734" timestamp="1577100909734" />
-    <state width="1314" height="207" key="GridCell.Tab.1.bottom" timestamp="1575989035324">
+    <state width="1314" height="212" key="GridCell.Tab.0.right/0.0.1360.734@0.0.1360.734" timestamp="1577105301676" />
+    <state width="1314" height="207" key="GridCell.Tab.1.bottom" timestamp="1577102122345">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="207" key="GridCell.Tab.1.bottom/0.0.1360.734@0.0.1360.734" timestamp="1575989035324" />
-    <state width="1314" height="207" key="GridCell.Tab.1.center" timestamp="1575989035323">
+    <state width="1314" height="207" key="GridCell.Tab.1.bottom/0.0.1360.734@0.0.1360.734" timestamp="1577102122345" />
+    <state width="1314" height="207" key="GridCell.Tab.1.center" timestamp="1577102122345">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="207" key="GridCell.Tab.1.center/0.0.1360.734@0.0.1360.734" timestamp="1575989035323" />
-    <state width="1314" height="207" key="GridCell.Tab.1.left" timestamp="1575989035323">
+    <state width="1314" height="207" key="GridCell.Tab.1.center/0.0.1360.734@0.0.1360.734" timestamp="1577102122345" />
+    <state width="1314" height="207" key="GridCell.Tab.1.left" timestamp="1577102122345">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="207" key="GridCell.Tab.1.left/0.0.1360.734@0.0.1360.734" timestamp="1575989035323" />
-    <state width="1314" height="207" key="GridCell.Tab.1.right" timestamp="1575989035323">
+    <state width="1314" height="207" key="GridCell.Tab.1.left/0.0.1360.734@0.0.1360.734" timestamp="1577102122345" />
+    <state width="1314" height="207" key="GridCell.Tab.1.right" timestamp="1577102122345">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="207" key="GridCell.Tab.1.right/0.0.1360.734@0.0.1360.734" timestamp="1575989035323" />
+    <state width="1314" height="207" key="GridCell.Tab.1.right/0.0.1360.734@0.0.1360.734" timestamp="1577102122345" />
     <state x="88" y="0" width="1024" height="732" key="SettingsEditor" timestamp="1577026349480">
       <screen x="0" y="0" width="1360" height="734" />
     </state>

@@ -84,10 +84,29 @@ public abstract class Node
         }
         return this;
     }
+
+    public Node appendi(Node n){
+        n.print();
+        boolean flag=true;
+        for(String s:n.list){
+            if(flag&&n.firstBlock){
+                flag=false;
+                append(s);
+            }else{
+                list.add(indention+s);
+            }
+        }
+        return this;
+    }
     
     public void setTo(Node n){
         n.level=this.level;
         n.init();
+    }
+
+    public void setFrom(Node n){
+        this.level=n.level;
+        this.init();
     }
     public void up(){
         level++;

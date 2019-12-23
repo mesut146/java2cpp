@@ -10,6 +10,7 @@ public class CHeader extends Node
     public List<CClass> classes=new ArrayList<>();
     public Namespace ns;
     public String rpath;
+    boolean hasRuntime=false;
     //public List<CMethod> methods=new ArrayList<>();
     
     
@@ -17,6 +18,10 @@ public class CHeader extends Node
         //cc.inHeader=true;
         cc.ns=ns;
         classes.add(cc);
+    }
+
+    public void addRuntime(){
+        hasRuntime=true;
     }
 
     public void print()
@@ -28,6 +33,9 @@ public class CHeader extends Node
         for(String imp:includes){
             append("#include \"");
             append(imp).append("\"").println();
+        }
+        if (hasRuntime){
+            appendln("#include \"JavaRuntime.h\"");
         }
         println();
         appendln("using namespace com::java::lang;");

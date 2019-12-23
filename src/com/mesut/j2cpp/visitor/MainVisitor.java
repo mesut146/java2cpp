@@ -15,7 +15,8 @@ import java.util.*;
 
 public class MainVisitor extends VoidVisitorAdapter<Nodew> {
 
-    public CHeader h;
+    public CHeader header;
+    public MethodVisitor mv;
     public Stack<CClass> stack = new Stack<>();
 
     public CClass last() {
@@ -25,7 +26,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     public void visit(PackageDeclaration n, Nodew arg) {
         Namespace ns = new Namespace();
         ns.pkg(n.getNameAsString());
-        h.ns = ns;
+        header.ns = ns;
     }
 
     public void visit(ImportDeclaration n, Nodew w) {
@@ -37,13 +38,13 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
             if (idx != -1) {
                 imp = imp.substring(0, idx - 1);
             }
-            h.includes.add(imp + ".h");
+            header.includes.add(imp + ".h");
         }
         if (n.isAsterisk()) {
             //TODO
             //resolve seperately
         } else {
-            h.includes.add(imp + ".h");
+            header.includes.add(imp + ".h");
         }
 
     }
@@ -51,12 +52,12 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     public void visit(ClassOrInterfaceDeclaration n, Nodew s) {
         CClass cc = new CClass();
         if (stack.size() == 0) {
-            h.addClass(cc);
+            header.addClass(cc);
         } else {
             last().addInner(cc);
         }
         stack.push(cc);
-        cc.name = n.getName().asString();
+        cc.name = n.getNameAsString();
         cc.isInterface = n.isInterface();
         n.getExtendedTypes().forEach(ex -> cc.base.add(new TypeName(ex.getNameAsString())));
         n.getImplementedTypes().forEach(iface -> cc.base.add(new TypeName(iface.getNameAsString())));
@@ -67,7 +68,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     public void visit(EnumDeclaration n, Nodew w) {
         CClass cc = new CClass();
         if (stack.size() == 0) {
-            h.addClass(cc);
+            header.addClass(cc);
         } else {
             last().addInner(cc);
         }
@@ -86,8 +87,6 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
             Nodew rh = new Nodew();
             rh.append("new ").append(cc.name);
 
-
-            MethodVisitor mv = new MethodVisitor();
             mv.args(ec.getArguments(), rh);
             /*if(ec.getBody()!=null){
                 throw new RuntimeException("enum body");
@@ -112,7 +111,6 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
 
             if (vd.getInitializer().isPresent()) {
                 Nodew nw = new Nodew();
-                MethodVisitor mv = new MethodVisitor();
                 vd.getInitializer().get().accept(mv, nw);
                 cf.right = nw.toString();
             }
@@ -137,8 +135,8 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         }
         if (n.getBody().isPresent()) {
             cm.body.init();
-            MethodVisitor mv = new MethodVisitor();
             mv.method = cm;
+            mv.header=header;
             n.getBody().get().accept(mv, cm.body);
         }
     }
@@ -153,13 +151,12 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         for (Parameter p : n.getParameters()) {
             CParameter cp = new CParameter();
             cp.type = (TypeName) p.getType().accept(methodVisitor,new Nodew());
-            System.out.println("type="+p.getType().getClass());
             cp.name = p.getNameAsString();
             cm.params.add(cp);
         }
         cm.body.init();
-        MethodVisitor mv = new MethodVisitor();
         mv.method = cm;
+        mv.header=header;
         n.getBody().accept(mv, cm.body);
     }
 

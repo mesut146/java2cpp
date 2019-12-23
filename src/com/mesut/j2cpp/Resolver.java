@@ -15,8 +15,18 @@ public class Resolver {
 
     }
 
-    public static boolean isClass(String name){
-
+    public static boolean isClass(String name,CHeader header){
+        for(String str:header.includes){
+            if (str.endsWith(".h")){
+                int idx=str.lastIndexOf('/');
+                if (idx!=-1){
+                    String cls=str.substring(idx+1,str.length()-2);
+                    if (name.equals(cls)){
+                        return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 
