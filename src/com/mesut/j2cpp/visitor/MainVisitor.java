@@ -18,6 +18,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     public CHeader header;
     public MethodVisitor mv;
     public Stack<CClass> stack = new Stack<>();
+    public Converter converter;
 
     public CClass last() {
         return stack.peek();

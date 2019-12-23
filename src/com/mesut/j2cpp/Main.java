@@ -17,18 +17,20 @@ public class Main {
 
 
         try {
+            Converter converter;
+            String srcPath;
             String destPath;
             boolean android=false;
             if (android){
-                Resolver.srcPath="/storage/extSdCard/asd/dx/dex/src";
+                srcPath="/storage/extSdCard/asd/dx/dex/src";
                 destPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
             }else {
-                Resolver.srcPath="/home/mesut/Desktop/dx-org/src";
+                srcPath="/home/mesut/Desktop/dx-org/src";
                 destPath="/home/mesut/Desktop/dx-cpp";
                 //destPath="/home/mesut/IdeaProjects/java2cpp/asd/test/cpp";
 
             }
-            //Resolver.srcPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/java";
+            converter=new Converter(srcPath,destPath);
 
 			String cls;
 			String path;
@@ -38,13 +40,12 @@ public class Main {
             //cls="com/android/dex/ClassDef.java";
             cls="com/android/dex/Dex.java";
             //cls="MyEnum.java";
-            
-            path=Resolver.srcPath+"/"+cls;
 
-            CompilationUnit cu=StaticJavaParser.parse(new File(path));
+            path=srcPath+"/"+cls;
             
             if(args.length>0){
                 if(args[0].equals("tree")){
+                    CompilationUnit cu=StaticJavaParser.parse(new File(path));
                     String yaml=new YamlPrinter(true).output(cu);
                     File fyml=new File(destPath+"/"+cls.replace(".java",".yaml"));
                     fyml.getParentFile().mkdirs();
@@ -53,28 +54,10 @@ public class Main {
                     return;
                 }
             }
-            
-            MainVisitor visitor=new MainVisitor();
-            CHeader h=new CHeader();
-            CSource cpp=new CSource();
-            h.rpath="test.h";
-            visitor.header=h;
-            visitor.mv=new MethodVisitor();
-            visitor.mv.header=h;
-            cpp.h=h;
-            cu.accept(visitor,null);
-            
-            String hs=h.toString();
-            String ss=cpp.toString();
-            System.out.println(hs);
-            System.out.println("---------------");
-            System.out.println(ss);
-            File fcpp=new File(destPath+"/"+cls.replace(".java",".cpp"));
-            fcpp.getParentFile().mkdirs();
-            Files.write(Paths.get(fcpp.getAbsolutePath()),ss.getBytes());
-            
-            File fh=new File(destPath+"/"+cls.replace(".java",".h"));
-            Files.write(Paths.get(fh.getAbsolutePath()),hs.getBytes());
+            converter.makeTable();
+            //converter.convertSingle(cls);
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -15,7 +15,7 @@ import java.util.*;
 public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     public CMethod method;
     public CHeader header;
-    public SymbolTable table;
+    public Converter converter;
     boolean hasReturn = false, hasThrow = false, hasBreak = false;
 
     public Object visit(BlockStmt n, Nodew w) {
@@ -177,6 +177,9 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
                 w.append(")");
             }
             n.getTryBlock().accept(this, w);
+            if (n.getCatchClauses().size()==0){
+                w.append("catch(int x){}");
+            }
             for (CatchClause cc : n.getCatchClauses()) {
                 w.append("catch(");
                 Parameter p = cc.getParameter();
@@ -229,7 +232,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             scope.accept(this, w);
 
             if (scope.isNameExpr()){//field or class
-                if (Resolver.isClass(scope.asNameExpr().getNameAsString(),header)){
+                if (converter.getResolver().isClass(scope.asNameExpr().getNameAsString(),header)){
                     w.append("::");
                 }else{
                     w.append("->");
@@ -253,7 +256,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         scope.accept(this, w);
         //TODO:if scope is not object,ns
         if (scope.isNameExpr()){//field/var or class
-            if (Resolver.isClass(scope.asNameExpr().getNameAsString(),header)){
+            if (converter.getResolver().isClass(scope.asNameExpr().getNameAsString(),header)){
                 w.append("::");
             }else{
                 w.append("->");
@@ -323,7 +326,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             if (first) {
                 first = false;
                 TypeName t = (TypeName) vd.getType().accept(this, null);
-                w.append(t.full());
+                w.append(t.toString());
                 if (t.isPointer()) {
                     w.append("*");
                 }
@@ -331,13 +334,11 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             } else {
                 w.append(",");
             }
-
             w.append(vd.getNameAsString());
             if (vd.getInitializer().isPresent()) {
                 w.append("=");
                 vd.getInitializer().get().accept(this, w);
             }
-
         }
         return null;
     }

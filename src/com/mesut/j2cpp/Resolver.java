@@ -6,7 +6,8 @@ import java.util.List;
 public class Resolver {
     String pkgStr;
     String[] pkgArr;
-    static String srcPath;
+    SymbolTable table;
+
     public static List<String> jreFiles=new ArrayList<>();
     public static List<String> projectFiles=new ArrayList<>();
 
@@ -15,7 +16,7 @@ public class Resolver {
 
     }
 
-    public static boolean isClass(String name,CHeader header){
+    public boolean isClass(String name,CHeader header){
         for(String str:header.includes){
             if (str.endsWith(".h")){
                 int idx=str.lastIndexOf('/');
@@ -27,6 +28,7 @@ public class Resolver {
                 }
             }
         }
+        //TODO: check same package too
         return false;
     }
 
