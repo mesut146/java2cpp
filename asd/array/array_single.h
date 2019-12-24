@@ -1,26 +1,26 @@
 #pragma once
 
-#include "java_array.h"
+#include "array_multi.h"
 
 using namespace std;
 
 template <typename T>
-class java_array;
+class array_multi;
 
 template <typename T>
-class java_array_single : java_array<T>
+class array_single : array_multi<T>
 {
 public:
     int length;
     T *elems;
 
-    java_array_single()
+    array_single()
     {
         length = 0;
         elems = nullptr;
     }
 
-    java_array_single(int size)
+    array_single(int size)
     {
         if (size < 0)
         {
@@ -43,7 +43,7 @@ public:
     }
 
   
-    java_array_single(int *sizes, int n)
+    array_single(int *sizes, int n)
     {
         if(n>1){
             throw "error: single dim expected";
@@ -56,7 +56,7 @@ public:
             }
     }
 
-    java_array_single(std::initializer_list<T> list)
+    array_single(std::initializer_list<T> list)
     {
         length = list.size();
         elems = new T[length];
@@ -72,7 +72,7 @@ public:
         throw std::runtime_error(this->format("array index out of bounds exception: index=%d size=%d", index, length));
     }
 
-    java_array_single<T> operator=(std::initializer_list<T> rhs)
+    array_single<T> operator=(std::initializer_list<T> rhs)
     {
         length = rhs.size();
         elems = new T[length];

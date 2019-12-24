@@ -10,20 +10,20 @@
 using namespace std;
 
 template <typename T>
-class java_array
+class array_multi
 {
 public:
     int length;
     T *elems;
-    java_array *map;
+    array_multi *map;
 
-    java_array()
+    array_multi()
     {
         length = 0;
         elems = nullptr;
     }
 
-    java_array(int size)
+    array_multi(int size)
     {
         if (size < 0)
         {
@@ -38,11 +38,11 @@ public:
         {
             length = size;
             elems = new T[length];
-            map = new java_array[length];
+            map = new array_multi[length];
         }
     }
 
-    java_array(std::initializer_list<T> list)
+    array_multi(std::initializer_list<T> list)
     {
         length = list.size();
         elems = new T[length];
@@ -65,19 +65,19 @@ public:
 
     bool isArray()
     {
-        return string(typeid(T).name()).find("java_array") != string::npos;
+        return string(typeid(T).name()).find("array_multi") != string::npos;
     }
 
     bool isSingleArray()
     {
-        return string(typeid(T).name()).find("java_array_single") != string::npos;
+        return string(typeid(T).name()).find("array_multi_single") != string::npos;
     }
 
-    /*java_array(std::initializer_list<T> sizes, int n)
+    /*array_multi(std::initializer_list<T> sizes, int n)
     {
     }*/
 
-    java_array(int *sizes, int n)
+    array_multi(int *sizes, int n)
     {
         length = sizes[0];
         if (length < 0)
@@ -91,7 +91,7 @@ public:
 
             //cout << "obj=" << obj.length << endl;
             //obj.init(sizes + 1, n - 1);
-            //map[0]=java_array
+            //map[0]=array_multi
             for (int i = 0; i < length; i++)
             {
                 elems[i] = T(sizes + 1, n - 1);
@@ -117,7 +117,7 @@ public:
         throw std::runtime_error(format("array index out of bounds exception: index=%d size=%d", index, length));
     }
 
-    java_array<T> operator=(std::initializer_list<T> rhs)
+    array_multi<T> operator=(std::initializer_list<T> rhs)
     {
         length = rhs.size();
         elems = new T[length];
