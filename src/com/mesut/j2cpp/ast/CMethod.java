@@ -1,12 +1,12 @@
 package com.mesut.j2cpp.ast;
 import java.util.*;
-import java.io.*;
+
 import com.mesut.j2cpp.*;
 
 public class CMethod extends HasModifier
 {
     public String name;
-    public TypeName type;
+    public CType type;
     public List<CParameter> params=new ArrayList<>();
     public List<String> throwList=new ArrayList<>();
     public boolean empty=false;
@@ -22,14 +22,18 @@ public class CMethod extends HasModifier
     public String getName(){
         return name;
     }
-    public TypeName getType(){
+    public CType getType(){
         return type;
     }
     
     public void print()
     {
         list.clear();
-        
+
+        if (isNative()){
+            System.out.println("native method");
+            append("/*TODO native*/ ");
+        }
         printDecl();
         
         if(parent.forHeader){
@@ -57,9 +61,6 @@ public class CMethod extends HasModifier
             }
             append(" ");
         }
-        /*if(!parent.inHeader){
-            append(parent.getNamespaceFull()+"::");
-        }*/
         if(!parent.forHeader&&parent.ns!=null){
             append(parent.getNamespaceFull().all+"::");
         }

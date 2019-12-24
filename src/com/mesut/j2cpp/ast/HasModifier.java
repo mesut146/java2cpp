@@ -18,6 +18,10 @@ public abstract class HasModifier extends Node{
         return modifiers.contains("static");
     }
 
+    public boolean isNative() {
+        return modifiers.contains("native");
+    }
+
     public void setPublic(boolean b){
         if (b){
             modifiers.add("public");

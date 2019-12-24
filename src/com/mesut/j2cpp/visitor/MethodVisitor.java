@@ -45,22 +45,30 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         w.append("if(");
         n.getCondition().accept(this, w);
         w.append(")");
-        n.getThenStmt().accept(this, w);
+        block(w,n.getThenStmt());
         if (n.getElseStmt().isPresent()) {
             w.append("else");
-            if (n.hasCascadingIfStmt()) {
-                w.append(" ");
-            }
-            n.getElseStmt().get().accept(this, w);
+            block(w,n.getElseStmt().get());
         }
         return null;
+    }
+
+    void block(Nodew w,Statement statement){
+        if (statement.isBlockStmt()){
+            statement.accept(this,w);
+        }else {
+            w.println();
+            w.up();
+            statement.accept(this,w);
+            w.down();
+        }
     }
 
     public Object visit(WhileStmt n, Nodew w) {
         w.append("while(");
         n.getCondition().accept(this, w);
-        w.append(")");
-        n.getBody().accept(this, w);
+        w.append(") ");
+        block(w,n.getBody());
         return null;
     }
 
@@ -88,7 +96,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             }
         }
         w.append(")");
-        n.getBody().accept(this, w);
+        block(w,n.getBody());
         return null;
     }
 
@@ -98,7 +106,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         w.append(":");
         n.getIterable().accept(this, w);
         w.append(")");
-        n.getBody().accept(this, w);
+        block(w,n.getBody());
         return null;
     }
 
@@ -119,11 +127,11 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         if (n.getFinallyBlock().isPresent()) {
             header.addRuntime();
             String retStr="if(0){return";
-            TypeName type=method.type;
+            CType type=method.type;
             if (!method.isCons&&!method.type.isVoid()){
                 retStr+=""+type.toString();
             }else {
-                type=new TypeName("void");
+                type=new CType("void");
             }
             retStr+=";}";
             Nodew fin = new Nodew();
@@ -141,7 +149,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
                 for (CatchClause cc : n.getCatchClauses()) {
                     w.append("catch(");
                     Parameter p = cc.getParameter();
-                    w.append(p.getTypeAsString());
+                    w.append((CType) p.getType().accept(this,new Nodew()));
                     w.append(" ");
                     w.append(p.getNameAsString());
                     w.append(")");
@@ -187,7 +195,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             for (CatchClause cc : n.getCatchClauses()) {
                 w.append("catch(");
                 Parameter p = cc.getParameter();
-                w.append(p.getTypeAsString());
+                w.append((CType) p.getType().accept(this,new Nodew()));
                 w.append(" ");
                 w.append(p.getNameAsString());
                 w.append(")");
@@ -214,7 +222,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     public Object visit(InstanceOfExpr n,Nodew w){
         header.addRuntime();
         w.append("instance_of<");
-        TypeName type=(TypeName)n.getType().accept(this,null);
+        CType type=(CType)n.getType().accept(this,null);
         w.append(type.toString());
         w.append(">(");
         n.getExpression().accept(this,w);
@@ -283,6 +291,16 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
+    @Override
+    public Object visit(ArrayAccessExpr n, Nodew w) {
+        w.append("(*");
+        n.getName().accept(this,w);
+        w.append(")[");
+        n.getIndex().accept(this,w);
+        w.append("]");
+        return null;
+    }
+
     public Object visit(AssignExpr n, Nodew w) {
         n.getTarget().accept(this, w);
         w.append(n.getOperator().asString());
@@ -303,7 +321,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
         w.append("new ");
         //typearg
-        TypeName type=(TypeName)n.getType().accept(this,null);
+        CType type=(CType)n.getType().accept(this,null);
         w.append(type.toString());
         args(n.getArguments(), w);
         if (n.getAnonymousClassBody().isPresent()) {
@@ -343,7 +361,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         for (VariableDeclarator vd : n.getVariables()) {
             if (first) {
                 first = false;
-                TypeName t = (TypeName) vd.getType().accept(this, null);
+                CType t = (CType) vd.getType().accept(this, null);
                 w.append(t.toString());
                 if (t.isPointer()) {
                     w.append("*");
@@ -398,10 +416,64 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
+    @Override
+    public Object visit(CharLiteralExpr n, Nodew w) {
+
+        String str=n.getValue();
+        if (str.startsWith("\\u")){
+            w.append("u");
+        }
+        w.append("'");
+        w.append(str);
+        w.append("'");
+        return null;
+    }
+
+    @Override
+    public Object visit(CastExpr n, Nodew w) {
+        w.append("(");
+        CType type=(CType) n.getType().accept(this,w);
+        w.append(type);
+        if (type.isPointer()){
+            w.append("*");
+        }
+        w.append(")");
+        n.getExpression().accept(this,w);
+        return null;
+    }
+
+    @Override
+    public Object visit(EnclosedExpr n, Nodew w) {
+        w.append("(");
+        n.getInner().accept(this,w);
+        w.append(")");
+        return null;
+    }
+
+    @Override
+    public Object visit(LongLiteralExpr n, Nodew w) {
+        String str=n.getValue();
+        if (str.endsWith("L")){
+            str=str.substring(0,str.length()-1);
+        }
+        w.append(str);
+        return null;
+    }
+
     public Object visit(StringLiteralExpr n, Nodew w) {
         w.append("new String(\"");
         w.append(n.getValue());
         w.append("\")");
+        return null;
+    }
+
+    @Override
+    public Object visit(BooleanLiteralExpr n, Nodew w) {
+        if (n.getValue()){
+            w.append("true");
+        }else {
+            w.append("false");
+        }
         return null;
     }
 
@@ -412,7 +484,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         } else {
             //only dimensions
             w.append("new ");
-            TypeName typeName = new TypeName(n.getElementType().asString());
+            CType typeName = new CType(n.getElementType().asString());
             typeName.arrayLevel = n.getLevels().size();
             w.append(typeName.toString());
             w.append("(");
@@ -453,28 +525,43 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return n.accept(this,w);
     }*/
 
+    public Object visit(PrimitiveType n, Nodew w) {
+        CType typeName = new CType(Helper.toCType(n.asString()));
+        //w.append(typeName.toString());
+        return typeName;
+    }
+
     public Object visit(ArrayType n, Nodew w) {
-        TypeName typeName = (TypeName) n.getElementType().accept(this,w);
+        CType typeName = (CType) n.getElementType().accept(this,w);
         typeName.arrayLevel=n.getArrayLevel();
-        //System.out.println("arr type="+typeName);
         return typeName;
     }
 
     public Object visit(VoidType n, Nodew w) {
-        TypeName typeName = new TypeName("void");
+        CType typeName = new CType("void");
         //w.append(typeName.toString());
         return typeName;
     }
 
     public Object visit(ClassOrInterfaceType n, Nodew w) {
-        TypeName typeName = new TypeName(n.getNameAsString());
+        CType typeName = new CType(n.getNameAsString());
         if (n.getTypeArguments().isPresent()){
             for(Iterator<Type> iterator=n.getTypeArguments().get().iterator();iterator.hasNext();){
-                typeName.typeNames.add((TypeName)iterator.next().accept(this,w));
+                typeName.typeNames.add((CType)iterator.next().accept(this,w));
             }
+        }
+        if (n.getScope().isPresent()){
+            CType scope= (CType) n.getScope().get().accept(this,new Nodew());
+            typeName.type=scope.type+"::"+typeName.type;
         }
         //w.append(typeName.toString());
         return typeName;
+    }
+
+    public Object visit(UnionType n, Nodew w) {
+        CType type= (CType) n.getElements().get(0).accept(this,new Nodew());
+        System.out.println("union type detected and chosen the first");
+        return type;
     }
 
     public Object visit(NameExpr n, Nodew w) {
@@ -483,14 +570,9 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     public Object visit(SimpleName n, Nodew w) {
-        TypeName typeName = new TypeName(n.getIdentifier());
+        CType typeName = new CType(n.getIdentifier());
         //w.append(typeName.toString());
         return typeName;
     }
 
-    public Object visit(PrimitiveType n, Nodew w) {
-        TypeName typeName = new TypeName(n.asString());
-        //w.append(typeName.toString());
-        return typeName;
-    }
 }

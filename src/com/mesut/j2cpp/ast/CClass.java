@@ -1,12 +1,14 @@
 package com.mesut.j2cpp.ast;
+import com.mesut.j2cpp.Nodew;
+
 import java.util.*;
-import java.io.*;
 import java.util.stream.Collectors;
 
 public class CClass extends Node
 {
     public String name;
-    public List<TypeName> base=new ArrayList<>();
+    public List<CType> base=new ArrayList<>();
+    public Template template=new Template();
     public List<CField> fields=new ArrayList<>();
     public List<CMethod> methods=new ArrayList<>();
     public List<CClass> classes=new ArrayList<>();
@@ -14,6 +16,7 @@ public class CClass extends Node
     public CClass parent;
     public Namespace ns=null;
     public boolean forHeader=true;
+    public Nodew staticBlock=null;
     //public boolean inHeader=false;
     
     public void addInner(CClass cc){
@@ -57,8 +60,12 @@ public class CClass extends Node
         if(parent==null&&ns!=null){
             line("namespace ");
             append(ns.all);
-            append("{");
+            appendln("{");
             up();
+        }
+        if (template.list.size()>0){
+            println();
+            append(template.toString());
         }
         line("class ");
         append(name);
@@ -73,6 +80,12 @@ public class CClass extends Node
         }
         append("{");
         up();
+        if (staticBlock!=null){
+            println();println();
+            appendi(staticBlock);
+            println();
+        }
+
         List<CField> fpub=fields.stream().filter(CField::isPublic).collect(Collectors.toList());
         if (fpub.size()>0){
             line("public:");

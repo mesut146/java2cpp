@@ -5,14 +5,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class TypeName
+public class CType
 {
     public Namespace ns;
     public String type;
     public int arrayLevel=0;
-    public List<TypeName> typeNames=new ArrayList<>();
+    public List<CType> typeNames=new ArrayList<>();
+    public CType scope=null;
     
-    public TypeName(String s){
+    public CType(String s){
         type=s;
     }
     
@@ -49,7 +50,7 @@ public class TypeName
             StringBuilder sb = new StringBuilder();
             sb.append(type);
             sb.append("<");
-            for (Iterator<TypeName> iterator=typeNames.iterator();iterator.hasNext();){
+            for (Iterator<CType> iterator = typeNames.iterator(); iterator.hasNext();){
                 sb.append(iterator.next());
                 if (iterator.hasNext()) {
                     sb.append(",");
@@ -65,9 +66,9 @@ public class TypeName
         if (level==0){
             return type;
         }else if(level==1){
-            return "java_array_single<"+strLevel(level-1)+">";
+            return "array_single<"+strLevel(level-1)+">";
         }
-        return "java_array<"+strLevel(level-1)+">";
+        return "array_multi<"+strLevel(level-1)+">";
     }
     
 }

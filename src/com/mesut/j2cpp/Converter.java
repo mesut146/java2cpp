@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Converter {
 
@@ -20,6 +22,17 @@ public class Converter {
     String src;
     String dest;
     String sysPath;
+    List<Holder> units;
+
+    class Holder{
+        CompilationUnit cu;
+        String name;//asd.java
+
+        public Holder(CompilationUnit cu, String name) {
+            this.cu = cu;
+            this.name = name;
+        }
+    }
 
     public Converter(String src, String dest) {
         this.src = src;
@@ -31,14 +44,22 @@ public class Converter {
     }
 
     public void convert() {
-        //makeTable();
-        convertDir(new File(src), "");
+        makeTable();
+        //convertDir(new File(src), "");
+        for (Holder h:units){
+            String pkg="";
+            if (h.cu.getPackageDeclaration().isPresent()){
+                pkg=h.cu.getPackageDeclaration().get().getNameAsString();
+            }
+            convertSingle(pkg.replaceAll("\\.","/")+"/"+h.name,h.cu);
+        }
     }
 
     public void makeTable() {
         table = new SymbolTable();
         resolver = new Resolver(table);
         File dir = new File(src);
+        units=new ArrayList<>();
         //tableDir(dir);
         //System.out.println(table.list.size());
         /*for (Symbol s:table.list) {
@@ -52,6 +73,7 @@ public class Converter {
                 if (file.getName().endsWith(".java")) {
                     try {
                         CompilationUnit cu = StaticJavaParser.parse(file);
+                        units.add(new Holder(cu,file.getName()));
                         // cu,pkg,name
                         for (TypeDeclaration<?> type : cu.getTypes()) {
                             if (type.isClassOrInterfaceDeclaration()) {
@@ -81,29 +103,29 @@ public class Converter {
         });
     }
 
-    public void convertDir(File dir, String pkg) {
+    /*public void convertDir(File dir, String pkg) throws FileNotFoundException {
         for (File file : dir.listFiles()) {
             if (file.isFile()) {
                 if (file.getName().endsWith(".java")) {
-                    convertSingle(file, pkg);
+                    convertSingle(file, pkg,StaticJavaParser.parse(file));
                 }
             } else {
                 convertDir(file, pkg + "/" + file.getName());
             }
         }
-    }
+    }*/
 
-    public void convertSingle(File file, String pkg) {
+    public void convertSingle(String path,CompilationUnit cu) {
         try {
-            String path = pkg + "/" + file.getName();
 
             CHeader header = new CHeader();
             CSource cpp = new CSource(header);
-            header.rpath = path;
+            header.rpath = path.replace(".java", ".h");
+            header.importStar.add("java/lang");
 
             MainVisitor visitor = new MainVisitor(this, header);
 
-            CompilationUnit cu = StaticJavaParser.parse(file);
+            //CompilationUnit cu = StaticJavaParser.parse(file);
             cu.accept(visitor, null);
 
             String hs = header.toString();
@@ -122,8 +144,9 @@ public class Converter {
         }
     }
 
-    public void convertSingle(String cls) {
-        convertSingle(new File(src, cls), "");
+    public void convertSingle(String cls) throws FileNotFoundException {
+        File file=new File(src,cls);
+        convertSingle(cls, StaticJavaParser.parse(file));
     }
 
 }

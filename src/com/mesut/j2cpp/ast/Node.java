@@ -47,6 +47,10 @@ public abstract class Node
         //write("\n");
         list.add("");
     }
+    public Node append(CType type){
+        append(type.toString());
+        return this;
+    }
     public Node append(String str){
         //write(indention).write(str);
         

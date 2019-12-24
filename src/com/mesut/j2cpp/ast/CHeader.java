@@ -5,6 +5,7 @@ public class CHeader extends Node
 {
     public String name;
     public List<String> includes=new ArrayList<>();
+    public List<String> importStar=new ArrayList();
     public List<CClass> classes=new ArrayList<>();
     public Namespace ns;
     public String rpath;
@@ -19,6 +20,20 @@ public class CHeader extends Node
         hasRuntime=true;
     }
 
+    /**
+     *make sure type is included
+     **/
+    public void validate(CType type){
+        for (String inc:includes){
+            int idx=inc.lastIndexOf("/");
+            String name=inc.substring(idx+1,inc.length()-2);
+            if (type.type.equals(name)){
+                return;
+            }
+        }
+        //check asterisk imps
+    }
+
     public void print()
     {
         append("#pragma once");
@@ -31,10 +46,10 @@ public class CHeader extends Node
             include("JavaRuntime.h");
         }
         println();
-        appendln("using namespace com::java::lang;");
-        if(ns!=null){
+        //appendln("using namespace java::lang;");
+        /*if(ns!=null){
             append("using namespace ").append(ns.all).appendln(";");
-        }
+        }*/
         
         for(CClass cc:classes){
             cc.forHeader=true;

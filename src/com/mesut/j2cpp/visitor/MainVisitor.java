@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.visitor;
 
+import com.github.javaparser.ast.expr.InstanceOfExpr;
 import com.github.javaparser.ast.visitor.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
@@ -45,6 +46,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         if (n.isAsterisk()) {
             //TODO
             //resolve seperately
+            header.importStar.add(imp);
         } else {
             header.includes.add(imp + ".h");
         }
@@ -61,8 +63,9 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         stack.push(cc);
         cc.name = n.getNameAsString();
         cc.isInterface = n.isInterface();
-        n.getExtendedTypes().forEach(ex -> cc.base.add(new TypeName(ex.getNameAsString())));
-        n.getImplementedTypes().forEach(iface -> cc.base.add(new TypeName(iface.getNameAsString())));
+        n.getTypeParameters().forEach(type-> cc.template.add((CType) type.accept(mv,new Nodew())));
+        n.getExtendedTypes().forEach(ex -> cc.base.add((CType)ex.accept(mv,new Nodew())));
+        n.getImplementedTypes().forEach(iface -> cc.base.add((CType)iface.accept(mv,new Nodew())));
         n.getMembers().forEach(p -> p.accept(this, null));
         stack.pop();
     }
@@ -77,14 +80,14 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         stack.push(cc);
         cc.isEnum = true;
         cc.name = n.getNameAsString();
-        cc.base.add(new TypeName("Enum"));
-        n.getImplementedTypes().forEach(iface -> cc.base.add(new TypeName(iface.getNameAsString())));
+        cc.base.add(new CType("Enum"));
+        n.getImplementedTypes().forEach(iface -> cc.base.add(new CType(iface.getNameAsString())));
         for (EnumConstantDeclaration ec : n.getEntries()) {
             CField cf = new CField();
             cc.addField(cf);
             cf.setPublic(true);
             cf.setStatic(true);
-            cf.type = new TypeName(cc.name);
+            cf.type = new CType(cc.name);
             cf.name = ec.getNameAsString();
             Nodew rh = new Nodew();
             rh.append("new ").append(cc.name);
@@ -105,7 +108,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         for (VariableDeclarator vd : n.getVariables()) {
             CField cf = new CField();
             last().addField(cf);
-            cf.type = (TypeName) vd.getType().accept(mv,new Nodew());
+            cf.type = (CType) vd.getType().accept(mv,new Nodew());
             //cf.type.arrayLevel=vd.getType().getArrayLevel();
             cf.name = vd.getNameAsString();
             cf.setStatic(n.isStatic());
@@ -122,7 +125,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     public void visit(MethodDeclaration n, Nodew w) {
         CMethod cm = new CMethod();
         last().addMethod(cm);
-        cm.type = (TypeName) n.getType().accept(mv,new Nodew());
+        cm.type = (CType) n.getType().accept(mv,new Nodew());
         cm.name = n.getName().asString();
         cm.setStatic(n.isStatic());
         cm.setPublic(n.isPublic());
@@ -130,7 +133,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
 
         for (Parameter p : n.getParameters()) {
             CParameter cp = new CParameter();
-            cp.type = (TypeName) p.getType().accept(mv,new Nodew());
+            cp.type = (CType) p.getType().accept(mv,new Nodew());
             cp.name = p.getNameAsString();
             cm.params.add(cp);
         }
@@ -149,7 +152,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         cm.setPublic(n.isPublic());
         for (Parameter p : n.getParameters()) {
             CParameter cp = new CParameter();
-            cp.type = (TypeName) p.getType().accept(mv,new Nodew());
+            cp.type = (CType) p.getType().accept(mv,new Nodew());
             cp.name = p.getNameAsString();
             cm.params.add(cp);
         }
@@ -158,4 +161,14 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         n.getBody().accept(mv, cm.body);
     }
 
+    @Override
+    public void visit(InitializerDeclaration n, Nodew w) {
+        if (n.isStatic()){
+            header.addRuntime();
+            w=new Nodew();
+            last().staticBlock=w;
+            w.append("static_block");
+            n.getBody().accept(mv,w);
+        }
+    }
 }

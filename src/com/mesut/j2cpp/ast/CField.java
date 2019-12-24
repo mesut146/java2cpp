@@ -1,9 +1,8 @@
 package com.mesut.j2cpp.ast;
-import com.mesut.j2cpp.*;
 
 public class CField extends HasModifier
 {
-    public TypeName type;
+    public CType type;
     public String name,right;
     
     

@@ -1,9 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="74c0cebe-1d5d-4445-8c95-cd48b15840ca" name="Default Changelist" comment="adding constructors">
+    <list default="true" id="74c0cebe-1d5d-4445-8c95-cd48b15840ca" name="Default Changelist" comment="reformat">
+      <change afterPath="$PROJECT_DIR$/asd/static_block.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asd/test/java/Generic.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/asd/a.java" beforeDir="false" afterPath="$PROJECT_DIR$/asd/test/java/a.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/asd/iface.java" beforeDir="false" afterPath="$PROJECT_DIR$/asd/test/java/iface.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Converter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Converter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Helper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Helper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CClass.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CClass.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CField.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CField.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CHeader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CHeader.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CMethod.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CMethod.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CParameter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CParameter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/HasModifier.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/HasModifier.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Node.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Node.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Template.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Template.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/TypeName.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MainVisitor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MainVisitor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MethodVisitor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MethodVisitor.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,6 +54,9 @@
     <property name="settings.editor.selected.configurable" value="inlay.hints.JAVA" />
   </component>
   <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/asd/test/java" />
+    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/asd/array" />
     </key>
@@ -218,8 +238,26 @@
       <option name="project" value="LOCAL" />
       <updated>1577191293039</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="reformat">
+      <created>1577191513328</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1577191513328</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
@@ -239,7 +277,8 @@
     <MESSAGE value="rename to shorter" />
     <MESSAGE value="move package" />
     <MESSAGE value="adding constructors" />
-    <option name="LAST_COMMIT_MESSAGE" value="adding constructors" />
+    <MESSAGE value="reformat" />
+    <option name="LAST_COMMIT_MESSAGE" value="reformat" />
   </component>
   <component name="WindowStateProjectService">
     <state x="275" y="27" width="800" height="675" key="#Notifications" timestamp="1577026317362">
@@ -250,10 +289,10 @@
       <screen x="0" y="0" width="1360" height="734" />
     </state>
     <state x="138" y="24" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1360.734@0.0.1360.734" timestamp="1576072902063" />
-    <state x="419" y="70" width="511" height="590" key="#com.intellij.ide.util.MemberChooser" timestamp="1577190864594">
+    <state x="419" y="70" width="511" height="590" key="#com.intellij.ide.util.MemberChooser" timestamp="1577192749373">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state x="419" y="70" width="511" height="590" key="#com.intellij.ide.util.MemberChooser/0.0.1360.734@0.0.1360.734" timestamp="1577190864594" />
+    <state x="419" y="70" width="511" height="590" key="#com.intellij.ide.util.MemberChooser/0.0.1360.734@0.0.1360.734" timestamp="1577192749373" />
     <state x="412" y="152" width="525" height="425" key="#com.intellij.ide.util.TreeClassChooserDialog" timestamp="1576072870041">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
@@ -262,46 +301,50 @@
       <screen x="0" y="0" width="1360" height="734" />
     </state>
     <state x="363" y="95" width="624" height="539" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/0.0.1360.734@0.0.1360.734" timestamp="1577113639890" />
-    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2" timestamp="1577191303207">
+    <state x="278" y="0" width="783" height="732" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog" timestamp="1577193081399">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2/0.0.1360.734@0.0.1360.734" timestamp="1577191303207" />
+    <state x="278" y="0" width="783" height="732" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog/0.0.1360.734@0.0.1360.734" timestamp="1577193081399" />
+    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2" timestamp="1577198138563">
+      <screen x="0" y="0" width="1360" height="734" />
+    </state>
+    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2/0.0.1360.734@0.0.1360.734" timestamp="1577198138563" />
     <state x="100" y="99" width="1160" height="534" key="DiffContextDialog" timestamp="1577036348549">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
     <state x="100" y="99" width="1160" height="534" key="DiffContextDialog/0.0.1360.734@0.0.1360.734" timestamp="1577036348549" />
-    <state width="1314" height="212" key="GridCell.Tab.0.bottom" timestamp="1577190942860">
+    <state width="1314" height="212" key="GridCell.Tab.0.bottom" timestamp="1577206210365">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.bottom/0.0.1360.734@0.0.1360.734" timestamp="1577190942860" />
-    <state width="1314" height="212" key="GridCell.Tab.0.center" timestamp="1577190942859">
+    <state width="1314" height="212" key="GridCell.Tab.0.bottom/0.0.1360.734@0.0.1360.734" timestamp="1577206210365" />
+    <state width="1314" height="212" key="GridCell.Tab.0.center" timestamp="1577206210365">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.center/0.0.1360.734@0.0.1360.734" timestamp="1577190942859" />
-    <state width="1314" height="212" key="GridCell.Tab.0.left" timestamp="1577190942859">
+    <state width="1314" height="212" key="GridCell.Tab.0.center/0.0.1360.734@0.0.1360.734" timestamp="1577206210365" />
+    <state width="1314" height="212" key="GridCell.Tab.0.left" timestamp="1577206210364">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.left/0.0.1360.734@0.0.1360.734" timestamp="1577190942859" />
-    <state width="1314" height="212" key="GridCell.Tab.0.right" timestamp="1577190942859">
+    <state width="1314" height="212" key="GridCell.Tab.0.left/0.0.1360.734@0.0.1360.734" timestamp="1577206210364" />
+    <state width="1314" height="212" key="GridCell.Tab.0.right" timestamp="1577206210365">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="212" key="GridCell.Tab.0.right/0.0.1360.734@0.0.1360.734" timestamp="1577190942859" />
-    <state width="1314" height="207" key="GridCell.Tab.1.bottom" timestamp="1577190777853">
+    <state width="1314" height="212" key="GridCell.Tab.0.right/0.0.1360.734@0.0.1360.734" timestamp="1577206210365" />
+    <state width="1314" height="207" key="GridCell.Tab.1.bottom" timestamp="1577203723033">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="207" key="GridCell.Tab.1.bottom/0.0.1360.734@0.0.1360.734" timestamp="1577190777853" />
-    <state width="1314" height="207" key="GridCell.Tab.1.center" timestamp="1577190777853">
+    <state width="1314" height="207" key="GridCell.Tab.1.bottom/0.0.1360.734@0.0.1360.734" timestamp="1577203723033" />
+    <state width="1314" height="207" key="GridCell.Tab.1.center" timestamp="1577203723032">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="207" key="GridCell.Tab.1.center/0.0.1360.734@0.0.1360.734" timestamp="1577190777853" />
-    <state width="1314" height="207" key="GridCell.Tab.1.left" timestamp="1577190777853">
+    <state width="1314" height="207" key="GridCell.Tab.1.center/0.0.1360.734@0.0.1360.734" timestamp="1577203723032" />
+    <state width="1314" height="207" key="GridCell.Tab.1.left" timestamp="1577203723032">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="207" key="GridCell.Tab.1.left/0.0.1360.734@0.0.1360.734" timestamp="1577190777853" />
-    <state width="1314" height="207" key="GridCell.Tab.1.right" timestamp="1577190777853">
+    <state width="1314" height="207" key="GridCell.Tab.1.left/0.0.1360.734@0.0.1360.734" timestamp="1577203723032" />
+    <state width="1314" height="207" key="GridCell.Tab.1.right" timestamp="1577203723033">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state width="1314" height="207" key="GridCell.Tab.1.right/0.0.1360.734@0.0.1360.734" timestamp="1577190777853" />
+    <state width="1314" height="207" key="GridCell.Tab.1.right/0.0.1360.734@0.0.1360.734" timestamp="1577203723033" />
     <state x="88" y="0" width="1024" height="732" key="SettingsEditor" timestamp="1577112783923">
       <screen x="0" y="0" width="1360" height="734" />
     </state>

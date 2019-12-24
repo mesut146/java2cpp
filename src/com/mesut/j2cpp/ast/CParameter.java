@@ -1,9 +1,8 @@
 package com.mesut.j2cpp.ast;
-import java.io.*;
 
 public class CParameter extends Node
 {
-    public TypeName type;
+    public CType type;
     public String name;
     //public boolean isPointer=true;
 

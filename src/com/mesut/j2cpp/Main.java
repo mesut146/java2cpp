@@ -24,8 +24,11 @@ public class Main {
                 srcPath="/storage/extSdCard/asd/dx/dex/src";
                 destPath="/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
             }else {
-                srcPath="/home/mesut/Desktop/dx-org/src";
-                destPath="/home/mesut/Desktop/dx-cpp";
+                //srcPath="/home/mesut/Desktop/dx-org/src";
+                srcPath="/home/mesut/Desktop/src7";
+                //srcPath="/home/mesut/IdeaProjects/java2cpp/asd/test/java";
+                //destPath="/home/mesut/Desktop/dx-cpp";
+                destPath="/home/mesut/Desktop/src7-cpp";
                 //destPath="/home/mesut/IdeaProjects/java2cpp/asd/test/cpp";
 
             }
@@ -39,6 +42,8 @@ public class Main {
             //cls="com/android/dex/ClassDef.java";
             cls="com/android/dex/Dex.java";
             //cls="MyEnum.java";
+            //cls="Generic.java";
+            cls="java/lang/Class.java";
 
             path=srcPath+"/"+cls;
             
@@ -55,7 +60,7 @@ public class Main {
             }
             converter.makeTable();
             converter.convertSingle(cls);
-
+            //converter.convert();
 
         } catch (Exception e) {
             e.printStackTrace();
