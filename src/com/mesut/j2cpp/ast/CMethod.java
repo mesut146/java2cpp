@@ -35,7 +35,9 @@ public class CMethod extends HasModifier
             append("/*TODO native*/ ");
         }
         printDecl();
-        
+        if(parent.isInterface){
+            w.append("=0")
+         }
         if(parent.forHeader){
             append(";");
         }
@@ -55,6 +57,9 @@ public class CMethod extends HasModifier
             if(isStatic()){
                 append("static ");
             }
+            if(parent.isInterface){
+                w.append("virtual ");
+             }
             append(type.toString());
             if(isPointer()){
                 append("*");
