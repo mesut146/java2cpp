@@ -1,5 +1,7 @@
 package com.mesut.j2cpp;
 
+import com.mesut.j2cpp.ast.CHeader;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,12 +13,16 @@ public class Resolver {
     public static List<String> jreFiles=new ArrayList<>();
     public static List<String> projectFiles=new ArrayList<>();
 
+    public Resolver(SymbolTable table) {
+        this.table = table;
+    }
+
     public static String resolve(String fullname){
         return null;
 
     }
 
-    public boolean isClass(String name,CHeader header){
+    public boolean isClass(String name, CHeader header){
         for(String str:header.includes){
             if (str.endsWith(".h")){
                 int idx=str.lastIndexOf('/');

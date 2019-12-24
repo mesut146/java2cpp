@@ -15,7 +15,6 @@ public class Main {
 
     public static void main(String[] args) {
 
-
         try {
             Converter converter;
             String srcPath;
@@ -55,7 +54,7 @@ public class Main {
                 }
             }
             converter.makeTable();
-            //converter.convertSingle(cls);
+            converter.convertSingle(cls);
 
 
         } catch (Exception e) {

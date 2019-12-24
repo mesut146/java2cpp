@@ -8,7 +8,6 @@ import com.mesut.j2cpp.ast.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
-import com.mesut.j2cpp.ast.Node;
 
 import java.util.*;
 
@@ -17,6 +16,11 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     public CHeader header;
     public Converter converter;
     boolean hasReturn = false, hasThrow = false, hasBreak = false;
+
+    public MethodVisitor(Converter converter,CHeader header) {
+        this.header = header;
+        this.converter = converter;
+    }
 
     public Object visit(BlockStmt n, Nodew w) {
         w.firstBlock = true;
@@ -208,13 +212,14 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
     
     public Object visit(InstanceOfExpr n,Nodew w){
+        header.addRuntime();
         w.append("instance_of<");
         TypeName type=(TypeName)n.getType().accept(this,null);
         w.append(type.toString());
         w.append(">(");
         n.getExpression().accept(this,w);
         w.append(")");
-        
+        return null;
     }
 
     public Object visit(ExplicitConstructorInvocationStmt n, Nodew w) {

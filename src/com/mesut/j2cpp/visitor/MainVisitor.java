@@ -1,13 +1,8 @@
 package com.mesut.j2cpp.visitor;
 
 import com.github.javaparser.ast.visitor.*;
-import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
-import com.github.javaparser.ast.expr.*;
-import com.github.javaparser.ast.modules.*;
-import com.github.javaparser.ast.type.*;
-import com.github.javaparser.ast.comments.*;
 import com.mesut.j2cpp.*;
 import com.mesut.j2cpp.ast.*;
 
@@ -19,6 +14,12 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     public MethodVisitor mv;
     public Stack<CClass> stack = new Stack<>();
     public Converter converter;
+
+    public MainVisitor(Converter converter,CHeader header) {
+        this.converter = converter;
+        this.header=header;
+        this.mv=new MethodVisitor(converter,header);
+    }
 
     public CClass last() {
         return stack.peek();
@@ -104,8 +105,8 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         for (VariableDeclarator vd : n.getVariables()) {
             CField cf = new CField();
             last().addField(cf);
-            cf.type = new TypeName(vd.getType().getElementType().asString());
-            cf.type.arrayLevel=vd.getType().getArrayLevel();
+            cf.type = (TypeName) vd.getType().accept(mv,new Nodew());
+            //cf.type.arrayLevel=vd.getType().getArrayLevel();
             cf.name = vd.getNameAsString();
             cf.setStatic(n.isStatic());
             cf.setPublic(n.isPublic());
@@ -121,8 +122,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     public void visit(MethodDeclaration n, Nodew w) {
         CMethod cm = new CMethod();
         last().addMethod(cm);
-        MethodVisitor methodVisitor=new MethodVisitor();
-        cm.type = (TypeName) n.getType().accept(methodVisitor,new Nodew());
+        cm.type = (TypeName) n.getType().accept(mv,new Nodew());
         cm.name = n.getName().asString();
         cm.setStatic(n.isStatic());
         cm.setPublic(n.isPublic());
@@ -130,14 +130,13 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
 
         for (Parameter p : n.getParameters()) {
             CParameter cp = new CParameter();
-            cp.type = (TypeName) p.getType().accept(methodVisitor,new Nodew());
+            cp.type = (TypeName) p.getType().accept(mv,new Nodew());
             cp.name = p.getNameAsString();
             cm.params.add(cp);
         }
         if (n.getBody().isPresent()) {
             cm.body.init();
             mv.method = cm;
-            mv.header=header;
             n.getBody().get().accept(mv, cm.body);
         }
     }
@@ -145,19 +144,17 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     public void visit(ConstructorDeclaration n, Nodew w) {
         CMethod cm = new CMethod();
         last().addMethod(cm);
-        MethodVisitor methodVisitor=new MethodVisitor();
         cm.isCons = true;
         cm.name = n.getNameAsString();
         cm.setPublic(n.isPublic());
         for (Parameter p : n.getParameters()) {
             CParameter cp = new CParameter();
-            cp.type = (TypeName) p.getType().accept(methodVisitor,new Nodew());
+            cp.type = (TypeName) p.getType().accept(mv,new Nodew());
             cp.name = p.getNameAsString();
             cm.params.add(cp);
         }
         cm.body.init();
         mv.method = cm;
-        mv.header=header;
         n.getBody().accept(mv, cm.body);
     }
 

@@ -98,6 +98,11 @@ public abstract class Node
         }
         return this;
     }
+
+    public Node include(String file){
+        appendln("#include \""+file+"\"");
+        return this;
+    }
     
     public void setTo(Node n){
         n.level=this.level;

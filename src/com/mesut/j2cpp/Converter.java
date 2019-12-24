@@ -1,15 +1,15 @@
 package com.mesut.j2cpp;
 
-import com.github.javaparser.JavaParser;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.TypeDeclaration;
+import com.mesut.j2cpp.ast.CHeader;
+import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.visitor.MainVisitor;
 import com.mesut.j2cpp.visitor.MethodVisitor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -37,10 +37,9 @@ public class Converter {
 
     public void makeTable() {
         table=new SymbolTable();
-        resolver=new Resolver();
-        resolver.table=table;
+        resolver=new Resolver(table);
         File dir=new File(src);
-        tableDir(dir);
+        //tableDir(dir);
         //System.out.println(table.list.size());
         /*for (Symbol s:table.list) {
             //System.out.println(s.name+" , "+s.pkg);
@@ -97,19 +96,13 @@ public class Converter {
         try {
             String path=pkg+"/"+file.getName();
 
-            CompilationUnit cu=StaticJavaParser.parse(file);
-            MainVisitor visitor=new MainVisitor();
-            visitor.converter=this;
-
             CHeader header=new CHeader();
-            CSource cpp=new CSource();
-
+            CSource cpp=new CSource(header);
             header.rpath=path;
-            visitor.header=header;
-            visitor.mv=new MethodVisitor();
-            visitor.mv.converter=this;
-            visitor.mv.header=header;
-            cpp.h=header;
+
+            MainVisitor visitor=new MainVisitor(this,header);
+
+            CompilationUnit cu=StaticJavaParser.parse(file);
             cu.accept(visitor,null);
 
             String hs=header.toString();
