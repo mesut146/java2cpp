@@ -1,7 +1,5 @@
-package com.mesut.j2cpp;
-import com.mesut.j2cpp.ast.*;
+package com.mesut.j2cpp.ast;
 import java.util.*;
-import java.io.*;
 
 public class CHeader extends Node
 {
@@ -11,11 +9,8 @@ public class CHeader extends Node
     public Namespace ns;
     public String rpath;
     boolean hasRuntime=false;
-    //public List<CMethod> methods=new ArrayList<>();
-    
     
     public void addClass(CClass cc){
-        //cc.inHeader=true;
         cc.ns=ns;
         classes.add(cc);
     }
@@ -29,13 +24,11 @@ public class CHeader extends Node
         append("#pragma once");
         println();
         println();
-        //append("#include \"com/java/lang\"");
         for(String imp:includes){
-            append("#include \"");
-            append(imp).append("\"").println();
+            include(imp);
         }
         if (hasRuntime){
-            appendln("#include \"JavaRuntime.h\"");
+            include("JavaRuntime.h");
         }
         println();
         appendln("using namespace com::java::lang;");
@@ -49,10 +42,10 @@ public class CHeader extends Node
         }
     }
     
-    public void printSource(CSource cs){
-        cs.h=this;
+    /*public void printSource(CSource cs){
+        cs.header=this;
         cs.print();
-    }
+    }*/
     
     public String getInclude(){
         return rpath;
