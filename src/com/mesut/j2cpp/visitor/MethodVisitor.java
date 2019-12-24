@@ -145,19 +145,10 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             Nodew tn = new Nodew();
             n.getTryBlock().accept(this, tn);
             w.appendi(tn);
-            if (n.getCatchClauses().size() > 0) {
-                for (CatchClause cc : n.getCatchClauses()) {
-                    w.append("catch(");
-                    Parameter p = cc.getParameter();
-                    w.append((CType) p.getType().accept(this,new Nodew()));
-                    w.append(" ");
-                    w.append(p.getNameAsString());
-                    w.append(")");
-                    cc.getBody().accept(this, w);
-                }
-            } else {
+            if (n.getCatchClauses().size() == 0) {
                 w.line("catch(int x){}");
             }
+            makeCatch(n.getCatchClauses(),w);
             w.line(retStr);
             w.line("tryReturned=false;");
             w.down();
@@ -192,18 +183,33 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             if (n.getCatchClauses().size()==0){
                 w.append("catch(int x){}");
             }
-            for (CatchClause cc : n.getCatchClauses()) {
-                w.append("catch(");
-                Parameter p = cc.getParameter();
-                w.append((CType) p.getType().accept(this,new Nodew()));
-                w.append(" ");
-                w.append(p.getNameAsString());
-                w.append(")");
-                cc.getBody().accept(this, w);
-            }
+            makeCatch(n.getCatchClauses(),w);
         }
-
         return null;
+    }
+    
+    void makeCatch(NodeList<CatchClause> list,Nodew w){
+        for (CatchClause cc : list) {
+                Parameter p = cc.getParameter();
+                if(p.getType().isUnionType()){
+                    for(Type t:p.getType().asUnionType().getElements()){
+                        w.append("catch(");
+                        w.append((CType) t.accept(this,new Nodew()));
+                        w.append(" ");
+                        w.append(p.getNameAsString());
+                        w.append(")");
+                        cc.getBody().accept(this, w);
+                    }
+                }else{
+                    w.append("catch(");
+                    w.append((CType) p.getType().accept(this,new Nodew()));
+                    w.append(" ");
+                    w.append(p.getNameAsString());
+                    w.append(")");
+                    cc.getBody().accept(this, w);
+                }
+                
+            }
     }
 
     void makeLambda(BlockStmt n, Nodew w) {
