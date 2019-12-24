@@ -7,6 +7,8 @@ array to pointer
 
 #cast
 
+#make base class meth virtual
+
 #call super
 
 #static member access should has namespace not pointer

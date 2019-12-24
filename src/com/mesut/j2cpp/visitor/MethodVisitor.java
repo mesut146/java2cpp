@@ -206,6 +206,16 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         n.getExpression().accept(this, w);
         return null;
     }
+    
+    public Object visit(InstanceOfExpr n,Nodew w){
+        w.append("instance_of<");
+        TypeName type=(TypeName)n.getType().accept(this,null);
+        w.append(type.toString());
+        w.append(">(");
+        n.getExpression().accept(this,w);
+        w.append(")");
+        
+    }
 
     public Object visit(ExplicitConstructorInvocationStmt n, Nodew w) {
         Nodew p = new Nodew();
@@ -288,13 +298,16 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
         w.append("new ");
         //typearg
-        w.append(n.getTypeAsString());
+        TypeName type=(TypeName)n.getType().accept(this,null);
+        w.append(type.toString());
         args(n.getArguments(), w);
         if (n.getAnonymousClassBody().isPresent()) {
-
+            //TODO
         }
         return null;
     }
+    
+    
 
     public Object visit(NodeList<Expression> n, Nodew w) {
         w.append("(");
