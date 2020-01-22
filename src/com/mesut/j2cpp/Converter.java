@@ -22,17 +22,7 @@ public class Converter {
     String src;
     String dest;
     String sysPath;
-    List<Holder> units;
-
-    class Holder{
-        CompilationUnit cu;
-        String name;//asd.java
-
-        public Holder(CompilationUnit cu, String name) {
-            this.cu = cu;
-            this.name = name;
-        }
-    }
+    List<UnitMap> units;
 
     public Converter(String src, String dest) {
         this.src = src;
@@ -46,12 +36,12 @@ public class Converter {
     public void convert() {
         makeTable();
         //convertDir(new File(src), "");
-        for (Holder h:units){
-            String pkg="";
-            if (h.cu.getPackageDeclaration().isPresent()){
-                pkg=h.cu.getPackageDeclaration().get().getNameAsString();
+        for (UnitMap h : units) {
+            String pkg = "";
+            if (h.cu.getPackageDeclaration().isPresent()) {
+                pkg = h.cu.getPackageDeclaration().get().getNameAsString();
             }
-            convertSingle(pkg.replaceAll("\\.","/")+"/"+h.name,h.cu);
+            convertSingle(pkg.replaceAll("\\.", "/") + "/" + h.name, h.cu);
         }
     }
 
@@ -59,7 +49,7 @@ public class Converter {
         table = new SymbolTable();
         resolver = new Resolver(table);
         File dir = new File(src);
-        units=new ArrayList<>();
+        units = new ArrayList<>();
         //tableDir(dir);
         //System.out.println(table.list.size());
         /*for (Symbol s:table.list) {
@@ -73,7 +63,7 @@ public class Converter {
                 if (file.getName().endsWith(".java")) {
                     try {
                         CompilationUnit cu = StaticJavaParser.parse(file);
-                        units.add(new Holder(cu,file.getName()));
+                        units.add(new UnitMap(cu, file.getName()));
                         // cu,pkg,name
                         for (TypeDeclaration<?> type : cu.getTypes()) {
                             if (type.isClassOrInterfaceDeclaration()) {
@@ -115,7 +105,7 @@ public class Converter {
         }
     }*/
 
-    public void convertSingle(String path,CompilationUnit cu) {
+    public void convertSingle(String path, CompilationUnit cu) {
         try {
 
             CHeader header = new CHeader();
@@ -145,8 +135,18 @@ public class Converter {
     }
 
     public void convertSingle(String cls) throws FileNotFoundException {
-        File file=new File(src,cls);
+        File file = new File(src, cls);
         convertSingle(cls, StaticJavaParser.parse(file));
     }
 
+}
+
+class UnitMap {
+    CompilationUnit cu;
+    String name;//asd.java
+
+    public UnitMap(CompilationUnit cu, String name) {
+        this.cu = cu;
+        this.name = name;
+    }
 }

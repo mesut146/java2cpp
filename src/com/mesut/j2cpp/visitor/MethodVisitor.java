@@ -17,7 +17,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     public Converter converter;
     boolean hasReturn = false, hasThrow = false, hasBreak = false;
 
-    public MethodVisitor(Converter converter,CHeader header) {
+    public MethodVisitor(Converter converter, CHeader header) {
         this.header = header;
         this.converter = converter;
     }
@@ -45,21 +45,21 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         w.append("if(");
         n.getCondition().accept(this, w);
         w.append(")");
-        block(w,n.getThenStmt());
+        block(w, n.getThenStmt());
         if (n.getElseStmt().isPresent()) {
             w.append("else");
-            block(w,n.getElseStmt().get());
+            block(w, n.getElseStmt().get());
         }
         return null;
     }
 
-    void block(Nodew w,Statement statement){
-        if (statement.isBlockStmt()){
-            statement.accept(this,w);
-        }else {
+    void block(Nodew w, Statement statement) {
+        if (statement.isBlockStmt()) {
+            statement.accept(this, w);
+        } else {
             w.println();
             w.up();
-            statement.accept(this,w);
+            statement.accept(this, w);
             w.down();
         }
     }
@@ -68,7 +68,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         w.append("while(");
         n.getCondition().accept(this, w);
         w.append(") ");
-        block(w,n.getBody());
+        block(w, n.getBody());
         return null;
     }
 
@@ -96,7 +96,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             }
         }
         w.append(")");
-        block(w,n.getBody());
+        block(w, n.getBody());
         return null;
     }
 
@@ -106,7 +106,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         w.append(":");
         n.getIterable().accept(this, w);
         w.append(")");
-        block(w,n.getBody());
+        block(w, n.getBody());
         return null;
     }
 
@@ -126,20 +126,20 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         boolean tryRet, tryTh, finRet, finTh;
         if (n.getFinallyBlock().isPresent()) {
             header.addRuntime();
-            String retStr="if(0){return";
-            CType type=method.type;
-            if (!method.isCons&&!method.type.isVoid()){
-                retStr+=""+type.toString();
-            }else {
-                type=new CType("void");
+            String retStr = "if(0){return";
+            CType type = method.type;
+            if (!method.isCons && !method.type.isVoid()) {
+                retStr += "" + type.toString();
+            } else {
+                type = new CType("void");
             }
-            retStr+=";}";
+            retStr += ";}";
             Nodew fin = new Nodew();
             //tryRet=hasReturn;hasReturn=false;
             n.getFinallyBlock().get().accept(this, fin);
             //finRet=hasReturn;hasReturn=false;
             w.append("bool tryReturned=true,finReturned=true;");
-            w.line(type.toString()).append("* res_tryBlock=with_finally<"+type.toString()+">([&](){");
+            w.line(type.toString()).append("* res_tryBlock=with_finally<" + type.toString() + ">([&](){");
             w.up();
             w.line("try");
             Nodew tn = new Nodew();
@@ -148,7 +148,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             if (n.getCatchClauses().size() == 0) {
                 w.line("catch(int x){}");
             }
-            makeCatch(n.getCatchClauses(),w);
+            makeCatch(n.getCatchClauses(), w);
             w.line(retStr);
             w.line("tryReturned=false;");
             w.down();
@@ -159,7 +159,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             w.line("finReturned=false;");
             w.down();
             w.line("});");
-            if(!method.isCons&&!method.type.isVoid()){
+            if (!method.isCons && !method.type.isVoid()) {
                 w.line("if(tryReturned||finReturned){");
                 w.up();
                 w.line("return res_tryBlock;");
@@ -180,36 +180,36 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
                 w.append(")");
             }
             n.getTryBlock().accept(this, w);
-            if (n.getCatchClauses().size()==0){
+            if (n.getCatchClauses().size() == 0) {
                 w.append("catch(int x){}");
             }
-            makeCatch(n.getCatchClauses(),w);
+            makeCatch(n.getCatchClauses(), w);
         }
         return null;
     }
-    
-    void makeCatch(NodeList<CatchClause> list,Nodew w){
+
+    void makeCatch(NodeList<CatchClause> list, Nodew w) {
         for (CatchClause cc : list) {
-                Parameter p = cc.getParameter();
-                if(p.getType().isUnionType()){
-                    for(Type t:p.getType().asUnionType().getElements()){
-                        w.append("catch(");
-                        w.append((CType) t.accept(this,new Nodew()));
-                        w.append(" ");
-                        w.append(p.getNameAsString());
-                        w.append(")");
-                        cc.getBody().accept(this, w);
-                    }
-                }else{
+            Parameter p = cc.getParameter();
+            if (p.getType().isUnionType()) {
+                for (Type t : p.getType().asUnionType().getElements()) {
                     w.append("catch(");
-                    w.append((CType) p.getType().accept(this,new Nodew()));
+                    w.append((CType) t.accept(this, new Nodew()));
                     w.append(" ");
                     w.append(p.getNameAsString());
                     w.append(")");
                     cc.getBody().accept(this, w);
                 }
-                
+            } else {
+                w.append("catch(");
+                w.append((CType) p.getType().accept(this, new Nodew()));
+                w.append(" ");
+                w.append(p.getNameAsString());
+                w.append(")");
+                cc.getBody().accept(this, w);
             }
+
+        }
     }
 
     void makeLambda(BlockStmt n, Nodew w) {
@@ -224,14 +224,14 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         n.getExpression().accept(this, w);
         return null;
     }
-    
-    public Object visit(InstanceOfExpr n,Nodew w){
+
+    public Object visit(InstanceOfExpr n, Nodew w) {
         header.addRuntime();
         w.append("instance_of<");
-        CType type=(CType)n.getType().accept(this,null);
+        CType type = (CType) n.getType().accept(this, null);
         w.append(type.toString());
         w.append(">(");
-        n.getExpression().accept(this,w);
+        n.getExpression().accept(this, w);
         w.append(")");
         return null;
     }
@@ -260,13 +260,13 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
             Expression scope = n.getScope().get();
             scope.accept(this, w);
 
-            if (scope.isNameExpr()){//field or class
-                if (converter.getResolver().isClass(scope.asNameExpr().getNameAsString(),header)){
+            if (scope.isNameExpr()) {//field or class
+                if (converter.getResolver().isClass(scope.asNameExpr().getNameAsString(), header)) {
                     w.append("::");
-                }else{
+                } else {
                     w.append("->");
                 }
-            }else {
+            } else {
                 w.append("->");
             }
             /*if (scope.isFieldAccessExpr()||scope.isMethodCallExpr()){
@@ -284,13 +284,13 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         Expression scope = n.getScope();
         scope.accept(this, w);
         //TODO:if scope is not object,ns
-        if (scope.isNameExpr()){//field/var or class
-            if (converter.getResolver().isClass(scope.asNameExpr().getNameAsString(),header)){
+        if (scope.isNameExpr()) {//field/var or class
+            if (converter.getResolver().isClass(scope.asNameExpr().getNameAsString(), header)) {
                 w.append("::");
-            }else{
+            } else {
                 w.append("->");
             }
-        }else {
+        } else {
             w.append("->");
         }
         w.append(n.getNameAsString());
@@ -300,9 +300,9 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     @Override
     public Object visit(ArrayAccessExpr n, Nodew w) {
         w.append("(*");
-        n.getName().accept(this,w);
+        n.getName().accept(this, w);
         w.append(")[");
-        n.getIndex().accept(this,w);
+        n.getIndex().accept(this, w);
         w.append("]");
         return null;
     }
@@ -327,7 +327,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
         w.append("new ");
         //typearg
-        CType type=(CType)n.getType().accept(this,null);
+        CType type = (CType) n.getType().accept(this, null);
         w.append(type.toString());
         args(n.getArguments(), w);
         if (n.getAnonymousClassBody().isPresent()) {
@@ -335,8 +335,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         }
         return null;
     }
-    
-    
+
 
     public Object visit(NodeList<Expression> n, Nodew w) {
         w.append("(");
@@ -425,8 +424,8 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     @Override
     public Object visit(CharLiteralExpr n, Nodew w) {
 
-        String str=n.getValue();
-        if (str.startsWith("\\u")){
+        String str = n.getValue();
+        if (str.startsWith("\\u")) {
             w.append("u");
         }
         w.append("'");
@@ -438,29 +437,29 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     @Override
     public Object visit(CastExpr n, Nodew w) {
         w.append("(");
-        CType type=(CType) n.getType().accept(this,w);
+        CType type = (CType) n.getType().accept(this, w);
         w.append(type);
-        if (type.isPointer()){
+        if (type.isPointer()) {
             w.append("*");
         }
         w.append(")");
-        n.getExpression().accept(this,w);
+        n.getExpression().accept(this, w);
         return null;
     }
 
     @Override
     public Object visit(EnclosedExpr n, Nodew w) {
         w.append("(");
-        n.getInner().accept(this,w);
+        n.getInner().accept(this, w);
         w.append(")");
         return null;
     }
 
     @Override
     public Object visit(LongLiteralExpr n, Nodew w) {
-        String str=n.getValue();
-        if (str.endsWith("L")){
-            str=str.substring(0,str.length()-1);
+        String str = n.getValue();
+        if (str.endsWith("L")) {
+            str = str.substring(0, str.length() - 1);
         }
         w.append(str);
         return null;
@@ -475,9 +474,9 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
     @Override
     public Object visit(BooleanLiteralExpr n, Nodew w) {
-        if (n.getValue()){
+        if (n.getValue()) {
             w.append("true");
-        }else {
+        } else {
             w.append("false");
         }
         return null;
@@ -538,8 +537,8 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     public Object visit(ArrayType n, Nodew w) {
-        CType typeName = (CType) n.getElementType().accept(this,w);
-        typeName.arrayLevel=n.getArrayLevel();
+        CType typeName = (CType) n.getElementType().accept(this, w);
+        typeName.arrayLevel = n.getArrayLevel();
         return typeName;
     }
 
@@ -551,21 +550,21 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
     public Object visit(ClassOrInterfaceType n, Nodew w) {
         CType typeName = new CType(n.getNameAsString());
-        if (n.getTypeArguments().isPresent()){
-            for(Iterator<Type> iterator=n.getTypeArguments().get().iterator();iterator.hasNext();){
-                typeName.typeNames.add((CType)iterator.next().accept(this,w));
+        if (n.getTypeArguments().isPresent()) {
+            for (Iterator<Type> iterator = n.getTypeArguments().get().iterator(); iterator.hasNext(); ) {
+                typeName.typeNames.add((CType) iterator.next().accept(this, w));
             }
         }
-        if (n.getScope().isPresent()){
-            CType scope= (CType) n.getScope().get().accept(this,new Nodew());
-            typeName.type=scope.type+"::"+typeName.type;
+        if (n.getScope().isPresent()) {
+            CType scope = (CType) n.getScope().get().accept(this, new Nodew());
+            typeName.type = scope.type + "::" + typeName.type;
         }
         //w.append(typeName.toString());
         return typeName;
     }
 
     public Object visit(UnionType n, Nodew w) {
-        CType type= (CType) n.getElements().get(0).accept(this,new Nodew());
+        CType type = (CType) n.getElements().get(0).accept(this, new Nodew());
         System.out.println("union type detected and chosen the first");
         return type;
     }

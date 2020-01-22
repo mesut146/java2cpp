@@ -5,9 +5,9 @@ import java.util.Iterator;
 import java.util.List;
 
 public class Template {
-    public List<CType> list=new ArrayList<>();
+    public List<CType> list = new ArrayList<>();
 
-    public void add(CType typeName){
+    public void add(CType typeName) {
         list.add(typeName);
     }
 
@@ -15,10 +15,10 @@ public class Template {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("template <");
-        for (Iterator<CType> iterator = list.iterator(); iterator.hasNext();){
+        for (Iterator<CType> iterator = list.iterator(); iterator.hasNext(); ) {
             sb.append("typename ");
             sb.append(iterator.next());
-            if (iterator.hasNext()){
+            if (iterator.hasNext()) {
                 sb.append(",");
             }
         }

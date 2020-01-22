@@ -5,14 +5,14 @@ import java.util.List;
 
 public class SymbolTable {
 
-    List<Symbol> list=new ArrayList<>();
+    List<Symbol> list = new ArrayList<>();
 
-    public void addSymbol(String pkg,String name){
-        list.add(new Symbol(pkg,name));
+    public void addSymbol(String pkg, String name) {
+        list.add(new Symbol(pkg, name));
     }
 }
 
-class Symbol{
+class Symbol {
     String pkg;
     String name;
 

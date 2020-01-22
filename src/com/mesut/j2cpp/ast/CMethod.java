@@ -1,94 +1,95 @@
 package com.mesut.j2cpp.ast;
-import java.util.*;
 
-import com.mesut.j2cpp.*;
+import com.mesut.j2cpp.Nodew;
 
-public class CMethod extends HasModifier
-{
+import java.util.ArrayList;
+import java.util.List;
+
+public class CMethod extends ModifierNode {
     public String name;
     public CType type;
-    public List<CParameter> params=new ArrayList<>();
-    public List<String> throwList=new ArrayList<>();
-    public boolean empty=false;
-    public boolean isCons=false;
+    public List<CParameter> params = new ArrayList<>();
+    public List<String> throwList = new ArrayList<>();
+    public boolean empty = false;
+    public boolean isCons = false;
     public CClass parent;
     public Call call;
-    public Nodew body=new Nodew();
+    public Nodew body = new Nodew();
     //public Nodew decl;
-    
-    public CClass getParent(){
+
+    public CClass getParent() {
         return parent;
     }
-    public String getName(){
+
+    public String getName() {
         return name;
     }
-    public CType getType(){
+
+    public CType getType() {
         return type;
     }
-    
-    public void print()
-    {
+
+    public void print() {
         list.clear();
 
-        if (isNative()){
+        if (isNative()) {
             System.out.println("native method");
             append("/*TODO native*/ ");
         }
         printDecl();
-        if(parent.isInterface){
+        if (parent.isInterface) {
             w.append("=0")
-         }
-        if(parent.forHeader){
-            append(";");
         }
-        else{
-            if(call!=null){
+        if (parent.forHeader) {
+            append(";");
+        } else {
+            if (call != null) {
                 append(":");
                 append(call.str);
             }
             append(body);
             println();
         }
-        
+
     }
-    
-    public void printDecl(){
-        if(!isCons){
-            if(isStatic()){
+
+    public void printDecl() {
+        if (!isCons) {
+            if (isStatic()) {
                 append("static ");
             }
-            if(parent.isInterface){
+            if (parent.isInterface) {
                 w.append("virtual ");
-             }
+            }
             append(type.toString());
-            if(isPointer()){
+            if (isPointer()) {
                 append("*");
             }
             append(" ");
         }
-        if(!parent.forHeader&&parent.ns!=null){
-            append(parent.getNamespaceFull().all+"::");
+        if (!parent.forHeader && parent.ns != null) {
+            append(parent.getNamespaceFull().all + "::");
         }
 
         append(name);
         append("(");
-        for(int i=0;i<params.size();i++){
-            CParameter cp=params.get(i);
+        for (int i = 0; i < params.size(); i++) {
+            CParameter cp = params.get(i);
             append(cp.toString());
-            if(i<params.size()-1){
+            if (i < params.size() - 1) {
                 append(",");
             }
         }
         append(")");
     }
-    
-    boolean isPointer(){
-        return !isCons&&type.isPointer();
-    }
-    
-    boolean isVoid(){
-        return !isCons&&type.isVoid();
+
+    boolean isPointer() {
+        return !isCons && type.isPointer();
     }
 
-    
+    boolean isVoid() {
+        return !isCons && type.isVoid();
+    }
+
+
 }
