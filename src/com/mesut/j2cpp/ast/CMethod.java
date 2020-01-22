@@ -33,7 +33,7 @@ public class CMethod extends ModifierNode {
         list.clear();
 
         if (isNative()) {
-            System.out.println("native method");
+            //System.out.println("native method");
             append("/*TODO native*/ ");
         }
         printDecl();

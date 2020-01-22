@@ -1,15 +1,22 @@
 package com.mesut.j2cpp.visitor;
 
-import com.github.javaparser.ast.type.*;
-import com.github.javaparser.ast.visitor.*;
-import com.mesut.j2cpp.*;
+import com.github.javaparser.ast.ArrayCreationLevel;
+import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
-import com.mesut.j2cpp.ast.*;
 import com.github.javaparser.ast.stmt.*;
-import com.github.javaparser.ast.*;
-import com.github.javaparser.ast.body.*;
+import com.github.javaparser.ast.type.*;
+import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
+import com.mesut.j2cpp.Converter;
+import com.mesut.j2cpp.Helper;
+import com.mesut.j2cpp.Nodew;
+import com.mesut.j2cpp.ast.CHeader;
+import com.mesut.j2cpp.ast.CMethod;
+import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.ast.Call;
 
-import java.util.*;
+import java.util.Iterator;
 
 public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
     public CMethod method;
