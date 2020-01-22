@@ -107,15 +107,14 @@ public class Converter {
 
     public void convertSingle(String path, CompilationUnit cu) {
         try {
-
-            CHeader header = new CHeader();
+            System.out.println("converting "+path);
+            CHeader header = new CHeader(path.replace(".java", ".h"));
             CSource cpp = new CSource(header);
-            header.rpath = path.replace(".java", ".h");
-            header.importStar.add("java/lang");
+
+            header.importStar.add("java/lang");//by default as in java compilers
 
             MainVisitor visitor = new MainVisitor(this, header);
 
-            //CompilationUnit cu = StaticJavaParser.parse(file);
             cu.accept(visitor, null);
 
             String hs = header.toString();

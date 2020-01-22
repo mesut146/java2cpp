@@ -37,8 +37,8 @@ public class CMethod extends ModifierNode {
             append("/*TODO native*/ ");
         }
         printDecl();
-        if (parent.isInterface) {
-            w.append("=0")
+        if (parent.isInterface) {//make it virtual
+            append("=0");
         }
         if (parent.forHeader) {
             append(";");
@@ -59,7 +59,7 @@ public class CMethod extends ModifierNode {
                 append("static ");
             }
             if (parent.isInterface) {
-                w.append("virtual ");
+                append("virtual ");
             }
             append(type.toString());
             if (isPointer()) {

@@ -1,25 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="74c0cebe-1d5d-4445-8c95-cd48b15840ca" name="Default Changelist" comment="static block,asterisk import,type scope">
+    <list default="true" id="74c0cebe-1d5d-4445-8c95-cd48b15840ca" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Converter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Converter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Helper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Helper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/SymbolTable.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/SymbolTable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CClass.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CClass.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CField.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CField.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CHeader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CHeader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CMethod.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CMethod.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CParameter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CParameter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CSource.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CSource.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CType.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/CType.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Call.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Call.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/HasModifier.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/ModifierNode.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Namespace.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Namespace.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Node.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Node.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Template.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/ast/Template.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MethodVisitor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/mesut/j2cpp/visitor/MethodVisitor.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -251,7 +237,14 @@
       <option name="project" value="LOCAL" />
       <updated>1577206706430</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="reformat all files">
+      <created>1579712104953</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1579712104953</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -287,7 +280,8 @@
     <MESSAGE value="adding constructors" />
     <MESSAGE value="reformat" />
     <MESSAGE value="static block,asterisk import,type scope" />
-    <option name="LAST_COMMIT_MESSAGE" value="static block,asterisk import,type scope" />
+    <MESSAGE value="reformat all files" />
+    <option name="LAST_COMMIT_MESSAGE" value="reformat all files" />
   </component>
   <component name="WindowStateProjectService">
     <state x="275" y="27" width="800" height="675" key="#Notifications" timestamp="1577026317362">
@@ -314,10 +308,10 @@
       <screen x="0" y="0" width="1360" height="734" />
     </state>
     <state x="278" y="0" width="783" height="732" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog/0.0.1360.734@0.0.1360.734" timestamp="1577193081399" />
-    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2" timestamp="1577206741672">
+    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2" timestamp="1579712104536">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2/0.0.1360.734@0.0.1360.734" timestamp="1577206741672" />
+    <state x="389" y="2" width="695" height="732" key="CommitChangelistDialog2/0.0.1360.734@0.0.1360.734" timestamp="1579712104536" />
     <state x="100" y="99" width="1160" height="534" key="DiffContextDialog" timestamp="1577036348549">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
@@ -362,10 +356,10 @@
       <screen x="0" y="0" width="1360" height="734" />
     </state>
     <state x="527" y="72" width="296" height="585" key="VCS.ChangeListViewerDialog/0.0.1360.734@0.0.1360.734" timestamp="1577031089622" />
-    <state x="275" y="102" width="800" height="526" key="Vcs.Push.Dialog.v2" timestamp="1577206714392">
+    <state x="275" y="102" width="800" height="526" key="Vcs.Push.Dialog.v2" timestamp="1579712108873">
       <screen x="0" y="0" width="1360" height="734" />
     </state>
-    <state x="275" y="102" width="800" height="526" key="Vcs.Push.Dialog.v2/0.0.1360.734@0.0.1360.734" timestamp="1577206714392" />
+    <state x="275" y="102" width="800" height="526" key="Vcs.Push.Dialog.v2/0.0.1360.734@0.0.1360.734" timestamp="1579712108873" />
     <state x="470" y="286" width="419" height="160" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1575970304111">
       <screen x="0" y="0" width="1360" height="734" />
     </state>

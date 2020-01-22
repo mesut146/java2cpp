@@ -6,11 +6,15 @@ import java.util.List;
 public class CHeader extends Node {
     public String name;
     public List<String> includes = new ArrayList<>();
-    public List<String> importStar = new ArrayList();
+    public List<String> importStar = new ArrayList<>();//import namespace for symbols on the fly(java.util.*)
     public List<CClass> classes = new ArrayList<>();
     public Namespace ns;
-    public String rpath;
+    public String rpath;//header path:java/lang/String.h
     boolean hasRuntime = false;
+
+    public CHeader(String path){
+        rpath=path;
+    }
 
     public void addClass(CClass cc) {
         cc.ns = ns;

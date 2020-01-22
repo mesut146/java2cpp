@@ -41,7 +41,7 @@ public class Main {
             //cls="com/android/dex/Annotation.java";
             //cls="com/android/dex/ClassData.java";
             //cls="com/android/dex/ClassDef.java";
-            cls = "com/android/dex/Dex.java";
+            //cls = "com/android/dex/Dex.java";
             //cls="MyEnum.java";
             //cls="Generic.java";
             cls = "java/lang/Class.java";
