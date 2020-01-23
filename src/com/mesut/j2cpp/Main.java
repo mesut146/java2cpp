@@ -7,8 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import com.github.javaparser.ast.*;
-import com.mesut.j2cpp.visitor.*;
-import com.github.javaparser.ast.visitor.*;
 import com.github.javaparser.printer.*;
 
 public class Main {

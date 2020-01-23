@@ -8,6 +8,7 @@ public class SymbolTable {
     List<Symbol> list = new ArrayList<>();
 
     public void addSymbol(String pkg, String name) {
+        pkg=pkg.replace(".","::");
         list.add(new Symbol(pkg, name));
     }
 }

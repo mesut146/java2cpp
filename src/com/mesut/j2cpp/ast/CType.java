@@ -8,13 +8,22 @@ import java.util.List;
 
 public class CType {
     public Namespace ns;
-    public String type;
+    public String type;//e.g String,Object
     public int arrayLevel = 0;
     public List<CType> typeNames = new ArrayList<>();
     public CType scope = null;
 
-    public CType(String s) {
-        type = s;
+    public CType(String type) {
+        String[] arr = type.split("::");
+        this.type = arr[arr.length - 1];
+        if (arr.length > 1) {
+            ns = new Namespace(type.substring(0,type.lastIndexOf("::")));
+        }
+        //this.type = type;
+    }
+
+    public String getName(){
+        return type;
     }
 
     public String full() {
@@ -50,7 +59,7 @@ public class CType {
             sb.append(type);
             sb.append("<");
             for (Iterator<CType> iterator = typeNames.iterator(); iterator.hasNext(); ) {
-                sb.append(iterator.next());
+                sb.append(iterator.next().full());
                 if (iterator.hasNext()) {
                     sb.append(",");
                 }
@@ -58,12 +67,12 @@ public class CType {
             sb.append(">");
             return sb.toString();
         }
-        return type;
+        return full();
     }
 
     String strLevel(int level) {
         if (level == 0) {
-            return type;
+            return full();
         } else if (level == 1) {
             return "array_single<" + strLevel(level - 1) + ">";
         }

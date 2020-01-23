@@ -22,7 +22,6 @@ public class CClass extends Node {
 
     public void addInner(CClass cc) {
         cc.parent = this;
-        //cc.inHeader=inHeader;
         classes.add(cc);
     }
 
@@ -59,7 +58,7 @@ public class CClass extends Node {
     }
 
     public void print() {
-        if (parent == null && ns != null) {
+        if (parent == null && ns != null) {//todo move this into header print
             line("namespace ");
             append(ns.all);
             appendln("{");
@@ -143,6 +142,16 @@ public class CClass extends Node {
             down();
             appendln("}//ns");
         }
+    }
+
+    //return this class as type ,in hierarchy ,e.g org::MyClass::Inner::inner_field
+    public CType asType() {
+        CType type = new CType(name);
+        type.ns = ns;
+        if (parent != null) {
+            type.scope = parent.asType();
+        }
+        return type;
     }
 
     public boolean hasField(String fname) {

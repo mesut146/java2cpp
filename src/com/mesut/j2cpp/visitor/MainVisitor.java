@@ -54,6 +54,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     }
 
     public void visit(ClassOrInterfaceDeclaration n, Nodew s) {
+        //System.out.println("class="+n.getFullyQualifiedName().get());
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);

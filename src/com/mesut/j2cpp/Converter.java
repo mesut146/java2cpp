@@ -58,7 +58,6 @@ public class Converter {
     }
 
     public void convert() {
-        makeTable();
         //convertDir(new File(src), "");
         for (UnitMap h : units) {
             String pkg = "";
@@ -75,16 +74,17 @@ public class Converter {
         resolver = new Resolver(table);
         File dir = new File(src);
         units = new ArrayList<>();
-        tableDir(dir);
-        //System.out.println(table.list.size());
+        //tableDir(dir);
+        System.out.println("total="+table.list.size());
         /*for (Symbol s:table.list) {
-            //System.out.println(s.name+" , "+s.pkg);
+            System.out.println(s.name+" , "+s.pkg);
         }*/
     }
 
     //traverse source directory,parse all files and add classes to symbol table
     //useful for converting directory
     void tableDir(File dir) {
+        System.out.println("tabling dir="+dir);
         for (File file : dir.listFiles()) {
             if (file.isFile()) {
                 if (file.getName().endsWith(".java")) {
@@ -103,7 +103,7 @@ public class Converter {
                 }
             } else {
                 for (PackageName packageName:includeDirs){
-                    if (packageName.has(file.getAbsolutePath().substring(src.length()+1))){
+                    if (packageName.isSub(file.getAbsolutePath().substring(src.length()+1))){
                         tableDir(file);
                     }
                 }
@@ -117,7 +117,7 @@ public class Converter {
         if (cu.getPackageDeclaration().isPresent()) {
             table.addSymbol(cu.getPackageDeclaration().get().getNameAsString(), type.getNameAsString());
         } else {
-            table.addSymbol("", type.getNameAsString());
+            table.addSymbol("", type.getNameAsString());//no package
         }
         type.getMembers().forEach(m -> {
             if (m.isClassOrInterfaceDeclaration()) {
@@ -168,7 +168,9 @@ public class Converter {
 
     public void convertSingle(String cls) throws FileNotFoundException {
         File file = new File(src, cls);
-        convertSingle(cls, StaticJavaParser.parse(file));
+        CompilationUnit unit=StaticJavaParser.parse(file);
+        tableClass(unit.getType(0),unit);
+        convertSingle(cls, unit);
     }
 
 }
