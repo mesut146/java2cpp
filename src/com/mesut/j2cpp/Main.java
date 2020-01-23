@@ -20,10 +20,14 @@ public class Main {
             Converter converter;
             String srcPath;
             String destPath;
-            boolean android = false;
+            String cls ="";
+            boolean android = true;
             if (android) {
-                srcPath = "/storage/extSdCard/asd/dx/dex/src";
-                destPath = "/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
+                //srcPath = "/storage/extSdCard/asd/dx/dex/src";
+                //destPath = "/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
+                srcPath = "/storage/emulated/0";
+                destPath = srcPath;
+                cls = "test.java";
             } else {
                 //srcPath="/home/mesut/Desktop/dx-org/src";
                 srcPath = "/home/mesut/Desktop/src7";
@@ -35,7 +39,7 @@ public class Main {
             }
             converter = new Converter(srcPath, destPath);
 
-            String cls;
+            
             String path;
             //a="/storage/emulated/0/AppProjects/java2cpp/asd/a.java";
             //cls="com/android/dex/Annotation.java";
@@ -44,7 +48,7 @@ public class Main {
             //cls = "com/android/dex/Dex.java";
             //cls="MyEnum.java";
             //cls="Generic.java";
-            cls = "java/lang/Class.java";
+            //cls = "java/lang/Class.java";
 
             path = srcPath + "/" + cls;
 

@@ -3,8 +3,8 @@
 lib1=./lib/javaparser-core-3.15.5.jar
 cp=./build/classes:${lib1}
 
-ant build
-java -cp ${cp} com.mesut.j2cpp.Main>output
+#ant build
+java8 -cp ${cp} com.mesut.j2cpp.Main
 #if [ $1 == "save" ]; then
 #fi
 
