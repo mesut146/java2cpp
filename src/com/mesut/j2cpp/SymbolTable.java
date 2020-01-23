@@ -12,6 +12,7 @@ public class SymbolTable {
     }
 }
 
+//represents source file in pgk and name
 class Symbol {
     String pkg;
     String name;

@@ -21,7 +21,7 @@ public class Main {
             String srcPath;
             String destPath;
             String cls ="";
-            boolean android = true;
+            boolean android = false;
             if (android) {
                 //srcPath = "/storage/extSdCard/asd/dx/dex/src";
                 //destPath = "/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
@@ -38,9 +38,11 @@ public class Main {
 
             }
             converter = new Converter(srcPath, destPath);
+            converter.addIncludeDir("java/lang");
+            //converter.addInclude("java/util");
+            //converter.addInclude("java/io");
+            //converter.addInclude("java/nio");
 
-            
-            String path;
             //a="/storage/emulated/0/AppProjects/java2cpp/asd/a.java";
             //cls="com/android/dex/Annotation.java";
             //cls="com/android/dex/ClassData.java";
@@ -48,12 +50,11 @@ public class Main {
             //cls = "com/android/dex/Dex.java";
             //cls="MyEnum.java";
             //cls="Generic.java";
-            //cls = "java/lang/Class.java";
-
-            path = srcPath + "/" + cls;
+            cls = "java/lang/Object.java";
 
             if (args.length > 0) {
                 if (args[0].equals("tree")) {
+                    String path = srcPath + "/" + cls;
                     CompilationUnit cu = StaticJavaParser.parse(new File(path));
                     String yaml = new YamlPrinter(true).output(cu);
                     File fyml = new File(destPath + "/" + cls.replace(".java", ".yaml"));
