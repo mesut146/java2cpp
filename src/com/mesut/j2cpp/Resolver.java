@@ -10,25 +10,26 @@ public class Resolver {
     String[] pkgArr;
     SymbolTable table;
 
-    public static List<String> jreFiles=new ArrayList<>();
-    public static List<String> projectFiles=new ArrayList<>();
+    public static List<String> jreFiles = new ArrayList<>();
+    public static List<String> projectFiles = new ArrayList<>();
 
     public Resolver(SymbolTable table) {
         this.table = table;
     }
 
-    public static String resolve(String fullname){
+    public static String resolve(String fullname) {
         return null;
 
     }
 
-    public boolean isClass(String name, CHeader header){
-        for(String str:header.includes){
-            if (str.endsWith(".h")){
-                int idx=str.lastIndexOf('/');
-                if (idx!=-1){
-                    String cls=str.substring(idx+1,str.length()-2);
-                    if (name.equals(cls)){
+    //check that if class name is in import section
+    public boolean isClass(String name, CHeader header) {
+        for (String str : header.includes) {
+            if (str.endsWith(".h")) {
+                int idx = str.lastIndexOf('/');
+                if (idx != -1) {
+                    String cls = str.substring(idx + 1, str.length() - 2);
+                    if (name.equals(cls)) {
                         return true;
                     }
                 }
@@ -38,7 +39,7 @@ public class Resolver {
         return false;
     }
 
-    public static void init(){
+    public static void init() {
 
     }
 }

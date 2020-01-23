@@ -556,6 +556,7 @@ public class MethodVisitor extends GenericVisitorAdapter<Object, Nodew> {
         /*if (converter.getResolver().isClass(n.getNameAsString(),)){
 
         }*/
+
         CType typeName = new CType(n.getNameAsString());
         if (n.getTypeArguments().isPresent()) {
             for (Iterator<Type> iterator = n.getTypeArguments().get().iterator(); iterator.hasNext(); ) {

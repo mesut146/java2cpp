@@ -154,7 +154,7 @@ public class Converter {
             String ss = cpp.toString();
             System.out.println(hs);
             System.out.println("---------------");
-            System.out.println(ss);
+            //System.out.println(ss);
             File fcpp = new File(dest, path.replace(".java", ".cpp"));
             fcpp.getParentFile().mkdirs();
             Files.write(Paths.get(fcpp.getAbsolutePath()), ss.getBytes());

@@ -69,17 +69,8 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        Util.Inner_util obj;
+        Util.Inner_util.Inner2 obj2;
     }
 
-    static class inner {
-        Object field = null;
-
-        void inner_norm(String s) {
-            System.out.println("inner_norm " + s);
-        }
-
-        static void inner_static(String s) {
-            System.out.println("inner_static " + s);
-        }
-    }
 }

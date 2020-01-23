@@ -14,4 +14,7 @@ public class Util
             e.printStackTrace();
         }
     }
+    class Inner_util{
+        class Inner2{}
+    }
 }
