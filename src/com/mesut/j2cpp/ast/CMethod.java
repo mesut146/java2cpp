@@ -34,7 +34,11 @@ public class CMethod extends ModifierNode {
 
         if (isNative()) {
             //System.out.println("native method");
-            append("/*TODO native*/ ");
+            append("/*TODO native*/ extern ");
+            /*
+             *extern to get rid of compilation errors
+             *later they will be implemented or,linked from openjdk
+            */
         }
         printDecl();
         if (parent.isInterface) {//make it virtual

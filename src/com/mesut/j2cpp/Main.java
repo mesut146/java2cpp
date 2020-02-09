@@ -9,11 +9,13 @@ import java.nio.file.Paths;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.printer.*;
 
+import com.mesut.j2cpp.Util.Inner_util.Inner2;
+
 public class Main {
 
 
     public static void main(String[] args) {
-
+        Inner2 as;
         try {
             Converter converter;
             String srcPath;
@@ -69,8 +71,7 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Util.Inner_util obj;
-        Util.Inner_util.Inner2 obj2;
+
     }
 
 }

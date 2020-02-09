@@ -1,6 +1,7 @@
 package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.CHeader;
+import com.mesut.j2cpp.ast.CType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,30 @@ public class Resolver {
         }
         //TODO: check same package too
         return false;
+    }
+
+    public CType resolveType(String typeStr, CHeader header) {
+        //include java/lang/Class.h
+        for (String include : header.includes) {
+            if (include.endsWith(".h")) {//not necessary
+                int idx = include.lastIndexOf('/');
+                if (idx != -1) {
+                    //get class name
+                    String cls = include.substring(idx + 1, include.length() - 2);
+                    if (typeStr.equals(cls)) {
+                        return toType(include);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    CType toType(String include) {
+        CType type=new CType("");
+        // java/lang/String.h
+        // com/my/Type.Inner.h
+        return type;
     }
 
     public static void init() {

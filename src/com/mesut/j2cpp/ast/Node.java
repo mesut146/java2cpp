@@ -108,7 +108,7 @@ public abstract class Node {
     }
 
     public Node include(String file) {
-        appendln("#include \"" + file + "\"");
+        appendln("#include \"" + file + ".h\"");
         return this;
     }
 

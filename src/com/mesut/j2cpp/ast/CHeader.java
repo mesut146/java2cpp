@@ -12,8 +12,8 @@ public class CHeader extends Node {
     public String rpath;//header path:java/lang/String.h
     boolean hasRuntime = false;
 
-    public CHeader(String path){
-        rpath=path;
+    public CHeader(String path) {
+        rpath = path;
     }
 
     public void addClass(CClass cc) {
@@ -71,4 +71,12 @@ public class CHeader extends Node {
     }
 
 
+    public boolean isIncluded(String path) {
+        for (String str : includes) {
+            if (str.equals(path)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

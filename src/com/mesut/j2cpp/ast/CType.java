@@ -79,4 +79,8 @@ public class CType {
         return "array_multi<" + strLevel(level - 1) + ">";
     }
 
+    public String getIncludePath() {
+        //todo
+        return null;
+    }
 }
