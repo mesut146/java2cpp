@@ -59,8 +59,10 @@ public class Resolver {
 
     CType toType(String include) {
         CType type=new CType("");
-        // java/lang/String.h
-        // com/my/Type.Inner.h
+        // java/lang/String
+        // com/my/Type/Inner
+        String[] arr=include.split("/");
+        //todo need package hier
         return type;
     }
 
