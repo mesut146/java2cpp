@@ -60,6 +60,7 @@ public class Converter {
 
     public void convert() {
         //convertDir(new File(src), "");
+        
         for (UnitMap h : units) {
             String pkg = "";
             if (h.cu.getPackageDeclaration().isPresent()) {
@@ -76,8 +77,11 @@ public class Converter {
         File dir = new File(src);
         units = new ArrayList<>();
         
-        //tableDir(dir);
+        tableDir(dir,null);
         System.out.println("total="+table.list.size());
+        for(PackageNode node:packageHierarchy){
+            System.out.println(node);
+        }
         /*for (Symbol s:table.list) {
             System.out.println(s.name+" , "+s.pkg);
         }*/
@@ -85,28 +89,37 @@ public class Converter {
 
     //walk in source directory,parse all files and add classes to symbol table
     //useful for converting directory
-    void tableDir(File dir) {
+    void tableDir(File dir,PackageNode node) {
         System.out.println("tabling dir="+dir);
+        
         for (File file : dir.listFiles()) {
             if (file.isFile()) {
                 if (file.getName().endsWith(".java")) {
                     try {
-                        CompilationUnit cu = StaticJavaParser.parse(file);
+                        /*CompilationUnit cu = StaticJavaParser.parse(file);
                         units.add(new UnitMap(cu, file.getName()));
                         // cu,pkg,name
                         for (TypeDeclaration<?> type : cu.getTypes()) {
                             if (type.isClassOrInterfaceDeclaration()) {
                                 tableClass(type, cu);
                             }
-                        }
-                    } catch (FileNotFoundException e) {
+                        }*/
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             } else {
+                PackageNode sub;
+                if(node==null){
+                    sub=new PackageNode(file.getName());
+                    packageHierarchy.add(sub);
+                }else{
+                    sub=node.addSub(file.getName());
+                }
+                
                 for (PackageName packageName:includeDirs){
                     if (packageName.isSub(file.getAbsolutePath().substring(src.length()+1))){
-                        tableDir(file);
+                        tableDir(file,sub);
                     }
                 }
 
@@ -141,6 +154,7 @@ public class Converter {
     }*/
     
     String getPath(CompilationUnit cu){
+        
         String pkg=cu.getPackageDeclaration.get().getNameAsString();
         return pkg.replace(".","/");
     }

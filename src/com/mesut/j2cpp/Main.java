@@ -21,12 +21,12 @@ public class Main {
             String srcPath;
             String destPath;
             String cls ="";
-            boolean android = false;
+            boolean android = true;
             if (android) {
-                //srcPath = "/storage/extSdCard/asd/dx/dex/src";
-                //destPath = "/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
-                srcPath = "/storage/emulated/0";
-                destPath = srcPath;
+                srcPath = "/storage/extSdCard/asd/dx/dex/src";
+                destPath = "/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
+                //srcPath = "/storage/emulated/0";
+                //destPath = srcPath;
                 cls = "test.java";
             } else {
                 //srcPath="/home/mesut/Desktop/dx-org/src";
@@ -38,7 +38,7 @@ public class Main {
 
             }
             converter = new Converter(srcPath, destPath);
-            converter.addIncludeDir("java/lang");
+            //converter.addIncludeDir("java/lang");
             //converter.addInclude("java/util");
             //converter.addInclude("java/io");
             //converter.addInclude("java/nio");
@@ -65,7 +65,7 @@ public class Main {
                 }
             }
             converter.makeTable();
-            converter.convertSingle(cls);
+            //converter.convertSingle(cls);
             //converter.convert();
 
         } catch (Exception e) {

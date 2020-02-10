@@ -9,6 +9,12 @@ public class PackageNode
     public PackageNode(String name){
         this.name=name;
     }
+    
+    public PackageNode addSub(String sub){
+        PackageNode subnode=new PackageNode(sub);
+        nodes.add(subnode);
+        return subnode;
+    }
 
     @Override
     public String toString()
