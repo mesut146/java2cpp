@@ -27,7 +27,8 @@ public class Converter {
     List<String> excludeDirs = new ArrayList<>();
     List<String> includeClasses = new ArrayList<>();
     List<String> excludeClasses = new ArrayList<>();
-
+    List<PackageNode> packageHierarchy=new ArrayList<>();
+    
     public Converter(String src, String dest) {
         this.src = src;
         this.dest = dest;
@@ -74,6 +75,7 @@ public class Converter {
         resolver = new Resolver(table);
         File dir = new File(src);
         units = new ArrayList<>();
+        
         //tableDir(dir);
         System.out.println("total="+table.list.size());
         /*for (Symbol s:table.list) {
@@ -81,7 +83,7 @@ public class Converter {
         }*/
     }
 
-    //traverse source directory,parse all files and add classes to symbol table
+    //walk in source directory,parse all files and add classes to symbol table
     //useful for converting directory
     void tableDir(File dir) {
         System.out.println("tabling dir="+dir);
@@ -137,6 +139,11 @@ public class Converter {
             }
         }
     }*/
+    
+    String getPath(CompilationUnit cu){
+        String pkg=cu.getPackageDeclaration.get().getNameAsString();
+        return pkg.replace(".","/");
+    }
 
     public void convertSingle(String path, CompilationUnit cu) {
         try {
@@ -144,8 +151,8 @@ public class Converter {
             CHeader header = new CHeader(path.replace(".java", ".h"));
             CSource cpp = new CSource(header);
 
-            header.importStar.add("java/lang");//by default as in java compilers
-
+            header.addIncludeStar("java/lang");//by default as in java compilers
+            header.addIncludeStar(getPath(cu));//visible to current package
             MainVisitor visitor = new MainVisitor(this, header);
 
             cu.accept(visitor, null);

@@ -24,7 +24,18 @@ public class CHeader extends Node {
     public void addRuntime() {
         hasRuntime = true;
     }
-
+    
+    public void addInclude(String include){
+        if(!includes.contains(include)){
+            includes.add(include);
+        }
+    }
+    public void addIncludeStar(String include){
+        if(!importStar.contains(include)){
+            includes.add(include);
+        }
+    }
+    
     /**
      * make sure type is included
      **/

@@ -4,6 +4,7 @@ import com.github.javaparser.ast.body.*;
 
 import java.util.*;
 
+//super call in cons
 public class Call {
     public boolean isThis;
     public String str;
