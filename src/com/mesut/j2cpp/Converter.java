@@ -27,6 +27,7 @@ public class Converter {
     List<String> excludeDirs = new ArrayList<>();
     List<String> includeClasses = new ArrayList<>();
     List<String> excludeClasses = new ArrayList<>();
+    //look fist this while resolving
     List<PackageNode> packageHierarchy=new ArrayList<>();
     
     public Converter(String src, String dest) {
@@ -56,6 +57,10 @@ public class Converter {
 
     public Resolver getResolver() {
         return resolver;
+    }
+    
+    public void fixImports(){
+        
     }
 
     public void convert() {
@@ -153,11 +158,11 @@ public class Converter {
         }
     }*/
     
-    String getPath(CompilationUnit cu){
+    /*String getPath(CompilationUnit cu){
         
         String pkg=cu.getPackageDeclaration.get().getNameAsString();
         return pkg.replace(".","/");
-    }
+    }*/
 
     public void convertSingle(String path, CompilationUnit cu) {
         try {
@@ -166,7 +171,7 @@ public class Converter {
             CSource cpp = new CSource(header);
 
             header.addIncludeStar("java/lang");//by default as in java compilers
-            header.addIncludeStar(getPath(cu));//visible to current package
+            //header.addIncludeStar(getPath(cu));//visible to current package
             MainVisitor visitor = new MainVisitor(this, header);
 
             cu.accept(visitor, null);

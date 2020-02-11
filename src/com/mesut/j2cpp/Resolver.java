@@ -29,7 +29,7 @@ public class Resolver {
         for (String str : header.includes) {
             int idx = str.lastIndexOf('/');
             if (idx != -1) {
-                String cls = str.substring(idx + 1, str.length() - 2);
+                String cls = str.substring(idx + 1);
                 if (name.equals(cls)) {
                     return true;
                 }
@@ -40,18 +40,44 @@ public class Resolver {
     }
 
     public CType resolveType(String typeStr, CHeader header) {
+        String[] arr=typeStr.split(".");
+        if(arr.length>1){
+            //todo fulltype
+            // java.lang.String  com.Base.inner
+        }
         //include java/lang/Class.h
         for (String include : header.includes) {
             int idx = include.lastIndexOf('/');
             if (idx != -1) {
                 //get class name
-                String cls = include.substring(idx + 1, include.length() - 2);
-                if (typeStr.equals(cls)) {
+                String cls = include.substring(idx + 1);
+                if (typeStr.equals(cls)) {//directly imported
                     return toType(include);
                 }
             }
         }
+        for(String imp:header.importStar){
+            // imp=java/lang   type=String
+            String[] arr2=imp.split("/");
+            PackageNode pn=getHier(arr2);
+            if(pn!=null){
+                return toType(pn,);
+            }  
+        }
         return null;
+    }
+    
+    PackageNode getHier(String[] arr){
+        for(PackageNode pn:converter.packageHierarchy){
+            if(pn.has(arr,0)){
+                return pn;
+            }
+        }
+        return null;
+    }
+    
+    CType toType(PackageNode node){
+        
     }
 
     CType toType(String include) {

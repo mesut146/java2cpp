@@ -15,6 +15,17 @@ public class PackageNode
         nodes.add(subnode);
         return subnode;
     }
+    
+    public boolean has(String[] arr,int i){
+        if(name.equals(arr[i])){
+            for(PackageNode pn:nodes){
+                if(pn.has(arr,i++)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     @Override
     public String toString()
