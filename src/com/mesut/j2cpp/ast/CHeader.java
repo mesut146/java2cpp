@@ -16,6 +16,10 @@ public class CHeader extends Node {
         rpath = path;
     }
 
+    String getPathNoExt() {
+        return rpath.substring(0, rpath.length() - 2);
+    }
+
     public void addClass(CClass cc) {
         cc.ns = ns;
         classes.add(cc);
@@ -26,7 +30,8 @@ public class CHeader extends Node {
     }
 
     public void addInclude(String include) {
-        if (!includes.contains(include)) {
+        //prevent same header includes itself and other duplications
+        if (!include.equals(getPathNoExt()) && !includes.contains(include)) {
             includes.add(include);
         }
     }

@@ -21,21 +21,17 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     public Object visit(PrimitiveType n, Nodew w) {
-        CType typeName = new CType(Helper.toCType(n.asString()));
-        //w.append(typeName.toString());
-        return typeName;
+        return new CType(Helper.toCType(n.asString()));
     }
 
     public Object visit(ArrayType n, Nodew w) {
-        CType typeName = (CType) n.getElementType().accept(this, w);
-        typeName.arrayLevel = n.getArrayLevel();
-        return typeName;
+        CType type = (CType) n.getElementType().accept(this, w);
+        type.arrayLevel = n.getArrayLevel();
+        return type;
     }
 
     public Object visit(VoidType n, Nodew w) {
-        CType typeName = new CType("void");
-        //w.append(typeName.toString());
-        return typeName;
+        return new CType("void");
     }
 
     public Object visit(ClassOrInterfaceType n, Nodew w) {
@@ -80,8 +76,6 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
     @Override
     public Object visit(WildcardType n, Nodew arg) {
-        CType type = new CType("java::lang::Object");
-        //type.ns=new Namespace("java::lang");
-        return type;
+        return new CType("java::lang::Object");
     }
 }

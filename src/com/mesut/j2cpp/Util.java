@@ -1,20 +1,14 @@
 package com.mesut.j2cpp;
-import java.io.*;
 
-public class Util
-{
-    public static void save(String data,String file){
-        try
-        {
-            FileOutputStream fos=new FileOutputStream(file);
+import java.io.FileOutputStream;
+
+public class Util {
+    public static void save(String data, String file) {
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
             fos.write(data.getBytes());
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-    class Inner_util{
-        class Inner2{}
     }
 }

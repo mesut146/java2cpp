@@ -66,6 +66,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
                     w.append("->");
                 }
             } else {
+                //another method call or field access
                 w.append("->");
             }
             /*if (scope.isFieldAccessExpr()||scope.isMethodCallExpr()){
@@ -87,6 +88,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
             if (converter.getResolver().isClass(scope.asNameExpr().getNameAsString(), header)) {
                 w.append("::");
             } else {
+                //another field access or method call
                 w.append("->");
             }
         } else {

@@ -1,11 +1,16 @@
 package com.mesut.j2cpp;
 
 import com.github.javaparser.JavaParser;
+import com.github.javaparser.ParseProblemException;
+import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.resolution.SymbolResolver;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
@@ -13,6 +18,7 @@ import com.mesut.j2cpp.visitor.MainVisitor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -22,7 +28,6 @@ public class Converter {
 
     SymbolTable table;
     Resolver resolver;
-    JavaSymbolSolver symbolSolver;
     JavaParser javaParser;
     String srcDir;//source folder
     String destDir;//destinaytion folder for c++ files
@@ -35,14 +40,11 @@ public class Converter {
     List<String> excludeClasses = new ArrayList<>();
     //look fist this while resolving
     List<PackageNode> packageHierarchy = new ArrayList<>();
+    List<String> jars = new ArrayList<>();
 
-    public Converter(String srcDir, String destDir) {
+    public Converter(String srcDir, String destDir) throws IOException {
         this.srcDir = srcDir;
         this.destDir = destDir;
-        TypeSolver typeSolver = new JavaParserTypeSolver(srcDir);
-        symbolSolver = new JavaSymbolSolver(typeSolver);
-        javaParser = new JavaParser(new ParserConfiguration().setSymbolResolver(symbolSolver));
-        //StaticJavaParser.getConfiguration().setSymbolResolver(symbolSolver);
     }
 
     public void addIncludeDir(String prefix) {
@@ -73,6 +75,10 @@ public class Converter {
 
     }
 
+    public void addJar(String jarPath) {
+        jars.add(jarPath);
+    }
+
     public void convert() {
         //convertDir(new File(src), "");
 
@@ -85,8 +91,26 @@ public class Converter {
         }
     }
 
+    void initSolver() throws IOException {
+        TypeSolver dirSolver = new JavaParserTypeSolver(srcDir);
+        TypeSolver typeSolver = dirSolver;
+        if (!jars.isEmpty()) {
+            //no jars just srcDir
+            CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
+            combinedTypeSolver.add(dirSolver);
+            for (String jar : jars) {
+                JarTypeSolver jarTypeSolver = new JarTypeSolver(jar);
+                combinedTypeSolver.add(jarTypeSolver);
+            }
+            typeSolver = combinedTypeSolver;
+        }
+        SymbolResolver symbolResolver = new JavaSymbolSolver(typeSolver);
+        javaParser = new JavaParser(new ParserConfiguration().setSymbolResolver(symbolResolver));
+    }
+
     //
-    public void makeTable() {
+    public void makeTable() throws IOException {
+        initSolver();
         table = new SymbolTable();
         resolver = new Resolver(table);
         File dir = new File(srcDir);
@@ -131,7 +155,6 @@ public class Converter {
                 } else {
                     sub = node.addSub(file.getName());
                 }
-
                 for (PackageName packageName : includeDirs) {
                     if (packageName.isSub(file.getAbsolutePath().substring(srcDir.length() + 1))) {
                         tableDir(file, sub);
@@ -154,6 +177,10 @@ public class Converter {
                 tableClass(m.asClassOrInterfaceDeclaration(), cu);
             }
         });
+        /*type.getMembers()//java8
+                .stream()
+                .filter(BodyDeclaration::isClassOrInterfaceDeclaration)
+                .forEach(m -> tableClass(m.asClassOrInterfaceDeclaration(), cu));*/
     }
 
     /*public void convertDir(File dir, String pkg) throws FileNotFoundException {
@@ -189,17 +216,19 @@ public class Converter {
 
             cu.accept(visitor, null);
 
-            String hs = header.toString();
-            String ss = cpp.toString();
-            System.out.println(hs);
-            System.out.println("---------------");
-            System.out.println(ss);
-            File fcpp = new File(destDir, path.replace(".java", ".cpp"));
-            fcpp.getParentFile().mkdirs();
-            Files.write(Paths.get(fcpp.getAbsolutePath()), ss.getBytes());
+            String header_str = header.toString();
+            String source_str = cpp.toString();
 
-            File fh = new File(destDir, path.replace(".java", ".h"));
-            Files.write(Paths.get(fh.getAbsolutePath()), hs.getBytes());
+            System.out.println(header_str);
+            System.out.println("---------------");
+            System.out.println(source_str);
+
+            File header_file = new File(destDir, path.replace(".java", ".h"));
+            File source_file = new File(destDir, path.replace(".java", ".cpp"));
+            header_file.getParentFile().mkdirs();
+            Files.write(Paths.get(header_file.getAbsolutePath()), header_str.getBytes());
+            Files.write(Paths.get(source_file.getAbsolutePath()), source_str.getBytes());
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -207,11 +236,17 @@ public class Converter {
 
     public void convertSingle(String cls) throws FileNotFoundException {
         File file = new File(srcDir, cls);
-        CompilationUnit unit = javaParser.parse(file).getResult().get();
-        for (TypeDeclaration<?> typeDeclaration : unit.getTypes()) {
-            tableClass(typeDeclaration, unit);
+        ParseResult<?> result = javaParser.parse(file);
+        if (result.isSuccessful()) {
+            CompilationUnit unit = (CompilationUnit) result.getResult().get();
+            for (TypeDeclaration<?> typeDeclaration : unit.getTypes()) {
+                tableClass(typeDeclaration, unit);
+            }
+            convertSingle(cls, unit);
+        } else {
+            throw new ParseProblemException(result.getProblems());
         }
-        convertSingle(cls, unit);
+
     }
 
 }

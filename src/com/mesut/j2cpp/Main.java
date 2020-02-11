@@ -12,6 +12,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeS
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -48,6 +49,7 @@ public class Main {
 
             }
             converter = new Converter(srcPath, destPath);
+            //converter.addJar("/home/mesut/Desktop/rt7.jar");
             //converter.addIncludeDir("java/lang");
             //converter.addInclude("java/util");
             //converter.addInclude("java/io");
@@ -57,13 +59,7 @@ public class Main {
 
             if (args.length > 0) {
                 if (args[0].equals("tree")) {
-                    String path = srcPath + "/" + cls;
-                    CompilationUnit cu = StaticJavaParser.parse(new File(path));
-                    String yaml = new YamlPrinter(true).output(cu);
-                    File fyml = new File(destPath + "/" + cls.replace(".java", ".yaml"));
-                    fyml.getParentFile().mkdirs();
-                    Files.write(Paths.get(fyml.getAbsolutePath()), yaml.getBytes());
-                    System.out.println(yaml);
+                    yaml(srcPath, destPath, cls);
                     return;
                 }
             }
@@ -75,6 +71,16 @@ public class Main {
             e.printStackTrace();
         }
 
+    }
+
+    static void yaml(String srcPath, String destPath, String cls) throws IOException {
+        String path = srcPath + "/" + cls;
+        CompilationUnit cu = StaticJavaParser.parse(new File(path));
+        String yaml = new YamlPrinter(true).output(cu);
+        File fyml = new File(destPath + "/" + cls.replace(".java", ".yaml"));
+        fyml.getParentFile().mkdirs();
+        Files.write(Paths.get(fyml.getAbsolutePath()), yaml.getBytes());
+        System.out.println(yaml);
     }
 
     static void resolve() throws FileNotFoundException {
