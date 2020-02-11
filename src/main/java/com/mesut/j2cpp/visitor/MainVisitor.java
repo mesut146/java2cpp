@@ -140,7 +140,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         CMethod method = new CMethod();
         last().addMethod(method);
         if (!n.getTypeParameters().isEmpty()) {
-            n.getTypeParameters().forEach(temp -> method.template.add(new CType(temp.asString())));
+            n.getTypeParameters().forEach(temp -> method.template.add(new CType(temp.getNameAsString())));
         }
         //type could be template
         method.type = typeVisitor.visitType(n.getType(), method);

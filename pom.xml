@@ -17,7 +17,7 @@
       <configuration>
         <archive>
           <manifest>
-            <mainClass>com.nesut.j2cpp.Cmd</mainClass>
+            <mainClass>com.mesut.j2cpp.Cmd</mainClass>
           </manifest>
         </archive>
         <descriptorRefs>
