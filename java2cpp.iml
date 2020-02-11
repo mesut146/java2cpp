@@ -23,5 +23,9 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="javaparser-symbol-solver-core-3.15.5" level="project" />
+    <orderEntry type="library" name="javaparser-symbol-solver-logic-3.15.5" level="project" />
+    <orderEntry type="library" name="javaparser-symbol-solver-model-3.15.5" level="project" />
+    <orderEntry type="library" name="guava-28.2-jre" level="project" />
   </component>
 </module>

@@ -1,26 +1,34 @@
 package com.mesut.j2cpp;
 
-import com.github.javaparser.*;
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.printer.YamlPrinter;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
-import com.github.javaparser.ast.*;
-import com.github.javaparser.printer.*;
-
-import com.mesut.j2cpp.Util.Inner_util.Inner2;
 
 public class Main {
 
 
     public static void main(String[] args) {
-        Inner2 as;
+
         try {
+            if (true) {
+                resolve();
+                return;
+            }
             Converter converter;
             String srcPath;
             String destPath;
-            String cls ="";
+            String cls = "";
             boolean android = true;
             if (android) {
                 srcPath = "/storage/extSdCard/asd/dx/dex/src";
@@ -43,13 +51,6 @@ public class Main {
             //converter.addInclude("java/io");
             //converter.addInclude("java/nio");
 
-            //a="/storage/emulated/0/AppProjects/java2cpp/asd/a.java";
-            //cls="com/android/dex/Annotation.java";
-            //cls="com/android/dex/ClassData.java";
-            //cls="com/android/dex/ClassDef.java";
-            //cls = "com/android/dex/Dex.java";
-            //cls="MyEnum.java";
-            //cls="Generic.java";
             cls = "java/lang/Object.java";
 
             if (args.length > 0) {
@@ -74,4 +75,24 @@ public class Main {
 
     }
 
+    static void resolve() throws FileNotFoundException {
+        String dir = "/home/mesut/Desktop/src7/";
+        String file = dir + "java/lang/Object.java";
+
+        //TypeSolver typeSolver = new CombinedTypeSolver();
+        TypeSolver typeSolver = new JavaParserTypeSolver(dir);
+
+        JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
+        StaticJavaParser
+                .getConfiguration()
+                .setSymbolResolver(symbolSolver);
+
+        CompilationUnit cu = StaticJavaParser.parse(new File(file));
+
+        TypeDeclaration<?> type = cu.getType(0);
+        System.out.println(type.resolve().getQualifiedName());
+
+        MethodDeclaration method = type.getMethodsByName("getClass").get(0);
+        System.out.println(method.getType().resolve());
+    }
 }

@@ -40,8 +40,8 @@ public class Resolver {
     }
 
     public CType resolveType(String typeStr, CHeader header) {
-        String[] arr=typeStr.split(".");
-        if(arr.length>1){
+        String[] arr = typeStr.split(".");
+        if (arr.length > 1) {
             //todo fulltype
             // java.lang.String  com.Base.inner
         }
@@ -56,35 +56,35 @@ public class Resolver {
                 }
             }
         }
-        for(String imp:header.importStar){
+        for (String imp : header.importStar) {
             // imp=java/lang   type=String
-            String[] arr2=imp.split("/");
-            PackageNode pn=getHier(arr2);
-            if(pn!=null){
-                return toType(pn,);
-            }  
+            String[] arr2 = imp.split("/");
+            PackageNode pn = getHier(arr2);
+            if (pn != null) {
+                //return toType(pn, typeStr);
+            }
         }
         return null;
     }
-    
-    PackageNode getHier(String[] arr){
-        for(PackageNode pn:converter.packageHierarchy){
-            if(pn.has(arr,0)){
+
+    PackageNode getHier(String[] arr) {
+        for (PackageNode pn : converter.packageHierarchy) {
+            if (pn.has(arr, 0)) {
                 return pn;
             }
         }
         return null;
     }
-    
-    CType toType(PackageNode node){
-        
+
+    CType toType(PackageNode node) {
+        return null;
     }
 
     CType toType(String include) {
-        CType type=new CType("");
+        CType type = new CType("");
         // java/lang/String
         // com/my/Type/Inner
-        String[] arr=include.split("/");
+        String[] arr = include.split("/");
         //todo need package hier
         return type;
     }

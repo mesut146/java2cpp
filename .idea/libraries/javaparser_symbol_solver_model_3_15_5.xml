@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="javaparser-symbol-solver-model-3.15.5">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/javaparser-symbol-solver-model-3.15.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

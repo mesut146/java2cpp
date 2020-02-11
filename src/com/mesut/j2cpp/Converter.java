@@ -28,8 +28,8 @@ public class Converter {
     List<String> includeClasses = new ArrayList<>();
     List<String> excludeClasses = new ArrayList<>();
     //look fist this while resolving
-    List<PackageNode> packageHierarchy=new ArrayList<>();
-    
+    List<PackageNode> packageHierarchy = new ArrayList<>();
+
     public Converter(String src, String dest) {
         this.src = src;
         this.dest = dest;
@@ -58,14 +58,14 @@ public class Converter {
     public Resolver getResolver() {
         return resolver;
     }
-    
-    public void fixImports(){
-        
+
+    public void fixImports() {
+
     }
 
     public void convert() {
         //convertDir(new File(src), "");
-        
+
         for (UnitMap h : units) {
             String pkg = "";
             if (h.cu.getPackageDeclaration().isPresent()) {
@@ -81,10 +81,10 @@ public class Converter {
         resolver = new Resolver(table);
         File dir = new File(src);
         units = new ArrayList<>();
-        
-        tableDir(dir,null);
-        System.out.println("total="+table.list.size());
-        for(PackageNode node:packageHierarchy){
+
+        tableDir(dir, null);
+        System.out.println("total=" + table.list.size());
+        for (PackageNode node : packageHierarchy) {
             System.out.println(node);
         }
         /*for (Symbol s:table.list) {
@@ -94,9 +94,9 @@ public class Converter {
 
     //walk in source directory,parse all files and add classes to symbol table
     //useful for converting directory
-    void tableDir(File dir,PackageNode node) {
-        System.out.println("tabling dir="+dir);
-        
+    void tableDir(File dir, PackageNode node) {
+        System.out.println("tabling dir=" + dir);
+
         for (File file : dir.listFiles()) {
             if (file.isFile()) {
                 if (file.getName().endsWith(".java")) {
@@ -115,16 +115,16 @@ public class Converter {
                 }
             } else {
                 PackageNode sub;
-                if(node==null){
-                    sub=new PackageNode(file.getName());
+                if (node == null) {
+                    sub = new PackageNode(file.getName());
                     packageHierarchy.add(sub);
-                }else{
-                    sub=node.addSub(file.getName());
+                } else {
+                    sub = node.addSub(file.getName());
                 }
-                
-                for (PackageName packageName:includeDirs){
-                    if (packageName.isSub(file.getAbsolutePath().substring(src.length()+1))){
-                        tableDir(file,sub);
+
+                for (PackageName packageName : includeDirs) {
+                    if (packageName.isSub(file.getAbsolutePath().substring(src.length() + 1))) {
+                        tableDir(file, sub);
                     }
                 }
 
@@ -157,12 +157,14 @@ public class Converter {
             }
         }
     }*/
-    
-    /*String getPath(CompilationUnit cu){
-        
-        String pkg=cu.getPackageDeclaration.get().getNameAsString();
-        return pkg.replace(".","/");
-    }*/
+
+    String getPath(CompilationUnit cu) {
+        if (cu.getPackageDeclaration().isPresent()) {
+            String pkg = cu.getPackageDeclaration().get().getNameAsString();
+            return pkg.replace(".", "/");
+        }
+        return "";
+    }
 
     public void convertSingle(String path, CompilationUnit cu) {
         try {
@@ -194,8 +196,8 @@ public class Converter {
 
     public void convertSingle(String cls) throws FileNotFoundException {
         File file = new File(src, cls);
-        CompilationUnit unit=StaticJavaParser.parse(file);
-        tableClass(unit.getType(0),unit);
+        CompilationUnit unit = StaticJavaParser.parse(file);
+        tableClass(unit.getType(0), unit);
         convertSingle(cls, unit);
     }
 
