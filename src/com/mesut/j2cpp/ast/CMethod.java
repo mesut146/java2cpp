@@ -8,6 +8,7 @@ import java.util.List;
 public class CMethod extends ModifierNode {
     public String name;
     public CType type;
+    public Template template = new Template();
     public List<CParameter> params = new ArrayList<>();
     public List<String> throwList = new ArrayList<>();
     public boolean empty = false;
@@ -19,6 +20,10 @@ public class CMethod extends ModifierNode {
 
     public CClass getParent() {
         return parent;
+    }
+
+    public Template getTemplate() {
+        return template;
     }
 
     public String getName() {

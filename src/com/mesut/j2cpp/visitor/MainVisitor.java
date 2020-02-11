@@ -74,6 +74,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         cc.name = n.getNameAsString();
         cc.isInterface = n.isInterface();
         n.getTypeParameters().forEach(type -> cc.template.add((CType) type.accept(typeVisitor, new Nodew())));
+        //n.getTypeParameters().forEach(type -> System.out.println(type.isReferenceType()));
         n.getExtendedTypes().forEach(ex -> cc.base.add((CType) ex.accept(typeVisitor, new Nodew())));
         n.getImplementedTypes().forEach(iface -> cc.base.add((CType) iface.accept(typeVisitor, new Nodew())));
         n.getMembers().forEach(p -> p.accept(this, null));
@@ -120,7 +121,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         for (VariableDeclarator vd : n.getVariables()) {
             CField cf = new CField();
             last().addField(cf);
-            cf.type = (CType) vd.getType().accept(typeVisitor, new Nodew());
+            cf.type = typeVisitor.visitType(vd.getType(), last());
             //cf.type.arrayLevel=vd.getType().getArrayLevel();
             cf.name = vd.getNameAsString();
             cf.setStatic(n.isStatic());
@@ -135,42 +136,52 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     }
 
     public void visit(MethodDeclaration n, Nodew w) {
-        CMethod cm = new CMethod();
-        last().addMethod(cm);
-        cm.type = (CType) n.getType().accept(typeVisitor, new Nodew());
-        cm.name = n.getName().asString();
-        cm.setStatic(n.isStatic());
-        cm.setPublic(n.isPublic());
-        cm.setNative(n.isNative());
+        CMethod method = new CMethod();
+        last().addMethod(method);
+        if (!n.getTypeParameters().isEmpty()) {
+            n.getTypeParameters().forEach(temp -> method.template.add(new CType(temp.asString())));
+        }
+        //type could be template
+        method.type = typeVisitor.visitType(n.getType(), method);
 
-        for (Parameter p : n.getParameters()) {
+        method.name = n.getName().asString();
+        method.setStatic(n.isStatic());
+        method.setPublic(n.isPublic());
+        method.setNative(n.isNative());
+
+        for (Parameter parameter : n.getParameters()) {
             CParameter cp = new CParameter();
-            cp.type = (CType) p.getType().accept(typeVisitor, new Nodew());
-            cp.name = p.getNameAsString();
-            cm.params.add(cp);
+            cp.type = typeVisitor.visitType(parameter.getType(), method);
+            cp.name = parameter.getNameAsString();
+            method.params.add(cp);
         }
         if (n.getBody().isPresent()) {
-            cm.body.init();
-            statementVisitor.method = cm;
-            n.getBody().get().accept(statementVisitor, cm.body);
+            method.body.init();
+            statementVisitor.method = method;
+            n.getBody().get().accept(statementVisitor, method.body);
         }
     }
 
     public void visit(ConstructorDeclaration n, Nodew w) {
-        CMethod cm = new CMethod();
-        last().addMethod(cm);
-        cm.isCons = true;
-        cm.name = n.getNameAsString();
-        cm.setPublic(n.isPublic());
-        for (Parameter p : n.getParameters()) {
-            CParameter cp = new CParameter();
-            cp.type = (CType) p.getType().accept(typeVisitor, new Nodew());
-            cp.name = p.getNameAsString();
-            cm.params.add(cp);
+        CMethod method = new CMethod();
+        last().addMethod(method);
+        method.isCons = true;
+        method.name = n.getNameAsString();
+        method.setPublic(n.isPublic());
+
+        if (!n.getTypeParameters().isEmpty()) {
+            n.getTypeParameters().forEach(temp -> method.template.add(new CType(temp.asString())));
         }
-        cm.body.init();
-        statementVisitor.method = cm;
-        n.getBody().accept(statementVisitor, cm.body);
+
+        for (Parameter parameter : n.getParameters()) {
+            CParameter cp = new CParameter();
+            cp.type = typeVisitor.visitType(parameter.getType(), method);
+            cp.name = parameter.getNameAsString();
+            method.params.add(cp);
+        }
+        method.body.init();
+        statementVisitor.method = method;
+        n.getBody().accept(statementVisitor, method.body);
     }
 
     //static block

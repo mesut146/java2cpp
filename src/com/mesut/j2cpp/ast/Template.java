@@ -11,6 +11,14 @@ public class Template {
         list.add(typeName);
     }
 
+    public boolean isEmpty() {
+        return list.isEmpty();
+    }
+
+    public List<CType> getList() {
+        return list;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

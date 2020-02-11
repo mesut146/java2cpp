@@ -1,4 +1,4 @@
-/bin
-/build
-/out
-/.idea/workspace.xml
+bin/
+build/
+out/
+.idea/

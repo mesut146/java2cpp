@@ -2,7 +2,7 @@ package com.mesut.j2cpp;
 
 import java.io.FileOutputStream;
 
-public class Util {
+public class Util{
     public static void save(String data, String file) {
         try {
             FileOutputStream fos = new FileOutputStream(file);

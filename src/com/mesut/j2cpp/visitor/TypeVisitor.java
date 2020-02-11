@@ -6,7 +6,9 @@ import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.Helper;
 import com.mesut.j2cpp.Nodew;
+import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
+import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
 
 //visit types and ensures type is included
@@ -35,7 +37,8 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     public Object visit(ClassOrInterfaceType n, Nodew w) {
-        //System.out.println("solving=" + n.getNameAsString());
+        System.out.println("solving=" + n.getNameAsString());
+
         ResolvedReferenceType resolved = n.resolve();
         //System.out.printf("q=%s id=%s\n", resolved.getQualifiedName(), resolved.getId());
         String q = resolved.getQualifiedName();
@@ -76,6 +79,46 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
     @Override
     public Object visit(WildcardType n, Nodew arg) {
+        //<?>
         return new CType("java::lang::Object");
+    }
+
+    //resolve type in a method,method type,param type,local type
+    public CType visitType(Type type, CMethod method) {
+        if (!type.isClassOrInterfaceType()) {
+            return (CType) type.accept(this, new Nodew());
+        }
+        //type could be type param,Class type reference or normal type
+        ClassOrInterfaceType ctype = type.asClassOrInterfaceType();
+        String name = ctype.getNameAsString();
+
+        for (CType ct : method.getTemplate().getList()) {
+            if (ct.getName().equals(name)) {
+                return new CType(name);
+            }
+        }
+        for (CType ct : method.getParent().getTemplate().getList()) {
+            if (ct.getName().equals(name)) {
+                return new CType(name);
+            }
+        }
+        //it has to be declared type
+        return (CType) ctype.accept(this, new Nodew());
+    }
+
+    public CType visitType(Type type, CClass cc) {
+        if (!type.isClassOrInterfaceType()) {
+            return (CType) type.accept(this, new Nodew());
+        }
+        for (CType ct : cc.getTemplate().getList()) {
+            if (ct.getName().equals(type.asString())) {//class templated field type
+                return new CType(type.asString());
+            }
+        }
+        return (CType) type.accept(this, new Nodew());
+    }
+
+    <my> void asd() {
+        my asd;
     }
 }

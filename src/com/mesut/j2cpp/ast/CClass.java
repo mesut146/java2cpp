@@ -34,6 +34,10 @@ public class CClass extends Node {
         fields.add(cf);
     }
 
+    public Template getTemplate() {
+        return template;
+    }
+
     public Namespace getNamespace() {
         String str;
         if (parent == null) {//header level
@@ -64,7 +68,7 @@ public class CClass extends Node {
             appendln("{");
             up();
         }
-        if (template.list.size() > 0) {
+        if (!template.isEmpty()) {
             println();
             append(template.toString());
         }
