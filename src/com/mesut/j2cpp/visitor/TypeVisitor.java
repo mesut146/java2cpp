@@ -2,14 +2,14 @@ package com.mesut.j2cpp.visitor;
 
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
+import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.Helper;
 import com.mesut.j2cpp.Nodew;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CType;
 
-import java.util.Iterator;
-
+//visit types and ensures type is included
 public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
     Converter converter;
@@ -39,7 +39,16 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     public Object visit(ClassOrInterfaceType n, Nodew w) {
-        CType type = converter.getResolver().resolveType(n.getNameAsString(), header);
+        //System.out.println("solving=" + n.getNameAsString());
+        ResolvedReferenceType resolved = n.resolve();
+        //System.out.printf("q=%s id=%s\n", resolved.getQualifiedName(), resolved.getId());
+        String q = resolved.getQualifiedName();
+        String[] arr = q.split(".");
+        CType type = new CType(q.replace(".", "::"));
+        header.addInclude(q.replace(".", "/"));
+        return type;
+
+        /*CType type = converter.getResolver().resolveType(n.getNameAsString(), header);
         if (type != null) {
             if (!header.isIncluded(type.getIncludePath())) {
                 header.includes.add(type.getIncludePath());
@@ -51,16 +60,16 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
         CType typeName = new CType(n.getNameAsString());
         if (n.getTypeArguments().isPresent()) {
-            for (Iterator<Type> iterator = n.getTypeArguments().get().iterator(); iterator.hasNext(); ) {
-                typeName.typeNames.add((CType) iterator.next().accept(this, w));
+            for (Type value : n.getTypeArguments().get()) {
+                typeName.typeNames.add((CType) value.accept(this, w));
             }
         }
         if (n.getScope().isPresent()) {//todo
             CType scope = (CType) n.getScope().get().accept(this, new Nodew());
             typeName.type = scope.type + "::" + typeName.type;
         }
-        //w.append(typeName.toString());
-        return typeName;
+
+        return typeName;*/
     }
 
     public Object visit(UnionType n, Nodew w) {

@@ -27,5 +27,7 @@
     <orderEntry type="library" name="javaparser-symbol-solver-logic-3.15.5" level="project" />
     <orderEntry type="library" name="javaparser-symbol-solver-model-3.15.5" level="project" />
     <orderEntry type="library" name="guava-28.2-jre" level="project" />
+    <orderEntry type="library" name="failureaccess-1.0.1" level="project" />
+    <orderEntry type="library" name="listenablefuture-1.0" level="project" />
   </component>
 </module>

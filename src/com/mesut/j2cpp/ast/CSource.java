@@ -9,7 +9,7 @@ public class CSource extends Node {
 
     @Override
     public void print() {
-        include(header.getInclude());
+        includePath(header.getInclude());
         println();
         for (CClass cc : header.classes) {
             printClass(cc);

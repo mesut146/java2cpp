@@ -2,18 +2,20 @@ package com.mesut.j2cpp;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.BodyDeclaration;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.printer.YamlPrinter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Main {
 
@@ -21,15 +23,15 @@ public class Main {
     public static void main(String[] args) {
 
         try {
-            if (true) {
+            /*if (true) {
                 resolve();
                 return;
-            }
+            }*/
             Converter converter;
             String srcPath;
             String destPath;
             String cls = "";
-            boolean android = true;
+            boolean android = false;
             if (android) {
                 srcPath = "/storage/extSdCard/asd/dx/dex/src";
                 destPath = "/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
@@ -66,7 +68,7 @@ public class Main {
                 }
             }
             converter.makeTable();
-            //converter.convertSingle(cls);
+            converter.convertSingle(cls);
             //converter.convert();
 
         } catch (Exception e) {
@@ -89,10 +91,17 @@ public class Main {
 
         CompilationUnit cu = StaticJavaParser.parse(new File(file));
 
-        TypeDeclaration<?> type = cu.getType(0);
+        ClassOrInterfaceDeclaration type = (ClassOrInterfaceDeclaration) cu.getType(0);
+
         System.out.println(type.resolve().getQualifiedName());
 
         MethodDeclaration method = type.getMethodsByName("getClass").get(0);
         System.out.println(method.getType().resolve());
+
+        List<ClassOrInterfaceDeclaration> inners = type.getMembers().stream().filter(BodyDeclaration::isClassOrInterfaceDeclaration).map(BodyDeclaration::asClassOrInterfaceDeclaration).collect(Collectors.toList());
+        ClassOrInterfaceDeclaration inner = inners.get(0);
+
+        MethodDeclaration m2 = type.getMethodsByName("mymethod").get(0);
+        System.out.println(m2.getType().resolve().asReferenceType());
     }
 }

@@ -1,8 +1,12 @@
 package com.mesut.j2cpp;
 
-import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.JavaParser;
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.visitor.MainVisitor;
@@ -18,8 +22,10 @@ public class Converter {
 
     SymbolTable table;
     Resolver resolver;
-    String src;
-    String dest;
+    JavaSymbolSolver symbolSolver;
+    JavaParser javaParser;
+    String srcDir;//source folder
+    String destDir;//destinaytion folder for c++ files
     String sysPath;//openjdk sources
     List<UnitMap> units;//parsed sources
     boolean includeAll = false;
@@ -30,9 +36,13 @@ public class Converter {
     //look fist this while resolving
     List<PackageNode> packageHierarchy = new ArrayList<>();
 
-    public Converter(String src, String dest) {
-        this.src = src;
-        this.dest = dest;
+    public Converter(String srcDir, String destDir) {
+        this.srcDir = srcDir;
+        this.destDir = destDir;
+        TypeSolver typeSolver = new JavaParserTypeSolver(srcDir);
+        symbolSolver = new JavaSymbolSolver(typeSolver);
+        javaParser = new JavaParser(new ParserConfiguration().setSymbolResolver(symbolSolver));
+        //StaticJavaParser.getConfiguration().setSymbolResolver(symbolSolver);
     }
 
     public void addIncludeDir(String prefix) {
@@ -79,14 +89,14 @@ public class Converter {
     public void makeTable() {
         table = new SymbolTable();
         resolver = new Resolver(table);
-        File dir = new File(src);
+        File dir = new File(srcDir);
         units = new ArrayList<>();
 
         tableDir(dir, null);
-        System.out.println("total=" + table.list.size());
-        for (PackageNode node : packageHierarchy) {
+        //System.out.println("total=" + table.list.size());
+        /*for (PackageNode node : packageHierarchy) {
             System.out.println(node);
-        }
+        }*/
         /*for (Symbol s:table.list) {
             System.out.println(s.name+" , "+s.pkg);
         }*/
@@ -101,14 +111,14 @@ public class Converter {
             if (file.isFile()) {
                 if (file.getName().endsWith(".java")) {
                     try {
-                        /*CompilationUnit cu = StaticJavaParser.parse(file);
+                        CompilationUnit cu = javaParser.parse(file).getResult().get();
                         units.add(new UnitMap(cu, file.getName()));
                         // cu,pkg,name
                         for (TypeDeclaration<?> type : cu.getTypes()) {
                             if (type.isClassOrInterfaceDeclaration()) {
                                 tableClass(type, cu);
                             }
-                        }*/
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -123,7 +133,7 @@ public class Converter {
                 }
 
                 for (PackageName packageName : includeDirs) {
-                    if (packageName.isSub(file.getAbsolutePath().substring(src.length() + 1))) {
+                    if (packageName.isSub(file.getAbsolutePath().substring(srcDir.length() + 1))) {
                         tableDir(file, sub);
                     }
                 }
@@ -169,11 +179,12 @@ public class Converter {
     public void convertSingle(String path, CompilationUnit cu) {
         try {
             System.out.println("converting " + path);
-            CHeader header = new CHeader(path.replace(".java", ".h"));
+
+            CHeader header = new CHeader(path.substring(0, path.length() - 4) + "h");
             CSource cpp = new CSource(header);
 
             header.addIncludeStar("java/lang");//by default as in java compilers
-            //header.addIncludeStar(getPath(cu));//visible to current package
+            header.addIncludeStar(getPath(cu));//visible to current package
             MainVisitor visitor = new MainVisitor(this, header);
 
             cu.accept(visitor, null);
@@ -182,12 +193,12 @@ public class Converter {
             String ss = cpp.toString();
             System.out.println(hs);
             System.out.println("---------------");
-            //System.out.println(ss);
-            File fcpp = new File(dest, path.replace(".java", ".cpp"));
+            System.out.println(ss);
+            File fcpp = new File(destDir, path.replace(".java", ".cpp"));
             fcpp.getParentFile().mkdirs();
             Files.write(Paths.get(fcpp.getAbsolutePath()), ss.getBytes());
 
-            File fh = new File(dest, path.replace(".java", ".h"));
+            File fh = new File(destDir, path.replace(".java", ".h"));
             Files.write(Paths.get(fh.getAbsolutePath()), hs.getBytes());
         } catch (Exception e) {
             e.printStackTrace();
@@ -195,9 +206,11 @@ public class Converter {
     }
 
     public void convertSingle(String cls) throws FileNotFoundException {
-        File file = new File(src, cls);
-        CompilationUnit unit = StaticJavaParser.parse(file);
-        tableClass(unit.getType(0), unit);
+        File file = new File(srcDir, cls);
+        CompilationUnit unit = javaParser.parse(file).getResult().get();
+        for (TypeDeclaration<?> typeDeclaration : unit.getTypes()) {
+            tableClass(typeDeclaration, unit);
+        }
         convertSingle(cls, unit);
     }
 

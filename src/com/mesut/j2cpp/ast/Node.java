@@ -112,6 +112,11 @@ public abstract class Node {
         return this;
     }
 
+    public Node includePath(String file) {
+        appendln("#include \"" + file + "\"");
+        return this;
+    }
+
     public void setTo(Node n) {
         n.level = this.level;
         n.init();

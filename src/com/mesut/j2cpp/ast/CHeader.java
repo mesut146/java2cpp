@@ -24,18 +24,19 @@ public class CHeader extends Node {
     public void addRuntime() {
         hasRuntime = true;
     }
-    
-    public void addInclude(String include){
-        if(!includes.contains(include)){
+
+    public void addInclude(String include) {
+        if (!includes.contains(include)) {
             includes.add(include);
         }
     }
-    public void addIncludeStar(String include){
-        if(!importStar.contains(include)){
-            includes.add(include);
+
+    public void addIncludeStar(String include) {
+        if (!importStar.contains(include)) {
+            importStar.add(include);
         }
     }
-    
+
     /**
      * make sure type is included
      **/
@@ -58,9 +59,9 @@ public class CHeader extends Node {
             include(imp);
         }
         if (hasRuntime) {
-            include("JavaRuntime.h");
+            include("JavaRuntime");
         }
-        println();
+        //println();
         //appendln("using namespace java::lang;");
         /*if(ns!=null){
             append("using namespace ").append(ns.all).appendln(";");
