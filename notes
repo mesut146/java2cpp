@@ -36,3 +36,4 @@ if return,run finally first then return
 if throw exception,run finally again
 be sure both try&finally cant have return or throw
 
+public <A extends Annotation> A getAnnotation(Class<A> annotationClass) A resolve

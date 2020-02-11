@@ -71,6 +71,7 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return typeName;*/
     }
 
+    //multi catch type
     public Object visit(UnionType n, Nodew w) {
         CType type = (CType) n.getElements().get(0).accept(this, new Nodew());
         System.out.println("union type detected and chosen the first");
@@ -83,8 +84,18 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return new CType("java::lang::Object");
     }
 
+    @Override
+    public Object visit(TypeParameter typeParameter, Nodew w) {
+        return new CType(typeParameter.asString());
+    }
+
     //resolve type in a method,method type,param type,local type
     public CType visitType(Type type, CMethod method) {
+        if (type.isArrayType()) {
+            CType cType = visitType(type.getElementType(), method);
+            cType.arrayLevel = type.getArrayLevel();
+            return cType;
+        }
         if (!type.isClassOrInterfaceType()) {
             return (CType) type.accept(this, new Nodew());
         }
@@ -98,6 +109,7 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
             }
         }
         for (CType ct : method.getParent().getTemplate().getList()) {
+            //System.out.println("ct=" + ct.getName());
             if (ct.getName().equals(name)) {
                 return new CType(name);
             }
@@ -107,6 +119,11 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     public CType visitType(Type type, CClass cc) {
+        if (type.isArrayType()) {
+            CType cType = visitType(type.getElementType(), cc);
+            cType.arrayLevel = type.getArrayLevel();
+            return cType;
+        }
         if (!type.isClassOrInterfaceType()) {
             return (CType) type.accept(this, new Nodew());
         }

@@ -73,10 +73,11 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
 
         cc.name = n.getNameAsString();
         cc.isInterface = n.isInterface();
-        n.getTypeParameters().forEach(type -> cc.template.add((CType) type.accept(typeVisitor, new Nodew())));
+        n.getTypeParameters().forEach(type -> cc.template.add((CType) type.accept(typeVisitor, null)));
+        //System.out.println("temp=" + cc.getTemplate().getList());
         //n.getTypeParameters().forEach(type -> System.out.println(type.isReferenceType()));
-        n.getExtendedTypes().forEach(ex -> cc.base.add((CType) ex.accept(typeVisitor, new Nodew())));
-        n.getImplementedTypes().forEach(iface -> cc.base.add((CType) iface.accept(typeVisitor, new Nodew())));
+        n.getExtendedTypes().forEach(ex -> cc.base.add((CType) ex.accept(typeVisitor, null)));
+        n.getImplementedTypes().forEach(iface -> cc.base.add((CType) iface.accept(typeVisitor, null)));
         n.getMembers().forEach(p -> p.accept(this, null));
         stack.pop();
     }
@@ -157,7 +158,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         }
         if (n.getBody().isPresent()) {
             method.body.init();
-            statementVisitor.method = method;
+            statementVisitor.setMethod(method);
             n.getBody().get().accept(statementVisitor, method.body);
         }
     }

@@ -33,6 +33,11 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
         this.typeVisitor = typeVisitor;
     }
 
+    public void setMethod(CMethod method) {
+        this.method = method;
+        this.exprVisitor.setMethod(method);
+    }
+
     public Object visit(SimpleName n, Nodew w) {
         return new CType(n.getIdentifier());
     }

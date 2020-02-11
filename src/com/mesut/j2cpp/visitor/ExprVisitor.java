@@ -28,6 +28,10 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         this.typeVisitor = typeVisitor;
     }
 
+    public void setMethod(CMethod method) {
+        this.method = method;
+    }
+
     public Object visit(SimpleName n, Nodew w) {
         return new CType(n.getIdentifier());
     }
@@ -142,9 +146,10 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         for (VariableDeclarator vd : n.getVariables()) {
             if (first) {
                 first = false;
-                CType t = (CType) vd.getType().accept(typeVisitor, null);
-                w.append(t.toString());
-                if (t.isPointer()) {
+                //CType type = (CType) vd.getType().accept(typeVisitor, null);
+                CType type = typeVisitor.visitType(vd.getType(), method);
+                w.append(type.toString());
+                if (type.isPointer()) {
                     w.append("*");
                 }
                 w.append(" ");
@@ -215,7 +220,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
     @Override
     public Object visit(CastExpr n, Nodew w) {
         w.append("(");
-        CType type = (CType) n.getType().accept(typeVisitor, w);
+        CType type = typeVisitor.visitType(n.getType(), method);
         w.append(type);
         if (type.isPointer()) {
             w.append("*");
