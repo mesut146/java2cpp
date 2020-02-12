@@ -33,12 +33,15 @@ public class Main {
             String srcPath;
             String destPath;
             String cls = "";
-            boolean android = false;
+            String rt="";
+            boolean android = true;
             if (android) {
+                rt="/storage/extSdCard/lib/rt7.jar";
                 srcPath = "/storage/extSdCard/asd/dx/dex/src";
                 destPath = "/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
-                cls = "test.java";
+                //cls = "test.java";
             } else {
+                rt="/home/mesut/Desktop/rt7.jar";
                 //srcPath = "/home/mesut/Desktop/dx-org";
                 srcPath = "/home/mesut/Desktop/src7";
                 //destPath = "/home/mesut/Desktop/dx-cpp";
@@ -46,14 +49,14 @@ public class Main {
 
             }
             converter = new Converter(srcPath, destPath);
-            //converter.addJar("/home/mesut/Desktop/rt7.jar");
+            converter.addJar(rt);
             //converter.addIncludeDir("java/lang");
             //converter.addInclude("java/util");
             //converter.addInclude("java/io");
             //converter.addInclude("java/nio");
 
             cls = "java/lang/Class.java";
-            //cls = "com/android/dx/command/Main.java";
+            cls = "com/android/dx/command/Main.java";
             if (args.length > 0) {
                 if (args[0].equals("tree")) {
                     yaml(srcPath, destPath, cls);
@@ -83,7 +86,7 @@ public class Main {
 
     static void removeComment(Node node) {
         node.removeComment();
-        node.getChildNodes().forEach(Node::removeComment);
+        //node.getChildNodes().forEach(Node::removeComment);
         node.getChildNodes().forEach(Main::removeComment);
     }
 
