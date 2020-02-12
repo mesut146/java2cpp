@@ -1,3 +1,5 @@
+package base;
+
 public class Generic<T,V> extends List<T>{
 
     void add(T elem){

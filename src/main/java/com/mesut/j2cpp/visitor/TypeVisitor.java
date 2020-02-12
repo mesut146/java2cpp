@@ -37,38 +37,18 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     public Object visit(ClassOrInterfaceType n, Nodew w) {
-        System.out.println("solving=" + n.getNameAsString());
-
+        //System.out.println("solving=" + n.getNameAsString());
+        if (converter.jars.isEmpty() && converter.cpDirs.isEmpty()) {
+            String q = n.getNameAsString();
+            CType type = new CType(q.replace(".", "::"));
+            header.addInclude(q.replace(".", "/"));
+            return type;
+        }
         ResolvedReferenceType resolved = n.resolve();
-        //System.out.printf("q=%s id=%s\n", resolved.getQualifiedName(), resolved.getId());
         String q = resolved.getQualifiedName();
-        String[] arr = q.split(".");
         CType type = new CType(q.replace(".", "::"));
         header.addInclude(q.replace(".", "/"));
         return type;
-
-        /*CType type = converter.getResolver().resolveType(n.getNameAsString(), header);
-        if (type != null) {
-            if (!header.isIncluded(type.getIncludePath())) {
-                header.includes.add(type.getIncludePath());
-            }
-        } else {
-            System.err.println("type : " + n.getNameAsString() + " not found");
-            return null;
-        }
-
-        CType typeName = new CType(n.getNameAsString());
-        if (n.getTypeArguments().isPresent()) {
-            for (Type value : n.getTypeArguments().get()) {
-                typeName.typeNames.add((CType) value.accept(this, w));
-            }
-        }
-        if (n.getScope().isPresent()) {//todo
-            CType scope = (CType) n.getScope().get().accept(this, new Nodew());
-            typeName.type = scope.type + "::" + typeName.type;
-        }
-
-        return typeName;*/
     }
 
     //multi catch type
@@ -94,6 +74,7 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
         if (type.isArrayType()) {
             CType cType = visitType(type.getElementType(), method);
             cType.arrayLevel = type.getArrayLevel();
+            //cType.pointer=true;
             return cType;
         }
         if (!type.isClassOrInterfaceType()) {
@@ -105,37 +86,33 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
         for (CType ct : method.getTemplate().getList()) {
             if (ct.getName().equals(name)) {
-                return new CType(name);
+                return ct;
             }
         }
         for (CType ct : method.getParent().getTemplate().getList()) {
-            //System.out.println("ct=" + ct.getName());
             if (ct.getName().equals(name)) {
-                return new CType(name);
+                return ct;
             }
         }
         //it has to be declared type
         return (CType) ctype.accept(this, new Nodew());
     }
 
+    //for class members; fields,methods,todo inner cls
     public CType visitType(Type type, CClass cc) {
-        if (type.isArrayType()) {
+        if (type.isArrayType()) {//array type
             CType cType = visitType(type.getElementType(), cc);
             cType.arrayLevel = type.getArrayLevel();
             return cType;
         }
-        if (!type.isClassOrInterfaceType()) {
+        if (!type.isClassOrInterfaceType()) {//normal type
             return (CType) type.accept(this, new Nodew());
         }
-        for (CType ct : cc.getTemplate().getList()) {
+        for (CType ct : cc.getTemplate().getList()) {//class temptlated type
             if (ct.getName().equals(type.asString())) {//class templated field type
-                return new CType(type.asString());
+                return ct;
             }
         }
         return (CType) type.accept(this, new Nodew());
-    }
-
-    <my> void asd() {
-        my asd;
     }
 }

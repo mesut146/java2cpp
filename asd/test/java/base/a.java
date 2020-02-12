@@ -1,4 +1,4 @@
-package com.pkg;
+package base;
 
 import java.util.*;
 
@@ -13,40 +13,34 @@ public class a extends Object implements Runnable{
     byte mybyte;
     float myFloat;
     double myDouble;
-    Object myObj=new Type("type");
+    Object myObj=new second();
 
-    class innerface{
-        int c=4;
-        void innermeth(){}
-        class most{
-            void deep(){}
+    class inner{
+        int inner_field=4;
+        void inner_meth(){}
+        class inner_inner{
+            void inner_inner_method(){}
         }
     }
     
     public static void main(){
-        //comment
         System.out.println("Hello World!");
-
     }
     
     String[] asd(int i,String[][] s){
         return null;
     }
-    
+
+    int[][] sec(int[] asd){
+        return null;
+    }
     @Override
     public void run(){
         
     }
     
-    int[][] sec(int[] asd){
-        return null;
-    }
-    
-    class myInner{
-        Object field=null;
-    }
-    
 }
+
 class second{
-    int x;
+    int second_field=55555;
 }

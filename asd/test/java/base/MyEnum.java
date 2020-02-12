@@ -1,3 +1,5 @@
+package base;
+
 enum MyEnum{
     m1("m111"),m2;
     String str;

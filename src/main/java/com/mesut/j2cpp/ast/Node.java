@@ -117,6 +117,10 @@ public abstract class Node {
         return this;
     }
 
+    public void print_using(Namespace ns) {
+        appendln("using namespace " + ns.getAll() + ";");
+    }
+
     public void setTo(Node n) {
         n.level = this.level;
         n.init();

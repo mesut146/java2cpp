@@ -50,8 +50,8 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
     public Object visit(InstanceOfExpr n, Nodew w) {
         header.addRuntime();
         w.append("instance_of<");
-        CType type = (CType) n.getType().accept(typeVisitor, null);
-        w.append(type.toString());
+        CType type = typeVisitor.visitType(n.getType(), method);
+        w.append(type);
         w.append(">(");
         n.getExpression().accept(this, w);
         w.append(")");
@@ -102,6 +102,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
+    //array[index] -> (*array)[index]
     @Override
     public Object visit(ArrayAccessExpr n, Nodew w) {
         w.append("(*");
@@ -114,7 +115,9 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
     public Object visit(AssignExpr n, Nodew w) {
         n.getTarget().accept(this, w);
+        w.append(" ");
         w.append(n.getOperator().asString());
+        w.append(" ");
         n.getValue().accept(this, w);
         return null;
     }
@@ -133,6 +136,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         w.append("new ");
         //typearg
         CType type = (CType) n.getType().accept(typeVisitor, null);
+        type.pointer = false;//new keyword already makes it pointer
         w.append(type.toString());
         args(n.getArguments(), w);
         if (n.getAnonymousClassBody().isPresent()) {
@@ -148,10 +152,10 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
                 first = false;
                 //CType type = (CType) vd.getType().accept(typeVisitor, null);
                 CType type = typeVisitor.visitType(vd.getType(), method);
-                w.append(type.toString());
-                if (type.isPointer()) {
+                w.append(type);
+                /*if (type.isPointer()) {
                     w.append("*");
-                }
+                }*/
                 w.append(" ");
             } else {
                 w.append(",");
@@ -222,9 +226,9 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         w.append("(");
         CType type = typeVisitor.visitType(n.getType(), method);
         w.append(type);
-        if (type.isPointer()) {
+        /*if (type.isPointer()) {
             w.append("*");
-        }
+        }*/
         w.append(")");
         n.getExpression().accept(this, w);
         return null;
@@ -265,18 +269,18 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    //int[]{}
+    //new int[]{...} or new int[5]
     public Object visit(ArrayCreationExpr n, Nodew w) {
         if (n.getInitializer().isPresent()) {
+            //just print values,ignore new type[]... because c++ allows it
             n.getInitializer().get().accept(this, w);
         } else {
             //only dimensions
             w.append("new ");
-            CType typeName = new CType(n.getElementType().asString());
+            CType typeName = typeVisitor.visitType(n.getElementType(), method);
             typeName.arrayLevel = n.getLevels().size();
             w.append(typeName.toString());
             w.append("(");
-            int i = 0;
             w.append("new int[]{");
             for (Iterator<ArrayCreationLevel> iterator = n.getLevels().iterator(); iterator.hasNext(); ) {
                 Optional<Expression> dimension = iterator.next().getDimension();

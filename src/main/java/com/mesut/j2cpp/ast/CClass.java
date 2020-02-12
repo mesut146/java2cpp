@@ -75,7 +75,7 @@ public class CClass extends Node {
         line("class ");
         append(name);
         if (base.size() > 0) {
-            append(":");
+            append(": public ");
             for (int i = 0; i < base.size(); i++) {
                 append(base.get(i).toString());
                 if (i < base.size() - 1) {
@@ -146,6 +146,11 @@ public class CClass extends Node {
             down();
             appendln("}//ns");
         }
+    }
+
+    public void printDestructor() {
+        //todo
+        append("~").append(name).append("(){}");
     }
 
     //return this class as type ,in hierarchy ,e.g org::MyClass::Inner::inner_field

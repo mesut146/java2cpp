@@ -3,8 +3,8 @@ package com.mesut.j2cpp.ast;
 import com.mesut.j2cpp.Helper;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CType {
     public Namespace ns;
@@ -12,25 +12,33 @@ public class CType {
     public int arrayLevel = 0;
     public List<CType> typeNames = new ArrayList<>();
     public CType scope = null;
+    public boolean isTemplate = false;
+    public boolean pointer = true;
 
     public CType(String type) {
         String[] arr = type.split("::");
         this.type = arr[arr.length - 1];
         if (arr.length > 1) {
-            ns = new Namespace(type.substring(0,type.lastIndexOf("::")));
+            ns = new Namespace(type.substring(0, type.lastIndexOf("::")));
         }
         //this.type = type;
     }
 
-    public String getName(){
+    public String getName() {
         return type;
     }
 
+    //print namespace and pointer
     public String full() {
-        if (ns == null) {
-            return type;
+        StringBuilder sb = new StringBuilder();
+        if (ns != null) {
+            sb.append(ns.getAll()).append("::");
         }
-        return ns.all + "::" + type;
+        sb.append(type);
+        if (isPointer()) {
+            sb.append("*");
+        }
+        return sb.toString();
     }
 
     public boolean isArray() {
@@ -42,12 +50,17 @@ public class CType {
     }
 
     public boolean isPointer() {
-        return !isVoid() && (!isPrim() || isArray());
+        //return !isVoid() && (!isPrim() || isArray());
+        return !isVoid() && !isPrim() && !isTemplate && pointer;
     }
 
     public boolean isVoid() {
         return type.equals("void");
     }
+
+    /*public String toPointerString(){
+
+    }*/
 
     @Override
     public String toString() {
@@ -58,12 +71,13 @@ public class CType {
             StringBuilder sb = new StringBuilder();
             sb.append(type);
             sb.append("<");
-            for (Iterator<CType> iterator = typeNames.iterator(); iterator.hasNext(); ) {
+            /*for (Iterator<CType> iterator = typeNames.iterator(); iterator.hasNext(); ) {
                 sb.append(iterator.next().full());
                 if (iterator.hasNext()) {
                     sb.append(",");
                 }
-            }
+            }*/
+            sb.append(typeNames.stream().map(CType::full).collect(Collectors.joining(",")));
             sb.append(">");
             return sb.toString();
         }
@@ -81,6 +95,12 @@ public class CType {
 
     public String getIncludePath() {
         //todo
-        return null;
+        StringBuilder sb = new StringBuilder();
+        if (ns != null) {
+            sb.append(ns.getAll().replace("::", "/"));
+            sb.append("/");
+        }
+        sb.append(type);
+        return sb.toString();
     }
 }

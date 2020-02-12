@@ -12,9 +12,9 @@ public class CParameter extends Node {
         }
         //append(type.toString().replace(".","::"));//normalize the type(base::type)
         append(type.toString());
-        if (type.isPointer()) {
+        /*if (type.isPointer()) {
             append("*");
-        }
+        }*/
         append(" ");
         append(name);
     }

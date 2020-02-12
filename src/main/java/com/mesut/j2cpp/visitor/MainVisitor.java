@@ -24,7 +24,6 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     public MainVisitor(Converter converter, CHeader header) {
         this.converter = converter;
         this.header = header;
-        //this.methodVisitor = new MethodVisitor(converter, header);
         this.typeVisitor = new TypeVisitor(converter, header);
         this.exprVisitor = new ExprVisitor(converter, header, typeVisitor);
         this.statementVisitor = new StatementVisitor(converter, header, exprVisitor, typeVisitor);
@@ -62,7 +61,6 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
     }
 
     public void visit(ClassOrInterfaceDeclaration n, Nodew s) {
-        //System.out.println("class="+n.getFullyQualifiedName().get());
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
@@ -74,8 +72,6 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         cc.name = n.getNameAsString();
         cc.isInterface = n.isInterface();
         n.getTypeParameters().forEach(type -> cc.template.add((CType) type.accept(typeVisitor, null)));
-        //System.out.println("temp=" + cc.getTemplate().getList());
-        //n.getTypeParameters().forEach(type -> System.out.println(type.isReferenceType()));
         n.getExtendedTypes().forEach(ex -> cc.base.add((CType) ex.accept(typeVisitor, null)));
         n.getImplementedTypes().forEach(iface -> cc.base.add((CType) iface.accept(typeVisitor, null)));
         n.getMembers().forEach(p -> p.accept(this, null));

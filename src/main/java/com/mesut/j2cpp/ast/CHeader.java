@@ -9,6 +9,7 @@ public class CHeader extends Node {
     public List<String> importStar = new ArrayList<>();//import namespace for symbols on the fly(java.util.*)
     public List<CClass> classes = new ArrayList<>();
     public Namespace ns;
+    public List<Namespace> using = new ArrayList<>();
     public String rpath;//header path:java/lang/String.h
     boolean hasRuntime = false;
 
@@ -42,6 +43,16 @@ public class CHeader extends Node {
         }
     }
 
+    public void useNamespace(Namespace ns) {
+        if (!using.contains(ns)) {
+            using.add(ns);
+        }
+    }
+
+    public void useNamespace(String ns) {
+        useNamespace(new Namespace(ns));
+    }
+
     /**
      * make sure type is included
      **/
@@ -66,11 +77,10 @@ public class CHeader extends Node {
         if (hasRuntime) {
             include("JavaRuntime");
         }
-        //println();
-        //appendln("using namespace java::lang;");
-        /*if(ns!=null){
-            append("using namespace ").append(ns.all).appendln(";");
-        }*/
+        println();
+        for (Namespace use : using) {
+            print_using(use);
+        }
 
         for (CClass cc : classes) {
             cc.forHeader = true;

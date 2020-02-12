@@ -10,13 +10,13 @@ public class CField extends ModifierNode {
             append("static ");
         }
         append(type.toString());
-        if (type.isPointer()) {
+        /*if (type.isPointer()) {
             append("*");
-        }
+        }*/
         append(" ");
         append(name);
         if (right != null) {
-            append("=");
+            append(" = ");
             append(right);
         }
         append(";");

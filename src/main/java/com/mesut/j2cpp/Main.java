@@ -7,16 +7,22 @@ import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.printer.YamlPrinter;
+import com.github.javaparser.serialization.JavaParserJsonSerializer;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 
+import javax.json.Json;
+import javax.json.stream.JsonGeneratorFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Main {
@@ -33,35 +39,37 @@ public class Main {
             String srcPath;
             String destPath;
             String cls = "";
-            String rt="";
-            boolean android = true;
+            String rt = "";
+            boolean android = false;
             if (android) {
-                rt="/storage/extSdCard/lib/rt7.jar";
+                rt = "/storage/extSdCard/lib/rt7.jar";
                 srcPath = "/storage/extSdCard/asd/dx/dex/src";
                 destPath = "/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
                 //cls = "test.java";
             } else {
-                rt="/home/mesut/Desktop/rt7.jar";
+                rt = "/home/mesut/Desktop/rt7.jar";
                 //srcPath = "/home/mesut/Desktop/dx-org";
-                srcPath = "/home/mesut/Desktop/src7";
                 //destPath = "/home/mesut/Desktop/dx-cpp";
-                destPath = "/home/mesut/Desktop/src7-cpp";
-
+                //srcPath = "/home/mesut/Desktop/src7";
+                //destPath = "/home/mesut/Desktop/src7-cpp";
+                srcPath = "/home/mesut/IdeaProjects/java2cpp/asd/test/java";
+                destPath = "/home/mesut/IdeaProjects/java2cpp/asd/test/cpp";
+                cls = "base/a.java";
             }
             converter = new Converter(srcPath, destPath);
             converter.addJar(rt);
+            converter.addClasspath("/home/mesut/Desktop/src7");
             //converter.addIncludeDir("java/lang");
             //converter.addInclude("java/util");
             //converter.addInclude("java/io");
             //converter.addInclude("java/nio");
 
-            cls = "java/lang/Class.java";
-            cls = "com/android/dx/command/Main.java";
-            if (args.length > 0) {
-                if (args[0].equals("tree")) {
-                    yaml(srcPath, destPath, cls);
-                    return;
-                }
+            //cls = "java/lang/Class.java";
+            //cls = "com/android/dx/command/Main.java";
+            if (args.length > 0 && args[0].equals("tree")) {
+                yaml(srcPath, destPath, cls);
+                //json(srcPath, destPath, cls);
+                return;
             }
             converter.makeTable();
             converter.convertSingle(cls);
@@ -73,21 +81,36 @@ public class Main {
 
     }
 
+    static void json(String srcPath, String destPath, String cls) throws IOException {
+        String path = srcPath + "/" + cls;
+        File output = new File(destPath + "/" + cls.replace(".java", ".json"));
+
+        Map<String, ?> config = new HashMap<>();
+        //config.put(JsonGenerator.PRETTY_PRINTING, null);
+        JsonGeneratorFactory generatorFactory = Json.createGeneratorFactory(config);
+
+        CompilationUnit cu = StaticJavaParser.parse(new File(path));
+        removeComments(cu);
+        JavaParserJsonSerializer serializer = new JavaParserJsonSerializer();
+
+        serializer.serialize(cu, generatorFactory.createGenerator(new FileWriter(output)));
+    }
+
     static void yaml(String srcPath, String destPath, String cls) throws IOException {
         String path = srcPath + "/" + cls;
         CompilationUnit cu = StaticJavaParser.parse(new File(path));
-        removeComment(cu);
+        removeComments(cu);
         String yaml = new YamlPrinter(true).output(cu);
         File fyml = new File(destPath + "/" + cls.replace(".java", ".yaml"));
         fyml.getParentFile().mkdirs();
         Files.write(Paths.get(fyml.getAbsolutePath()), yaml.getBytes());
-        System.out.println(yaml);
+        //System.out.println(yaml);
     }
 
-    static void removeComment(Node node) {
+    static void removeComments(Node node) {
         node.removeComment();
         //node.getChildNodes().forEach(Node::removeComment);
-        node.getChildNodes().forEach(Main::removeComment);
+        node.getChildNodes().forEach(Main::removeComments);
     }
 
     static void resolve() throws FileNotFoundException {

@@ -8,7 +8,6 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.resolution.SymbolResolver;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
@@ -40,7 +39,8 @@ public class Converter {
     List<String> excludeClasses = new ArrayList<>();
     //look fist this while resolving
     List<PackageNode> packageHierarchy = new ArrayList<>();
-    List<String> jars = new ArrayList<>();
+    public List<String> jars = new ArrayList<>();
+    public List<String> cpDirs = new ArrayList<>();
 
     public Converter(String srcDir, String destDir) throws IOException {
         this.srcDir = srcDir;
@@ -75,13 +75,17 @@ public class Converter {
 
     }
 
+    //add jar to resolve against
     public void addJar(String jarPath) {
         jars.add(jarPath);
     }
 
+    public void addClasspath(String dir) {
+        cpDirs.add(dir);
+    }
+
     public void convert() {
         //convertDir(new File(src), "");
-
         for (UnitMap h : units) {
             String pkg = "";
             if (h.cu.getPackageDeclaration().isPresent()) {
@@ -92,19 +96,19 @@ public class Converter {
     }
 
     void initSolver() throws IOException {
-        TypeSolver dirSolver = new JavaParserTypeSolver(srcDir);
-        TypeSolver typeSolver = dirSolver;
-        if (!jars.isEmpty()) {
-            //no jars just srcDir
-            CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
-            combinedTypeSolver.add(dirSolver);
-            for (String jar : jars) {
-                JarTypeSolver jarTypeSolver = new JarTypeSolver(jar);
-                combinedTypeSolver.add(jarTypeSolver);
-            }
-            typeSolver = combinedTypeSolver;
+        CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
+        JavaParserTypeSolver dirSolver = new JavaParserTypeSolver(srcDir);
+
+        combinedTypeSolver.add(dirSolver);//current dir
+        for (String jar : jars) {
+            JarTypeSolver jarTypeSolver = new JarTypeSolver(jar);
+            combinedTypeSolver.add(jarTypeSolver);
         }
-        SymbolResolver symbolResolver = new JavaSymbolSolver(typeSolver);
+        for (String cp : cpDirs) {
+            JavaParserTypeSolver cpSolver = new JavaParserTypeSolver(cp);
+            combinedTypeSolver.add(cpSolver);
+        }
+        SymbolResolver symbolResolver = new JavaSymbolSolver(combinedTypeSolver);
         javaParser = new JavaParser(new ParserConfiguration().setSymbolResolver(symbolResolver));
     }
 
@@ -117,7 +121,7 @@ public class Converter {
         units = new ArrayList<>();
 
         tableDir(dir, null);
-        //System.out.println("total=" + table.list.size());
+        System.out.println("total " + units.size() + " classes");
         /*for (PackageNode node : packageHierarchy) {
             System.out.println(node);
         }*/
@@ -147,20 +151,20 @@ public class Converter {
                         e.printStackTrace();
                     }
                 }
-            } else {
-                PackageNode sub;
+            } else {//dir
+                /*PackageNode sub;
                 if (node == null) {
                     sub = new PackageNode(file.getName());
                     packageHierarchy.add(sub);
                 } else {
                     sub = node.addSub(file.getName());
-                }
+                }*/
                 for (PackageName packageName : includeDirs) {
                     if (packageName.isSub(file.getAbsolutePath().substring(srcDir.length() + 1))) {
-                        tableDir(file, sub);
+                        tableDir(file, null);
                     }
                 }
-
+                //tableDir(file, null);
             }
         }
     }
@@ -212,6 +216,7 @@ public class Converter {
 
             header.addIncludeStar("java/lang");//by default as in java compilers
             header.addIncludeStar(getPath(cu));//visible to current package
+            header.useNamespace("java::lang");//by default
             MainVisitor visitor = new MainVisitor(this, header);
 
             cu.accept(visitor, null);
