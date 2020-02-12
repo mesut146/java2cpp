@@ -159,12 +159,15 @@ public class Converter {
                 } else {
                     sub = node.addSub(file.getName());
                 }*/
-                for (PackageName packageName : includeDirs) {
-                    if (packageName.isSub(file.getAbsolutePath().substring(srcDir.length() + 1))) {
-                        tableDir(file, null);
+                if (includeDirs.isEmpty()) {
+                    tableDir(file, null);
+                } else {
+                    for (PackageName packageName : includeDirs) {
+                        if (packageName.isSub(file.getAbsolutePath().substring(srcDir.length() + 1))) {
+                            tableDir(file, null);
+                        }
                     }
                 }
-                //tableDir(file, null);
             }
         }
     }

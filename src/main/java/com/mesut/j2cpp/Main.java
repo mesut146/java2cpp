@@ -57,7 +57,7 @@ public class Main {
                 cls = "base/a.java";
             }
             converter = new Converter(srcPath, destPath);
-            converter.addJar(rt);
+            //converter.addJar(rt);
             converter.addClasspath("/home/mesut/Desktop/src7");
             //converter.addIncludeDir("java/lang");
             //converter.addInclude("java/util");
