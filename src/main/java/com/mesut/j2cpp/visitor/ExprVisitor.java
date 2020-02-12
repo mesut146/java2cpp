@@ -127,15 +127,15 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
+    //new Base.Inner(args...){body}
     public Object visit(ObjectCreationExpr n, Nodew w) {
         if (n.getScope().isPresent()) {
             n.getScope().get().accept(this, w);
             w.append("->");
         }
-
         w.append("new ");
         //typearg
-        CType type = (CType) n.getType().accept(typeVisitor, null);
+        CType type = typeVisitor.visitType(n.getType(), method);
         type.pointer = false;//new keyword already makes it pointer
         w.append(type.toString());
         args(n.getArguments(), w);
@@ -145,17 +145,14 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
+    //Type name=value
     public Object visit(VariableDeclarationExpr n, Nodew w) {
         boolean first = true;
         for (VariableDeclarator vd : n.getVariables()) {
             if (first) {
                 first = false;
-                //CType type = (CType) vd.getType().accept(typeVisitor, null);
                 CType type = typeVisitor.visitType(vd.getType(), method);
                 w.append(type);
-                /*if (type.isPointer()) {
-                    w.append("*");
-                }*/
                 w.append(" ");
             } else {
                 w.append(",");

@@ -1,10 +1,12 @@
 package base;
 
-public class Generic<T,V> extends List<T>{
+import java.util.*;
 
-    void add(T elem){
-        T obj=new T();
-        T[] arr=new T[10];
-        add(elem);
+public class Generic<T, V> extends List<T> {
+
+    public void add(T param) {
+        T obj = new T();
+        T[] arr = new T[10];
+        add(arr[0]);
     }
 }

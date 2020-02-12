@@ -13,6 +13,7 @@ public class CMethod extends ModifierNode {
     public List<String> throwList = new ArrayList<>();
     public boolean empty = false;
     public boolean isCons = false;
+    public boolean isOverride = false;//is necessary in c++?
     public CClass parent;
     public Call call;
     public Nodew body = new Nodew();
