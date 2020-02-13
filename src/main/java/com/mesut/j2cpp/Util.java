@@ -2,7 +2,7 @@ package com.mesut.j2cpp;
 
 import java.io.FileOutputStream;
 
-public class Util<T, Object> {
+public class Util<T> {
     public static void save(String data, String file) {
         try {
             FileOutputStream fos = new FileOutputStream(file);
@@ -13,6 +13,7 @@ public class Util<T, Object> {
     }
 
     void asd(){
+        T obj=null;
         Object asd;
     }
 }

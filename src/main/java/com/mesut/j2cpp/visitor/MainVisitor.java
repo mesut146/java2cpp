@@ -5,13 +5,14 @@ import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.mesut.j2cpp.Converter;
-import com.mesut.j2cpp.Nodew;
+import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.*;
 
 import java.util.Stack;
 
+//visitor for single compilation unit
 //fields,method decl,class decl
-public class MainVisitor extends VoidVisitorAdapter<Nodew> {
+public class MainVisitor extends VoidVisitorAdapter<Writer> {
 
     public CHeader header;
     //public MethodVisitor methodVisitor;
@@ -33,13 +34,13 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         return stack.peek();
     }
 
-    public void visit(PackageDeclaration n, Nodew arg) {
+    public void visit(PackageDeclaration n, Writer arg) {
         Namespace ns = new Namespace();
         ns.pkg(n.getNameAsString());
         header.ns = ns;
     }
 
-    public void visit(ImportDeclaration n, Nodew w) {
+    public void visit(ImportDeclaration n, Writer w) {
         String imp = n.getNameAsString();
         imp = imp.replace(".", "/");
         if (n.isStatic()) {
@@ -60,7 +61,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
 
     }
 
-    public void visit(ClassOrInterfaceDeclaration n, Nodew s) {
+    public void visit(ClassOrInterfaceDeclaration n, Writer s) {
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
@@ -69,16 +70,27 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         }
         stack.push(cc);
 
+        exprVisitor.clazz = cc;
         cc.name = n.getNameAsString();
         cc.isInterface = n.isInterface();
-        n.getTypeParameters().forEach(type -> cc.template.add((CType) type.accept(typeVisitor, null)));
-        n.getExtendedTypes().forEach(ex -> cc.base.add((CType) ex.accept(typeVisitor, null)));
-        n.getImplementedTypes().forEach(iface -> cc.base.add((CType) iface.accept(typeVisitor, null)));
+        n.getTypeParameters().forEach(type -> cc.template.add(new CType(type.getNameAsString(), true)));
+        n.getExtendedTypes().forEach(base -> {
+            CType baseType = typeVisitor.visitType(base, cc);
+            baseType.isTemplate = false;
+            baseType.isPointer = false;
+            cc.base.add(baseType);
+        });
+        n.getImplementedTypes().forEach(iface -> {
+            CType ifType = typeVisitor.visitType(iface, cc);
+            ifType.isTemplate = false;
+            ifType.isPointer = false;
+            cc.base.add(ifType);
+        });
         n.getMembers().forEach(p -> p.accept(this, null));
         stack.pop();
     }
 
-    public void visit(EnumDeclaration n, Nodew w) {
+    public void visit(EnumDeclaration n, Writer w) {
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
@@ -86,11 +98,13 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
             last().addInner(cc);
         }
         stack.push(cc);
+        exprVisitor.clazz = cc;
+
         cc.isEnum = true;
         cc.name = n.getNameAsString();
         cc.base.add(new CType("java::lang::Enum"));
         header.addInclude("java/lang/Enum");
-        n.getImplementedTypes().forEach(iface -> cc.base.add((CType) iface.accept(typeVisitor, new Nodew())));
+        n.getImplementedTypes().forEach(iface -> cc.base.add(iface.accept(typeVisitor, null)));
 
         for (EnumConstantDeclaration constant : n.getEntries()) {
             CField cf = new CField();
@@ -99,7 +113,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
             cf.setStatic(true);
             cf.type = new CType(cc.name);
             cf.name = constant.getNameAsString();
-            Nodew rh = new Nodew();
+            Writer rh = new Writer();
             rh.append("new ").append(cc.name);
 
             exprVisitor.args(constant.getArguments(), rh);
@@ -114,7 +128,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         stack.pop();
     }
 
-    public void visit(FieldDeclaration n, Nodew s) {
+    public void visit(FieldDeclaration n, Writer s) {
         for (VariableDeclarator vd : n.getVariables()) {
             CField cf = new CField();
             last().addField(cf);
@@ -125,22 +139,20 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
             cf.setPublic(n.isPublic());
 
             if (vd.getInitializer().isPresent()) {
-                Nodew nw = new Nodew();
+                Writer nw = new Writer();
                 vd.getInitializer().get().accept(exprVisitor, nw);
                 cf.right = nw.toString();
             }
         }
     }
 
-    public void visit(MethodDeclaration n, Nodew w) {
+    public void visit(MethodDeclaration n, Writer w) {
         CMethod method = new CMethod();
         last().addMethod(method);
-        if (!n.getTypeParameters().isEmpty()) {
-            n.getTypeParameters().forEach(temp -> method.template.add(new CType(temp.getNameAsString())));
-        }
+
+        n.getTypeParameters().forEach(temp -> method.template.add(new CType(temp.getNameAsString())));
         //type could be template
         method.type = typeVisitor.visitType(n.getType(), method);
-
         method.name = n.getName().asString();
         method.setStatic(n.isStatic());
         method.setPublic(n.isPublic());
@@ -149,6 +161,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         for (Parameter parameter : n.getParameters()) {
             CParameter cp = new CParameter();
             cp.type = typeVisitor.visitType(parameter.getType(), method);
+            cp.type.isTemplate = false;
             cp.name = parameter.getNameAsString();
             method.params.add(cp);
         }
@@ -159,7 +172,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         }
     }
 
-    public void visit(ConstructorDeclaration n, Nodew w) {
+    public void visit(ConstructorDeclaration n, Writer w) {
         CMethod method = new CMethod();
         last().addMethod(method);
         method.isCons = true;
@@ -173,6 +186,7 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
         for (Parameter parameter : n.getParameters()) {
             CParameter cp = new CParameter();
             cp.type = typeVisitor.visitType(parameter.getType(), method);
+            cp.type.isTemplate = false;
             cp.name = parameter.getNameAsString();
             method.params.add(cp);
         }
@@ -183,10 +197,10 @@ public class MainVisitor extends VoidVisitorAdapter<Nodew> {
 
     //static block
     @Override
-    public void visit(InitializerDeclaration n, Nodew w) {
+    public void visit(InitializerDeclaration n, Writer w) {
         if (n.isStatic()) {
             header.addRuntime();
-            w = new Nodew();
+            w = new Writer();
             last().staticBlock = w;
             w.append("static_block");
             n.getBody().accept(statementVisitor, w);

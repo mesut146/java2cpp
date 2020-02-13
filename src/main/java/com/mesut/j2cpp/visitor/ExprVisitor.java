@@ -5,8 +5,10 @@ import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
+import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.mesut.j2cpp.Converter;
-import com.mesut.j2cpp.Nodew;
+import com.mesut.j2cpp.Writer;
+import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
@@ -14,9 +16,10 @@ import com.mesut.j2cpp.ast.CType;
 import java.util.Iterator;
 import java.util.Optional;
 
-public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
+public class ExprVisitor extends GenericVisitorAdapter<Object, Writer> {
 
     public CMethod method;
+    public CClass clazz;
     public CHeader header;
     public Converter converter;
     TypeVisitor typeVisitor;
@@ -32,11 +35,11 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         this.method = method;
     }
 
-    public Object visit(SimpleName n, Nodew w) {
+    public Object visit(SimpleName n, Writer w) {
         return new CType(n.getIdentifier());
     }
 
-    public void args(NodeList<Expression> expressions, Nodew w) {
+    public void args(NodeList<Expression> expressions, Writer w) {
         w.append("(");
         for (int i = 0; i < expressions.size(); i++) {
             expressions.get(i).accept(this, w);
@@ -47,7 +50,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         w.append(")");
     }
 
-    public Object visit(InstanceOfExpr n, Nodew w) {
+    public Object visit(InstanceOfExpr n, Writer w) {
         header.addRuntime();
         w.append("instance_of<");
         CType type = typeVisitor.visitType(n.getType(), method);
@@ -58,7 +61,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(MethodCallExpr n, Nodew w) {
+    public Object visit(MethodCallExpr n, Writer w) {
         if (n.getScope().isPresent()) {
             Expression scope = n.getScope().get();
             scope.accept(this, w);
@@ -84,18 +87,20 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(FieldAccessExpr n, Nodew w) {
+    public Object visit(FieldAccessExpr n, Writer w) {
         Expression scope = n.getScope();
         scope.accept(this, w);
         //TODO:if scope is not object,ns
         if (scope.isNameExpr()) {//field/var or class
+            ResolvedValueDeclaration res=n.resolve();
+            System.out.println("resolved="+res);
             if (converter.getResolver().isClass(scope.asNameExpr().getNameAsString(), header)) {
                 w.append("::");
             } else {
                 //another field access or method call
                 w.append("->");
             }
-        } else {
+        } else {//another expr
             w.append("->");
         }
         w.append(n.getNameAsString());
@@ -104,7 +109,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
     //array[index] -> (*array)[index]
     @Override
-    public Object visit(ArrayAccessExpr n, Nodew w) {
+    public Object visit(ArrayAccessExpr n, Writer w) {
         w.append("(*");
         n.getName().accept(this, w);
         w.append(")[");
@@ -113,7 +118,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(AssignExpr n, Nodew w) {
+    public Object visit(AssignExpr n, Writer w) {
         n.getTarget().accept(this, w);
         w.append(" ");
         w.append(n.getOperator().asString());
@@ -122,21 +127,27 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(ThisExpr n, Nodew w) {
+    public Object visit(ThisExpr n, Writer w) {
         w.append("this");
         return null;
     }
 
     //new Base.Inner(args...){body}
-    public Object visit(ObjectCreationExpr n, Nodew w) {
+    public Object visit(ObjectCreationExpr n, Writer w) {
         if (n.getScope().isPresent()) {
             n.getScope().get().accept(this, w);
             w.append("->");
         }
         w.append("new ");
         //typearg
-        CType type = typeVisitor.visitType(n.getType(), method);
-        type.pointer = false;//new keyword already makes it pointer
+        CType type;
+        if (method == null) {
+            type = typeVisitor.visitType(n.getType(), clazz);
+        } else {
+            type = typeVisitor.visitType(n.getType(), method);
+        }
+
+        type.isPointer = false;//new keyword already makes it pointer
         w.append(type.toString());
         args(n.getArguments(), w);
         if (n.getAnonymousClassBody().isPresent()) {
@@ -146,12 +157,13 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     //Type name=value
-    public Object visit(VariableDeclarationExpr n, Nodew w) {
+    public Object visit(VariableDeclarationExpr n, Writer w) {
         boolean first = true;
         for (VariableDeclarator vd : n.getVariables()) {
             if (first) {
                 first = false;
                 CType type = typeVisitor.visitType(vd.getType(), method);
+                type.isTemplate = false;
                 w.append(type);
                 w.append(" ");
             } else {
@@ -166,7 +178,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(ConditionalExpr n, Nodew w) {
+    public Object visit(ConditionalExpr n, Writer w) {
         n.getCondition().accept(this, w);
         w.append("?");
         n.getThenExpr().accept(this, w);
@@ -175,7 +187,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(BinaryExpr n, Nodew w) {
+    public Object visit(BinaryExpr n, Writer w) {
         n.getLeft().accept(this, w);
         w.append(" ");
         w.append(n.getOperator().asString());
@@ -184,7 +196,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(UnaryExpr n, Nodew w) {
+    public Object visit(UnaryExpr n, Writer w) {
         if (n.isPostfix()) {
             n.getExpression().accept(this, w);
             w.append(n.getOperator().asString());
@@ -195,18 +207,18 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(NullLiteralExpr n, Nodew w) {
+    public Object visit(NullLiteralExpr n, Writer w) {
         w.append("nullptr");
         return null;
     }
 
-    public Object visit(IntegerLiteralExpr n, Nodew w) {
+    public Object visit(IntegerLiteralExpr n, Writer w) {
         w.append(n.getValue());
         return null;
     }
 
     @Override
-    public Object visit(CharLiteralExpr n, Nodew w) {
+    public Object visit(CharLiteralExpr n, Writer w) {
 
         String str = n.getValue();
         if (str.startsWith("\\u")) {
@@ -219,7 +231,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     @Override
-    public Object visit(CastExpr n, Nodew w) {
+    public Object visit(CastExpr n, Writer w) {
         w.append("(");
         CType type = typeVisitor.visitType(n.getType(), method);
         w.append(type);
@@ -232,7 +244,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     @Override
-    public Object visit(EnclosedExpr n, Nodew w) {
+    public Object visit(EnclosedExpr n, Writer w) {
         w.append("(");
         n.getInner().accept(this, w);
         w.append(")");
@@ -240,7 +252,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     @Override
-    public Object visit(LongLiteralExpr n, Nodew w) {
+    public Object visit(LongLiteralExpr n, Writer w) {
         String str = n.getValue();
         if (str.endsWith("L")) {
             str = str.substring(0, str.length() - 1);
@@ -249,7 +261,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(StringLiteralExpr n, Nodew w) {
+    public Object visit(StringLiteralExpr n, Writer w) {
         w.append("new java::lang::String(\"");
         w.append(n.getValue());
         w.append("\")");
@@ -257,7 +269,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     @Override
-    public Object visit(BooleanLiteralExpr n, Nodew w) {
+    public Object visit(BooleanLiteralExpr n, Writer w) {
         if (n.getValue()) {
             w.append("true");
         } else {
@@ -267,14 +279,14 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     //new int[]{...} or new int[5]
-    public Object visit(ArrayCreationExpr n, Nodew w) {
+    public Object visit(ArrayCreationExpr n, Writer w) {
         if (n.getInitializer().isPresent()) {
             //just print values,ignore new type[]... because c++ allows it
             n.getInitializer().get().accept(this, w);
         } else {
             //only dimensions
             w.append("new ");
-            CType typeName = typeVisitor.visitType(n.getElementType(), method);
+            CType typeName = typeVisitor.visitType(n.getElementType(), method).copy();
             typeName.arrayLevel = n.getLevels().size();
             w.append(typeName.toString());
             w.append("(");
@@ -298,7 +310,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
     }
 
     //{{1,2,3},{4,5,6}}
-    public Object visit(ArrayInitializerExpr n, Nodew w) {
+    public Object visit(ArrayInitializerExpr n, Writer w) {
         w.append("{");
         for (Iterator<Expression> iterator = n.getValues().iterator(); iterator.hasNext(); ) {
             iterator.next().accept(this, w);
@@ -314,7 +326,7 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return n.accept(this,w);
     }*/
 
-    public Object visit(NameExpr n, Nodew w) {
+    public Object visit(NameExpr n, Writer w) {
         w.append(n.getNameAsString());
         return null;
     }

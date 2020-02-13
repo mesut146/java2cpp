@@ -5,14 +5,14 @@ import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.Helper;
-import com.mesut.j2cpp.Nodew;
+import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
 
 //visit types and ensures type is included
-public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
+public class TypeVisitor extends GenericVisitorAdapter<CType, Writer> {
 
     Converter converter;
     CHeader header;
@@ -22,21 +22,21 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
         this.header = header;
     }
 
-    public Object visit(PrimitiveType n, Nodew w) {
+    public CType visit(PrimitiveType n, Writer w) {
         return new CType(Helper.toCType(n.asString()));
     }
 
-    public Object visit(ArrayType n, Nodew w) {
-        CType type = (CType) n.getElementType().accept(this, w);
+    public CType visit(ArrayType n, Writer w) {
+        CType type = n.getElementType().accept(this, w).copy();
         type.arrayLevel = n.getArrayLevel();
         return type;
     }
 
-    public Object visit(VoidType n, Nodew w) {
+    public CType visit(VoidType n, Writer w) {
         return new CType("void");
     }
 
-    public Object visit(ClassOrInterfaceType n, Nodew w) {
+    public CType visit(ClassOrInterfaceType n, Writer w) {
         //System.out.println("solving=" + n.getNameAsString());
         if (converter.jars.isEmpty() && converter.cpDirs.isEmpty()) {
             String q = n.getNameAsString();
@@ -47,38 +47,39 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
         ResolvedReferenceType resolved = n.resolve();
         String q = resolved.getQualifiedName();
         CType type = new CType(q.replace(".", "::"));
+        n.getTypeArguments().ifPresent(list -> list.forEach(tp -> type.typeNames.add(new CType(tp.toString(), true))));
         header.addInclude(q.replace(".", "/"));
         return type;
     }
 
     //multi catch type
-    public Object visit(UnionType n, Nodew w) {
-        CType type = (CType) n.getElements().get(0).accept(this, new Nodew());
+    public CType visit(UnionType n, Writer w) {
+        CType type = n.getElements().get(0).accept(this, null);
         System.out.println("union type detected and chosen the first");
         return type;
     }
 
     @Override
-    public Object visit(WildcardType n, Nodew arg) {
+    public CType visit(WildcardType n, Writer arg) {
         //<?>
         return new CType("java::lang::Object");
     }
 
     @Override
-    public Object visit(TypeParameter typeParameter, Nodew w) {
+    public CType visit(TypeParameter typeParameter, Writer w) {
         return new CType(typeParameter.asString());
     }
 
     //resolve type in a method,method type,param type,local type
     public CType visitType(Type type, CMethod method) {
         if (type.isArrayType()) {
-            CType cType = visitType(type.getElementType(), method);
+            CType cType = visitType(type.getElementType(), method).copy();
             cType.arrayLevel = type.getArrayLevel();
             //cType.pointer=true;
             return cType;
         }
         if (!type.isClassOrInterfaceType()) {
-            return (CType) type.accept(this, new Nodew());
+            return type.accept(this, null);
         }
         //type could be type param,Class type reference or normal type
         ClassOrInterfaceType ctype = type.asClassOrInterfaceType();
@@ -86,33 +87,33 @@ public class TypeVisitor extends GenericVisitorAdapter<Object, Nodew> {
 
         for (CType ct : method.getTemplate().getList()) {
             if (ct.getName().equals(name)) {
-                return ct;
+                return ct.copy();
             }
         }
         for (CType ct : method.getParent().getTemplate().getList()) {
             if (ct.getName().equals(name)) {
-                return ct;
+                return ct.copy();
             }
         }
         //it has to be declared type
-        return (CType) ctype.accept(this, new Nodew());
+        return visit(ctype, null);
     }
 
-    //for class members; fields,methods,todo inner cls
+    //fields,methods,base class types,todo inner cls
     public CType visitType(Type type, CClass cc) {
         if (type.isArrayType()) {//array type
-            CType cType = visitType(type.getElementType(), cc);
+            CType cType = visitType(type.getElementType(), cc).copy();
             cType.arrayLevel = type.getArrayLevel();
             return cType;
         }
-        if (!type.isClassOrInterfaceType()) {//normal type
-            return (CType) type.accept(this, new Nodew());
+        if (!type.isClassOrInterfaceType()) {//void or primitive
+            return type.accept(this, null);
         }
-        for (CType ct : cc.getTemplate().getList()) {//class temptlated type
-            if (ct.getName().equals(type.asString())) {//class templated field type
-                return ct;
+        for (CType ct : cc.getTemplate().getList()) {//class temptated type
+            if (ct.getName().equals(type.asString())) {
+                return ct.copy();
             }
         }
-        return (CType) type.accept(this, new Nodew());
+        return visit(type.asClassOrInterfaceType(), null);
     }
 }

@@ -25,8 +25,10 @@ public class a extends Object implements Runnable {
         }
     }
 
-    public static void main() {
+    public static void main(String[] args) {
         System.out.println("Hello World!");
+        second sec=new second();
+        int var=sec.second_field;
         //System::out->println();
     }
 

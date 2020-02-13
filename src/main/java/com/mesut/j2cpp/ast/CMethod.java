@@ -1,13 +1,13 @@
 package com.mesut.j2cpp.ast;
 
-import com.mesut.j2cpp.Nodew;
+import com.mesut.j2cpp.Writer;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CMethod extends ModifierNode {
     public String name;
-    public CType type;
+    public CType type;//return type
     public Template template = new Template();
     public List<CParameter> params = new ArrayList<>();
     public List<String> throwList = new ArrayList<>();
@@ -16,8 +16,7 @@ public class CMethod extends ModifierNode {
     public boolean isOverride = false;//is necessary in c++?
     public CClass parent;
     public Call call;
-    public Nodew body = new Nodew();
-    //public Nodew decl;
+    public Writer body = new Writer();
 
     public CClass getParent() {
         return parent;
@@ -73,9 +72,9 @@ public class CMethod extends ModifierNode {
                 append("virtual ");
             }
             append(type.toString());
-            if (isPointer()) {
+            /*if (isPointer()) {
                 append("*");
-            }
+            }*/
             append(" ");
         }
         if (!parent.forHeader && parent.ns != null) {
@@ -92,14 +91,6 @@ public class CMethod extends ModifierNode {
             }
         }
         append(")");
-    }
-
-    boolean isPointer() {
-        return !isCons && type.isPointer();
-    }
-
-    boolean isVoid() {
-        return !isCons && type.isVoid();
     }
 
 

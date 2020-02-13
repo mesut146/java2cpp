@@ -8,7 +8,7 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import com.mesut.j2cpp.Converter;
-import com.mesut.j2cpp.Nodew;
+import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
@@ -17,7 +17,7 @@ import com.mesut.j2cpp.ast.Call;
 import java.util.Iterator;
 
 //visit statements (ones end with ;)
-public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
+public class StatementVisitor extends GenericVisitorAdapter<Object, Writer> {
 
     public CMethod method;
     public CHeader header;
@@ -38,11 +38,11 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
         this.exprVisitor.setMethod(method);
     }
 
-    public Object visit(SimpleName n, Nodew w) {
+    public Object visit(SimpleName n, Writer w) {
         return new CType(n.getIdentifier());
     }
 
-    public Object visit(BlockStmt n, Nodew w) {
+    public Object visit(BlockStmt n, Writer w) {
         w.firstBlock = true;
         w.appendln("{");
         w.up();
@@ -55,13 +55,13 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(ExpressionStmt n, Nodew w) {
+    public Object visit(ExpressionStmt n, Writer w) {
         n.getExpression().accept(exprVisitor, w);
         w.append(";");
         return null;
     }
 
-    public Object visit(IfStmt n, Nodew w) {
+    public Object visit(IfStmt n, Writer w) {
         w.append("if(");
         n.getCondition().accept(exprVisitor, w);
         w.append(")");
@@ -73,7 +73,7 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    void block(Nodew w, Statement statement) {
+    void block(Writer w, Statement statement) {
         if (statement.isBlockStmt()) {
             statement.accept(this, w);
         } else {
@@ -84,7 +84,7 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
         }
     }
 
-    public Object visit(WhileStmt n, Nodew w) {
+    public Object visit(WhileStmt n, Writer w) {
         w.append("while(");
         n.getCondition().accept(exprVisitor, w);
         w.append(") ");
@@ -92,7 +92,7 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(ForStmt n, Nodew w) {
+    public Object visit(ForStmt n, Writer w) {
         w.append("for(");
         for (Iterator<Expression> iterator = n.getInitialization().iterator(); iterator.hasNext(); ) {
             iterator.next().accept(exprVisitor, w);
@@ -116,7 +116,7 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(ForEachStmt n, Nodew w) {
+    public Object visit(ForEachStmt n, Writer w) {
         w.append("for(");
         n.getVariable().accept(exprVisitor, w);
         w.append(":");
@@ -126,7 +126,7 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(ReturnStmt n, Nodew w) {
+    public Object visit(ReturnStmt n, Writer w) {
         hasReturn = true;
         w.append("return");
         if (n.getExpression().isPresent()) {
@@ -137,7 +137,7 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    public Object visit(TryStmt n, Nodew w) {
+    public Object visit(TryStmt n, Writer w) {
 
         boolean tryRet, tryTh, finRet, finTh;
         if (n.getFinallyBlock().isPresent()) {
@@ -150,7 +150,7 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
                 type = new CType("void");
             }
             retStr += ";}";
-            Nodew fin = new Nodew();
+            Writer fin = new Writer();
             //tryRet=hasReturn;hasReturn=false;
             n.getFinallyBlock().get().accept(this, fin);
             //finRet=hasReturn;hasReturn=false;
@@ -158,7 +158,7 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
             w.line(type.toString()).append("* res_tryBlock=with_finally<" + type.toString() + ">([&](){");
             w.up();
             w.line("try");
-            Nodew tn = new Nodew();
+            Writer tn = new Writer();
             n.getTryBlock().accept(this, tn);
             w.appendi(tn);
             if (n.getCatchClauses().size() == 0) {
@@ -204,13 +204,13 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
         return null;
     }
 
-    void makeCatch(NodeList<CatchClause> list, Nodew w) {
+    void makeCatch(NodeList<CatchClause> list, Writer w) {
         for (CatchClause cc : list) {
             Parameter parameter = cc.getParameter();
             if (parameter.getType().isUnionType()) {
                 for (Type type : parameter.getType().asUnionType().getElements()) {
                     w.append("catch(");
-                    w.append((CType) type.accept(typeVisitor, new Nodew()));
+                    w.append((CType) type.accept(typeVisitor, new Writer()));
                     w.append(" ");
                     w.append(parameter.getNameAsString());
                     w.append(")");
@@ -218,7 +218,7 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
                 }
             } else {
                 w.append("catch(");
-                w.append((CType) parameter.getType().accept(typeVisitor, new Nodew()));
+                w.append((CType) parameter.getType().accept(typeVisitor, new Writer()));
                 w.append(" ");
                 w.append(parameter.getNameAsString());
                 w.append(")");
@@ -228,21 +228,21 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Nodew> {
         }
     }
 
-    void makeLambda(BlockStmt n, Nodew w) {
+    void makeLambda(BlockStmt n, Writer w) {
         w.append("auto finally=[&]()");
         n.accept(this, w);
         w.append(";");
     }
 
-    public Object visit(ThrowStmt n, Nodew w) {
+    public Object visit(ThrowStmt n, Writer w) {
         hasThrow = true;
         w.append("throw ");
         n.getExpression().accept(exprVisitor, w);
         return null;
     }
 
-    public Object visit(ExplicitConstructorInvocationStmt n, Nodew w) {
-        Nodew p = new Nodew();
+    public Object visit(ExplicitConstructorInvocationStmt n, Writer w) {
+        Writer p = new Writer();
         Call c = new Call();
         c.isThis = n.isThis();
         if (n.isThis()) {

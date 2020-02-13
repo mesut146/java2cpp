@@ -54,8 +54,8 @@ public class Main {
                 //destPath = "/home/mesut/Desktop/src7-cpp";
                 srcPath = "/home/mesut/IdeaProjects/java2cpp/asd/test/java";
                 destPath = "/home/mesut/IdeaProjects/java2cpp/asd/test/cpp";
-                //cls = "base/a.java";
-                cls = "base/Generic.java";
+                cls = "base/a.java";
+                //cls = "base/Generic.java";
             }
             converter = new Converter(srcPath, destPath);
             //converter.addJar(rt);

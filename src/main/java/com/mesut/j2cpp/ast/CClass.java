@@ -1,6 +1,6 @@
 package com.mesut.j2cpp.ast;
 
-import com.mesut.j2cpp.Nodew;
+import com.mesut.j2cpp.Writer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ public class CClass extends Node {
     public CClass parent;
     public Namespace ns = null;
     public boolean forHeader = true;
-    public Nodew staticBlock = null;
+    public Writer staticBlock = null;
     //public boolean inHeader=false;
 
     public void addInner(CClass cc) {

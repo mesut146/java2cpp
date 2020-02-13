@@ -10,10 +10,10 @@ public class CType {
     public Namespace ns;
     public String type;//e.g String,Object
     public int arrayLevel = 0;
-    public List<CType> typeNames = new ArrayList<>();
-    public CType scope = null;
-    public boolean isTemplate = false;
-    public boolean pointer = true;
+    public List<CType> typeNames = new ArrayList<>();//generics
+    public CType scope = null;//parent type
+    public boolean isTemplate = false;//<T>
+    public boolean isPointer = true;//for manual cases
 
     public CType(String type) {
         String[] arr = type.split("::");
@@ -22,6 +22,11 @@ public class CType {
             ns = new Namespace(type.substring(0, type.lastIndexOf("::")));
         }
         //this.type = type;
+    }
+
+    public CType(String type, boolean isTemplate) {
+        this(type);
+        this.isTemplate = isTemplate;
     }
 
     public String getName() {
@@ -41,6 +46,12 @@ public class CType {
         return sb.toString();
     }
 
+    public CType copy() {
+        CType copied = new CType(type, isTemplate);
+        copied.isPointer = isPointer;
+        return copied;
+    }
+
     public boolean isArray() {
         return arrayLevel > 0;
     }
@@ -51,7 +62,7 @@ public class CType {
 
     public boolean isPointer() {
         //return !isVoid() && (!isPrim() || isArray());
-        return !isVoid() && !isPrim() && !isTemplate && pointer;
+        return isPointer && !isVoid() && !isPrim() && !isTemplate;
     }
 
     public boolean isVoid() {
@@ -71,12 +82,6 @@ public class CType {
             StringBuilder sb = new StringBuilder();
             sb.append(type);
             sb.append("<");
-            /*for (Iterator<CType> iterator = typeNames.iterator(); iterator.hasNext(); ) {
-                sb.append(iterator.next().full());
-                if (iterator.hasNext()) {
-                    sb.append(",");
-                }
-            }*/
             sb.append(typeNames.stream().map(CType::full).collect(Collectors.joining(",")));
             sb.append(">");
             return sb.toString();
