@@ -41,6 +41,7 @@ public class Converter {
     List<PackageNode> packageHierarchy = new ArrayList<>();
     public List<String> jars = new ArrayList<>();
     public List<String> cpDirs = new ArrayList<>();
+    public SymbolResolver symbolResolver;
 
     public Converter(String srcDir, String destDir) throws IOException {
         this.srcDir = srcDir;
@@ -108,7 +109,7 @@ public class Converter {
             JavaParserTypeSolver cpSolver = new JavaParserTypeSolver(cp);
             combinedTypeSolver.add(cpSolver);
         }
-        SymbolResolver symbolResolver = new JavaSymbolSolver(combinedTypeSolver);
+        symbolResolver = new JavaSymbolSolver(combinedTypeSolver);
         javaParser = new JavaParser(new ParserConfiguration().setSymbolResolver(symbolResolver));
     }
 

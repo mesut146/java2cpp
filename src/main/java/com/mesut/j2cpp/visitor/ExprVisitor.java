@@ -92,9 +92,11 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Writer> {
         scope.accept(this, w);
         //TODO:if scope is not object,ns
         if (scope.isNameExpr()) {//field/var or class
-            ResolvedValueDeclaration res=n.resolve();
-            System.out.println("resolved="+res);
-            if (converter.getResolver().isClass(scope.asNameExpr().getNameAsString(), header)) {
+            String scopeName = scope.asNameExpr().getNameAsString();
+            ResolvedValueDeclaration res = n.resolve();
+            System.out.println("resolved=" + res.getName() + " " + res.getType() + " " + res.isField());
+
+            if (converter.getResolver().isClass(scopeName, header)) {
                 w.append("::");
             } else {
                 //another field access or method call
