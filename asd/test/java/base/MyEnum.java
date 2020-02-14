@@ -16,6 +16,6 @@ enum MyEnum{
 
     void print(){
         System.out.println(str+","+x);//System::out->println()
-        System.arraycopy();//System::arraycopy()
+        //System.arraycopy();//System::arraycopy()
     }
 }

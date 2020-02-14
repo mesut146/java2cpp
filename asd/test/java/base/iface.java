@@ -5,4 +5,9 @@ public interface iface extends base{
     public Object obj=null;
    
     void asd();
+
+}
+
+interface base{
+
 }

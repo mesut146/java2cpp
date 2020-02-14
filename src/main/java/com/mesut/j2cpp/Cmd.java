@@ -12,7 +12,7 @@ public class Cmd {
         }
         String srcDir = null;
         String destDir = null;
-        List<String> jars = new ArrayList<>();
+        List<String> cp = new ArrayList<>();
 
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -23,17 +23,15 @@ public class Cmd {
                     return;
                 case "-src":
                 case "-source":
-                case "--src":
-                case "--source":
                     srcDir = args[++i];
                     break;
                 case "-output":
-                case "--output":
+                case "-out":
                     destDir = args[++i];
                     break;
-                case "-jar":
-                case "--jar":
-                    jars.add(args[++i]);
+                case "-cp":
+                case "-classpath":
+                    cp.add(args[++i]);
                     break;
             }
             if (srcDir == null) {
@@ -43,17 +41,21 @@ public class Cmd {
                 System.out.println("enter output path");
             }
             Converter converter = new Converter(srcDir, destDir);
-            converter.jars.addAll(jars);
+            if (cp.isEmpty()) {
+                System.out.println("converting without classpath");
+            } else {
+                converter.classpath.addAll(cp);
+            }
             converter.makeTable();
             converter.convert();
         }
     }
 
     static void usage() {
-        System.out.println("usage: -src <srcdir> -output <outputdir> -jar <jarpath>\n");
+        System.out.println("usage: j2cpp -src <sourcedir> -output <outputdir> -cp <path>\n");
         System.out.println("Options:");
-        System.out.println("-src, --src, -source, --source   src directory to be converted");
-        System.out.println("-output, --output,               output directory to write c++ .h and .cpp files");
-        System.out.println("-jar, --jar                      jar file to add as classpath for symbol resolution, can be multiple");
+        System.out.println("-source, -src       source directory to be converted");
+        System.out.println("-output, -out,      output directory to write c++ .h and .cpp files");
+        System.out.println("-cp, --classpath    jar or source directory for classpath, can be multiple");
     }
 }

@@ -1,5 +1,6 @@
 package com.mesut.j2cpp;
 
+import java.io.File;
 import java.io.FileOutputStream;
 
 public class Util<T> {
@@ -12,8 +13,11 @@ public class Util<T> {
         }
     }
 
-    void asd(){
-        T obj=null;
-        Object asd;
+    public static String relative(String file, String root) {
+        return file.substring(root.length()+1);
+    }
+
+    public static String relative(File file, File root) {
+        return relative(file.getAbsolutePath(), root.getAbsolutePath());
     }
 }

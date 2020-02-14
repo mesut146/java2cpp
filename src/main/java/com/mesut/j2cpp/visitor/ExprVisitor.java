@@ -5,7 +5,8 @@ import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
-import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.CClass;
@@ -67,7 +68,16 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Writer> {
             scope.accept(this, w);
 
             if (scope.isNameExpr()) {//field or class
-                if (converter.getResolver().isClass(scope.asNameExpr().getNameAsString(), header)) {
+                String scopeName = scope.asNameExpr().getNameAsString();
+                if (scopeName.equals("this")) {
+                    w.append("->");
+                    w.append(n.getNameAsString());
+                    args(n.getArguments(), w);
+                    return null;
+                }
+                ResolvedMethodDeclaration rt = converter.symbolResolver.resolveDeclaration(n, ResolvedMethodDeclaration.class);
+
+                if (rt.isStatic()) {
                     w.append("::");
                 } else {
                     w.append("->");
@@ -76,11 +86,6 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Writer> {
                 //another method call or field access
                 w.append("->");
             }
-            /*if (scope.isFieldAccessExpr()||scope.isMethodCallExpr()){
-                w.append("->");
-            }
-            */
-            //TODO: if static access,make ns
         }
         w.append(n.getNameAsString());
         args(n.getArguments(), w);
@@ -90,18 +95,22 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Writer> {
     public Object visit(FieldAccessExpr n, Writer w) {
         Expression scope = n.getScope();
         scope.accept(this, w);
-        //TODO:if scope is not object,ns
+
         if (scope.isNameExpr()) {//field/var or class
             String scopeName = scope.asNameExpr().getNameAsString();
-            ResolvedValueDeclaration res = n.resolve();
-            System.out.println("resolved=" + res.getName() + " " + res.getType() + " " + res.isField());
-
-            if (converter.getResolver().isClass(scopeName, header)) {
+            if (scopeName.equals("this")) {
+                w.append("->");
+                w.append(n.getNameAsString());
+                return null;
+            }
+            ResolvedFieldDeclaration rt = converter.symbolResolver.resolveDeclaration(n, ResolvedFieldDeclaration.class);
+            if (rt.isStatic()) {
                 w.append("::");
             } else {
-                //another field access or method call
                 w.append("->");
             }
+            //System.out.println("resolved="+rt+" "+rt.isStatic());
+
         } else {//another expr
             w.append("->");
         }
@@ -221,7 +230,6 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Writer> {
 
     @Override
     public Object visit(CharLiteralExpr n, Writer w) {
-
         String str = n.getValue();
         if (str.startsWith("\\u")) {
             w.append("u");

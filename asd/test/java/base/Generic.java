@@ -2,12 +2,12 @@ package base;
 
 import java.util.*;
 
-public class Generic<T, V> extends List<T> {
+public class Generic<T, V> extends ArrayList<T> {
 
-    public void add(T param) {
+    public void meth(T param) {
         T obj = null;
-        T[] arr = new T[10];
-        arr[0]=obj;
-        add(arr[0]);
+        List<T> arr=new ArrayList<>();
+        arr.add(obj);
+        add(arr.get(0));
     }
 }

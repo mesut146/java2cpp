@@ -37,17 +37,20 @@ public class TypeVisitor extends GenericVisitorAdapter<CType, Writer> {
     }
 
     public CType visit(ClassOrInterfaceType n, Writer w) {
-        //System.out.println("solving=" + n.getNameAsString());
-        if (converter.jars.isEmpty() && converter.cpDirs.isEmpty()) {
-            String q = n.getNameAsString();
-            CType type = new CType(q.replace(".", "::"));
-            header.addInclude(q.replace(".", "/"));
-            return type;
+        //if no classpath,include it directly
+        String q;
+        CType type;
+        if (converter.classpath.isEmpty()) {
+            q = n.getNameAsString();
+            type = new CType(q.replace(".", "::"));
+        } else {
+            ResolvedReferenceType resolved = n.resolve();
+            q = resolved.getQualifiedName();
+
+            type = new CType(q.replace(".", "::"));
+            n.getTypeArguments().ifPresent(list -> list.forEach(tp -> type.typeNames.add(new CType(tp.toString(), true))));
         }
-        ResolvedReferenceType resolved = n.resolve();
-        String q = resolved.getQualifiedName();
-        CType type = new CType(q.replace(".", "::"));
-        n.getTypeArguments().ifPresent(list -> list.forEach(tp -> type.typeNames.add(new CType(tp.toString(), true))));
+
         header.addInclude(q.replace(".", "/"));
         return type;
     }

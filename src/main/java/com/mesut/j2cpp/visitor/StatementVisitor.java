@@ -1,11 +1,8 @@
 package com.mesut.j2cpp.visitor;
 
-import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.stmt.*;
-import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.Writer;
@@ -22,7 +19,7 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Writer> {
     public CMethod method;
     public CHeader header;
     public Converter converter;
-    boolean hasReturn = false, hasThrow = false, hasBreak = false;
+    //boolean hasReturn = false, hasThrow = false, hasBreak = false;
     ExprVisitor exprVisitor;
     TypeVisitor typeVisitor;
 
@@ -127,7 +124,6 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Writer> {
     }
 
     public Object visit(ReturnStmt n, Writer w) {
-        hasReturn = true;
         w.append("return");
         if (n.getExpression().isPresent()) {
             w.append(" ");
@@ -138,104 +134,18 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Writer> {
     }
 
     public Object visit(TryStmt n, Writer w) {
-
-        boolean tryRet, tryTh, finRet, finTh;
+        TryHelper helper = new TryHelper(exprVisitor, this);
         if (n.getFinallyBlock().isPresent()) {
             header.addRuntime();
-            String retStr = "if(0){return";
-            CType type = method.type;
-            if (!method.isCons && !method.type.isVoid()) {
-                retStr += "" + type.toString();
-            } else {
-                type = new CType("void");
-            }
-            retStr += ";}";
-            Writer fin = new Writer();
-            //tryRet=hasReturn;hasReturn=false;
-            n.getFinallyBlock().get().accept(this, fin);
-            //finRet=hasReturn;hasReturn=false;
-            w.append("bool tryReturned=true,finReturned=true;");
-            w.line(type.toString()).append("* res_tryBlock=with_finally<" + type.toString() + ">([&](){");
-            w.up();
-            w.line("try");
-            Writer tn = new Writer();
-            n.getTryBlock().accept(this, tn);
-            w.appendi(tn);
-            if (n.getCatchClauses().size() == 0) {
-                w.line("catch(int x){}");
-            }
-            makeCatch(n.getCatchClauses(), w);
-            w.line(retStr);
-            w.line("tryReturned=false;");
-            w.down();
-            w.lineln("},[&](){");
-            w.up();
-            w.appendi(fin);
-            w.line(retStr);
-            w.line("finReturned=false;");
-            w.down();
-            w.line("});");
-            if (!method.isCons && !method.type.isVoid()) {
-                w.line("if(tryReturned||finReturned){");
-                w.up();
-                w.line("return res_tryBlock;");
-                w.down();
-                w.line("}");
-            }
+            helper.with_finally(n, w);
         } else {
-            w.append("try");
-            int len = n.getResources().size();
-            if (len > 0) {
-                w.append("(");
-                for (int i = 0; i < len; i++) {
-                    n.getResources().get(i).accept(exprVisitor, w);
-                    if (i < len - 1) {
-                        w.append(",");
-                    }
-                }
-                w.append(")");
-            }
-            n.getTryBlock().accept(this, w);
-            if (n.getCatchClauses().size() == 0) {
-                w.append("catch(int x){}");
-            }
-            makeCatch(n.getCatchClauses(), w);
+            //no finnaly stmt just print it directly
+            helper.no_finally(n, w);
         }
         return null;
     }
 
-    void makeCatch(NodeList<CatchClause> list, Writer w) {
-        for (CatchClause cc : list) {
-            Parameter parameter = cc.getParameter();
-            if (parameter.getType().isUnionType()) {
-                for (Type type : parameter.getType().asUnionType().getElements()) {
-                    w.append("catch(");
-                    w.append((CType) type.accept(typeVisitor, new Writer()));
-                    w.append(" ");
-                    w.append(parameter.getNameAsString());
-                    w.append(")");
-                    cc.getBody().accept(this, w);
-                }
-            } else {
-                w.append("catch(");
-                w.append((CType) parameter.getType().accept(typeVisitor, new Writer()));
-                w.append(" ");
-                w.append(parameter.getNameAsString());
-                w.append(")");
-                cc.getBody().accept(this, w);
-            }
-
-        }
-    }
-
-    void makeLambda(BlockStmt n, Writer w) {
-        w.append("auto finally=[&]()");
-        n.accept(this, w);
-        w.append(";");
-    }
-
     public Object visit(ThrowStmt n, Writer w) {
-        hasThrow = true;
         w.append("throw ");
         n.getExpression().accept(exprVisitor, w);
         return null;

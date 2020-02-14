@@ -61,6 +61,7 @@ public class MainVisitor extends VoidVisitorAdapter<Writer> {
 
     }
 
+
     public void visit(ClassOrInterfaceDeclaration n, Writer s) {
         CClass cc = new CClass();
         if (stack.size() == 0) {
@@ -199,7 +200,7 @@ public class MainVisitor extends VoidVisitorAdapter<Writer> {
     @Override
     public void visit(InitializerDeclaration n, Writer w) {
         if (n.isStatic()) {
-            header.addRuntime();
+            header.includePath("static_block.hpp");
             w = new Writer();
             last().staticBlock = w;
             w.append("static_block");

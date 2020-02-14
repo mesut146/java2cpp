@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Converter {
 
@@ -39,13 +40,17 @@ public class Converter {
     List<String> excludeClasses = new ArrayList<>();
     //look fist this while resolving
     List<PackageNode> packageHierarchy = new ArrayList<>();
-    public List<String> jars = new ArrayList<>();
-    public List<String> cpDirs = new ArrayList<>();
+    public List<String> classpath = new ArrayList<>();
     public SymbolResolver symbolResolver;
+    public CMakeWriter cMakeWriter;
+    public CMakeWriter.Target target;
+    public boolean debug_output = false;
 
     public Converter(String srcDir, String destDir) throws IOException {
         this.srcDir = srcDir;
         this.destDir = destDir;
+        cMakeWriter = new CMakeWriter("myproject");
+        target = cMakeWriter.addTarget("mylib", false);
     }
 
     public void addIncludeDir(String prefix) {
@@ -76,23 +81,43 @@ public class Converter {
 
     }
 
-    //add jar to resolve against
-    public void addJar(String jarPath) {
-        jars.add(jarPath);
-    }
 
     public void addClasspath(String dir) {
-        cpDirs.add(dir);
+        classpath.add(dir);
     }
 
     public void convert() {
-        //convertDir(new File(src), "");
-        for (UnitMap h : units) {
+        try {
+            convertDir(new File(srcDir), "");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        /*for (UnitMap h : units) {
             String pkg = "";
             if (h.cu.getPackageDeclaration().isPresent()) {
                 pkg = h.cu.getPackageDeclaration().get().getNameAsString();
             }
             convertSingle(pkg.replaceAll("\\.", "/") + "/" + h.name, h.cu);
+        }
+        File cmakeFile = new File(destDir, "CMakeLists.txt");
+        try {
+            Files.write(cmakeFile.toPath(), cMakeWriter.generate().getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+        System.out.println("conversion done");
+    }
+
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    void convertDir(File dir, String str) throws FileNotFoundException {
+        for (File file : Objects.requireNonNull(dir.listFiles())) {
+            if (file.isDirectory()) {
+                convertDir(file, str);
+            } else if (file.getName().endsWith(".java")) {
+                CompilationUnit cu = javaParser.parse(file).getResult().get();
+                convertSingle(Util.relative(file.getAbsolutePath(), srcDir), cu);
+            }
         }
     }
 
@@ -101,13 +126,14 @@ public class Converter {
         JavaParserTypeSolver dirSolver = new JavaParserTypeSolver(srcDir);
 
         combinedTypeSolver.add(dirSolver);//current dir
-        for (String jar : jars) {
-            JarTypeSolver jarTypeSolver = new JarTypeSolver(jar);
-            combinedTypeSolver.add(jarTypeSolver);
-        }
-        for (String cp : cpDirs) {
-            JavaParserTypeSolver cpSolver = new JavaParserTypeSolver(cp);
-            combinedTypeSolver.add(cpSolver);
+        for (String cp : classpath) {
+            if (cp.endsWith(".jar")) {
+                JarTypeSolver jarTypeSolver = new JarTypeSolver(cp);
+                combinedTypeSolver.add(jarTypeSolver);
+            } else {//directory
+                JavaParserTypeSolver cpSolver = new JavaParserTypeSolver(cp);
+                combinedTypeSolver.add(cpSolver);
+            }
         }
         symbolResolver = new JavaSymbolSolver(combinedTypeSolver);
         javaParser = new JavaParser(new ParserConfiguration().setSymbolResolver(symbolResolver));
@@ -115,7 +141,6 @@ public class Converter {
 
     //
     public void makeTable() throws IOException {
-        initSolver();
         table = new SymbolTable();
         resolver = new Resolver(table);
         File dir = new File(srcDir);
@@ -134,7 +159,7 @@ public class Converter {
     //walk in source directory,parse all files and add classes to symbol table
     //useful for converting directory
     void tableDir(File dir, PackageNode node) {
-        System.out.println("tabling dir=" + dir);
+        System.out.println("entering dir=" + dir);
 
         for (File file : dir.listFiles()) {
             if (file.isFile()) {
@@ -191,18 +216,6 @@ public class Converter {
                 .forEach(m -> tableClass(m.asClassOrInterfaceDeclaration(), cu));*/
     }
 
-    /*public void convertDir(File dir, String pkg) throws FileNotFoundException {
-        for (File file : dir.listFiles()) {
-            if (file.isFile()) {
-                if (file.getName().endsWith(".java")) {
-                    convertSingle(file, pkg,StaticJavaParser.parse(file));
-                }
-            } else {
-                convertDir(file, pkg + "/" + file.getName());
-            }
-        }
-    }*/
-
     String getPath(CompilationUnit cu) {
         if (cu.getPackageDeclaration().isPresent()) {
             String pkg = cu.getPackageDeclaration().get().getNameAsString();
@@ -228,9 +241,11 @@ public class Converter {
             String header_str = header.toString();
             String source_str = cpp.toString();
 
-            System.out.println(header_str);
-            System.out.println("---------------");
-            System.out.println(source_str);
+            if (debug_output) {
+                System.out.println(header_str);
+                System.out.println("---------------");
+                System.out.println(source_str);
+            }
 
             File header_file = new File(destDir, path.replace(".java", ".h"));
             File source_file = new File(destDir, path.replace(".java", ".cpp"));
@@ -238,6 +253,7 @@ public class Converter {
             Files.write(Paths.get(header_file.getAbsolutePath()), header_str.getBytes());
             Files.write(Paths.get(source_file.getAbsolutePath()), source_str.getBytes());
 
+            target.sourceFiles.add(Util.relative(source_file.getAbsolutePath(), srcDir));
         } catch (Exception e) {
             e.printStackTrace();
         }

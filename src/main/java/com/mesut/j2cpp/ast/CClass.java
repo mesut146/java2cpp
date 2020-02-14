@@ -88,7 +88,7 @@ public class CClass extends Node {
         if (staticBlock != null) {
             println();
             println();
-            appendi(staticBlock);
+            appendIndent(staticBlock);
             println();
         }
 

@@ -75,7 +75,7 @@ public class CHeader extends Node {
             include(imp);
         }
         if (hasRuntime) {
-            include("JavaRuntime");
+            include("Helper");
         }
         println();
         for (Namespace use : using) {

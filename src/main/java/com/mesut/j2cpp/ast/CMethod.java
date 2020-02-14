@@ -48,7 +48,7 @@ public class CMethod extends ModifierNode {
         }
         printDecl();
         if (parent.isInterface) {//make it virtual
-            append("=0");
+            append(" = 0");
         }
         if (parent.forHeader) {
             append(";");

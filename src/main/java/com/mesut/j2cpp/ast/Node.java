@@ -79,6 +79,7 @@ public abstract class Node {
         return this;
     }
 
+    //no indention
     public Node append(Node n) {
         n.print();
         boolean flag = true;
@@ -93,7 +94,8 @@ public abstract class Node {
         return this;
     }
 
-    public Node appendi(Node n) {
+    //append with indention
+    public Node appendIndent(Node n) {
         n.print();
         boolean flag = true;
         for (String s : n.list) {
