@@ -7,6 +7,7 @@ import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.CClass;
@@ -16,6 +17,7 @@ import com.mesut.j2cpp.ast.CType;
 
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class ExprVisitor extends GenericVisitorAdapter<Object, Writer> {
 
@@ -103,13 +105,18 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Writer> {
                 w.append(n.getNameAsString());
                 return null;
             }
-            ResolvedFieldDeclaration rt = converter.symbolResolver.resolveDeclaration(n, ResolvedFieldDeclaration.class);
-            if (rt.isStatic()) {
+            ResolvedValueDeclaration value = n.resolve();
+            if (value.isEnumConstant()) {
                 w.append("::");
             } else {
-                w.append("->");
+                //System.out.println("resolving " + n.toString());
+                ResolvedFieldDeclaration rt = converter.symbolResolver.resolveDeclaration(n, ResolvedFieldDeclaration.class);
+                if (rt.isStatic()) {
+                    w.append("::");
+                } else {
+                    w.append("->");
+                }
             }
-            //System.out.println("resolved="+rt+" "+rt.isStatic());
 
         } else {//another expr
             w.append("->");
@@ -331,10 +338,6 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Writer> {
         w.append("}");
         return null;
     }
-
-    /*public Object visit(Type n, Nodew w){
-        return n.accept(this,w);
-    }*/
 
     public Object visit(NameExpr n, Writer w) {
         w.append(n.getNameAsString());

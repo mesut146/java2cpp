@@ -87,7 +87,6 @@ public class TypeVisitor extends GenericVisitorAdapter<CType, Writer> {
         //type could be type param,Class type reference or normal type
         ClassOrInterfaceType ctype = type.asClassOrInterfaceType();
         String name = ctype.getNameAsString();
-
         for (CType ct : method.getTemplate().getList()) {
             if (ct.getName().equals(name)) {
                 return ct.copy();

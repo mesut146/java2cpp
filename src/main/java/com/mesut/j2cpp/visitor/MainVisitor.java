@@ -192,7 +192,7 @@ public class MainVisitor extends VoidVisitorAdapter<Writer> {
             method.params.add(cp);
         }
         method.body.init();
-        statementVisitor.method = method;
+        statementVisitor.setMethod(method);
         n.getBody().accept(statementVisitor, method.body);
     }
 

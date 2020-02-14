@@ -46,6 +46,7 @@ public class Main {
                 //destPath = "/home/mesut/Desktop/dx-cpp";
                 srcPath = "/home/mesut/Desktop/src7";
                 destPath = "/home/mesut/Desktop/src7-cpp";
+                cls="org/jcp/xml/dsig/internal/dom/Utils.java";
                 /*srcPath = "/home/mesut/IdeaProjects/java2cpp/asd/test/java";
                 destPath = "/home/mesut/IdeaProjects/java2cpp/asd/test/cpp";*/
                 //cls = "base/a.java";
@@ -69,7 +70,7 @@ public class Main {
             }
             converter.initSolver();
             //converter.makeTable();
-            //converter.convertSingle(cls);
+            converter.convertSingle(cls);
             converter.convert();
 
         } catch (Exception e) {

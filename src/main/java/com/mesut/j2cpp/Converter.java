@@ -233,7 +233,7 @@ public class Converter {
 
             header.addIncludeStar("java/lang");//by default as in java compilers
             header.addIncludeStar(getPath(cu));//visible to current package
-            header.useNamespace("java::lang");//by default
+            //header.useNamespace("java::lang");//by default
             MainVisitor visitor = new MainVisitor(this, header);
 
             cu.accept(visitor, null);
@@ -264,9 +264,9 @@ public class Converter {
         ParseResult<?> result = javaParser.parse(file);
         if (result.isSuccessful()) {
             CompilationUnit unit = (CompilationUnit) result.getResult().get();
-            for (TypeDeclaration<?> typeDeclaration : unit.getTypes()) {
+            /*for (TypeDeclaration<?> typeDeclaration : unit.getTypes()) {
                 tableClass(typeDeclaration, unit);
-            }
+            }*/
             convertSingle(cls, unit);
         } else {
             throw new ParseProblemException(result.getProblems());

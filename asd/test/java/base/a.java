@@ -27,9 +27,13 @@ public class a extends Object implements Runnable {
 
     public static void main(String[] args) {
         System.out.println("Hello World!");
-        second sec=new second();
-        int var=sec.second_field;
-        //System::out->println();
+        second sec = new second();
+        int var = sec.second_field;
+        String str = second.second_static;
+        String norm = sec.second_normal;
+        sec.second_normal_method();
+        second.second_st_method();
+        sec.second_st_method();
     }
 
     String[] asd(int i, String[][] s) {
@@ -45,8 +49,20 @@ public class a extends Object implements Runnable {
 
     }
 
+    public boolean is() {
+        return this instanceof second;
+    }
+
 }
 
 class second {
     int second_field = 55555;
+    static String second_static = null;
+    String second_normal = null;
+
+    static void second_st_method() {
+    }
+
+    void second_normal_method() {
+    }
 }
