@@ -259,9 +259,10 @@ public class Converter {
             header.addIncludeStar("java/lang");//by default as in java compilers
             header.addIncludeStar(getPath(cu));//visible to current package
             //header.useNamespace("java::lang");//by default
-            MainVisitor visitor = new MainVisitor(this, header);
 
+            MainVisitor visitor = new MainVisitor(this, header);
             cu.accept(visitor);
+            //cu.types().forEach(type -> visitor.visit(type));
 
             String header_str = header.toString();
             String source_str = cpp.toString();

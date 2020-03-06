@@ -70,10 +70,20 @@ public class TypeVisitor extends GenericVisitor<CType, Writer> {
         return new CType(typeParameter.getName().getIdentifier());
     }
 
+    public CType visit(ParameterizedType type, Writer w) {
+        return null;
+    }
+
     //resolve type in a method,method type,param type,local type
     public CType visitType(Type type, CMethod method) {
         if (type.isArrayType()) {
             return visit((ArrayType) type, null).copy();
+        }
+        if (type.isParameterizedType()) {
+            return visit((ParameterizedType) type, null);
+        }
+        if (type.isSimpleType()){
+
         }
         if (!type.isClassOrInterfaceType()) {
             return type.accept(this, null);
