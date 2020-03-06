@@ -16,7 +16,7 @@ public class CMethod extends ModifierNode {
     public boolean isOverride = false;//is necessary in c++?
     public CClass parent;
     public Call call;
-    public Writer body = new Writer();
+    public Writer bodyWriter = new Writer();
 
     public CClass getParent() {
         return parent;
@@ -57,7 +57,7 @@ public class CMethod extends ModifierNode {
                 append(":");
                 append(call.str);
             }
-            append(body);
+            append(bodyWriter);
             println();
         }
 

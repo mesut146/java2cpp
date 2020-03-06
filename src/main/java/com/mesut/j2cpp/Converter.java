@@ -1,22 +1,14 @@
 package com.mesut.j2cpp;
 
-import com.github.javaparser.JavaParser;
-import com.github.javaparser.ParseProblemException;
-import com.github.javaparser.ParseResult;
-import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.TypeDeclaration;
-import com.github.javaparser.resolution.SymbolResolver;
-import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
+
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.visitor.MainVisitor;
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -28,7 +20,7 @@ public class Converter {
 
     SymbolTable table;
     Resolver resolver;
-    JavaParser javaParser;
+    //JavaParser javaParser;
     String srcDir;//source folder
     String destDir;//destinaytion folder for c++ files
     String sysPath;//openjdk sources
@@ -41,10 +33,11 @@ public class Converter {
     //look fist this while resolving
     List<PackageNode> packageHierarchy = new ArrayList<>();
     public List<String> classpath = new ArrayList<>();
-    public SymbolResolver symbolResolver;
+    //public SymbolResolver symbolResolver;
     public CMakeWriter cMakeWriter;
     public CMakeWriter.Target target;
     public boolean debug_output = false;
+    ASTParser parser;
 
     public Converter(String srcDir, String destDir) throws IOException {
         this.srcDir = srcDir;
@@ -86,10 +79,31 @@ public class Converter {
         classpath.add(dir);
     }
 
+    public void initParser() {
+        parser = ASTParser.newParser(AST.JLS13);
+        List<String> cpDirs = new ArrayList<>();
+        List<String> cpJars = new ArrayList<>();
+
+        for (String path : classpath) {
+            if (path.endsWith(".jar")) {
+                cpJars.add(path);
+            }
+            else {
+                cpDirs.add(path);
+            }
+        }
+        parser.setEnvironment(cpJars.toArray(new String[0]), cpDirs.toArray(new String[0]), null, false);
+
+
+        parser.setResolveBindings(true);
+        parser.setBindingsRecovery(true);
+        parser.setStatementsRecovery(true);
+    }
+
     public void convert() {
         try {
             convertDir(new File(srcDir), "");
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -109,19 +123,23 @@ public class Converter {
         System.out.println("conversion done");
     }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
-    void convertDir(File dir, String str) throws FileNotFoundException {
+    void convertDir(File dir, String str) throws IOException {
         for (File file : Objects.requireNonNull(dir.listFiles())) {
             if (file.isDirectory()) {
                 convertDir(file, str);
-            } else if (file.getName().endsWith(".java")) {
-                CompilationUnit cu = javaParser.parse(file).getResult().get();
-                convertSingle(Util.relative(file.getAbsolutePath(), srcDir), cu);
+            }
+            else if (file.getName().endsWith(".java")) {
+                parser.setSource(Util.read(file).toCharArray());
+                parser.setUnitName(file.getPath());
+                CompilationUnit unit = (CompilationUnit) parser.createAST(null);
+
+                //CompilationUnit cu = javaParser.parse(file).getResult().get();
+                convertSingle(Util.relative(file.getAbsolutePath(), srcDir), unit);
             }
         }
     }
 
-    void initSolver() throws IOException {
+    /*void initSolver() throws IOException {
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         JavaParserTypeSolver dirSolver = new JavaParserTypeSolver(srcDir);
 
@@ -137,10 +155,10 @@ public class Converter {
         }
         symbolResolver = new JavaSymbolSolver(combinedTypeSolver);
         javaParser = new JavaParser(new ParserConfiguration().setSymbolResolver(symbolResolver));
-    }
+    }*/
 
-    //
-    public void makeTable() throws IOException {
+
+    /*public void makeTable() throws IOException {
         table = new SymbolTable();
         resolver = new Resolver(table);
         File dir = new File(srcDir);
@@ -148,17 +166,17 @@ public class Converter {
 
         tableDir(dir, null);
         System.out.println("total " + units.size() + " classes");
-        /*for (PackageNode node : packageHierarchy) {
+        for (PackageNode node : packageHierarchy) {
             System.out.println(node);
-        }*/
+        }
         /*for (Symbol s:table.list) {
             System.out.println(s.name+" , "+s.pkg);
-        }*/
-    }
+        }
+    }*/
 
     //walk in source directory,parse all files and add classes to symbol table
     //useful for converting directory
-    void tableDir(File dir, PackageNode node) {
+    /*void tableDir(File dir, PackageNode node) {
         System.out.println("entering dir=" + dir);
 
         for (File file : dir.listFiles()) {
@@ -177,17 +195,20 @@ public class Converter {
                         e.printStackTrace();
                     }
                 }
-            } else {//dir
-                /*PackageNode sub;
+            }
+            else {
+            //dir
+                PackageNode sub;
                 if (node == null) {
                     sub = new PackageNode(file.getName());
                     packageHierarchy.add(sub);
                 } else {
                     sub = node.addSub(file.getName());
-                }*/
+                }
                 if (includeDirs.isEmpty()) {
                     tableDir(file, null);
-                } else {
+                }
+                else {
                     for (PackageName packageName : includeDirs) {
                         if (packageName.isSub(file.getAbsolutePath().substring(srcDir.length() + 1))) {
                             tableDir(file, null);
@@ -196,13 +217,14 @@ public class Converter {
                 }
             }
         }
-    }
+    }*/
 
     //add class unit as symbol to table
-    void tableClass(TypeDeclaration<?> type, CompilationUnit cu) {
+    /*void tableClass(TypeDeclaration<?> type, CompilationUnit cu) {
         if (cu.getPackageDeclaration().isPresent()) {
             table.addSymbol(cu.getPackageDeclaration().get().getNameAsString(), type.getNameAsString());
-        } else {
+        }
+        else {
             table.addSymbol("", type.getNameAsString());//no package
         }
         type.getMembers().forEach(m -> {
@@ -210,17 +232,20 @@ public class Converter {
                 tableClass(m.asClassOrInterfaceDeclaration(), cu);
             }
         });
-        /*type.getMembers()//java8
+        type.getMembers()//java8
                 .stream()
                 .filter(BodyDeclaration::isClassOrInterfaceDeclaration)
-                .forEach(m -> tableClass(m.asClassOrInterfaceDeclaration(), cu));*/
-    }
+                .forEach(m -> tableClass(m.asClassOrInterfaceDeclaration(), cu));
+    }*/
 
     String getPath(CompilationUnit cu) {
-        if (cu.getPackageDeclaration().isPresent()) {
+        if (cu.getPackage() != null) {
+            return cu.getPackage().getName().getFullyQualifiedName().replace(".", "/");
+        }
+        /*if (cu.getPackageDeclaration().isPresent()) {
             String pkg = cu.getPackageDeclaration().get().getNameAsString();
             return pkg.replace(".", "/");
-        }
+        }*/
         return "";
     }
 
@@ -236,7 +261,7 @@ public class Converter {
             //header.useNamespace("java::lang");//by default
             MainVisitor visitor = new MainVisitor(this, header);
 
-            cu.accept(visitor, null);
+            cu.accept(visitor);
 
             String header_str = header.toString();
             String source_str = cpp.toString();
@@ -259,19 +284,18 @@ public class Converter {
         }
     }
 
-    public void convertSingle(String cls) throws FileNotFoundException {
+    public void convertSingle(String cls) throws IOException {
         File file = new File(srcDir, cls);
-        ParseResult<?> result = javaParser.parse(file);
-        if (result.isSuccessful()) {
-            CompilationUnit unit = (CompilationUnit) result.getResult().get();
-            /*for (TypeDeclaration<?> typeDeclaration : unit.getTypes()) {
-                tableClass(typeDeclaration, unit);
-            }*/
-            convertSingle(cls, unit);
-        } else {
-            throw new ParseProblemException(result.getProblems());
-        }
+        CompilationUnit unit = parse(file);
+        convertSingle(cls, unit);
 
+
+    }
+
+    CompilationUnit parse(File file) throws IOException {
+        parser.setSource(Util.read(file).toCharArray());
+        parser.setUnitName(file.getPath());
+        return (CompilationUnit) parser.createAST(null);
     }
 
 }

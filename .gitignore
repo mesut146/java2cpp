@@ -4,4 +4,4 @@ out/
 target/*
 !target/*.jar
 .idea/
-/asd/test/cpp/base/
+/asd/test/cpp/

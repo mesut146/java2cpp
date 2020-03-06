@@ -1,25 +1,18 @@
 package com.mesut.j2cpp.visitor;
 
-import com.github.javaparser.ast.ArrayCreationLevel;
-import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.VariableDeclarator;
-import com.github.javaparser.ast.expr.*;
-import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
-import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class ExprVisitor extends GenericVisitorAdapter<Object, Writer> {
+public class ExprVisitor extends GenericVisitor<Object, Writer> {
 
     public CMethod method;
     public CClass clazz;
@@ -64,7 +57,8 @@ public class ExprVisitor extends GenericVisitorAdapter<Object, Writer> {
         return null;
     }
 
-    public Object visit(MethodCallExpr n, Writer w) {
+    @Override
+    public Object visit(MethodInvocation n, Writer w) {
         if (n.getScope().isPresent()) {
             Expression scope = n.getScope().get();
             scope.accept(this, w);

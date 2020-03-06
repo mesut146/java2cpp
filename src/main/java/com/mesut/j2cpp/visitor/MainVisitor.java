@@ -1,18 +1,14 @@
 package com.mesut.j2cpp.visitor;
 
-import com.github.javaparser.ast.ImportDeclaration;
-import com.github.javaparser.ast.PackageDeclaration;
-import com.github.javaparser.ast.body.*;
-import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.mesut.j2cpp.Converter;
-import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.*;
+import org.eclipse.jdt.core.dom.*;
 
 import java.util.Stack;
 
 //visitor for single compilation unit
 //fields,method decl,class decl
-public class MainVisitor extends VoidVisitorAdapter<Writer> {
+public class MainVisitor extends ASTVisitor {
 
     public CHeader header;
     //public MethodVisitor methodVisitor;
@@ -34,14 +30,17 @@ public class MainVisitor extends VoidVisitorAdapter<Writer> {
         return stack.peek();
     }
 
-    public void visit(PackageDeclaration n, Writer arg) {
+    public boolean visit(PackageDeclaration n) {
         Namespace ns = new Namespace();
-        ns.pkg(n.getNameAsString());
+        ns.pkg(n.getName().getFullyQualifiedName());
         header.ns = ns;
+        return true;
     }
 
-    public void visit(ImportDeclaration n, Writer w) {
-        String imp = n.getNameAsString();
+
+    public boolean visit(ImportDeclaration n) {
+        String imp = n.getName().getFullyQualifiedName();
+
         imp = imp.replace(".", "/");
         if (n.isStatic()) {
             //base.cls.var;
@@ -51,58 +50,66 @@ public class MainVisitor extends VoidVisitorAdapter<Writer> {
             }
             header.includes.add(imp);
         }
-        if (n.isAsterisk()) {
+        if (n.isOnDemand()) {
             //TODO
             //resolve seperately
             header.importStar.add(imp);
-        } else {
+        }
+        else {
             header.includes.add(imp);
         }
-
+        return true;
     }
 
 
-    public void visit(ClassOrInterfaceDeclaration n, Writer s) {
+    public boolean visit(TypeDeclaration n) {
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
-        } else {
+        }
+        else {
             last().addInner(cc);
         }
         stack.push(cc);
 
         exprVisitor.clazz = cc;
-        cc.name = n.getNameAsString();
+        cc.name = n.getName().getFullyQualifiedName();
         cc.isInterface = n.isInterface();
-        n.getTypeParameters().forEach(type -> cc.template.add(new CType(type.getNameAsString(), true)));
-        n.getExtendedTypes().forEach(base -> {
-            CType baseType = typeVisitor.visitType(base, cc);
-            baseType.isTemplate = false;
-            baseType.isPointer = false;
-            cc.base.add(baseType);
-        });
-        n.getImplementedTypes().forEach(iface -> {
-            CType ifType = typeVisitor.visitType(iface, cc);
+
+
+        n.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true)));
+
+        CType baseType = typeVisitor.visitType(n.getSuperclassType(), cc);
+        baseType.isTemplate = false;
+        baseType.isPointer = false;
+        cc.base.add(baseType);
+
+        n.superInterfaceTypes().forEach(iface -> {
+            /*CType ifType = typeVisitor.visitType(iface, cc);
             ifType.isTemplate = false;
             ifType.isPointer = false;
-            cc.base.add(ifType);
+            cc.base.add(ifType);*/
         });
-        n.getMembers().forEach(p -> p.accept(this, null));
+        for (TypeDeclaration member : n.getTypes()) {
+            member.accept(this);
+        }
         stack.pop();
+        return true;
     }
 
-    public void visit(EnumDeclaration n, Writer w) {
+    /*public boolean visit(EnumDeclaration n) {
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
-        } else {
+        }
+        else {
             last().addInner(cc);
         }
         stack.push(cc);
         exprVisitor.clazz = cc;
 
         cc.isEnum = true;
-        cc.name = n.getNameAsString();
+        cc.name = n.getName().getFullyQualifiedName();
         cc.base.add(new CType("java::lang::Enum"));
         header.addInclude("java/lang/Enum");
         n.getImplementedTypes().forEach(iface -> cc.base.add(iface.accept(typeVisitor, null)));
@@ -118,22 +125,24 @@ public class MainVisitor extends VoidVisitorAdapter<Writer> {
             rh.append("new ").append(cc.name);
 
             exprVisitor.args(constant.getArguments(), rh);
-            /*if(constant.getBody()!=null){
+            if(constant.getBody()!=null){
                 throw new RuntimeException("enum body");
-            }*/
+            }
             cf.right = rh.toString();
         }
         if (!n.getMembers().isEmpty()) {
             n.getMembers().forEach(p -> p.accept(this, null));
         }
         stack.pop();
-    }
+    }*/
 
-    public void visit(FieldDeclaration n, Writer s) {
+    public boolean visit(FieldDeclaration n) {
+        n.fragments().forEach(frag -> System.out.println("field=" + frag));
+        /*
         for (VariableDeclarator vd : n.getVariables()) {
             CField cf = new CField();
             last().addField(cf);
-            cf.type = typeVisitor.visitType(vd.getType(), last());
+            cf.type = typeVisitor.visitType(n.getType(), last());
             //cf.type.arrayLevel=vd.getType().getArrayLevel();
             cf.name = vd.getNameAsString();
             cf.setStatic(n.isStatic());
@@ -144,36 +153,47 @@ public class MainVisitor extends VoidVisitorAdapter<Writer> {
                 vd.getInitializer().get().accept(exprVisitor, nw);
                 cf.right = nw.toString();
             }
-        }
+        }*/
+        return true;
     }
 
-    public void visit(MethodDeclaration n, Writer w) {
+    public boolean visit(MethodDeclaration n) {
         CMethod method = new CMethod();
         last().addMethod(method);
 
-        n.getTypeParameters().forEach(temp -> method.template.add(new CType(temp.getNameAsString())));
+        n.typeParameters().forEach(temp -> method.template.add(new CType(temp.toString())));
+        //n.getTypeParameters().forEach(temp -> method.template.add(new CType(temp.getNameAsString())));
         //type could be template
-        method.type = typeVisitor.visitType(n.getType(), method);
-        method.name = n.getName().asString();
-        method.setStatic(n.isStatic());
-        method.setPublic(n.isPublic());
-        method.setNative(n.isNative());
+        if (!n.isConstructor()) {
+            method.type = typeVisitor.visitType(n.getReturnType2(), method);
+        }
 
-        for (Parameter parameter : n.getParameters()) {
-            CParameter cp = new CParameter();
+        method.name = n.getName().getFullyQualifiedName();
+
+        method.setStatic(Modifier.isStatic(n.getModifiers()));
+        method.setPublic(Modifier.isPublic(n.getModifiers()));
+        method.setNative(Modifier.isNative(n.getModifiers()));
+
+
+        for (Object obj : n.parameters()) {
+            /*CParameter cp = new CParameter();
             cp.type = typeVisitor.visitType(parameter.getType(), method);
             cp.type.isTemplate = false;
             cp.name = parameter.getNameAsString();
-            method.params.add(cp);
+            method.params.add(cp);*/
         }
-        if (n.getBody().isPresent()) {
-            method.body.init();
+
+        if (n.getBody() != null) {
+            method.bodyWriter.init();
             statementVisitor.setMethod(method);
-            n.getBody().get().accept(statementVisitor, method.body);
+            statementVisitor.visit(n.getBody(), method.bodyWriter);
+            //n.getBody().accept(statementVisitor, method.body);
         }
+
+        return true;
     }
 
-    public void visit(ConstructorDeclaration n, Writer w) {
+    /*public void visit(ConstructorDeclaration n, Writer w) {
         CMethod method = new CMethod();
         last().addMethod(method);
         method.isCons = true;
@@ -191,13 +211,13 @@ public class MainVisitor extends VoidVisitorAdapter<Writer> {
             cp.name = parameter.getNameAsString();
             method.params.add(cp);
         }
-        method.body.init();
+        method.bodyWriter.init();
         statementVisitor.setMethod(method);
-        n.getBody().accept(statementVisitor, method.body);
-    }
+        n.getBody().accept(statementVisitor, method.bodyWriter);
+    }*/
 
     //static block
-    @Override
+    /*@Override
     public void visit(InitializerDeclaration n, Writer w) {
         if (n.isStatic()) {
             header.includePath("static_block.hpp");
@@ -206,5 +226,5 @@ public class MainVisitor extends VoidVisitorAdapter<Writer> {
             w.append("static_block");
             n.getBody().accept(statementVisitor, w);
         }
-    }
+    }*/
 }

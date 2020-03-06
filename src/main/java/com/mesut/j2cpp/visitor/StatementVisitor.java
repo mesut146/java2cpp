@@ -1,20 +1,17 @@
 package com.mesut.j2cpp.visitor;
 
-import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.SimpleName;
-import com.github.javaparser.ast.stmt.*;
-import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.ast.Call;
+import org.eclipse.jdt.core.dom.*;
 
 import java.util.Iterator;
 
 //visit statements (ones end with ;)
-public class StatementVisitor extends GenericVisitorAdapter<Object, Writer> {
+public class StatementVisitor extends GenericVisitor<Object, Writer> {
 
     public CMethod method;
     public CHeader header;
@@ -39,12 +36,15 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Writer> {
         return new CType(n.getIdentifier());
     }
 
-    public Object visit(BlockStmt n, Writer w) {
+    @Override
+    public Object visit(Block n, Writer w) {
         w.firstBlock = true;
         w.appendln("{");
         w.up();
-        for (Statement st : n.getStatements()) {
-            st.accept(this, w);
+
+        for (Object obj : n.statements()) {
+            Statement statement = (Statement) obj;
+            visit(statement, w);
             w.println();
         }
         w.down();
@@ -52,58 +52,73 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Writer> {
         return null;
     }
 
-    public Object visit(ExpressionStmt n, Writer w) {
-        n.getExpression().accept(exprVisitor, w);
+    @Override
+    public Object visit(ExpressionStatement n, Writer w) {
+        exprVisitor.visit(n.getExpression(), w);
         w.append(";");
         return null;
     }
 
-    public Object visit(IfStmt n, Writer w) {
+    @Override
+    public Object visit(IfStatement n, Writer w) {
         w.append("if(");
-        n.getCondition().accept(exprVisitor, w);
+        exprVisitor.visit(n.getExpression(), w);//condition
         w.append(")");
-        block(w, n.getThenStmt());
-        if (n.getElseStmt().isPresent()) {
+        block(w, n.getThenStatement());
+        if (n.getElseStatement() != null) {
             w.append("else");
-            block(w, n.getElseStmt().get());
+            block(w, n.getElseStatement());
         }
         return null;
     }
 
+    //handles indention for statements
     void block(Writer w, Statement statement) {
-        if (statement.isBlockStmt()) {
-            statement.accept(this, w);
-        } else {
+        if (statement instanceof Block) {
+            visit(statement, w);
+        }
+        else {
             w.println();
             w.up();
-            statement.accept(this, w);
+            visit(statement, w);
             w.down();
         }
     }
 
-    public Object visit(WhileStmt n, Writer w) {
+    @Override
+    public Object visit(WhileStatement n, Writer w) {
         w.append("while(");
-        n.getCondition().accept(exprVisitor, w);
+        exprVisitor.visit(n.getExpression(), w);
         w.append(") ");
         block(w, n.getBody());
         return null;
     }
 
-    public Object visit(ForStmt n, Writer w) {
+    @Override
+    public Object visit(ForStatement n, Writer w) {
         w.append("for(");
-        for (Iterator<Expression> iterator = n.getInitialization().iterator(); iterator.hasNext(); ) {
-            iterator.next().accept(exprVisitor, w);
+
+        for (Iterator<Object> iterator = n.initializers().iterator(); iterator.hasNext(); ) {
+            Object obj = iterator.next();
+            if (obj instanceof VariableDeclarationExpression) {
+                exprVisitor.visit((VariableDeclarationExpression) obj, w);
+            }
+
             if (iterator.hasNext()) {
                 w.append(",");
             }
         }
         w.append(";");
-        if (n.getCompare().isPresent()) {
-            n.getCompare().get().accept(exprVisitor, w);
+        if (n.getExpression() != null) {
+            exprVisitor.visit(n.getExpression(), w);
         }
         w.append(";");
-        for (Iterator<Expression> iterator = n.getUpdate().iterator(); iterator.hasNext(); ) {
-            iterator.next().accept(exprVisitor, w);
+        for (Iterator<Object> iterator = n.updaters().iterator(); iterator.hasNext(); ) {
+            Object obj = iterator.hasNext();
+            if (obj instanceof Expression) {
+                exprVisitor.visit((Expression) obj, w);
+            }
+
             if (iterator.hasNext()) {
                 w.append(",");
             }
@@ -113,7 +128,7 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Writer> {
         return null;
     }
 
-    public Object visit(ForEachStmt n, Writer w) {
+    /*public Object visit(ForEach n, Writer w) {
         w.append("for(");
         n.getVariable().accept(exprVisitor, w);
         w.append(":");
@@ -121,46 +136,53 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Writer> {
         w.append(")");
         block(w, n.getBody());
         return null;
-    }
+    }*/
 
-    public Object visit(ReturnStmt n, Writer w) {
+    @Override
+    public Object visit(ReturnStatement n, Writer w) {
         w.append("return");
-        if (n.getExpression().isPresent()) {
+        if (n.getExpression() != null) {
             w.append(" ");
-            n.getExpression().get().accept(exprVisitor, w);
+            exprVisitor.visit(n.getExpression(), w);
         }
         w.append(";");
         return null;
     }
 
-    public Object visit(TryStmt n, Writer w) {
+    @Override
+    public Object visit(TryStatement n, Writer w) {
         TryHelper helper = new TryHelper(exprVisitor, this);
-        if (n.getFinallyBlock().isPresent()) {
+
+        if (n.getFinally()!=null) {
             header.addRuntime();
             helper.with_finally(n, w);
-        } else {
+        }
+        else {
             //no finnaly stmt just print it directly
             helper.no_finally(n, w);
         }
         return null;
     }
 
-    public Object visit(ThrowStmt n, Writer w) {
+    @Override
+    public Object visit(ThrowStatement n, Writer w) {
         w.append("throw ");
-        n.getExpression().accept(exprVisitor, w);
+        exprVisitor.visit(n.getExpression(),w);
         return null;
     }
-
+    /*
     public Object visit(ExplicitConstructorInvocationStmt n, Writer w) {
         Writer p = new Writer();
         Call c = new Call();
         c.isThis = n.isThis();
         if (n.isThis()) {
             p.line(method.getName());
-        } else {
+        }
+        else {
             if (n.getExpression().isPresent()) {
                 return null;
-            } else {
+            }
+            else {
                 p.line(method.getParent().base.get(0).type);
             }
         }
@@ -168,5 +190,5 @@ public class StatementVisitor extends GenericVisitorAdapter<Object, Writer> {
         c.str = p.toString();
         method.call = c;
         return null;
-    }
+    }*/
 }

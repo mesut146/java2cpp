@@ -1,8 +1,5 @@
 package com.mesut.j2cpp.visitor;
 
-import com.github.javaparser.ast.type.*;
-import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
-import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.Helper;
 import com.mesut.j2cpp.Writer;
@@ -10,9 +7,10 @@ import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
+import org.eclipse.jdt.core.dom.*;
 
 //visit types and ensures type is included
-public class TypeVisitor extends GenericVisitorAdapter<CType, Writer> {
+public class TypeVisitor extends GenericVisitor<CType, Writer> {
 
     Converter converter;
     CHeader header;
@@ -23,20 +21,20 @@ public class TypeVisitor extends GenericVisitorAdapter<CType, Writer> {
     }
 
     public CType visit(PrimitiveType n, Writer w) {
-        return new CType(Helper.toCType(n.asString()));
+        return new CType(Helper.toCType(n.toString()));
     }
 
     public CType visit(ArrayType n, Writer w) {
-        CType type = n.getElementType().accept(this, w).copy();
-        type.arrayLevel = n.getArrayLevel();
+        CType type = visit(n.getElementType(), w).copy();
+        type.arrayLevel = n.getDimensions();
         return type;
     }
 
-    public CType visit(VoidType n, Writer w) {
+    /*public CType visit(Void n, Writer w) {
         return new CType("void");
-    }
+    }*/
 
-    public CType visit(ClassOrInterfaceType n, Writer w) {
+    /*public CType visit(ClassOrInterfaceType n, Writer w) {
         //if no classpath,include it directly
         String q;
         CType type;
@@ -51,35 +49,31 @@ public class TypeVisitor extends GenericVisitorAdapter<CType, Writer> {
             n.getTypeArguments().ifPresent(list -> list.forEach(tp -> type.typeNames.add(new CType(tp.toString(), true))));
         }
 
-        header.addInclude(q.replace(".", "/"));
+        header.addInclude(q.replace(".", "/"));//inner classes too?
         return type;
-    }
+    }*/
 
     //multi catch type
-    public CType visit(UnionType n, Writer w) {
-        CType type = n.getElements().get(0).accept(this, null);
+    /*public CType visit(UnionType n, Writer w) {
+        CType type = visit(n.types().get(0),w);
         System.out.println("union type detected and chosen the first");
         return type;
-    }
+    }*/
 
-    @Override
     public CType visit(WildcardType n, Writer arg) {
         //<?>
         return new CType("java::lang::Object");
     }
 
-    @Override
+
     public CType visit(TypeParameter typeParameter, Writer w) {
-        return new CType(typeParameter.asString());
+        return new CType(typeParameter.getName().getIdentifier());
     }
 
     //resolve type in a method,method type,param type,local type
     public CType visitType(Type type, CMethod method) {
         if (type.isArrayType()) {
-            CType cType = visitType(type.getElementType(), method).copy();
-            cType.arrayLevel = type.getArrayLevel();
-            //cType.pointer=true;
-            return cType;
+            return visit((ArrayType) type, null).copy();
         }
         if (!type.isClassOrInterfaceType()) {
             return type.accept(this, null);
@@ -104,15 +98,13 @@ public class TypeVisitor extends GenericVisitorAdapter<CType, Writer> {
     //fields,methods,base class types,todo inner cls
     public CType visitType(Type type, CClass cc) {
         if (type.isArrayType()) {//array type
-            CType cType = visitType(type.getElementType(), cc).copy();
-            cType.arrayLevel = type.getArrayLevel();
-            return cType;
+            return visit((ArrayType) type, null).copy();
         }
         if (!type.isClassOrInterfaceType()) {//void or primitive
             return type.accept(this, null);
         }
         for (CType ct : cc.getTemplate().getList()) {//class temptated type
-            if (ct.getName().equals(type.asString())) {
+            if (ct.getName().equals(type.toString())) {
                 return ct.copy();
             }
         }

@@ -40,13 +40,14 @@ public class Main {
                 srcPath = "/storage/extSdCard/asd/dx/dex/src";
                 destPath = "/storage/emulated/0/AppProjects/java2cpp/asd/test/cpp";
                 //cls = "test.java";
-            } else {
+            }
+            else {
                 rt = "/home/mesut/Desktop/rt7.jar";
                 //srcPath = "/home/mesut/Desktop/dx-org";
                 //destPath = "/home/mesut/Desktop/dx-cpp";
                 srcPath = "/home/mesut/Desktop/src7";
                 destPath = "/home/mesut/Desktop/src7-cpp";
-                cls="org/jcp/xml/dsig/internal/dom/Utils.java";
+                cls = "org/jcp/xml/dsig/internal/dom/Utils.java";
                 /*srcPath = "/home/mesut/IdeaProjects/java2cpp/asd/test/java";
                 destPath = "/home/mesut/IdeaProjects/java2cpp/asd/test/cpp";*/
                 //cls = "base/a.java";
@@ -55,7 +56,8 @@ public class Main {
                 //cls = "base/TryTest.java";
             }
             converter = new Converter(srcPath, destPath);
-            //converter.addClasspath(rt);
+            converter.addClasspath(rt);
+            converter.addClasspath(srcPath);
             //converter.addClasspath("/home/mesut/Desktop/src7");
             //converter.addIncludeDir("java/lang");
             //converter.addInclude("java/util");
@@ -68,7 +70,8 @@ public class Main {
                 yaml(srcPath, destPath, cls);
                 return;
             }
-            converter.initSolver();
+            converter.initParser();
+            //converter.initSolver();
             //converter.makeTable();
             converter.convertSingle(cls);
             converter.convert();
