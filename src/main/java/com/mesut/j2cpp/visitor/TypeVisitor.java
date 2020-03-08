@@ -10,24 +10,35 @@ import com.mesut.j2cpp.ast.CType;
 import org.eclipse.jdt.core.dom.*;
 
 //visit types and ensures type is included
-public class TypeVisitor extends GenericVisitor<CType, Writer> {
+public class TypeVisitor extends ASTVisitor {
 
     Converter converter;
     CHeader header;
+    CType type;
 
     public TypeVisitor(Converter converter, CHeader header) {
         this.converter = converter;
         this.header = header;
     }
 
-    public CType visit(PrimitiveType n, Writer w) {
-        return new CType(Helper.toCType(n.toString()));
+    public boolean visit(PrimitiveType n) {
+        type = new CType(Helper.toCType(n.toString()));
+        return false;
     }
 
-    public CType visit(ArrayType n, Writer w) {
-        CType type = visit(n.getElementType(), w).copy();
-        type.arrayLevel = n.getDimensions();
-        return type;
+    @Override
+    public boolean visit(SimpleType node) {
+        //System.out.println("simple.type=" + node);
+        type = new CType(node.getName().toString());
+        return false;
+    }
+
+    public boolean visit(ArrayType n) {
+        n.getElementType().accept(this);
+        //System.out.println("arr.type=" + n.getElementType().getClass());
+        type = type.copy();
+        type.dimensions = n.getDimensions();
+        return false;
     }
 
     /*public CType visit(Void n, Writer w) {
@@ -66,23 +77,26 @@ public class TypeVisitor extends GenericVisitor<CType, Writer> {
     }
 
 
-    public CType visit(TypeParameter typeParameter, Writer w) {
+   /*public CType visit(TypeParameter typeParameter, Writer w) {
         return new CType(typeParameter.getName().getIdentifier());
-    }
+    }*/
 
-    public CType visit(ParameterizedType type, Writer w) {
-        return null;
+    public boolean visit(ParameterizedType type) {
+        type.getType().accept(this);
+        /*for (Type param : (List<Type>) type.typeArguments()) {
+
+        }*/
+        return false;
     }
 
     //resolve type in a method,method type,param type,local type
     public CType visitType(Type type, CMethod method) {
-        if (type.isArrayType()) {
-            return visit((ArrayType) type, null).copy();
+        //System.out.println("m.type=" + type);
+        if (type.isArrayType() || type.isParameterizedType()) {
+            type.accept(this);
+            return this.type.copy();
         }
-        if (type.isParameterizedType()) {
-            return visit((ParameterizedType) type, null);
-        }
-        if (type.isSimpleType()){
+        /*if (type.isSimpleType()) {
 
         }
         if (!type.isClassOrInterfaceType()) {
@@ -102,12 +116,14 @@ public class TypeVisitor extends GenericVisitor<CType, Writer> {
             }
         }
         //it has to be declared type
-        return visit(ctype, null);
+        return visit(ctype, null);*/
+        return this.type;
     }
 
     //fields,methods,base class types,todo inner cls
     public CType visitType(Type type, CClass cc) {
-        if (type.isArrayType()) {//array type
+        type.accept(this);
+        /*if (type.isArrayType()) {//array type
             return visit((ArrayType) type, null).copy();
         }
         if (!type.isClassOrInterfaceType()) {//void or primitive
@@ -118,6 +134,7 @@ public class TypeVisitor extends GenericVisitor<CType, Writer> {
                 return ct.copy();
             }
         }
-        return visit(type.asClassOrInterfaceType(), null);
+        return visit(type.asClassOrInterfaceType(), null);*/
+        return this.type;
     }
 }

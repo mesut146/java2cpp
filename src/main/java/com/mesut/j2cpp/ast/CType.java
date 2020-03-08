@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 
 public class CType {
     public Namespace ns;
-    public String type;//e.g String,Object
-    public int arrayLevel = 0;
+    public String type;
+    public int dimensions = 0;//array dims
     public List<CType> typeNames = new ArrayList<>();//generics
     public CType scope = null;//parent type
     public boolean isTemplate = false;//<T>
@@ -53,7 +53,7 @@ public class CType {
     }
 
     public boolean isArray() {
-        return arrayLevel > 0;
+        return dimensions > 0;
     }
 
     public boolean isPrim() {
@@ -76,7 +76,7 @@ public class CType {
     @Override
     public String toString() {
         if (isArray()) {
-            return strLevel(arrayLevel);
+            return strLevel(dimensions);
         }
         if (typeNames.size() > 0) {
             StringBuilder sb = new StringBuilder();
@@ -92,7 +92,8 @@ public class CType {
     String strLevel(int level) {
         if (level == 0) {
             return full();
-        } else if (level == 1) {
+        }
+        else if (level == 1) {
             return "array_single<" + strLevel(level - 1) + ">";
         }
         return "array_multi<" + strLevel(level - 1) + ">";

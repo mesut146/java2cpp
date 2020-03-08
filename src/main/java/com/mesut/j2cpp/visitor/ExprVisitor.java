@@ -9,17 +9,16 @@ import com.mesut.j2cpp.ast.CType;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.Iterator;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.List;
 
-public class ExprVisitor extends GenericVisitor<Object, Writer> {
+public class ExprVisitor extends ASTVisitor {
 
     public CMethod method;
     public CClass clazz;
     public CHeader header;
     public Converter converter;
     TypeVisitor typeVisitor;
-    boolean hasReturn = false, hasThrow = false, hasBreak = false;
+    Writer w;
 
     public ExprVisitor(Converter converter, CHeader header, TypeVisitor typeVisitor) {
         this.converter = converter;
@@ -29,16 +28,17 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
 
     public void setMethod(CMethod method) {
         this.method = method;
+        this.w = method.bodyWriter;
     }
 
-    public Object visit(SimpleName n, Writer w) {
+    /*public boolean visit(SimpleName n) {
         return new CType(n.getIdentifier());
-    }
+    }*/
 
-    public void args(NodeList<Expression> expressions, Writer w) {
+    public void args(List<Expression> expressions, Writer w) {
         w.append("(");
         for (int i = 0; i < expressions.size(); i++) {
-            expressions.get(i).accept(this, w);
+            expressions.get(i).accept(this);
             if (i < expressions.size() - 1) {
                 w.append(",");
             }
@@ -46,106 +46,112 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         w.append(")");
     }
 
-    public Object visit(InstanceofExpression n, Writer w) {
+    @Override
+    public boolean visit(InstanceofExpression n) {
         header.addRuntime();
         w.append("instance_of<");
-        CType type = typeVisitor.visitType(n.getType(), method);
+        CType type = typeVisitor.visitType(n.getRightOperand(), method);
         w.append(type);
         w.append(">(");
-        n.getExpression().accept(this, w);
+        n.getLeftOperand().accept(this);
         w.append(")");
-        return null;
+        return false;
     }
 
     @Override
-    public Object visit(MethodInvocation n, Writer w) {
-        if (n.getScope().isPresent()) {
-            Expression scope = n.getScope().get();
-            scope.accept(this, w);
+    public boolean visit(MethodInvocation n) {
 
-            if (scope.isNameExpr()) {//field or class
-                String scopeName = scope.asNameExpr().getNameAsString();
+        if (n.getExpression() != null) {//scope
+            Expression scope = n.getExpression();
+            scope.accept(this);
+
+            if (scope instanceof Name) {//field or class
+                String scopeName = ((Name) scope).getFullyQualifiedName();
                 if (scopeName.equals("this")) {
                     w.append("->");
-                    w.append(n.getNameAsString());
-                    args(n.getArguments(), w);
-                    return null;
+                    w.append(n.getName().getFullyQualifiedName());
+                    args((List<Expression>) n.arguments(), w);
+                    return false;
                 }
-                ResolvedMethodDeclaration rt = converter.symbolResolver.resolveDeclaration(n, ResolvedMethodDeclaration.class);
-
-                if (rt.isStatic()) {
+                IMethodBinding binding = n.resolveMethodBinding();
+                /*if (rt.isStatic()) {
                     w.append("::");
-                } else {
-                    w.append("->");
                 }
-            } else {
+                else {
+                    w.append("->");
+                }*/
+            }
+            else {
                 //another method call or field access
                 w.append("->");
             }
         }
-        w.append(n.getNameAsString());
-        args(n.getArguments(), w);
-        return null;
+        w.append(n.getName().getIdentifier());
+        args(n.arguments(), w);
+        return false;
     }
 
-    public Object visit(FieldAccess n, Writer w) {
-        Expression scope = n.getScope();
-        scope.accept(this, w);
+    public boolean visit(FieldAccess n) {
+        Expression scope = n.getExpression();
+        scope.accept(this);
 
-        if (scope.isNameExpr()) {//field/var or class
-            String scopeName = scope.asNameExpr().getNameAsString();
+        if (scope instanceof Name) {//field/var or class
+            String scopeName = ((Name) scope).getFullyQualifiedName();
             if (scopeName.equals("this")) {
                 w.append("->");
-                w.append(n.getNameAsString());
-                return null;
+                w.append(n.getName().getIdentifier());
+                return false;
             }
-            ResolvedValueDeclaration value = n.resolve();
-            if (value.isEnumConstant()) {
+            IVariableBinding binding = n.resolveFieldBinding();
+
+            if (binding.isEnumConstant()) {
                 w.append("::");
-            } else {
-                //System.out.println("resolving " + n.toString());
-                ResolvedFieldDeclaration rt = converter.symbolResolver.resolveDeclaration(n, ResolvedFieldDeclaration.class);
-                if (rt.isStatic()) {
+            }
+            else {
+                if (Modifier.isStatic(binding.getModifiers())) {
                     w.append("::");
-                } else {
+                }
+                else {
                     w.append("->");
                 }
             }
 
-        } else {//another expr
+        }
+        else {//another expr
             w.append("->");
         }
-        w.append(n.getNameAsString());
-        return null;
+        w.append(n.getName().getIdentifier());
+        return false;
     }
 
     //array[index] -> (*array)[index]
-    @Override
-    public Object visit(ArrayAccess n, Writer w) {
+    public boolean visit(ArrayAccess n) {
         w.append("(*");
-        n.getName().accept(this, w);
+        n.getArray().accept(this);
         w.append(")[");
-        n.getIndex().accept(this, w);
+        n.getIndex().accept(this);
         w.append("]");
-        return null;
+        return false;
     }
 
-    public Object visit(Assignment n, Writer w) {
-        n.getTarget().accept(this, w);
+    @Override
+    public boolean visit(Assignment n) {
+        n.getLeftHandSide().accept(this);
         w.append(" ");
-        w.append(n.getOperator().asString());
+        w.append(n.getOperator().toString());
         w.append(" ");
-        n.getValue().accept(this, w);
-        return null;
+        n.getRightHandSide().accept(this);
+        return false;
     }
 
-    public Object visit(ThisExpression n, Writer w) {
+    @Override
+    public boolean visit(ThisExpression n) {
         w.append("this");
-        return null;
+        return false;
     }
 
     //new Base.Inner(args...){body}
-    public Object visit(ObjectCreationExpr n, Writer w) {
+    /*public Object visit(ObjectCreationExpr n, Writer w) {
         if (n.getScope().isPresent()) {
             n.getScope().get().accept(this, w);
             w.append("->");
@@ -155,7 +161,8 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         CType type;
         if (method == null) {
             type = typeVisitor.visitType(n.getType(), clazz);
-        } else {
+        }
+        else {
             type = typeVisitor.visitType(n.getType(), method);
         }
 
@@ -166,83 +173,85 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
             //TODO
         }
         return null;
-    }
+    }*/
 
     //Type name=value
-    public Object visit(VariableDeclarationExpression n, Writer w) {
-        boolean first = true;
-        for (VariableDeclarator vd : n.getVariables()) {
+    public boolean visit(VariableDeclarationExpression n) {
+        /*boolean first = true;
+        for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
             if (first) {
                 first = false;
-                CType type = typeVisitor.visitType(vd.getType(), method);
+                CType type = typeVisitor.visitType(frag.get, method);
                 type.isTemplate = false;
                 w.append(type);
                 w.append(" ");
-            } else {
+            }
+            else {
                 w.append(",");
             }
-            w.append(vd.getNameAsString());
-            if (vd.getInitializer().isPresent()) {
+            w.append(frag.getName().getIdentifier());
+            if (frag.getInitializer() != null) {
                 w.append(" = ");
-                vd.getInitializer().get().accept(this, w);
+                visit(frag.getInitializer(), w);
             }
-        }
-        return null;
+        }*/
+        return false;
     }
 
-    public Object visit(ConditionalExpression n, Writer w) {
-        n.getCondition().accept(this, w);
+    public boolean visit(ConditionalExpression n) {
+        n.getExpression().accept(this);
         w.append("?");
-        n.getThenExpr().accept(this, w);
+        n.getThenExpression().accept(this);
         w.append(":");
-        n.getElseExpr().accept(this, w);
-        return null;
+        n.getElseExpression().accept(this);
+        return false;
     }
 
-    public Object visit(BinaryExpression n, Writer w) {
+    /*public boolean visit(BinaryExpression n, Writer w) {
         n.getLeft().accept(this, w);
         w.append(" ");
         w.append(n.getOperator().asString());
         w.append(" ");
         n.getRight().accept(this, w);
-        return null;
+        return false;
     }
 
     public Object visit(UnaryExpression n, Writer w) {
         if (n.isPostfix()) {
             n.getExpression().accept(this, w);
             w.append(n.getOperator().asString());
-        } else {
+        }
+        else {
             w.append(n.getOperator().asString());
             n.getExpression().accept(this, w);
         }
         return null;
-    }
+    }*/
 
-    public Object visit(NullLiteral n, Writer w) {
+    public boolean visit(NullLiteral n) {
         w.append("nullptr");
-        return null;
+        return false;
     }
 
-    public Object visit(IntegerLiteral n, Writer w) {
-        w.append(n.getValue());
-        return null;
+    public boolean visit(NumberLiteral n) {
+        w.append(n.getToken());
+        return false;
     }
 
     @Override
-    public Object visit(CharLiteral n, Writer w) {
-        String str = n.getValue();
+    public boolean visit(CharacterLiteral n) {
+        String str = n.getEscapedValue();
         if (str.startsWith("\\u")) {
             w.append("u");
         }
         w.append("'");
         w.append(str);
         w.append("'");
-        return null;
+        return false;
     }
 
     @Override
-    public Object visit(CastExpression n, Writer w) {
+    public boolean visit(CastExpression n) {
         w.append("(");
         CType type = typeVisitor.visitType(n.getType(), method);
         w.append(type);
@@ -250,52 +259,44 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
             w.append("*");
         }*/
         w.append(")");
-        n.getExpression().accept(this, w);
-        return null;
+        n.getExpression().accept(this);
+        return false;
     }
 
     @Override
-    public Object visit(ParenthesizedExpression n, Writer w) {
+    public boolean visit(ParenthesizedExpression n) {
         w.append("(");
-        n.getInner().accept(this, w);
+        n.getExpression().accept(this);
         w.append(")");
-        return null;
+        return false;
     }
 
-    @Override
-    public Object visit(LongLiteral n, Writer w) {
-        String str = n.getValue();
-        if (str.endsWith("L")) {
-            str = str.substring(0, str.length() - 1);
-        }
-        w.append(str);
-        return null;
-    }
 
     public Object visit(StringLiteral n, Writer w) {
         w.append("new java::lang::String(\"");
-        w.append(n.getValue());
+        w.append(n.getLiteralValue());
         w.append("\")");
         return null;
     }
 
     @Override
-    public Object visit(BooleanLiteral n, Writer w) {
-        if (n.getValue()) {
+    public boolean visit(BooleanLiteral n) {
+        if (n.booleanValue()) {
             w.append("true");
-        } else {
+        }
+        else {
             w.append("false");
         }
-        return null;
+        return false;
     }
 
     //new int[]{...} or new int[5]
-    public Object visit(ArrayCreation n, Writer w) {
-        if (n.getInitializer()!=null) {
+    /*public Object visit(ArrayCreation n, Writer w) {
+        if (n.getInitializer() != null) {
             //just print values,ignore new type[]... because c++ allows it
-            //n.getInitializer().get().accept(this, w);
-            
-        } else {
+            n.getInitializer().accept(this);
+        }
+        else {
             //only dimensions
             w.append("new ");
             CType typeName = typeVisitor.visitType(n.getType(), method).copy();
@@ -307,7 +308,8 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
                 Optional<Expression> dimension = iterator.next().getDimension();
                 if (dimension.isPresent()) {
                     dimension.get().accept(this, w);
-                } else {
+                }
+                else {
                     w.append("0");//default array size
                 }
                 if (iterator.hasNext()) {
@@ -319,24 +321,24 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
             w.append(")");
         }
         return null;
-    }
+    }*/
 
     //{{1,2,3},{4,5,6}}
-    public Object visit(ArrayInitializer n, Writer w) {
+    public boolean visit(ArrayInitializer n) {
         w.append("{");
-        for (Iterator<Object> iterator = n.getExpressions().iterator(); iterator.hasNext(); ) {
-            Expression expr=(Expression)iterator.next();
-            visit(expr,w);
+        for (Iterator<Expression> iterator = n.expressions().iterator(); iterator.hasNext(); ) {
+            Expression expr = iterator.next();
+            expr.accept(this);
             if (iterator.hasNext()) {
                 w.append(",");
             }
         }
         w.append("}");
-        return null;
+        return false;
     }
 
-    public Object visit(Name n, Writer w) {
+    public boolean visit(Name n) {
         w.append(n.toString());
-        return null;
+        return false;
     }
 }

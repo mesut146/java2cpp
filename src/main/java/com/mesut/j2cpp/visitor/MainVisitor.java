@@ -4,6 +4,7 @@ import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.ast.*;
 import org.eclipse.jdt.core.dom.*;
 
+import java.util.List;
 import java.util.Stack;
 
 //visitor for single compilation unit
@@ -38,11 +39,11 @@ public class MainVisitor extends ASTVisitor {
     }
 
 
-    public boolean visit(ImportDeclaration n) {
-        String imp = n.getName().getFullyQualifiedName();
+    public boolean visit(ImportDeclaration node) {
+        String imp = node.getName().getFullyQualifiedName();
 
         imp = imp.replace(".", "/");
-        if (n.isStatic()) {
+        if (node.isStatic()) {
             //base.cls.var;
             int idx = imp.lastIndexOf("/");
             if (idx != -1) {
@@ -50,7 +51,7 @@ public class MainVisitor extends ASTVisitor {
             }
             header.includes.add(imp);
         }
-        if (n.isOnDemand()) {
+        if (node.isOnDemand()) {
             //TODO
             //resolve seperately
             header.importStar.add(imp);
@@ -62,7 +63,7 @@ public class MainVisitor extends ASTVisitor {
     }
 
 
-    public boolean visit(TypeDeclaration n) {
+    public boolean visit(TypeDeclaration node) {
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
@@ -72,29 +73,31 @@ public class MainVisitor extends ASTVisitor {
         }
         stack.push(cc);
 
+        System.out.println("type.decl=" + node.getName() + " parent=" + last().name);
+
         exprVisitor.clazz = cc;
-        cc.name = n.getName().getFullyQualifiedName();
-        cc.isInterface = n.isInterface();
+        cc.name = node.getName().getFullyQualifiedName();
+        cc.isInterface = node.isInterface();
 
+        node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true)));
+        if (node.getSuperclassType() != null) {
+            CType baseType = typeVisitor.visitType(node.getSuperclassType(), cc);
+            baseType.isTemplate = false;
+            baseType.isPointer = false;
+            cc.base.add(baseType);
+        }
 
-        n.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true)));
-
-        CType baseType = typeVisitor.visitType(n.getSuperclassType(), cc);
-        baseType.isTemplate = false;
-        baseType.isPointer = false;
-        cc.base.add(baseType);
-
-        n.superInterfaceTypes().forEach(iface -> {
+        node.superInterfaceTypes().forEach(iface -> {
             /*CType ifType = typeVisitor.visitType(iface, cc);
             ifType.isTemplate = false;
             ifType.isPointer = false;
             cc.base.add(ifType);*/
         });
-        for (TypeDeclaration member : n.getTypes()) {
+        /*for (TypeDeclaration member : node.getTypes()) {
             member.accept(this);
-        }
+        }*/
         stack.pop();
-        return true;
+        return false;
     }
 
     /*public boolean visit(EnumDeclaration n) {
@@ -137,7 +140,7 @@ public class MainVisitor extends ASTVisitor {
     }*/
 
     public boolean visit(FieldDeclaration n) {
-        n.fragments().forEach(frag -> System.out.println("field=" + frag));
+        //n.fragments().forEach(frag -> System.out.println("field=" + frag));
         /*
         for (VariableDeclarator vd : n.getVariables()) {
             CField cf = new CField();
@@ -158,6 +161,7 @@ public class MainVisitor extends ASTVisitor {
     }
 
     public boolean visit(MethodDeclaration n) {
+        //System.out.println("method.decl=" + n.getName());
         CMethod method = new CMethod();
         last().addMethod(method);
 
@@ -175,22 +179,21 @@ public class MainVisitor extends ASTVisitor {
         method.setNative(Modifier.isNative(n.getModifiers()));
 
 
-        for (Object obj : n.parameters()) {
-            /*CParameter cp = new CParameter();
-            cp.type = typeVisitor.visitType(parameter.getType(), method);
+        for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) n.parameters()) {
+            CParameter cp = new CParameter();
+            cp.type = typeVisitor.visitType(param.getType(), method);
             cp.type.isTemplate = false;
-            cp.name = parameter.getNameAsString();
-            method.params.add(cp);*/
+            cp.name = param.getName().getIdentifier();
+            method.params.add(cp);
         }
 
         if (n.getBody() != null) {
             method.bodyWriter.init();
             statementVisitor.setMethod(method);
-            statementVisitor.visit(n.getBody(), method.bodyWriter);
-            //n.getBody().accept(statementVisitor, method.body);
+            n.getBody().accept(statementVisitor);
         }
 
-        return true;
+        return false;
     }
 
     /*public void visit(ConstructorDeclaration n, Writer w) {

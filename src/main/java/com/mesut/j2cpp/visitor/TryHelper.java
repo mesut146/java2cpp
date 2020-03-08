@@ -3,10 +3,7 @@ package com.mesut.j2cpp.visitor;
 import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
-import org.eclipse.jdt.core.dom.CatchClause;
-import org.eclipse.jdt.core.dom.Expression;
-import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
-import org.eclipse.jdt.core.dom.TryStatement;
+import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
 
@@ -31,7 +28,8 @@ public class TryHelper {
         CType type = method.type;
         if (type.isPrim()) {
             retStr += " 0";
-        } else {
+        }
+        else {
             retStr += " nullptr";
         }
         retStr += "; }";
@@ -40,11 +38,13 @@ public class TryHelper {
         w.up();
         w.line("try");
         Writer try_writer = new Writer();
-        statementVisitor.visit(node.getBody(),try_writer);
+        node.getBody().accept(statementVisitor);
+        //statementVisitor.visit(node.getBody(),try_writer);
         w.appendIndent(try_writer);
         if (node.catchClauses().isEmpty()) {
             w.line("catch(int x){}");
-        } else {
+        }
+        else {
             printCatch(node.catchClauses(), w);
         }
         w.line(retStr);
@@ -53,7 +53,8 @@ public class TryHelper {
         w.lineln("},[&](){");
         w.up();
         Writer fin = new Writer();
-        statementVisitor.visit(node.getFinally(),fin);
+        //statementVisitor.visit(node.getFinally(),fin);
+        node.getFinally().accept(statementVisitor);
         w.appendIndent(fin);
         w.line(retStr);
         w.line("finReturned = false;");
@@ -75,18 +76,22 @@ public class TryHelper {
         w.up();
         w.line("try");
         Writer try_writer = new Writer();
-        statementVisitor.visit(node.getBody(),try_writer);
+        //statementVisitor.visit(node.getBody(),try_writer);
+        statementVisitor.w = w;
+        node.getBody().accept(statementVisitor);
         w.appendIndent(try_writer);
         if (node.catchClauses().isEmpty()) {
             w.line("catch(int x){}");
-        } else {
+        }
+        else {
             printCatch(node.catchClauses(), w);
         }
         w.down();
         w.lineln("},[&](){");
         w.up();
         Writer fin = new Writer();
-        statementVisitor.visit(node.getFinally(),fin);
+        //statementVisitor.visit(node.getFinally(),fin);
+        node.getFinally().accept(statementVisitor);
         w.appendIndent(fin);
         w.down();
         w.line("});");
@@ -99,23 +104,30 @@ public class TryHelper {
         if (len > 0) {
             w.append("(");
             for (int i = 0; i < len; i++) {
-                Object obj=node.resources().get(i);
-                exprVisitor.visit((Expression) obj,w);
+                Object obj = node.resources().get(i);
+                if (obj instanceof Name) {
+
+                }
+                else {//expr
+                    ((Expression) obj).accept(exprVisitor);
+                }
+                //exprVisitor.visit((Expression) obj, w);
                 if (i < len - 1) {
                     w.append(",");
                 }
             }
             w.append(")");
         }
-        statementVisitor.visit(node.getBody(),w);
+        //statementVisitor.visit(node.getBody(), w);
+        node.getBody().accept(statementVisitor);
         printCatch(node.catchClauses(), w);
     }
 
     void printCatch(List list, Writer w) {
         for (Object obj : list) {
-            CatchClause cc= (CatchClause) obj;
+            CatchClause cc = (CatchClause) obj;
 
-            SingleVariableDeclaration exc=cc.getException();
+            SingleVariableDeclaration exc = cc.getException();
 
             /*Parameter parameter = cc.getParameter();
             if (parameter.getType().isUnionType()) {

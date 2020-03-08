@@ -289,8 +289,6 @@ public class Converter {
         File file = new File(srcDir, cls);
         CompilationUnit unit = parse(file);
         convertSingle(cls, unit);
-
-
     }
 
     CompilationUnit parse(File file) throws IOException {

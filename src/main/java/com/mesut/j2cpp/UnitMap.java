@@ -1,6 +1,7 @@
 package com.mesut.j2cpp;
 
-import com.github.javaparser.ast.CompilationUnit;
+
+import org.eclipse.jdt.core.dom.CompilationUnit;
 
 //maps class name to unit
 class UnitMap {

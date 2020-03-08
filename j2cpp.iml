@@ -10,21 +10,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: com.github.javaparser:javaparser-symbol-solver-core:3.15.12" level="project" />
-    <orderEntry type="library" name="Maven: com.github.javaparser:javaparser-symbol-solver-logic:3.15.12" level="project" />
-    <orderEntry type="library" name="Maven: org.javassist:javassist:3.24.0-GA" level="project" />
-    <orderEntry type="library" name="Maven: com.github.javaparser:javaparser-symbol-solver-model:3.15.12" level="project" />
-    <orderEntry type="library" name="Maven: com.google.guava:guava:27.0-jre" level="project" />
-    <orderEntry type="library" name="Maven: com.google.guava:failureaccess:1.0" level="project" />
-    <orderEntry type="library" name="Maven: com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava" level="project" />
-    <orderEntry type="library" name="Maven: com.google.code.findbugs:jsr305:3.0.2" level="project" />
-    <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.5.2" level="project" />
-    <orderEntry type="library" name="Maven: com.google.errorprone:error_prone_annotations:2.2.0" level="project" />
-    <orderEntry type="library" name="Maven: com.google.j2objc:j2objc-annotations:1.1" level="project" />
-    <orderEntry type="library" name="Maven: org.codehaus.mojo:animal-sniffer-annotations:1.17" level="project" />
-    <orderEntry type="library" name="Maven: com.github.javaparser:javaparser-core-serialization:3.15.12" level="project" />
-    <orderEntry type="library" name="Maven: com.github.javaparser:javaparser-core:3.15.12" level="project" />
-    <orderEntry type="library" name="Maven: javax.json:javax.json-api:1.1.4" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.jdt:org.eclipse.jdt.core:3.20.0" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.platform:org.eclipse.core.resources:3.13.600" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.platform:org.eclipse.core.expressions:3.6.600" level="project" />

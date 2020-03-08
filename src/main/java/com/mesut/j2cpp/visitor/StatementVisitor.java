@@ -5,20 +5,20 @@ import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
-import com.mesut.j2cpp.ast.Call;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.Iterator;
+import java.util.List;
 
 //visit statements (ones end with ;)
-public class StatementVisitor extends GenericVisitor<Object, Writer> {
+public class StatementVisitor extends ASTVisitor {
 
     public CMethod method;
     public CHeader header;
     public Converter converter;
-    //boolean hasReturn = false, hasThrow = false, hasBreak = false;
     ExprVisitor exprVisitor;
     TypeVisitor typeVisitor;
+    Writer w;
 
     public StatementVisitor(Converter converter, CHeader header, ExprVisitor exprVisitor, TypeVisitor typeVisitor) {
         this.converter = converter;
@@ -29,6 +29,7 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
 
     public void setMethod(CMethod method) {
         this.method = method;
+        this.w = method.bodyWriter;
         this.exprVisitor.setMethod(method);
     }
 
@@ -37,72 +38,68 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(Block n, Writer w) {
+    public boolean visit(Block n) {
         w.firstBlock = true;
         w.appendln("{");
         w.up();
 
-        for (Object obj : n.statements()) {
-            Statement statement = (Statement) obj;
-            visit(statement, w);
+        for (Statement statement : (List<Statement>) n.statements()) {
+            statement.accept(this);
             w.println();
         }
         w.down();
         w.append("}");
-        return null;
+        return false;
     }
 
     @Override
-    public Object visit(ExpressionStatement n, Writer w) {
-        exprVisitor.visit(n.getExpression(), w);
+    public boolean visit(ExpressionStatement n) {
+        n.getExpression().accept(exprVisitor);
         w.append(";");
-        return null;
+        return false;
     }
 
     @Override
-    public Object visit(IfStatement n, Writer w) {
+    public boolean visit(IfStatement n) {
         w.append("if(");
-        exprVisitor.visit(n.getExpression(), w);//condition
+        n.getExpression().accept(exprVisitor);//condition
         w.append(")");
         block(w, n.getThenStatement());
         if (n.getElseStatement() != null) {
             w.append("else");
             block(w, n.getElseStatement());
         }
-        return null;
+        return false;
     }
 
     //handles indention for statements
     void block(Writer w, Statement statement) {
         if (statement instanceof Block) {
-            visit(statement, w);
+            statement.accept(this);
         }
         else {
             w.println();
             w.up();
-            visit(statement, w);
+            statement.accept(this);
             w.down();
         }
     }
 
     @Override
-    public Object visit(WhileStatement n, Writer w) {
+    public boolean visit(WhileStatement n) {
         w.append("while(");
-        exprVisitor.visit(n.getExpression(), w);
+        n.getExpression().accept(exprVisitor);
         w.append(") ");
         block(w, n.getBody());
-        return null;
+        return false;
     }
 
     @Override
-    public Object visit(ForStatement n, Writer w) {
+    public boolean visit(ForStatement n) {
         w.append("for(");
 
-        for (Iterator<Object> iterator = n.initializers().iterator(); iterator.hasNext(); ) {
-            Object obj = iterator.next();
-            if (obj instanceof VariableDeclarationExpression) {
-                exprVisitor.visit((VariableDeclarationExpression) obj, w);
-            }
+        for (Iterator<Expression> iterator = n.initializers().iterator(); iterator.hasNext(); ) {
+            iterator.next().accept(exprVisitor);
 
             if (iterator.hasNext()) {
                 w.append(",");
@@ -110,14 +107,11 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
         }
         w.append(";");
         if (n.getExpression() != null) {
-            exprVisitor.visit(n.getExpression(), w);
+            n.getExpression().accept(exprVisitor);
         }
         w.append(";");
-        for (Iterator<Object> iterator = n.updaters().iterator(); iterator.hasNext(); ) {
-            Object obj = iterator.hasNext();
-            if (obj instanceof Expression) {
-                exprVisitor.visit((Expression) obj, w);
-            }
+        for (Iterator<Expression> iterator = n.updaters().iterator(); iterator.hasNext(); ) {
+            iterator.next().accept(exprVisitor);
 
             if (iterator.hasNext()) {
                 w.append(",");
@@ -125,35 +119,36 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
         }
         w.append(")");
         block(w, n.getBody());
-        return null;
+        return false;
     }
 
-    /*public Object visit(EnhancedForStatement n, Writer w) {
+    @Override
+    public boolean visit(EnhancedForStatement n) {
         w.append("for(");
-        exprVisitor.visit(n.getParameter(),w);
+        n.getParameter().accept(exprVisitor);
         w.append(":");
-        exprVisitor.visit(n.getExpression(),w);
+        n.getExpression().accept(exprVisitor);
         w.append(")");
         block(w, n.getBody());
-        return null;
-    }*/
+        return false;
+    }
 
     @Override
-    public Object visit(ReturnStatement n, Writer w) {
+    public boolean visit(ReturnStatement n) {
         w.append("return");
         if (n.getExpression() != null) {
             w.append(" ");
-            exprVisitor.visit(n.getExpression(), w);
+            n.getExpression().accept(exprVisitor);
         }
         w.append(";");
-        return null;
+        return false;
     }
 
     @Override
-    public Object visit(TryStatement n, Writer w) {
+    public boolean visit(TryStatement n) {
         TryHelper helper = new TryHelper(exprVisitor, this);
 
-        if (n.getFinally()!=null) {
+        if (n.getFinally() != null) {
             header.addRuntime();
             helper.with_finally(n, w);
         }
@@ -161,14 +156,14 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
             //no finnaly stmt just print it directly
             helper.no_finally(n, w);
         }
-        return null;
+        return false;
     }
 
     @Override
-    public Object visit(ThrowStatement n, Writer w) {
+    public boolean visit(ThrowStatement n) {
         w.append("throw ");
-        exprVisitor.visit(n.getExpression(),w);
-        return null;
+        n.getExpression().accept(exprVisitor);
+        return false;
     }
     /*
     public Object visit(ExplicitConstructorInvocationStmt n, Writer w) {
