@@ -128,11 +128,11 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
         return null;
     }
 
-    /*public Object visit(ForEach n, Writer w) {
+    /*public Object visit(EnhancedForStatement n, Writer w) {
         w.append("for(");
-        n.getVariable().accept(exprVisitor, w);
+        exprVisitor.visit(n.getParameter(),w);
         w.append(":");
-        n.getIterable().accept(exprVisitor, w);
+        exprVisitor.visit(n.getExpression(),w);
         w.append(")");
         block(w, n.getBody());
         return null;

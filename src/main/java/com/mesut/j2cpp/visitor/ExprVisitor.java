@@ -6,7 +6,7 @@ import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
-import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.*;
 
 import java.util.Iterator;
 import java.util.Optional;
@@ -46,7 +46,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         w.append(")");
     }
 
-    public Object visit(InstanceOfExpr n, Writer w) {
+    public Object visit(InstanceofExpression n, Writer w) {
         header.addRuntime();
         w.append("instance_of<");
         CType type = typeVisitor.visitType(n.getType(), method);
@@ -88,7 +88,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         return null;
     }
 
-    public Object visit(FieldAccessExpr n, Writer w) {
+    public Object visit(FieldAccess n, Writer w) {
         Expression scope = n.getScope();
         scope.accept(this, w);
 
@@ -121,7 +121,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
 
     //array[index] -> (*array)[index]
     @Override
-    public Object visit(ArrayAccessExpr n, Writer w) {
+    public Object visit(ArrayAccess n, Writer w) {
         w.append("(*");
         n.getName().accept(this, w);
         w.append(")[");
@@ -130,7 +130,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         return null;
     }
 
-    public Object visit(AssignExpr n, Writer w) {
+    public Object visit(Assignment n, Writer w) {
         n.getTarget().accept(this, w);
         w.append(" ");
         w.append(n.getOperator().asString());
@@ -139,7 +139,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         return null;
     }
 
-    public Object visit(ThisExpr n, Writer w) {
+    public Object visit(ThisExpression n, Writer w) {
         w.append("this");
         return null;
     }
@@ -169,7 +169,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
     }
 
     //Type name=value
-    public Object visit(VariableDeclarationExpr n, Writer w) {
+    public Object visit(VariableDeclarationExpression n, Writer w) {
         boolean first = true;
         for (VariableDeclarator vd : n.getVariables()) {
             if (first) {
@@ -190,7 +190,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         return null;
     }
 
-    public Object visit(ConditionalExpr n, Writer w) {
+    public Object visit(ConditionalExpression n, Writer w) {
         n.getCondition().accept(this, w);
         w.append("?");
         n.getThenExpr().accept(this, w);
@@ -199,7 +199,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         return null;
     }
 
-    public Object visit(BinaryExpr n, Writer w) {
+    public Object visit(BinaryExpression n, Writer w) {
         n.getLeft().accept(this, w);
         w.append(" ");
         w.append(n.getOperator().asString());
@@ -208,7 +208,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         return null;
     }
 
-    public Object visit(UnaryExpr n, Writer w) {
+    public Object visit(UnaryExpression n, Writer w) {
         if (n.isPostfix()) {
             n.getExpression().accept(this, w);
             w.append(n.getOperator().asString());
@@ -219,18 +219,18 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         return null;
     }
 
-    public Object visit(NullLiteralExpr n, Writer w) {
+    public Object visit(NullLiteral n, Writer w) {
         w.append("nullptr");
         return null;
     }
 
-    public Object visit(IntegerLiteralExpr n, Writer w) {
+    public Object visit(IntegerLiteral n, Writer w) {
         w.append(n.getValue());
         return null;
     }
 
     @Override
-    public Object visit(CharLiteralExpr n, Writer w) {
+    public Object visit(CharLiteral n, Writer w) {
         String str = n.getValue();
         if (str.startsWith("\\u")) {
             w.append("u");
@@ -242,7 +242,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(CastExpr n, Writer w) {
+    public Object visit(CastExpression n, Writer w) {
         w.append("(");
         CType type = typeVisitor.visitType(n.getType(), method);
         w.append(type);
@@ -255,7 +255,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(EnclosedExpr n, Writer w) {
+    public Object visit(ParenthesizedExpression n, Writer w) {
         w.append("(");
         n.getInner().accept(this, w);
         w.append(")");
@@ -263,7 +263,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(LongLiteralExpr n, Writer w) {
+    public Object visit(LongLiteral n, Writer w) {
         String str = n.getValue();
         if (str.endsWith("L")) {
             str = str.substring(0, str.length() - 1);
@@ -272,7 +272,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         return null;
     }
 
-    public Object visit(StringLiteralExpr n, Writer w) {
+    public Object visit(StringLiteral n, Writer w) {
         w.append("new java::lang::String(\"");
         w.append(n.getValue());
         w.append("\")");
@@ -280,7 +280,7 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(BooleanLiteralExpr n, Writer w) {
+    public Object visit(BooleanLiteral n, Writer w) {
         if (n.getValue()) {
             w.append("true");
         } else {
@@ -290,19 +290,20 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
     }
 
     //new int[]{...} or new int[5]
-    public Object visit(ArrayCreationExpr n, Writer w) {
-        if (n.getInitializer().isPresent()) {
+    public Object visit(ArrayCreation n, Writer w) {
+        if (n.getInitializer()!=null) {
             //just print values,ignore new type[]... because c++ allows it
-            n.getInitializer().get().accept(this, w);
+            //n.getInitializer().get().accept(this, w);
+            
         } else {
             //only dimensions
             w.append("new ");
-            CType typeName = typeVisitor.visitType(n.getElementType(), method).copy();
-            typeName.arrayLevel = n.getLevels().size();
+            CType typeName = typeVisitor.visitType(n.getType(), method).copy();
+            typeName.arrayLevel = n.dimensions().size();
             w.append(typeName.toString());
             w.append("(");
             w.append("new int[]{");
-            for (Iterator<ArrayCreationLevel> iterator = n.getLevels().iterator(); iterator.hasNext(); ) {
+            for (Iterator<ArrayCreationLevel> iterator = n.getInitializer().iterator(); iterator.hasNext(); ) {
                 Optional<Expression> dimension = iterator.next().getDimension();
                 if (dimension.isPresent()) {
                     dimension.get().accept(this, w);
@@ -321,10 +322,11 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
     }
 
     //{{1,2,3},{4,5,6}}
-    public Object visit(ArrayInitializerExpr n, Writer w) {
+    public Object visit(ArrayInitializer n, Writer w) {
         w.append("{");
-        for (Iterator<Expression> iterator = n.getValues().iterator(); iterator.hasNext(); ) {
-            iterator.next().accept(this, w);
+        for (Iterator<Object> iterator = n.getExpressions().iterator(); iterator.hasNext(); ) {
+            Expression expr=(Expression)iterator.next();
+            visit(expr,w);
             if (iterator.hasNext()) {
                 w.append(",");
             }
@@ -333,8 +335,8 @@ public class ExprVisitor extends GenericVisitor<Object, Writer> {
         return null;
     }
 
-    public Object visit(NameExpr n, Writer w) {
-        w.append(n.getNameAsString());
+    public Object visit(Name n, Writer w) {
+        w.append(n.toString());
         return null;
     }
 }
