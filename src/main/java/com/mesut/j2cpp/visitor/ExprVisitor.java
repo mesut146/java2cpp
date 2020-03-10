@@ -74,12 +74,13 @@ public class ExprVisitor extends ASTVisitor {
                     return false;
                 }
                 IMethodBinding binding = n.resolveMethodBinding();
-                /*if (rt.isStatic()) {
+
+                if (Modifier.isStatic(binding.getModifiers())) {
                     w.append("::");
                 }
                 else {
                     w.append("->");
-                }*/
+                }
             }
             else {
                 //another method call or field access

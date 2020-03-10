@@ -36,10 +36,10 @@ public class Converter {
     //public SymbolResolver symbolResolver;
     public CMakeWriter cMakeWriter;
     public CMakeWriter.Target target;
-    public boolean debug_output = false;
+    public boolean debug_output = true;
     ASTParser parser;
 
-    public Converter(String srcDir, String destDir) throws IOException {
+    public Converter(String srcDir, String destDir) {
         this.srcDir = srcDir;
         this.destDir = destDir;
         cMakeWriter = new CMakeWriter("myproject");
@@ -107,19 +107,6 @@ public class Converter {
             e.printStackTrace();
         }
 
-        /*for (UnitMap h : units) {
-            String pkg = "";
-            if (h.cu.getPackageDeclaration().isPresent()) {
-                pkg = h.cu.getPackageDeclaration().get().getNameAsString();
-            }
-            convertSingle(pkg.replaceAll("\\.", "/") + "/" + h.name, h.cu);
-        }
-        File cmakeFile = new File(destDir, "CMakeLists.txt");
-        try {
-            Files.write(cmakeFile.toPath(), cMakeWriter.generate().getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
         System.out.println("conversion done");
     }
 
@@ -133,29 +120,11 @@ public class Converter {
                 parser.setUnitName(file.getPath());
                 CompilationUnit unit = (CompilationUnit) parser.createAST(null);
 
-                //CompilationUnit cu = javaParser.parse(file).getResult().get();
                 convertSingle(Util.relative(file.getAbsolutePath(), srcDir), unit);
             }
         }
     }
 
-    /*void initSolver() throws IOException {
-        CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
-        JavaParserTypeSolver dirSolver = new JavaParserTypeSolver(srcDir);
-
-        combinedTypeSolver.add(dirSolver);//current dir
-        for (String cp : classpath) {
-            if (cp.endsWith(".jar")) {
-                JarTypeSolver jarTypeSolver = new JarTypeSolver(cp);
-                combinedTypeSolver.add(jarTypeSolver);
-            } else {//directory
-                JavaParserTypeSolver cpSolver = new JavaParserTypeSolver(cp);
-                combinedTypeSolver.add(cpSolver);
-            }
-        }
-        symbolResolver = new JavaSymbolSolver(combinedTypeSolver);
-        javaParser = new JavaParser(new ParserConfiguration().setSymbolResolver(symbolResolver));
-    }*/
 
 
     /*public void makeTable() throws IOException {

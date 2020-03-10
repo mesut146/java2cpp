@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Converter;
+import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.*;
 import org.eclipse.jdt.core.dom.*;
 
@@ -31,6 +32,7 @@ public class MainVisitor extends ASTVisitor {
         return stack.peek();
     }
 
+    @Override
     public boolean visit(PackageDeclaration n) {
         Namespace ns = new Namespace();
         ns.pkg(n.getName().getFullyQualifiedName());
@@ -38,7 +40,7 @@ public class MainVisitor extends ASTVisitor {
         return true;
     }
 
-
+    @Override
     public boolean visit(ImportDeclaration node) {
         String imp = node.getName().getFullyQualifiedName();
 
@@ -62,22 +64,24 @@ public class MainVisitor extends ASTVisitor {
         return true;
     }
 
-
+    @Override
     public boolean visit(TypeDeclaration node) {
+
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
+            //System.out.println("type.decl=" + node.getName());
         }
         else {
+            //System.out.println("type.decl=" + node.getName() + " parent=" + last().name);
             last().addInner(cc);
         }
         stack.push(cc);
 
-        System.out.println("type.decl=" + node.getName() + " parent=" + last().name);
-
         exprVisitor.clazz = cc;
         cc.name = node.getName().getFullyQualifiedName();
         cc.isInterface = node.isInterface();
+
 
         node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true)));
         if (node.getSuperclassType() != null) {
@@ -87,15 +91,23 @@ public class MainVisitor extends ASTVisitor {
             cc.base.add(baseType);
         }
 
+
         node.superInterfaceTypes().forEach(iface -> {
             /*CType ifType = typeVisitor.visitType(iface, cc);
             ifType.isTemplate = false;
             ifType.isPointer = false;
             cc.base.add(ifType);*/
         });
-        /*for (TypeDeclaration member : node.getTypes()) {
+        //inner classes
+        for (TypeDeclaration member : node.getTypes()) {
             member.accept(this);
-        }*/
+        }
+        for (FieldDeclaration field : node.getFields()) {
+            field.accept(this);
+        }
+        for (MethodDeclaration method : node.getMethods()) {
+            method.accept(this);
+        }
         stack.pop();
         return false;
     }
@@ -139,40 +151,43 @@ public class MainVisitor extends ASTVisitor {
         stack.pop();
     }*/
 
+    @Override
     public boolean visit(FieldDeclaration n) {
-        //n.fragments().forEach(frag -> System.out.println("field=" + frag));
-        /*
-        for (VariableDeclarator vd : n.getVariables()) {
+
+        CType type = typeVisitor.visitType(n.getType(), last());
+        System.out.println("field=" + n.getType()+" resolved="+type+" bind="+n.getType().resolveBinding().getBinaryName());
+        for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
             CField cf = new CField();
             last().addField(cf);
-            cf.type = typeVisitor.visitType(n.getType(), last());
-            //cf.type.arrayLevel=vd.getType().getArrayLevel();
-            cf.name = vd.getNameAsString();
-            cf.setStatic(n.isStatic());
-            cf.setPublic(n.isPublic());
-
-            if (vd.getInitializer().isPresent()) {
+            cf.type = type;
+            cf.name = frag.getName().getIdentifier();
+            cf.setPublic(Modifier.isPublic(n.getModifiers()));
+            cf.setStatic(Modifier.isStatic(n.getModifiers()));
+            if (frag.getInitializer() != null) {
                 Writer nw = new Writer();
-                vd.getInitializer().get().accept(exprVisitor, nw);
+                exprVisitor.w = nw;
+                frag.getInitializer().accept(exprVisitor);
                 cf.right = nw.toString();
             }
-        }*/
-        return true;
+        }
+        return false;
     }
 
+    @Override
     public boolean visit(MethodDeclaration n) {
         //System.out.println("method.decl=" + n.getName());
         CMethod method = new CMethod();
         last().addMethod(method);
 
         n.typeParameters().forEach(temp -> method.template.add(new CType(temp.toString())));
-        //n.getTypeParameters().forEach(temp -> method.template.add(new CType(temp.getNameAsString())));
+        method.isCons = n.isConstructor();
         //type could be template
         if (!n.isConstructor()) {
             method.type = typeVisitor.visitType(n.getReturnType2(), method);
+            //System.out.println("name=" + n.getName() + " type=" + method.type);
         }
 
-        method.name = n.getName().getFullyQualifiedName();
+        method.name = n.getName().getIdentifier();
 
         method.setStatic(Modifier.isStatic(n.getModifiers()));
         method.setPublic(Modifier.isPublic(n.getModifiers()));
@@ -192,7 +207,6 @@ public class MainVisitor extends ASTVisitor {
             statementVisitor.setMethod(method);
             n.getBody().accept(statementVisitor);
         }
-
         return false;
     }
 

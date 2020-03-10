@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CMakeWriter {
+
     public String projectName;
     public List<Target> targets = new ArrayList<>();
 

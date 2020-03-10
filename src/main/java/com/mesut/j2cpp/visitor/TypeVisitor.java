@@ -2,7 +2,6 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.Helper;
-import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
@@ -26,10 +25,44 @@ public class TypeVisitor extends ASTVisitor {
         return false;
     }
 
+    CType fromBinding(ITypeBinding binding) {
+        if (binding.isTypeVariable()) {
+            type=new CType(binding.getName());
+            //System.out.printf("name=%s bin=%s qua=%s \n", binding.getName(),binding.getBinaryName(),binding.getQualifiedName());
+            /*System.out.printf("bin=%s generic=%s raw=%s local=%s nested=%s typevar=%s prmtzd=%s\n",
+                    bin, binding.isGenericType(), binding.isRawType(), binding.isLocal(), binding.isNested(), binding.isTypeVariable(),binding.isParameterizedType());
+        */
+        }
+        else {
+            String bin = binding.getBinaryName();
+            String name;
+            if (bin.contains("$")) {
+                //inner
+                name = bin.replace("$", ".");
+            }
+            else {
+                name = bin;
+            }
+
+            type = new CType(name.replace(".", "::"));
+
+            for (ITypeBinding tp : binding.getTypeArguments()) {
+                type.typeNames.add(fromBinding(tp));
+            }
+
+            if (!binding.isGenericType() && !binding.isNested()) {
+                header.addInclude(name.replace(".", "/"));//inner classes too?
+            }
+        }
+        return type;
+    }
+
     @Override
     public boolean visit(SimpleType node) {
-        //System.out.println("simple.type=" + node);
-        type = new CType(node.getName().toString());
+        //resolve
+        ITypeBinding binding = node.resolveBinding();
+        //System.out.println("simple.type=" + binding.getBinaryName() + " nested=" + binding.isNested());
+        type = fromBinding(binding);
         return false;
     }
 
@@ -41,45 +74,12 @@ public class TypeVisitor extends ASTVisitor {
         return false;
     }
 
-    /*public CType visit(Void n, Writer w) {
-        return new CType("void");
-    }*/
-
-    /*public CType visit(ClassOrInterfaceType n, Writer w) {
-        //if no classpath,include it directly
-        String q;
-        CType type;
-        if (converter.classpath.isEmpty()) {
-            q = n.getNameAsString();
-            type = new CType(q.replace(".", "::"));
-        } else {
-            ResolvedReferenceType resolved = n.resolve();
-            q = resolved.getQualifiedName();
-
-            type = new CType(q.replace(".", "::"));
-            n.getTypeArguments().ifPresent(list -> list.forEach(tp -> type.typeNames.add(new CType(tp.toString(), true))));
-        }
-
-        header.addInclude(q.replace(".", "/"));//inner classes too?
-        return type;
-    }*/
-
-    //multi catch type
-    /*public CType visit(UnionType n, Writer w) {
-        CType type = visit(n.types().get(0),w);
-        System.out.println("union type detected and chosen the first");
-        return type;
-    }*/
-
-    public CType visit(WildcardType n, Writer arg) {
+    @Override
+    public boolean visit(WildcardType n) {
         //<?>
-        return new CType("java::lang::Object");
+        type = new CType("java::lang::Object");
+        return false;
     }
-
-
-   /*public CType visit(TypeParameter typeParameter, Writer w) {
-        return new CType(typeParameter.getName().getIdentifier());
-    }*/
 
     public boolean visit(ParameterizedType type) {
         type.getType().accept(this);
@@ -122,6 +122,7 @@ public class TypeVisitor extends ASTVisitor {
 
     //fields,methods,base class types,todo inner cls
     public CType visitType(Type type, CClass cc) {
+        //System.out.println("type=" + type.getClass() + " " + type.toString());
         type.accept(this);
         /*if (type.isArrayType()) {//array type
             return visit((ArrayType) type, null).copy();
