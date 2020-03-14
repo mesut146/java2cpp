@@ -11,14 +11,14 @@ import java.util.Iterator;
 import java.util.List;
 
 //visit statements (ones end with ;)
-public class StatementVisitor extends ASTVisitor {
+public class StatementVisitor extends GenericVisitor<Object, Writer> {
 
     public CMethod method;
     public CHeader header;
     public Converter converter;
     ExprVisitor exprVisitor;
     TypeVisitor typeVisitor;
-    Writer w;
+    //Writer w;
 
     public StatementVisitor(Converter converter, CHeader header, ExprVisitor exprVisitor, TypeVisitor typeVisitor) {
         this.converter = converter;
@@ -29,7 +29,6 @@ public class StatementVisitor extends ASTVisitor {
 
     public void setMethod(CMethod method) {
         this.method = method;
-        this.w = method.bodyWriter;
         this.exprVisitor.setMethod(method);
     }
 
@@ -38,7 +37,7 @@ public class StatementVisitor extends ASTVisitor {
     }
 
     @Override
-    public boolean visit(Block n) {
+    public Object visit(Block n, Writer w) {
         w.firstBlock = true;
         w.appendln("{");
         w.up();
@@ -53,14 +52,14 @@ public class StatementVisitor extends ASTVisitor {
     }
 
     @Override
-    public boolean visit(ExpressionStatement n) {
+    public Object visit(ExpressionStatement n, Writer w) {
         n.getExpression().accept(exprVisitor);
         w.append(";");
         return false;
     }
 
     @Override
-    public boolean visit(IfStatement n) {
+    public Object visit(IfStatement n, Writer w) {
         w.append("if(");
         n.getExpression().accept(exprVisitor);//condition
         w.append(")");
@@ -86,7 +85,7 @@ public class StatementVisitor extends ASTVisitor {
     }
 
     @Override
-    public boolean visit(WhileStatement n) {
+    public Object visit(WhileStatement n, Writer w) {
         w.append("while(");
         n.getExpression().accept(exprVisitor);
         w.append(") ");
@@ -95,7 +94,7 @@ public class StatementVisitor extends ASTVisitor {
     }
 
     @Override
-    public boolean visit(ForStatement n) {
+    public Object visit(ForStatement n, Writer w) {
         w.append("for(");
 
         for (Iterator<Expression> iterator = n.initializers().iterator(); iterator.hasNext(); ) {
@@ -123,7 +122,7 @@ public class StatementVisitor extends ASTVisitor {
     }
 
     @Override
-    public boolean visit(EnhancedForStatement n) {
+    public Object visit(EnhancedForStatement n, Writer w) {
         w.append("for(");
         n.getParameter().accept(exprVisitor);
         w.append(":");
@@ -134,7 +133,7 @@ public class StatementVisitor extends ASTVisitor {
     }
 
     @Override
-    public boolean visit(ReturnStatement n) {
+    public Object visit(ReturnStatement n, Writer w) {
         w.append("return");
         if (n.getExpression() != null) {
             w.append(" ");
@@ -145,7 +144,7 @@ public class StatementVisitor extends ASTVisitor {
     }
 
     @Override
-    public boolean visit(TryStatement n) {
+    public Object visit(TryStatement n, Writer w) {
         TryHelper helper = new TryHelper(exprVisitor, this);
 
         if (n.getFinally() != null) {
@@ -153,14 +152,14 @@ public class StatementVisitor extends ASTVisitor {
             helper.with_finally(n, w);
         }
         else {
-            //no finnaly stmt just print it directly
+            //no finally stmt just print it directly
             helper.no_finally(n, w);
         }
         return false;
     }
 
     @Override
-    public boolean visit(ThrowStatement n) {
+    public Object visit(ThrowStatement n, Writer w) {
         w.append("throw ");
         n.getExpression().accept(exprVisitor);
         return false;

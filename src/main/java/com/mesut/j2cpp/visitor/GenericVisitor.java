@@ -2,31 +2,48 @@ package com.mesut.j2cpp.visitor;
 
 import org.eclipse.jdt.core.dom.*;
 
+import java.util.List;
+
 public class GenericVisitor<R, A> extends ASTVisitor {
 
     //statements
 
-    public R visit(Statement n, A arg) {
+    /*public R visit(Statement n, A arg) {
         return null;
-    }
+    }*/
 
     public R visit(ExpressionStatement n, A arg) {
-        return null;
+        return visit(n.getExpression(), arg);
     }
 
     public R visit(Block n, A arg) {
+        for (Statement statement : (List<Statement>) n.statements()) {
+            //visit(statement,arg);
+        }
         return null;
     }
 
     public R visit(ForStatement n, A arg) {
+        //n.initializers().forEach(init -> visit(init, arg));
+        visit(n.getExpression(), arg);
+        //visit(n.getBody(), arg);
+        return null;
+    }
+
+    public R visit(EnhancedForStatement n, A arg) {
+        //n.initializers().forEach(init -> visit(init, arg));
+        visit(n.getExpression(), arg);
+        //visit(n.getBody(), arg);
         return null;
     }
 
     public R visit(WhileStatement n, A arg) {
+        visit(n.getExpression(), arg);
         return null;
     }
 
     public Object visit(IfStatement n, A arg) {
+
         return null;
     }
 
