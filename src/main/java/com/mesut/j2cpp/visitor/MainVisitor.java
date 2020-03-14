@@ -155,7 +155,7 @@ public class MainVisitor extends ASTVisitor {
     public boolean visit(FieldDeclaration n) {
 
         CType type = typeVisitor.visitType(n.getType(), last());
-        System.out.println("field=" + n.getType()+" resolved="+type+" bind="+n.getType().resolveBinding().getBinaryName());
+        System.out.println("field=" + n.getType() + " resolved=" + type + " bind=" + n.getType().resolveBinding().getBinaryName());
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
             CField cf = new CField();
             last().addField(cf);

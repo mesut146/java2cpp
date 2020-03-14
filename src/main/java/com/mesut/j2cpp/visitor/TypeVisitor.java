@@ -27,7 +27,7 @@ public class TypeVisitor extends ASTVisitor {
 
     CType fromBinding(ITypeBinding binding) {
         if (binding.isTypeVariable()) {
-            type=new CType(binding.getName());
+            type = new CType(binding.getName());
             //System.out.printf("name=%s bin=%s qua=%s \n", binding.getName(),binding.getBinaryName(),binding.getQualifiedName());
             /*System.out.printf("bin=%s generic=%s raw=%s local=%s nested=%s typevar=%s prmtzd=%s\n",
                     bin, binding.isGenericType(), binding.isRawType(), binding.isLocal(), binding.isNested(), binding.isTypeVariable(),binding.isParameterizedType());
