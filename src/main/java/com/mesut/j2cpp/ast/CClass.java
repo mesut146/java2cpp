@@ -54,9 +54,9 @@ public class CClass extends Node {
         Namespace n = new Namespace();
         if (parent != null) {
             str = parent.getNamespace().all + "::";
-            n.pkg(str);
+            n.fromPkg(str);
         } else if (ns != null) {
-            n.pkg(ns.all + "::" + name);
+            n.fromPkg(ns.all + "::" + name);
         }
         return n;
     }

@@ -35,7 +35,7 @@ public class MainVisitor extends ASTVisitor {
     @Override
     public boolean visit(PackageDeclaration n) {
         Namespace ns = new Namespace();
-        ns.pkg(n.getName().getFullyQualifiedName());
+        ns.fromPkg(n.getName().getFullyQualifiedName());
         header.ns = ns;
         return true;
     }

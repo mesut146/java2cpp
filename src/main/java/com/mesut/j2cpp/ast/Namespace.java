@@ -21,11 +21,10 @@ public class Namespace extends Node {
         return all;
     }
 
-    public void pkg(String str) {
+    public void fromPkg(String str) {
         int i = 0;
         all = str.replace(".", "::");
         Collections.addAll(parts, str.split("::"));
-
     }
 
     public Namespace appendNs(String str) {

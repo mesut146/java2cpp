@@ -225,9 +225,9 @@ public class Converter {
             CHeader header = new CHeader(path.substring(0, path.length() - 4) + "h");
             CSource cpp = new CSource(header);
 
-            header.addIncludeStar("java/lang");//by default as in java compilers
-            header.addIncludeStar(getPath(cu));//visible to current package
-            //header.useNamespace("java::lang");//by default
+
+            HeaderWriter headerWriter = new HeaderWriter(cu);
+            headerWriter.write();
 
             MainVisitor visitor = new MainVisitor(this, header);
             cu.accept(visitor);

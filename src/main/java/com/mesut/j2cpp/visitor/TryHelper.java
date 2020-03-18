@@ -77,7 +77,7 @@ public class TryHelper {
         w.line("try");
         Writer try_writer = new Writer();
         //statementVisitor.visit(node.getBody(),try_writer);
-        statementVisitor.w = w;
+        //statementVisitor.w = w;
         node.getBody().accept(statementVisitor);
         w.appendIndent(try_writer);
         if (node.catchClauses().isEmpty()) {

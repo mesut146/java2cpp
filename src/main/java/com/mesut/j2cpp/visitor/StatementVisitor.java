@@ -32,10 +32,6 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
         this.exprVisitor.setMethod(method);
     }
 
-    public Object visit(SimpleName n, Writer w) {
-        return new CType(n.getIdentifier());
-    }
-
     @Override
     public Object visit(Block n, Writer w) {
         w.firstBlock = true;
