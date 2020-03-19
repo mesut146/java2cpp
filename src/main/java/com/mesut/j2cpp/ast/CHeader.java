@@ -3,6 +3,7 @@ package com.mesut.j2cpp.ast;
 import java.util.ArrayList;
 import java.util.List;
 
+//represents simple c++ header (.hpp)
 public class CHeader extends Node {
     public String name;
     public List<String> includes = new ArrayList<>();

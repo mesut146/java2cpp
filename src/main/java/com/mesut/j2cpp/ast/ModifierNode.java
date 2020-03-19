@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class ModifierNode extends Node {
+
     Set<String> modifiers = new HashSet<>();
     final static String PUBLIC_NAME = "public";
     final static String PRIVATE_NAME = "private";

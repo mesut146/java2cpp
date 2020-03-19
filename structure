@@ -1,0 +1,16 @@
+#HeaderWriter(CHeader,cu).write()
+fill CHeader with necessary information(types,fields,methods)
+write content of CHeader to .hpp file
+
+-field right side
+   expr visitor?
+
+
+#ImplWriter(CHeader,cu).write()
+write to .cpp file
+
+-methods
+  statement visitor
+  expr visitor
+
+

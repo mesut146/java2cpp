@@ -1,8 +1,10 @@
 package com.mesut.j2cpp.ast;
 
 public class CField extends ModifierNode {
+
     public CType type;
-    public String name, right;
+    public String name;
+    public String right;
 
 
     public void print() {
@@ -10,9 +12,6 @@ public class CField extends ModifierNode {
             append("static ");
         }
         append(type.toString());
-        /*if (type.isPointer()) {
-            append("*");
-        }*/
         append(" ");
         append(name);
         if (right != null) {
@@ -20,7 +19,6 @@ public class CField extends ModifierNode {
             append(right);
         }
         append(";");
-        //TODO right
     }
 
 

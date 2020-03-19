@@ -5,7 +5,7 @@ import java.util.List;
 
 public class CSource extends Node {
     public CHeader header;
-    public List<Namespace> using = new ArrayList<>();//todo header's using instead?
+    public List<Namespace> usings = new ArrayList<>();//todo header's using instead?
 
     public CSource(CHeader header) {
         this.header = header;
@@ -15,7 +15,7 @@ public class CSource extends Node {
     public void print() {
         includePath(header.getInclude());
         println();
-        for (Namespace use : using) {
+        for (Namespace use : usings) {
             print_using(use);
         }
         println();
@@ -26,11 +26,14 @@ public class CSource extends Node {
 
     public void printClass(CClass cc) {
         cc.forHeader = false;
+        //we directly write methods since class declarations already in CHeader
+        //write methods
         for (CMethod cm : cc.methods) {
             cm.level = 0;
             cm.init();
             append(cm);
         }
+        //write inner classes
         for (CClass in : cc.classes) {
             printClass(in);
         }
