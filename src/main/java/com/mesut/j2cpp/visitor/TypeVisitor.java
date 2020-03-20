@@ -61,7 +61,8 @@ public class TypeVisitor extends ASTVisitor {
     public boolean visit(SimpleType node) {
         //resolve
         ITypeBinding binding = node.resolveBinding();
-        //System.out.println("simple.type=" + binding.getBinaryName() + " nested=" + binding.isNested());
+        /*System.out.println("simple.type bin=" + binding.getBinaryName() +
+                " qua=" + binding.getQualifiedName());*/
         type = fromBinding(binding);
         return false;
     }
@@ -91,11 +92,12 @@ public class TypeVisitor extends ASTVisitor {
 
     //resolve type in a method,method type,param type,local type
     public CType visitType(Type type, CMethod method) {
-        //System.out.println("m.type=" + type);
-        if (type.isArrayType() || type.isParameterizedType()) {
+        //System.out.println("m.type=" + type.getClass());
+        type.accept(this);
+        /*if (type.isArrayType() || type.isParameterizedType()) {
             type.accept(this);
             return this.type.copy();
-        }
+        }*/
         /*if (type.isSimpleType()) {
 
         }
@@ -117,7 +119,7 @@ public class TypeVisitor extends ASTVisitor {
         }
         //it has to be declared type
         return visit(ctype, null);*/
-        return this.type;
+        return this.type.copy();
     }
 
     //fields,methods,base class types,todo inner cls

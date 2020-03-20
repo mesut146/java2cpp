@@ -52,12 +52,12 @@ public class HeaderWriter extends WriterVisitor {
 
         node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true)));
 
-        if (node.getSuperclassType() != null) {
+       /* if (node.getSuperclassType() != null) {
             CType baseType = typeVisitor.visitType(node.getSuperclassType(), cc);
             baseType.isTemplate = false;
             baseType.isPointer = false;
             cc.base.add(baseType);
-        }
+        }*/
 
 
         node.superInterfaceTypes().forEach(iface -> {

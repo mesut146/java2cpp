@@ -11,14 +11,14 @@ import java.util.Iterator;
 import java.util.List;
 
 //visit statements (ones end with ;)
-public class StatementVisitor extends GenericVisitor<Object, Writer> {
+public class StatementVisitor extends ASTVisitor {
 
     public CMethod method;
     public CHeader header;
     public Converter converter;
     ExprVisitor exprVisitor;
     TypeVisitor typeVisitor;
-    //Writer w;
+    Writer w;
 
     public StatementVisitor(Converter converter, CHeader header, ExprVisitor exprVisitor, TypeVisitor typeVisitor) {
         this.converter = converter;
@@ -30,10 +30,11 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
     public void setMethod(CMethod method) {
         this.method = method;
         this.exprVisitor.setMethod(method);
+        this.w = method.bodyWriter;
     }
 
     @Override
-    public Object visit(Block n, Writer w) {
+    public boolean visit(Block n) {
         w.firstBlock = true;
         w.appendln("{");
         w.up();
@@ -48,14 +49,14 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(ExpressionStatement n, Writer w) {
+    public boolean visit(ExpressionStatement n) {
         n.getExpression().accept(exprVisitor);
         w.append(";");
         return false;
     }
 
     @Override
-    public Object visit(IfStatement n, Writer w) {
+    public boolean visit(IfStatement n) {
         w.append("if(");
         n.getExpression().accept(exprVisitor);//condition
         w.append(")");
@@ -81,7 +82,7 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(WhileStatement n, Writer w) {
+    public boolean visit(WhileStatement n) {
         w.append("while(");
         n.getExpression().accept(exprVisitor);
         w.append(") ");
@@ -90,7 +91,7 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(ForStatement n, Writer w) {
+    public boolean visit(ForStatement n) {
         w.append("for(");
 
         for (Iterator<Expression> iterator = n.initializers().iterator(); iterator.hasNext(); ) {
@@ -118,7 +119,7 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(EnhancedForStatement n, Writer w) {
+    public boolean visit(EnhancedForStatement n) {
         w.append("for(");
         n.getParameter().accept(exprVisitor);
         w.append(":");
@@ -129,7 +130,7 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(ReturnStatement n, Writer w) {
+    public boolean visit(ReturnStatement n) {
         w.append("return");
         if (n.getExpression() != null) {
             w.append(" ");
@@ -140,7 +141,35 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(TryStatement n, Writer w) {
+    public boolean visit(SwitchStatement node) {
+        w.append("switch(");
+        node.getExpression().accept(exprVisitor);
+        w.append(")");
+        for (Statement statement : (List<Statement>) node.statements()) {
+            statement.accept(this);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean visit(SwitchCase node) {
+        if (node.isDefault()) {
+            w.append("default");
+
+        }
+        else {
+            w.append("case ");
+            for (Expression expression : (List<Expression>) node.expressions()) {
+                expression.accept(exprVisitor);
+            }
+        }
+
+
+        return false;
+    }
+
+    @Override
+    public boolean visit(TryStatement n) {
         TryHelper helper = new TryHelper(exprVisitor, this);
 
         if (n.getFinally() != null) {
@@ -155,11 +184,40 @@ public class StatementVisitor extends GenericVisitor<Object, Writer> {
     }
 
     @Override
-    public Object visit(ThrowStatement n, Writer w) {
+    public boolean visit(ThrowStatement n) {
         w.append("throw ");
         n.getExpression().accept(exprVisitor);
+        w.append(";");
         return false;
     }
+
+    //type name=value,name2=value2...
+    @Override
+    public boolean visit(VariableDeclarationStatement node) {
+        //w.append("var.decl.stmt ");
+        boolean first = true;
+        CType type = typeVisitor.visitType(node.getType(), method);
+        type.isTemplate = false;
+        for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
+            if (first) {
+                first = false;
+                w.append(type);
+                w.append(" ");
+            }
+            else {
+                w.append(",");
+            }
+            w.append(frag.getName().getIdentifier());
+            if (frag.getInitializer() != null) {
+                w.append(" = ");
+                //w.append("#init=" + frag.getInitializer().getClass());
+                frag.getInitializer().accept(exprVisitor);
+            }
+        }
+        w.append(";");
+        return false;
+    }
+
     /*
     public Object visit(ExplicitConstructorInvocationStmt n, Writer w) {
         Writer p = new Writer();

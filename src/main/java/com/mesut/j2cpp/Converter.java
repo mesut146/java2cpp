@@ -5,8 +5,11 @@ import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.visitor.MainVisitor;
 import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.internal.core.nd.indexer.HierarchicalASTVisitor;
 
 import java.io.File;
 import java.io.IOException;
@@ -226,9 +229,10 @@ public class Converter {
             CSource cpp = new CSource(header);
 
 
-            HeaderWriter headerWriter = new HeaderWriter(cu);
-            headerWriter.write();
+            /*HeaderWriter headerWriter = new HeaderWriter(cu);
+            headerWriter.write();*/
 
+            //make header
             MainVisitor visitor = new MainVisitor(this, header);
             cu.accept(visitor);
             //cu.types().forEach(type -> visitor.visit(type));
@@ -237,8 +241,8 @@ public class Converter {
             String source_str = cpp.toString();
 
             if (debug_output) {
-                System.out.println(header_str);
-                System.out.println("---------------");
+                //System.out.println(header_str);
+                //System.out.println("---------------");
                 System.out.println(source_str);
             }
 
@@ -264,6 +268,11 @@ public class Converter {
         parser.setSource(Util.read(file).toCharArray());
         parser.setUnitName(file.getPath());
         return (CompilationUnit) parser.createAST(null);
+    }
+
+    public void printNode(ASTNode node, StringBuilder sb) {
+        sb.append(node.getClass());
+        sb.append(" ");
     }
 
 }

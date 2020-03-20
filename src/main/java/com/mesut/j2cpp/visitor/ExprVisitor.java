@@ -31,10 +31,6 @@ public class ExprVisitor extends ASTVisitor {
         this.w = method.bodyWriter;
     }
 
-    /*public boolean visit(SimpleName n) {
-        return new CType(n.getIdentifier());
-    }*/
-
     public void args(List<Expression> expressions, Writer w) {
         w.append("(");
         for (int i = 0; i < expressions.size(); i++) {
@@ -44,6 +40,13 @@ public class ExprVisitor extends ASTVisitor {
             }
         }
         w.append(")");
+    }
+
+    @Override
+    public boolean visit(SimpleName n) {
+        //w.append("#simple.name " + n.isDeclaration() + "," + n.isVar() + " ");
+        w.append(n.getIdentifier());
+        return false;
     }
 
     @Override
@@ -151,6 +154,7 @@ public class ExprVisitor extends ASTVisitor {
         return false;
     }
 
+
     //new Base.Inner(args...){body}
     /*public Object visit(ObjectCreationExpr n, Writer w) {
         if (n.getScope().isPresent()) {
@@ -176,14 +180,30 @@ public class ExprVisitor extends ASTVisitor {
         return null;
     }*/
 
+    //expr.new type(args)
+    @Override
+    public boolean visit(ClassInstanceCreation node) {
+        if (node.getExpression() != null) {
+
+        }
+        w.append("new ");
+        CType type = typeVisitor.visitType(node.getType(), method);
+        w.append(type);
+        args(node.arguments(), w);
+        return false;
+    }
+
     //Type name=value
-    public boolean visit(VariableDeclarationExpression n) {
-        /*boolean first = true;
-        for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
+    @Override
+    public boolean visit(VariableDeclarationExpression node) {
+        //mostly in for
+        //w.append("var.decl.expr ");
+        boolean first = true;
+        CType type = typeVisitor.visitType(node.getType(), method);
+        type.isTemplate = false;
+        for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
             if (first) {
                 first = false;
-                CType type = typeVisitor.visitType(frag.get, method);
-                type.isTemplate = false;
                 w.append(type);
                 w.append(" ");
             }
@@ -193,9 +213,9 @@ public class ExprVisitor extends ASTVisitor {
             w.append(frag.getName().getIdentifier());
             if (frag.getInitializer() != null) {
                 w.append(" = ");
-                visit(frag.getInitializer(), w);
+                frag.getInitializer().accept(this);
             }
-        }*/
+        }
         return false;
     }
 
@@ -208,32 +228,49 @@ public class ExprVisitor extends ASTVisitor {
         return false;
     }
 
-    /*public boolean visit(BinaryExpression n, Writer w) {
-        n.getLeft().accept(this, w);
+    @Override
+    public boolean visit(InfixExpression node) {
+        node.getLeftOperand().accept(this);
         w.append(" ");
-        w.append(n.getOperator().asString());
+        w.append(node.getOperator().toString());
         w.append(" ");
-        n.getRight().accept(this, w);
+        node.getRightOperand().accept(this);
         return false;
     }
 
-    public Object visit(UnaryExpression n, Writer w) {
-        if (n.isPostfix()) {
-            n.getExpression().accept(this, w);
-            w.append(n.getOperator().asString());
+    @Override
+    public boolean visit(PostfixExpression node) {
+        node.getOperand().accept(this);
+        w.append(node.getOperator().toString());
+        return false;
+    }
+
+    @Override
+    public boolean visit(PrefixExpression node) {
+        w.append(node.getOperator().toString());
+        node.getOperand().accept(this);
+        return false;
+    }
+
+    /*@Override
+    public boolean visit(SwitchExpression node) {
+        w.append("switch(");
+        node.getExpression().accept(this);
+        w.append(")");
+        for(Statement statement:(List<Statement>)node.statements()){
+            //statement.accept();
         }
-        else {
-            w.append(n.getOperator().asString());
-            n.getExpression().accept(this, w);
-        }
-        return null;
+        return false;
     }*/
 
+
+    @Override
     public boolean visit(NullLiteral n) {
         w.append("nullptr");
         return false;
     }
 
+    @Override
     public boolean visit(NumberLiteral n) {
         w.append(n.getToken());
         return false;
@@ -273,11 +310,11 @@ public class ExprVisitor extends ASTVisitor {
     }
 
 
-    public Object visit(StringLiteral n, Writer w) {
+    public boolean visit(StringLiteral n) {
         w.append("new java::lang::String(\"");
         w.append(n.getLiteralValue());
         w.append("\")");
-        return null;
+        return false;
     }
 
     @Override
@@ -338,8 +375,8 @@ public class ExprVisitor extends ASTVisitor {
         return false;
     }
 
-    public boolean visit(Name n) {
-        w.append(n.toString());
+    /*public boolean visit(Name node) {
+        w.append(node.toString());
         return false;
-    }
+    }*/
 }
