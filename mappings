@@ -1,0 +1,17 @@
+#List to vector
+  add -> push_back
+  get -> at
+  size -> size
+  isEmpty -> empty
+
+#String to string
+  substring(i,j) -> substr(i,len - j)
+  indexOf(s,i) -> find(s,i)
+
+
+#Array to vector
+
+#Set to unordered_set
+  put(k,v) -> [k]=v
+  get(k) -> [k]
+  size() -> size()

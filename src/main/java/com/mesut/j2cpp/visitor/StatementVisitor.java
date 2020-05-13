@@ -146,16 +146,15 @@ public class StatementVisitor extends ASTVisitor {
         node.getExpression().accept(exprVisitor);
         w.append(")");
         for (Statement statement : (List<Statement>) node.statements()) {
-            statement.accept(this);
+            //statement.accept(this);
         }
         return false;
     }
 
     @Override
     public boolean visit(SwitchCase node) {
-        if (node.isDefault()) {
-            w.append("default");
-
+        if (node.expressions() == null || node.expressions().isEmpty()) {
+            w.append("default:");
         }
         else {
             w.append("case ");
@@ -163,7 +162,6 @@ public class StatementVisitor extends ASTVisitor {
                 expression.accept(exprVisitor);
             }
         }
-
 
         return false;
     }

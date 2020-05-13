@@ -20,7 +20,8 @@ public class TryHelper {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     public void with_finally(TryStatement node, Writer w) {
         CMethod method = statementVisitor.method;
-        if (method.getType().isVoid() || method.isCons) {
+        //System.out.println("finally " + method.dump());
+        if (method.isCons || method.getType().isVoid()) {
             with_void(node, w);
             return;
         }

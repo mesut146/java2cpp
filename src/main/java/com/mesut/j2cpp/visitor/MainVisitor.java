@@ -66,7 +66,7 @@ public class MainVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(TypeDeclaration node) {
-
+        System.out.println("type.decl=" + node.getName());
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
@@ -163,6 +163,9 @@ public class MainVisitor extends ASTVisitor {
             cf.name = frag.getName().getIdentifier();
             cf.setPublic(Modifier.isPublic(n.getModifiers()));
             cf.setStatic(Modifier.isStatic(n.getModifiers()));
+            if (last().isInterface) {
+                cf.setPublic(true);
+            }
             if (frag.getInitializer() != null) {
                 Writer nw = new Writer();
                 exprVisitor.w = nw;
@@ -175,16 +178,16 @@ public class MainVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(MethodDeclaration n) {
-        //System.out.println("method.decl=" + n.getName());
+        System.out.println("method.decl=" + n.getReturnType2() + " " + n.getName() + "()");
         CMethod method = new CMethod();
         last().addMethod(method);
 
         n.typeParameters().forEach(temp -> method.template.add(new CType(temp.toString())));
         method.isCons = n.isConstructor();
         //type could be template
-        if (!n.isConstructor()) {
+        if (!n.isConstructor() && n.getReturnType2() != null) {//todo rt2 is null sometimes
             method.type = typeVisitor.visitType(n.getReturnType2(), method);
-            //System.out.println("name=" + n.getName() + " type=" + method.type);
+            //System.out.println("name=" + n.getName() + " type=" + n.getReturnType2());
         }
 
         method.name = n.getName().getIdentifier();
@@ -192,7 +195,9 @@ public class MainVisitor extends ASTVisitor {
         method.setStatic(Modifier.isStatic(n.getModifiers()));
         method.setPublic(Modifier.isPublic(n.getModifiers()));
         method.setNative(Modifier.isNative(n.getModifiers()));
-
+        if (last().isInterface) {
+            method.setPublic(true);
+        }
 
         for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) n.parameters()) {
             CParameter cp = new CParameter();

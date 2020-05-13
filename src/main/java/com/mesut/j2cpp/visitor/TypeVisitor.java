@@ -8,30 +8,30 @@ import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
 import org.eclipse.jdt.core.dom.*;
 
+import java.util.List;
+
 //visit types and ensures type is included
-public class TypeVisitor extends ASTVisitor {
+public class TypeVisitor {
 
     Converter converter;
     CHeader header;
-    CType type;
+    //CType type;
 
     public TypeVisitor(Converter converter, CHeader header) {
         this.converter = converter;
         this.header = header;
     }
 
-    public boolean visit(PrimitiveType n) {
-        type = new CType(Helper.toCType(n.toString()));
-        return false;
+    public CType visit(PrimitiveType n) {
+        CType type = new CType(Helper.toCType(n.toString()));
+        return type;
     }
 
     CType fromBinding(ITypeBinding binding) {
+        CType type;
+
         if (binding.isTypeVariable()) {
             type = new CType(binding.getName());
-            //System.out.printf("name=%s bin=%s qua=%s \n", binding.getName(),binding.getBinaryName(),binding.getQualifiedName());
-            /*System.out.printf("bin=%s generic=%s raw=%s local=%s nested=%s typevar=%s prmtzd=%s\n",
-                    bin, binding.isGenericType(), binding.isRawType(), binding.isLocal(), binding.isNested(), binding.isTypeVariable(),binding.isParameterizedType());
-        */
         }
         else {
             String bin = binding.getBinaryName();
@@ -46,9 +46,9 @@ public class TypeVisitor extends ASTVisitor {
 
             type = new CType(name.replace(".", "::"));
 
-            for (ITypeBinding tp : binding.getTypeArguments()) {
+            /*for (ITypeBinding tp : binding.getTypeArguments()) {
                 type.typeNames.add(fromBinding(tp));
-            }
+            }*/
 
             if (!binding.isGenericType() && !binding.isNested()) {
                 header.addInclude(name.replace(".", "/"));//inner classes too?
@@ -57,87 +57,67 @@ public class TypeVisitor extends ASTVisitor {
         return type;
     }
 
-    @Override
-    public boolean visit(SimpleType node) {
+    public CType visit(SimpleType node) {
         //resolve
         ITypeBinding binding = node.resolveBinding();
-        /*System.out.println("simple.type bin=" + binding.getBinaryName() +
-                " qua=" + binding.getQualifiedName());*/
-        type = fromBinding(binding);
-        return false;
+        //System.out.println("type=" + node + " bind=" + binding);
+        if (binding == null) {
+            return new CType(node.getName().getFullyQualifiedName());
+        }
+        CType type = fromBinding(binding);
+        return type;
     }
 
-    public boolean visit(ArrayType n) {
-        n.getElementType().accept(this);
-        //System.out.println("arr.type=" + n.getElementType().getClass());
+    public CType visit(ArrayType n) {
+        CType type = visit(n.getElementType());
         type = type.copy();
         type.dimensions = n.getDimensions();
-        return false;
+        return type;
     }
 
-    @Override
-    public boolean visit(WildcardType n) {
+    public CType visit(WildcardType n) {
         //<?>
-        type = new CType("java::lang::Object");
-        return false;
+        CType type = new CType("java::lang::Object");
+        return type;
     }
 
-    public boolean visit(ParameterizedType type) {
-        type.getType().accept(this);
-        /*for (Type param : (List<Type>) type.typeArguments()) {
-
-        }*/
-        return false;
+    public CType visit(ParameterizedType n) {
+        //System.out.println("p.type=" + n.getType() + " " + n.typeArguments());
+        CType type = visit(n.getType());
+        for (Type param : (List<Type>) n.typeArguments()) {
+            type.typeNames.add(visit(param));
+        }
+        return type;
     }
 
     //resolve type in a method,method type,param type,local type
     public CType visitType(Type type, CMethod method) {
-        //System.out.println("m.type=" + type.getClass());
-        type.accept(this);
-        /*if (type.isArrayType() || type.isParameterizedType()) {
-            type.accept(this);
-            return this.type.copy();
-        }*/
-        /*if (type.isSimpleType()) {
+        return visit(type);
+    }
 
+    public CType visit(Type type) {
+        CType cType = null;
+        if (type.isArrayType()) {
+            cType = visit((ArrayType) type);
         }
-        if (!type.isClassOrInterfaceType()) {
-            return type.accept(this, null);
+        if (type.isSimpleType()) {
+            cType = visit((SimpleType) type);
         }
-        //type could be type param,Class type reference or normal type
-        ClassOrInterfaceType ctype = type.asClassOrInterfaceType();
-        String name = ctype.getNameAsString();
-        for (CType ct : method.getTemplate().getList()) {
-            if (ct.getName().equals(name)) {
-                return ct.copy();
-            }
+        if (type.isParameterizedType()) {
+            cType = visit((ParameterizedType) type);
         }
-        for (CType ct : method.getParent().getTemplate().getList()) {
-            if (ct.getName().equals(name)) {
-                return ct.copy();
-            }
+        if (type.isWildcardType()) {
+            cType = visit((WildcardType) type);
         }
-        //it has to be declared type
-        return visit(ctype, null);*/
-        return this.type.copy();
+        if (type.isPrimitiveType()) {
+            cType = visit((PrimitiveType) type);
+        }
+        //System.out.println("type=" + type + " res=" + cType + " cls=" + type.getClass());
+        return cType;
     }
 
     //fields,methods,base class types,todo inner cls
     public CType visitType(Type type, CClass cc) {
-        //System.out.println("type=" + type.getClass() + " " + type.toString());
-        type.accept(this);
-        /*if (type.isArrayType()) {//array type
-            return visit((ArrayType) type, null).copy();
-        }
-        if (!type.isClassOrInterfaceType()) {//void or primitive
-            return type.accept(this, null);
-        }
-        for (CType ct : cc.getTemplate().getList()) {//class temptated type
-            if (ct.getName().equals(type.toString())) {
-                return ct.copy();
-            }
-        }
-        return visit(type.asClassOrInterfaceType(), null);*/
-        return this.type;
+        return visit(type);
     }
 }

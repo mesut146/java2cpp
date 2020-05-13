@@ -97,7 +97,6 @@ public class Converter {
         }
         parser.setEnvironment(cpJars.toArray(new String[0]), cpDirs.toArray(new String[0]), null, false);
 
-
         parser.setResolveBindings(true);
         parser.setBindingsRecovery(true);
         parser.setStatementsRecovery(true);
@@ -243,7 +242,7 @@ public class Converter {
             if (debug_output) {
                 //System.out.println(header_str);
                 //System.out.println("---------------");
-                System.out.println(source_str);
+                //System.out.println(source_str);
             }
 
             File header_file = new File(destDir, path.replace(".java", ".h"));

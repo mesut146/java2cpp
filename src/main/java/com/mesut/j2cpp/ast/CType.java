@@ -80,7 +80,7 @@ public class CType {
         }
         if (typeNames.size() > 0) {
             StringBuilder sb = new StringBuilder();
-            sb.append(type);
+            sb.append(full());
             sb.append("<");
             sb.append(typeNames.stream().map(CType::full).collect(Collectors.joining(",")));
             sb.append(">");

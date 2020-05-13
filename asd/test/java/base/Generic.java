@@ -10,4 +10,6 @@ public class Generic<T, V> extends ArrayList<T> {
         arr.add(obj);
         add(arr.get(0));
     }
+
+    List<String> list();
 }

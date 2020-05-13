@@ -52,7 +52,8 @@ public class CMethod extends ModifierNode {
         }
         if (parent.forHeader) {
             append(";");
-        } else {
+        }
+        else {
             if (call != null) {
                 append(":");
                 append(call.str);
@@ -93,5 +94,8 @@ public class CMethod extends ModifierNode {
         append(")");
     }
 
+    public String dump() {
+        return getType() + " " + getName() + "()";
+    }
 
 }

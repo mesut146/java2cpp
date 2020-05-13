@@ -63,12 +63,11 @@ public class ExprVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(MethodInvocation n) {
-
         if (n.getExpression() != null) {//scope
             Expression scope = n.getExpression();
             scope.accept(this);
 
-            if (scope instanceof Name) {//field or class
+            if (scope instanceof Name) {//field or class or variable
                 String scopeName = ((Name) scope).getFullyQualifiedName();
                 if (scopeName.equals("this")) {
                     w.append("->");
@@ -76,9 +75,10 @@ public class ExprVisitor extends ASTVisitor {
                     args((List<Expression>) n.arguments(), w);
                     return false;
                 }
-                IMethodBinding binding = n.resolveMethodBinding();
 
-                if (Modifier.isStatic(binding.getModifiers())) {
+                IMethodBinding binding = n.resolveMethodBinding();
+                //System.out.println("call " + scopeName + " " + n.getName() + " " + scope.resolveTypeBinding());
+                if (binding != null && Modifier.isStatic(binding.getModifiers())) {
                     w.append("::");
                 }
                 else {
@@ -279,12 +279,12 @@ public class ExprVisitor extends ASTVisitor {
     @Override
     public boolean visit(CharacterLiteral n) {
         String str = n.getEscapedValue();
-        if (str.startsWith("\\u")) {
+        /*if (str.startsWith("\\u")) {
             w.append("u");
-        }
-        w.append("'");
+        }*/
+        //w.append("'");//str already has quotes
         w.append(str);
-        w.append("'");
+        //w.append("'");
         return false;
     }
 
