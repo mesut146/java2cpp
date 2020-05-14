@@ -70,10 +70,8 @@ public class MainVisitor extends ASTVisitor {
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
-            //System.out.println("type.decl=" + node.getName());
         }
         else {
-            //System.out.println("type.decl=" + node.getName() + " parent=" + last().name);
             last().addInner(cc);
         }
         stack.push(cc);
@@ -91,28 +89,29 @@ public class MainVisitor extends ASTVisitor {
             cc.base.add(baseType);
         }
 
-
         node.superInterfaceTypes().forEach(iface -> {
-            /*CType ifType = typeVisitor.visitType(iface, cc);
+            CType ifType = typeVisitor.visitType((Type) iface, cc);
             ifType.isTemplate = false;
             ifType.isPointer = false;
-            cc.base.add(ifType);*/
+            cc.base.add(ifType);
         });
-        //inner classes
-        for (TypeDeclaration member : node.getTypes()) {
-            member.accept(this);
-        }
         for (FieldDeclaration field : node.getFields()) {
             field.accept(this);
         }
         for (MethodDeclaration method : node.getMethods()) {
-            method.accept(this);
+            //method.accept(this);
+        }
+        //inner classes
+        for (TypeDeclaration member : node.getTypes()) {
+            System.out.println("inner.type=" + member.getName());
+            //member.accept(this);
         }
         stack.pop();
         return false;
     }
 
-    /*public boolean visit(EnumDeclaration n) {
+    public boolean visit(EnumDeclaration n) {
+        System.out.println("enum.decl=" + n.getName());
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
@@ -127,35 +126,37 @@ public class MainVisitor extends ASTVisitor {
         cc.name = n.getName().getFullyQualifiedName();
         cc.base.add(new CType("java::lang::Enum"));
         header.addInclude("java/lang/Enum");
-        n.getImplementedTypes().forEach(iface -> cc.base.add(iface.accept(typeVisitor, null)));
 
-        for (EnumConstantDeclaration constant : n.getEntries()) {
+        n.superInterfaceTypes().forEach(iface -> cc.base.add(typeVisitor.visit((Type) iface)));
+
+        for (EnumConstantDeclaration constant : (List<EnumConstantDeclaration>) n.enumConstants()) {
             CField cf = new CField();
             cc.addField(cf);
             cf.setPublic(true);
             cf.setStatic(true);
             cf.type = new CType(cc.name);
-            cf.name = constant.getNameAsString();
+            cf.name = constant.getName().getIdentifier();
             Writer rh = new Writer();
             rh.append("new ").append(cc.name);
 
-            exprVisitor.args(constant.getArguments(), rh);
-            if(constant.getBody()!=null){
-                throw new RuntimeException("enum body");
+            exprVisitor.args(constant.arguments(), rh);
+            if (constant.getAnonymousClassDeclaration() != null) {
+                throw new RuntimeException("enum body is not supported");
             }
             cf.right = rh.toString();
         }
-        if (!n.getMembers().isEmpty()) {
-            n.getMembers().forEach(p -> p.accept(this, null));
+        if (!n.bodyDeclarations().isEmpty()) {
+            n.bodyDeclarations().forEach(p -> ((TypeDeclaration) p).accept(this));
         }
         stack.pop();
-    }*/
+        return false;
+    }
 
     @Override
     public boolean visit(FieldDeclaration n) {
 
         CType type = typeVisitor.visitType(n.getType(), last());
-        //System.out.println("field=" + n.getType() + " resolved=" + type + " bind=" + n.getType().resolveBinding().getBinaryName());
+        System.out.println("field.decl=" + n.getType() + " " + n.fragments());
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
             CField cf = new CField();
             last().addField(cf);
@@ -176,9 +177,17 @@ public class MainVisitor extends ASTVisitor {
         return false;
     }
 
+    CClass parent() {
+        if (stack.isEmpty()) {
+            return null;
+        }
+        return last();
+    }
+
     @Override
     public boolean visit(MethodDeclaration n) {
-        System.out.println("method.decl=" + n.getReturnType2() + " " + n.getName() + "()");
+        System.out.println("method.decl=" + n.getReturnType2() + " " + n.getName() + "()" + " cons=" + n.isConstructor() + " prent=" + parent().name);
+        //System.out.println("res="+n.resolveBinding());
         CMethod method = new CMethod();
         last().addMethod(method);
 
@@ -215,28 +224,6 @@ public class MainVisitor extends ASTVisitor {
         return false;
     }
 
-    /*public void visit(ConstructorDeclaration n, Writer w) {
-        CMethod method = new CMethod();
-        last().addMethod(method);
-        method.isCons = true;
-        method.name = n.getNameAsString();
-        method.setPublic(n.isPublic());
-
-        if (!n.getTypeParameters().isEmpty()) {
-            n.getTypeParameters().forEach(temp -> method.template.add(new CType(temp.asString())));
-        }
-
-        for (Parameter parameter : n.getParameters()) {
-            CParameter cp = new CParameter();
-            cp.type = typeVisitor.visitType(parameter.getType(), method);
-            cp.type.isTemplate = false;
-            cp.name = parameter.getNameAsString();
-            method.params.add(cp);
-        }
-        method.bodyWriter.init();
-        statementVisitor.setMethod(method);
-        n.getBody().accept(statementVisitor, method.bodyWriter);
-    }*/
 
     //static block
     /*@Override

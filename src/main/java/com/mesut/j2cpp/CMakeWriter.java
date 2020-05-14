@@ -31,14 +31,15 @@ public class CMakeWriter {
             sb.append(target.isShared ? "SHARED" : "STATIC");
             sb.append("\n");
             for (String src : target.sourceFiles) {
+                sb.append("  ");//indention
                 sb.append(src);
                 sb.append("\n");
             }
             sb.append(")\n");
             sb.append("target_include_directories(");
-            sb.append(target.name).append("\n");
-            sb.append("${CMAKE_SOURCE_DIR}\n");
+            sb.append(target.name).append(" ${CMAKE_SOURCE_DIR}\n");
             for (String dir : target.includeDirs) {
+                sb.append("  ");//indent
                 sb.append(dir);
                 sb.append("\n");
             }

@@ -30,22 +30,22 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.0</version>
             </plugin>
-<plugin>
-  <groupId>org.codehaus.mojo</groupId>
-  <artifactId>exec-maven-plugin</artifactId>
-  <version>1.2.1</version>
-  <executions>
-    <execution>
-      <goals>
-        <goal>java</goal>
-      </goals>
-    </execution>
-  </executions>
-  <configuration>
-    <mainClass>com.mesut.j2cpp.Main</mainClass>
-    
-  </configuration>
-</plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>com.mesut.j2cpp.Main</mainClass>
+
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -59,7 +59,7 @@
         <dependency>
             <groupId>org.eclipse.jdt</groupId>
             <artifactId>org.eclipse.jdt.core</artifactId>
-            <version>3.20.0</version>
+            <version>3.21.0</version>
         </dependency>
 
         <dependency>

@@ -144,10 +144,12 @@ public class StatementVisitor extends ASTVisitor {
     public boolean visit(SwitchStatement node) {
         w.append("switch(");
         node.getExpression().accept(exprVisitor);
-        w.append(")");
+        w.append("){");
         for (Statement statement : (List<Statement>) node.statements()) {
+            //cases
             //statement.accept(this);
         }
+        w.appendln("}");
         return false;
     }
 
@@ -161,6 +163,8 @@ public class StatementVisitor extends ASTVisitor {
             for (Expression expression : (List<Expression>) node.expressions()) {
                 expression.accept(exprVisitor);
             }
+            w.appendln(":");
+
         }
 
         return false;

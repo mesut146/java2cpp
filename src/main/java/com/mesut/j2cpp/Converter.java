@@ -8,10 +8,9 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.eclipse.jdt.internal.core.nd.indexer.HierarchicalASTVisitor;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -105,10 +104,10 @@ public class Converter {
     public void convert() {
         try {
             convertDir(new File(srcDir), "");
+            writeCmake();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         System.out.println("conversion done");
     }
 
@@ -233,7 +232,8 @@ public class Converter {
 
             //make header
             MainVisitor visitor = new MainVisitor(this, header);
-            cu.accept(visitor);
+            //cu.accept(visitor);
+            System.out.println(cu.types().get(0));
             //cu.types().forEach(type -> visitor.visit(type));
 
             String header_str = header.toString();
@@ -272,6 +272,15 @@ public class Converter {
     public void printNode(ASTNode node, StringBuilder sb) {
         sb.append(node.getClass());
         sb.append(" ");
+    }
+
+    public void writeCmake() throws IOException {
+        String src = cMakeWriter.generate();
+        File file = new File(destDir, "CMakeLists.txt");
+        FileWriter writer = new FileWriter(file);
+        writer.write(src);
+        writer.close();
+        System.out.println("cmake generation done");
     }
 
 }

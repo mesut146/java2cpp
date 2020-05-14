@@ -47,6 +47,7 @@ public class Main {
 
             //cls = "java/lang/Class.java";
             //cls = "com/android/dx/command/Main.java";
+            cls = "com/android/dex/MethodHandle.java";
             //cls = "com/android/multidex/FolderPathElement.java";
             //cls = "com/android/multidex/ClassPathElement.java";
             if (args.length > 0 && args[0].equals("tree")) {
@@ -54,8 +55,9 @@ public class Main {
                 return;
             }
             converter.initParser();
-            //converter.convertSingle(cls);
-            converter.convert();
+            converter.convertSingle(cls);
+            //converter.convert();
+
 
         } catch (Exception e) {
             e.printStackTrace();
