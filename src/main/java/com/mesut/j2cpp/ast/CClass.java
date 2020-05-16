@@ -91,7 +91,7 @@ public class CClass extends Node {
             appendIndent(staticBlock);
             println();
         }
-
+        //public fields
         List<CField> fpub = fields.stream().filter(CField::isPublic).collect(Collectors.toList());
         if (fpub.size() > 0) {
             line("public:");
@@ -102,6 +102,7 @@ public class CClass extends Node {
             }
             down();
         }
+        //private fields
         List<CField> fpriv = fields.stream().filter(CField::isPrivate).collect(Collectors.toList());
         if (fpriv.size() > 0) {
             line("private:");
@@ -112,8 +113,8 @@ public class CClass extends Node {
             }
             down();
         }
-
         println();
+        //public methods
         List<CMethod> mpub = methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
         if (mpub.size() > 0) {
             line("public:");
@@ -124,6 +125,7 @@ public class CClass extends Node {
             }
             down();
         }
+        //private methods
         List<CMethod> mpriv = methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
         if (mpriv.size() > 0) {
             line("private:");
@@ -135,6 +137,7 @@ public class CClass extends Node {
             down();
         }
         println();
+        //inner classes
         for (CClass cc : classes) {
             setTo(cc);
             append(cc);
@@ -150,7 +153,7 @@ public class CClass extends Node {
 
     public void printDestructor() {
         //todo
-        append("~").append(name).append("(){}");
+        append("virtual ~").append(name).append("(){}");
     }
 
     //return this class as type ,in hierarchy ,e.g org::MyClass::Inner::inner_field

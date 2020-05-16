@@ -72,6 +72,10 @@ public class CMethod extends ModifierNode {
             if (parent.isInterface) {
                 append("virtual ");
             }
+            if (type == null) {
+                System.out.println("method is null " + name + "(" + params + ") parent=" + parent.getNamespaceFull());
+                //System.exit(0);
+            }
             append(type.toString());
             /*if (isPointer()) {
                 append("*");

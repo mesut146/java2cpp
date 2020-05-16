@@ -55,8 +55,12 @@ public class Main {
                 return;
             }
             converter.initParser();
-            converter.convertSingle(cls);
-            //converter.convert();
+            converter.setDebugAll(true);
+            converter.debug_source = false;
+            converter.debug_header = false;
+
+            //converter.convertSingle(cls);
+            converter.convert();
 
 
         } catch (Exception e) {

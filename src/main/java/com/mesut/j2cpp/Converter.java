@@ -4,6 +4,7 @@ package com.mesut.j2cpp;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.visitor.MainVisitor;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -16,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class Converter {
@@ -38,8 +40,11 @@ public class Converter {
     //public SymbolResolver symbolResolver;
     public CMakeWriter cMakeWriter;
     public CMakeWriter.Target target;
-    public boolean debug_output = true;
+    public boolean debug_header = false, debug_source = false;
+    public boolean debug_fields = false;
+    public boolean debug_methods = false;
     ASTParser parser;
+    int count = 0;
 
     public Converter(String srcDir, String destDir) {
         this.srcDir = srcDir;
@@ -99,114 +104,48 @@ public class Converter {
         parser.setResolveBindings(true);
         parser.setBindingsRecovery(true);
         parser.setStatementsRecovery(true);
+
+        Map options = JavaCore.getOptions();
+        String ver = JavaCore.VERSION_13;
+        options.put(JavaCore.COMPILER_COMPLIANCE, ver);
+        options.put(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, ver);
+        options.put(JavaCore.COMPILER_SOURCE, ver);
+        //options.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES,"true");
+        parser.setCompilerOptions(options);
+    }
+
+    public void setDebugAll(boolean val){
+        debug_header=val;
+        debug_source=val;
+        debug_fields=val;
+        debug_methods=val;
     }
 
     public void convert() {
         try {
-            convertDir(new File(srcDir), "");
+            convertDir(new File(srcDir));
             writeCmake();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("conversion done");
+        System.out.println("conversion done for " + count + " files");
     }
 
-    void convertDir(File dir, String str) throws IOException {
+    void convertDir(File dir) throws IOException {
         for (File file : Objects.requireNonNull(dir.listFiles())) {
             if (file.isDirectory()) {
-                convertDir(file, str);
+                convertDir(file);
             }
             else if (file.getName().endsWith(".java")) {
                 parser.setSource(Util.read(file).toCharArray());
                 parser.setUnitName(file.getPath());
                 CompilationUnit unit = (CompilationUnit) parser.createAST(null);
-
                 convertSingle(Util.relative(file.getAbsolutePath(), srcDir), unit);
+                count++;
             }
         }
     }
 
-
-
-    /*public void makeTable() throws IOException {
-        table = new SymbolTable();
-        resolver = new Resolver(table);
-        File dir = new File(srcDir);
-        units = new ArrayList<>();
-
-        tableDir(dir, null);
-        System.out.println("total " + units.size() + " classes");
-        for (PackageNode node : packageHierarchy) {
-            System.out.println(node);
-        }
-        /*for (Symbol s:table.list) {
-            System.out.println(s.name+" , "+s.pkg);
-        }
-    }*/
-
-    //walk in source directory,parse all files and add classes to symbol table
-    //useful for converting directory
-    /*void tableDir(File dir, PackageNode node) {
-        System.out.println("entering dir=" + dir);
-
-        for (File file : dir.listFiles()) {
-            if (file.isFile()) {
-                if (file.getName().endsWith(".java")) {
-                    try {
-                        CompilationUnit cu = javaParser.parse(file).getResult().get();
-                        units.add(new UnitMap(cu, file.getName()));
-                        // cu,pkg,name
-                        for (TypeDeclaration<?> type : cu.getTypes()) {
-                            if (type.isClassOrInterfaceDeclaration()) {
-                                tableClass(type, cu);
-                            }
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            else {
-            //dir
-                PackageNode sub;
-                if (node == null) {
-                    sub = new PackageNode(file.getName());
-                    packageHierarchy.add(sub);
-                } else {
-                    sub = node.addSub(file.getName());
-                }
-                if (includeDirs.isEmpty()) {
-                    tableDir(file, null);
-                }
-                else {
-                    for (PackageName packageName : includeDirs) {
-                        if (packageName.isSub(file.getAbsolutePath().substring(srcDir.length() + 1))) {
-                            tableDir(file, null);
-                        }
-                    }
-                }
-            }
-        }
-    }*/
-
-    //add class unit as symbol to table
-    /*void tableClass(TypeDeclaration<?> type, CompilationUnit cu) {
-        if (cu.getPackageDeclaration().isPresent()) {
-            table.addSymbol(cu.getPackageDeclaration().get().getNameAsString(), type.getNameAsString());
-        }
-        else {
-            table.addSymbol("", type.getNameAsString());//no package
-        }
-        type.getMembers().forEach(m -> {
-            if (m.isClassOrInterfaceDeclaration()) {
-                tableClass(m.asClassOrInterfaceDeclaration(), cu);
-            }
-        });
-        type.getMembers()//java8
-                .stream()
-                .filter(BodyDeclaration::isClassOrInterfaceDeclaration)
-                .forEach(m -> tableClass(m.asClassOrInterfaceDeclaration(), cu));
-    }*/
 
     String getPath(CompilationUnit cu) {
         if (cu.getPackage() != null) {
@@ -232,17 +171,20 @@ public class Converter {
 
             //make header
             MainVisitor visitor = new MainVisitor(this, header);
-            //cu.accept(visitor);
-            System.out.println(cu.types().get(0));
-            //cu.types().forEach(type -> visitor.visit(type));
+            cu.accept(visitor);
+            //System.out.println(cu);
 
             String header_str = header.toString();
             String source_str = cpp.toString();
 
-            if (debug_output) {
-                //System.out.println(header_str);
-                //System.out.println("---------------");
-                //System.out.println(source_str);
+            if (debug_header) {
+                System.out.println(header_str);
+
+            }
+            if (debug_source) {
+                if (debug_header)
+                    System.out.println("---------------");
+                System.out.println(source_str);
             }
 
             File header_file = new File(destDir, path.replace(".java", ".h"));
@@ -266,6 +208,7 @@ public class Converter {
     CompilationUnit parse(File file) throws IOException {
         parser.setSource(Util.read(file).toCharArray());
         parser.setUnitName(file.getPath());
+        parser.setKind(ASTParser.K_COMPILATION_UNIT);
         return (CompilationUnit) parser.createAST(null);
     }
 
