@@ -15,3 +15,10 @@
   put(k,v) -> [k]=v
   get(k) -> [k]
   size() -> size()
+
+#StringBuilder to ?
+
+#ByteArrayOutputStream
+#File to ?
+#FileInputStream to fstream
+#FileInputStream to fstream

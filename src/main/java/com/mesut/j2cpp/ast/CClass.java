@@ -7,14 +7,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CClass extends Node {
+
     public String name;
     public List<CType> base = new ArrayList<>();
     public Template template = new Template();
     public List<CField> fields = new ArrayList<>();
     public List<CMethod> methods = new ArrayList<>();
     public List<CClass> classes = new ArrayList<>();
-    public boolean isInterface = false, isEnum = false;
-    public CClass parent;
+    public boolean isInterface = false;
+    public boolean isEnum = false;
+    public CClass parent;//outer
     public Namespace ns = null;
     public boolean forHeader = true;
     public Writer staticBlock = null;
@@ -55,7 +57,8 @@ public class CClass extends Node {
         if (parent != null) {
             str = parent.getNamespace().all + "::";
             n.fromPkg(str);
-        } else if (ns != null) {
+        }
+        else if (ns != null) {
             n.fromPkg(ns.all + "::" + name);
         }
         return n;
@@ -72,6 +75,8 @@ public class CClass extends Node {
             println();
             append(template.toString());
         }
+        if (isInterface)
+            line("/*interface*/");
         line("class ");
         append(name);
         if (base.size() > 0) {

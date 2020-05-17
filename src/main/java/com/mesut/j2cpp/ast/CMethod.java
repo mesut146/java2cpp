@@ -6,16 +6,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CMethod extends ModifierNode {
+
     public String name;
     public CType type;//return type
     public Template template = new Template();
     public List<CParameter> params = new ArrayList<>();
-    public List<String> throwList = new ArrayList<>();
-    public boolean empty = false;
-    public boolean isCons = false;
+    public boolean isCons = false;//is constructor
     public boolean isOverride = false;//is necessary in c++?
     public CClass parent;
-    public Call call;
+    public Call call;//super call
     public Writer bodyWriter = new Writer();
 
     public CClass getParent() {
@@ -65,17 +64,18 @@ public class CMethod extends ModifierNode {
     }
 
     public void printDecl() {
-        if (!isCons) {
+        //some enums have null type for some reason
+        if (!isCons && type!=null) {
             if (isStatic()) {
                 append("static ");
             }
             if (parent.isInterface) {
                 append("virtual ");
             }
-            if (type == null) {
+            /*if (type == null) {
                 System.out.println("method is null " + name + "(" + params + ") parent=" + parent.getNamespaceFull());
-                //System.exit(0);
-            }
+                System.exit(0);
+            }*/
             append(type.toString());
             /*if (isPointer()) {
                 append("*");

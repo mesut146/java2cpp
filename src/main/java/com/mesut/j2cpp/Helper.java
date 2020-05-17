@@ -1,11 +1,11 @@
 package com.mesut.j2cpp;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 public class Helper {
+
     static List<String> java_prims = Arrays.asList("byte", "char", "short", "float", "int", "double", "long", "boolean");
     static List<String> c_prims = Arrays.asList("char", "char16_t", "float", "int", "double", "long", "bool");
     static List<String> java_wr = Arrays.asList("Byte", "Character", "Short", "Float", "Integer", "Double", "Long", "Boolean");

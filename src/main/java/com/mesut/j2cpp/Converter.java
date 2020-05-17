@@ -165,14 +165,12 @@ public class Converter {
             CHeader header = new CHeader(path.substring(0, path.length() - 4) + "h");
             CSource cpp = new CSource(header);
 
-
             /*HeaderWriter headerWriter = new HeaderWriter(cu);
             headerWriter.write();*/
 
-            //make header
+            //make .h and .cpp
             MainVisitor visitor = new MainVisitor(this, header);
             cu.accept(visitor);
-            //System.out.println(cu);
 
             String header_str = header.toString();
             String source_str = cpp.toString();

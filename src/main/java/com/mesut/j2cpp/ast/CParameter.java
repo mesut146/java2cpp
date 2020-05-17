@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.ast;
 
 public class CParameter extends Node {
+
     public CType type;
     public String name;
     //public boolean isPointer=true;

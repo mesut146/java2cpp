@@ -24,10 +24,10 @@ public class Main {
             }
             else {
                 rt = "/home/mesut/Desktop/rt7.jar";
-                srcPath = "/home/mesut/Desktop/dx-org";
-                destPath = "/home/mesut/Desktop/dx-cpp";
-                //srcPath = "/home/mesut/Desktop/src7";
-                //destPath = "/home/mesut/Desktop/src7-cpp";
+                //srcPath = "/home/mesut/Desktop/dx-org";
+                //destPath = "/home/mesut/Desktop/dx-cpp";
+                srcPath = "/home/mesut/Desktop/src7";
+                destPath = "/home/mesut/Desktop/src7-cpp";
                 //cls = "org/jcp/xml/dsig/internal/dom/Utils.java";
                 //srcPath = "/home/mesut/IdeaProjects/java2cpp/asd/test/java";
                 //destPath = "/home/mesut/IdeaProjects/java2cpp/asd/test/cpp";
@@ -45,9 +45,9 @@ public class Main {
             //converter.addInclude("java/io");
             //converter.addInclude("java/nio");
 
-            //cls = "java/lang/Class.java";
+            cls = "java/lang/Class.java";
             //cls = "com/android/dx/command/Main.java";
-            cls = "com/android/dex/MethodHandle.java";
+            //cls = "com/android/dex/MethodHandle.java";
             //cls = "com/android/multidex/FolderPathElement.java";
             //cls = "com/android/multidex/ClassPathElement.java";
             if (args.length > 0 && args[0].equals("tree")) {
@@ -55,9 +55,9 @@ public class Main {
                 return;
             }
             converter.initParser();
-            converter.setDebugAll(true);
-            converter.debug_source = false;
-            converter.debug_header = false;
+            converter.setDebugAll(false);
+            //converter.debug_source = false;
+            //converter.debug_header = false;
 
             //converter.convertSingle(cls);
             converter.convert();
