@@ -79,6 +79,12 @@ public class CHeader extends Node {
             include("Helper");
         }
         println();
+        if (ns != null) {
+            line("namespace ");
+            append(ns.all);
+            appendln("{");
+            up();
+        }
         for (Namespace use : using) {
             print_using(use);
         }
@@ -87,12 +93,11 @@ public class CHeader extends Node {
             cc.forHeader = true;
             append(cc);
         }
+        if (ns != null) {
+            down();
+            lineln("}//namespace " + ns.all);
+        }
     }
-    
-    /*public void printSource(CSource cs){
-        cs.header=this;
-        cs.print();
-    }*/
 
     public String getInclude() {
         return rpath;

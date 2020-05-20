@@ -115,10 +115,14 @@ public class Converter {
     }
 
     public void setDebugAll(boolean val){
-        debug_header=val;
-        debug_source=val;
+        setDebugSource(val);
         debug_fields=val;
         debug_methods=val;
+    }
+
+    public void setDebugSource(boolean val){
+        debug_header=val;
+        debug_source=val;
     }
 
     public void convert() {

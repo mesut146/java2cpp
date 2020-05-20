@@ -56,11 +56,10 @@ public class Main {
             }
             converter.initParser();
             converter.setDebugAll(false);
-            //converter.debug_source = false;
-            //converter.debug_header = false;
+            converter.setDebugSource(true);
 
-            //converter.convertSingle(cls);
-            converter.convert();
+            converter.convertSingle(cls);
+            //converter.convert();
 
 
         } catch (Exception e) {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CSource extends Node {
+
     public CHeader header;
     public List<Namespace> usings = new ArrayList<>();//todo header's using instead?
 
@@ -15,12 +16,19 @@ public class CSource extends Node {
     public void print() {
         includePath(header.getInclude());
         println();
+        if (header.ns != null) {
+            append(header.ns);
+            up();
+        }
         for (Namespace use : usings) {
             print_using(use);
         }
         println();
         for (CClass cc : header.classes) {
             printClass(cc);
+        }
+        if (header.ns != null) {
+            down();
         }
     }
 

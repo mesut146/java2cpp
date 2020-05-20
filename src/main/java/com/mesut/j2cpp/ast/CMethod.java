@@ -63,6 +63,7 @@ public class CMethod extends ModifierNode {
 
     }
 
+    //for header
     public void printDecl() {
         //some enums have null type for some reason
         if (!isCons && type!=null) {
@@ -82,9 +83,9 @@ public class CMethod extends ModifierNode {
             }*/
             append(" ");
         }
-        if (!parent.forHeader && parent.ns != null) {
+        /*if (!parent.forHeader && parent.ns != null) {
             append(parent.getNamespaceFull().all + "::");
-        }
+        }*/
 
         append(name);
         append("(");

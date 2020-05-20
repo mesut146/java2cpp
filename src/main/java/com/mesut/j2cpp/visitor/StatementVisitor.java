@@ -211,7 +211,6 @@ public class StatementVisitor extends ASTVisitor {
             w.append(frag.getName().getIdentifier());
             if (frag.getInitializer() != null) {
                 w.append(" = ");
-                //w.append("#init=" + frag.getInitializer().getClass());
                 frag.getInitializer().accept(exprVisitor);
             }
         }

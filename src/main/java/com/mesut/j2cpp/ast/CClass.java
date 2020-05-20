@@ -15,12 +15,11 @@ public class CClass extends Node {
     public List<CMethod> methods = new ArrayList<>();
     public List<CClass> classes = new ArrayList<>();
     public boolean isInterface = false;
-    public boolean isEnum = false;
+    public boolean isEnum = false;//todo
     public CClass parent;//outer
     public Namespace ns = null;
     public boolean forHeader = true;
     public Writer staticBlock = null;
-    //public boolean inHeader=false;
 
     public void addInner(CClass cc) {
         cc.parent = this;
@@ -47,7 +46,7 @@ public class CClass extends Node {
         }
         str = parent.getNamespace().all + "::" + name;
         Namespace n = new Namespace();
-        n.all = (str);
+        n.all = str;
         return n;
     }
 
@@ -65,18 +64,36 @@ public class CClass extends Node {
     }
 
     public void print() {
-        if (parent == null && ns != null) {//todo move this into header print
-            line("namespace ");
-            append(ns.all);
-            appendln("{");
-            up();
+        printDecl();
+        append("{");
+        up();
+        //impl
+        if (staticBlock != null) {
+            println();
+            println();
+            appendIndent(staticBlock);
+            println();
         }
+        printFields();
+        printMethods();
+        //inner classes
+        for (CClass cc : classes) {
+            setTo(cc);
+            append(cc);
+        }
+        down();
+        lineln("};//class " + name);
+    }
+
+    private void printDecl() {
         if (!template.isEmpty()) {
             println();
             append(template.toString());
         }
-        if (isInterface)
+        if (isInterface) {
             line("/*interface*/");
+        }
+        //class decl
         line("class ");
         append(name);
         if (base.size() > 0) {
@@ -88,71 +105,45 @@ public class CClass extends Node {
                 }
             }
         }
-        append("{");
-        up();
-        if (staticBlock != null) {
-            println();
-            println();
-            appendIndent(staticBlock);
-            println();
-        }
-        //public fields
-        List<CField> fpub = fields.stream().filter(CField::isPublic).collect(Collectors.toList());
-        if (fpub.size() > 0) {
-            line("public:");
-            up();
-            for (CField cf : fpub) {
-                setTo(cf);
-                append(cf);
-            }
-            down();
-        }
-        //private fields
-        List<CField> fpriv = fields.stream().filter(CField::isPrivate).collect(Collectors.toList());
-        if (fpriv.size() > 0) {
-            line("private:");
-            up();
-            for (CField cf : fpriv) {
-                setTo(cf);
-                append(cf);
-            }
-            down();
-        }
-        println();
-        //public methods
-        List<CMethod> mpub = methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
-        if (mpub.size() > 0) {
-            line("public:");
-            up();
-            for (CMethod cm : mpub) {
-                setTo(cm);
-                append(cm);
-            }
-            down();
-        }
-        //private methods
-        List<CMethod> mpriv = methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
-        if (mpriv.size() > 0) {
-            line("private:");
-            up();
-            for (CMethod cm : mpriv) {
-                setTo(cm);
-                append(cm);
-            }
-            down();
-        }
-        println();
-        //inner classes
-        for (CClass cc : classes) {
-            setTo(cc);
-            append(cc);
-        }
-        down();
-        lineln("};//class " + name);
+    }
 
-        if (parent == null && ns != null) {
+    private void printMethods(List<CMethod> list, String modifier) {
+        if (list.size() > 0) {
+            line(modifier);
+            up();
+            for (CMethod cm : list) {
+                setTo(cm);
+                append(cm);
+            }
             down();
-            appendln("}//ns");
+        }
+    }
+
+    private void printMethods() {
+        List<CMethod> public_methods = methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
+        List<CMethod> priv_methods = methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
+        printMethods(public_methods, "public:");
+        printMethods(priv_methods, "private:");
+        println();
+    }
+
+    private void printFields() {
+        List<CField> public_fields = fields.stream().filter(CField::isPublic).collect(Collectors.toList());
+        List<CField> priv_fields = fields.stream().filter(CField::isPrivate).collect(Collectors.toList());
+        printFields(public_fields, "public:");
+        printFields(priv_fields, "private:");
+        println();
+    }
+
+    private void printFields(List<CField> list, String modifier) {
+        if (list.size() > 0) {
+            line(modifier);
+            up();
+            for (CField cf : list) {
+                setTo(cf);
+                append(cf);
+            }
+            down();
         }
     }
 
