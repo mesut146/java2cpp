@@ -3,8 +3,13 @@ package com.mesut.j2cpp.ast;
 public class CParameter extends Node {
 
     public CType type;
-    public String name;
+    public CName name;
     //public boolean isPointer=true;
+
+
+    public void setName(String name) {
+        this.name = new CName(name);
+    }
 
     public void print() {
         list.clear();
@@ -17,7 +22,7 @@ public class CParameter extends Node {
             append("*");
         }*/
         append(" ");
-        append(name);
+        append(name.toString());
     }
 
 

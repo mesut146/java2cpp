@@ -13,7 +13,7 @@ public class CType {
     public List<CType> typeNames = new ArrayList<>();//generics
     public CType scope = null;//parent type
     public boolean isTemplate = false;//<T>
-    public boolean isPointer = true;//for manual cases
+    public boolean isPointer = false;//for manual cases
 
     public CType(String type) {
         String[] arr = type.split("::");

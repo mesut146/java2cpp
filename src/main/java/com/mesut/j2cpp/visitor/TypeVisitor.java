@@ -32,6 +32,8 @@ public class TypeVisitor {
 
         if (binding.isTypeVariable()) {
             type = new CType(binding.getName());
+            type.isTemplate = true;
+            type.isPointer = false;
         }
         else {
             String bin = binding.getBinaryName();

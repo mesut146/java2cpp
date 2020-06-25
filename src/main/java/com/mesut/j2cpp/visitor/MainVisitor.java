@@ -218,7 +218,7 @@ public class MainVisitor extends ASTVisitor {
             CParameter cp = new CParameter();
             cp.type = typeVisitor.visitType(param.getType(), method);
             cp.type.isTemplate = false;
-            cp.name = param.getName().getIdentifier();
+            cp.setName(param.getName().getIdentifier());
             method.params.add(cp);
         }
 
