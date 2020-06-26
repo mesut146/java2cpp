@@ -73,7 +73,7 @@ public class MainVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(TypeDeclaration node) {
-        System.out.println("type.decl=" + node.getName());
+        //System.out.println("type.decl=" + node.getName());
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
@@ -110,7 +110,7 @@ public class MainVisitor extends ASTVisitor {
         }
         //inner classes
         for (TypeDeclaration member : node.getTypes()) {
-            System.out.println("inner.type=" + member.getName());
+            //System.out.println("inner.type=" + member.getName());
             member.accept(this);
         }
         node.bodyDeclarations().forEach(body -> {
@@ -123,7 +123,7 @@ public class MainVisitor extends ASTVisitor {
     }
 
     public boolean visit(EnumDeclaration n) {
-        System.out.println("enum.decl=" + n.getName());
+        //System.out.println("enum.decl=" + n.getName());
         CClass cc = new CClass();
         if (stack.size() == 0) {
             header.addClass(cc);
@@ -147,7 +147,7 @@ public class MainVisitor extends ASTVisitor {
             cf.setPublic(true);
             cf.setStatic(true);
             cf.type = new CType(cc.name);
-            cf.name = constant.getName().getIdentifier();
+            cf.setName(constant.getName().getIdentifier());
             Writer rh = new Writer();
             rh.append("new ").append(cc.name);
             exprVisitor.w = rh;
@@ -173,17 +173,17 @@ public class MainVisitor extends ASTVisitor {
             CField cf = new CField();
             last().addField(cf);
             cf.type = type;
-            cf.name = frag.getName().getIdentifier();
+            cf.setName(frag.getName().getIdentifier());
             cf.setPublic(Modifier.isPublic(n.getModifiers()));
             cf.setStatic(Modifier.isStatic(n.getModifiers()));
             if (last().isInterface) {
                 cf.setPublic(true);
             }
             if (frag.getInitializer() != null) {
-                Writer nw = new Writer();
-                exprVisitor.w = nw;
+                Writer writer = new Writer();
+                exprVisitor.w = writer;
                 frag.getInitializer().accept(exprVisitor);
-                cf.right = nw.toString();
+                cf.right = writer.toString();
             }
         }
         return false;

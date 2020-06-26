@@ -6,7 +6,7 @@ public class CName {
 
     public Namespace namespace;//for class names
     public String name;
-    public boolean isPointer = true;
+    public boolean isPointer = false;
 
     public CName(String name) {
         this.name = name;

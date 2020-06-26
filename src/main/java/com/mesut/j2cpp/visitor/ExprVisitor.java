@@ -49,6 +49,12 @@ public class ExprVisitor extends ASTVisitor {
         return false;
     }
 
+    public boolean visit(QualifiedName name) {
+        //todo array.length
+        w.append(name.getFullyQualifiedName());
+        return false;
+    }
+
     @Override
     public boolean visit(InstanceofExpression n) {
         header.addRuntime();
@@ -128,13 +134,18 @@ public class ExprVisitor extends ASTVisitor {
         return false;
     }
 
-    //array[index] -> (*array)[index]
+    //array[index] -> (*array)[index] (old)
+    //array[index] -> array.get(index) (new)
     public boolean visit(ArrayAccess n) {
-        w.append("(*");
+        /*w.append("(*");
         n.getArray().accept(this);
         w.append(")[");
         n.getIndex().accept(this);
-        w.append("]");
+        w.append("]");*/
+        n.getArray().accept(this);
+        w.append("->get(");
+        n.getIndex().accept(this);
+        w.append(")");
         return false;
     }
 
@@ -328,24 +339,25 @@ public class ExprVisitor extends ASTVisitor {
         return false;
     }
 
-    //new int[]{...} or new int[5]
-    /*public Object visit(ArrayCreation n, Writer w) {
+    //new int[]{...} or new int[5], or {1,2,3}
+    public boolean visit(ArrayCreation n) {
         if (n.getInitializer() != null) {
-            //just print values,ignore new type[]... because c++ allows it
+            //just print values,ignore `new type[]`... because c++ allows it
             n.getInitializer().accept(this);
         }
         else {
             //only dimensions
             w.append("new ");
             CType typeName = typeVisitor.visitType(n.getType(), method).copy();
-            typeName.arrayLevel = n.dimensions().size();
+            typeName.dimensions = n.dimensions().size();
             w.append(typeName.toString());
             w.append("(");
             w.append("new int[]{");
-            for (Iterator<ArrayCreationLevel> iterator = n.getInitializer().iterator(); iterator.hasNext(); ) {
-                Optional<Expression> dimension = iterator.next().getDimension();
-                if (dimension.isPresent()) {
-                    dimension.get().accept(this, w);
+
+            for (Iterator<Expression> iterator = n.dimensions().iterator(); iterator.hasNext(); ) {
+                Expression dimension = iterator.next();
+                if (dimension != null) {
+                    dimension.accept(this);
                 }
                 else {
                     w.append("0");//default array size
@@ -355,11 +367,11 @@ public class ExprVisitor extends ASTVisitor {
                 }
             }
             w.append("},");
-            w.append(String.valueOf(typeName.arrayLevel));
+            w.append(String.valueOf(typeName.dimensions));
             w.append(")");
         }
-        return null;
-    }*/
+        return false;
+    }
 
     //{{1,2,3},{4,5,6}}
     public boolean visit(ArrayInitializer n) {

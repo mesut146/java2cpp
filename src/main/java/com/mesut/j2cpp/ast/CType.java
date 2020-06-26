@@ -13,7 +13,7 @@ public class CType {
     public List<CType> typeNames = new ArrayList<>();//generics
     public CType scope = null;//parent type
     public boolean isTemplate = false;//<T>
-    public boolean isPointer = false;//for manual cases
+    public boolean isPointer = true;
 
     public CType(String type) {
         String[] arr = type.split("::");
@@ -34,7 +34,7 @@ public class CType {
     }
 
     //print namespace and pointer
-    public String full() {
+    public String withPtr() {
         StringBuilder sb = new StringBuilder();
         if (ns != null) {
             sb.append(ns.getAll()).append("::");
@@ -43,6 +43,16 @@ public class CType {
         if (isPointer()) {
             sb.append("*");
         }
+        return sb.toString();
+    }
+
+    //print namespace and pointer
+    public String withoutPtr() {
+        StringBuilder sb = new StringBuilder();
+        if (ns != null) {
+            sb.append(ns.getAll()).append("::");
+        }
+        sb.append(type);
         return sb.toString();
     }
 
@@ -76,27 +86,44 @@ public class CType {
     @Override
     public String toString() {
         if (isArray()) {
-            return strLevel(dimensions);
+            return strLevel(dimensions, true);
         }
         if (typeNames.size() > 0) {
             StringBuilder sb = new StringBuilder();
-            sb.append(full());
+            sb.append(withoutPtr());
             sb.append("<");
-            sb.append(typeNames.stream().map(CType::full).collect(Collectors.joining(",")));
+            sb.append(typeNames.stream().map(CType::withPtr).collect(Collectors.joining(",")));
+            sb.append(">");
+            if (isPointer()) sb.append("*");
+            return sb.toString();
+        }
+        return withPtr();
+    }
+
+
+    public String normal() {
+        if (isArray()) {
+            return strLevel(dimensions, false);
+        }
+        if (typeNames.size() > 0) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(withoutPtr());
+            sb.append("<");
+            sb.append(typeNames.stream().map(CType::withPtr).collect(Collectors.joining(",")));
             sb.append(">");
             return sb.toString();
         }
-        return full();
+        return withoutPtr();
     }
 
-    String strLevel(int level) {
+    String strLevel(int level, boolean ptr) {
         if (level == 0) {
-            return full();
+            return ptr ? withPtr() : withoutPtr();
         }
         else if (level == 1) {
-            return "array_single<" + strLevel(level - 1) + ">";
+            return "array_single<" + strLevel(level - 1, ptr) + ">";
         }
-        return "array_multi<" + strLevel(level - 1) + ">";
+        return "array_multi<" + strLevel(level - 1, ptr) + ">";
     }
 
     public String getIncludePath() {

@@ -110,11 +110,23 @@ public:
 
     T &operator[](int index) const
     {
-        if (index < length && index >= 0)
-        {
-            return elems[index];
+        return get(index);
+    }
+
+    void checkIndex(int index){
+        if(index < 0 || index >= length){
+            throw std::runtime_error(format("array index out of bounds exception: index=%d size=%d", index, length));
         }
-        throw std::runtime_error(format("array index out of bounds exception: index=%d size=%d", index, length));
+    }
+
+    T get(int index){
+        checkIndex(index);
+        return elems[index];
+    }
+
+    void set(int index,T value){
+        checkIndex(index);
+        elems[index] = value;
     }
 
     array_multi<T> operator=(std::initializer_list<T> rhs)

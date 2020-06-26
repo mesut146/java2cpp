@@ -45,6 +45,10 @@ public abstract class Node {
         return this;
     }
 
+    public void clear(){
+        list.clear();
+    }
+
     public void println() {
         //write("\n");
         list.add("");

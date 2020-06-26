@@ -63,10 +63,9 @@ public class CMethod extends ModifierNode {
 
     }
 
-    //for header
     public void printDecl() {
         //some enums have null type for some reason
-        if (!isCons && type!=null) {
+        if (!isCons && type != null) {
             if (isStatic()) {
                 append("static ");
             }
@@ -86,6 +85,9 @@ public class CMethod extends ModifierNode {
         /*if (!parent.forHeader && parent.ns != null) {
             append(parent.getNamespaceFull().all + "::");
         }*/
+        if (parent.parent != null && !parent.parent.forHeader) {
+            append(parent.name + "::");
+        }
 
         append(name);
         append("(");
