@@ -1,7 +1,6 @@
-bin/
-build/
-out/
-target/*
-!target/*.jar
+/bin/
+/build/
+/out/
+/target/*
 .idea/
 /asd/test/cpp/
