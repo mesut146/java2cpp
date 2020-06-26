@@ -56,6 +56,6 @@ public class Cmd {
         System.out.println("Options:");
         System.out.println("-source, -src       source directory to be converted");
         System.out.println("-output, -out,      output directory to write c++ .h and .cpp files");
-        System.out.println("-cp, --classpath    jar or source directory for classpath, can be multiple");
+        System.out.println("-cp, --classpath    jar file or source directory for classpath, can be multiple");
     }
 }

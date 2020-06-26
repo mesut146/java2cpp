@@ -12,7 +12,6 @@
     <properties>
         <mainClass>com.mesut.j2cpp.Main</mainClass>
         <cmdClass>com.mesut.j2cpp.Cmd</cmdClass>
-        <finalName>${name}-${version}-all.jar}</finalName>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
@@ -50,11 +49,20 @@
                             <mainClass>${cmdClass}</mainClass>
                         </manifest>
                     </archive>
-                    <finalName>${finalName}</finalName>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <!-- bind to the packaging phase -->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

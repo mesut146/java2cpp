@@ -9,4 +9,11 @@ jobs:
 
     steps:
     - name: build
-      run: mvn assembly
+      run: mvn assembly:assembly
+    - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          # Artifact name
+          name: java2cpp-all.jar
+          # A file, directory or wildcard pattern that describes what to upload
+          path: ./target/java2cpp-1.0-jar-with-dependencies.jar
