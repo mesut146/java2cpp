@@ -1,11 +1,8 @@
 package com.mesut;
 
-import junit.framework.TestCase;
 import org.junit.Test;
 
-import javax.tools.JavaCompiler;
-
-public class JavacTest extends TestCase {
+public class JavacTest {
 
     @Test
     public void test() {

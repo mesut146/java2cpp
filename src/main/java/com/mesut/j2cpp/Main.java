@@ -68,48 +68,5 @@ public class Main {
 
     }
 
-    /*static void yaml(String srcPath, String destPath, String cls) throws IOException {
-        String path = srcPath + "/" + cls;
-        CompilationUnit cu = StaticJavaParser.parse(new File(path));
-        removeComments(cu);
-        String yaml = new YamlPrinter(true).output(cu);
-        File fyml = new File(destPath + "/" + cls.replace(".java", ".yaml"));
-        fyml.getParentFile().mkdirs();
-        Files.write(Paths.get(fyml.getAbsolutePath()), yaml.getBytes());
-        //System.out.println(yaml);
-    }*/
 
-    /*static void removeComments(Node node) {
-        node.removeComment();
-        //node.getChildNodes().forEach(Node::removeComment);
-        node.getChildNodes().forEach(Main::removeComments);
-    }*/
-
-    /*static void resolve() throws FileNotFoundException {
-        String dir = "/home/mesut/Desktop/src7/";
-        String file = dir + "java/lang/Object.java";
-
-        //TypeSolver typeSolver = new CombinedTypeSolver();
-        TypeSolver typeSolver = new JavaParserTypeSolver(dir);
-
-        JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
-        StaticJavaParser
-                .getConfiguration()
-                .setSymbolResolver(symbolSolver);
-
-        CompilationUnit cu = StaticJavaParser.parse(new File(file));
-
-        ClassOrInterfaceDeclaration type = (ClassOrInterfaceDeclaration) cu.getType(0);
-
-        System.out.println(type.resolve().getQualifiedName());
-
-        MethodDeclaration method = type.getMethodsByName("getClass").get(0);
-        System.out.println(method.getType().resolve());
-
-        List<ClassOrInterfaceDeclaration> inners = type.getMembers().stream().filter(BodyDeclaration::isClassOrInterfaceDeclaration).map(BodyDeclaration::asClassOrInterfaceDeclaration).collect(Collectors.toList());
-        ClassOrInterfaceDeclaration inner = inners.get(0);
-
-        MethodDeclaration m2 = type.getMethodsByName("mymethod").get(0);
-        System.out.println(m2.getType().resolve().asReferenceType());
-    }*/
 }
