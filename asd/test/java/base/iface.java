@@ -1,13 +1,13 @@
 package base;
 
-public interface iface extends base{
-    public static int x=8;
-    public Object obj=null;
-   
+public interface iface extends base {
+    int x = 8;
+    Object obj = null;
+
     void asd();
 
 }
 
-interface base{
-
+interface base {
+    void baseMeth();
 }

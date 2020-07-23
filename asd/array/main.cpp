@@ -1,65 +1,84 @@
-#include "car.h"
-#include "java_array_single.h"
+#include "array_single.h"
 #include <iostream>
 #include <array>
 #include <typeinfo>
 
 using namespace std;
-using namespace ns1;
 
-void ns1::car::print()
-{
-    std::cout << year << std::endl;
-}
 
-void print(ns1::car::inner *obj)
-{
-    std::cout << obj->price << std::endl;
-}
-
-void car_test(car *c)
-{
-    c->year = 1995;
-    c = new car(1453);
-}
-
-void arr_test(java_array<int> arr)
-{
-    //arr[0]=55;
-    arr = java_array<int>({66, 99});
-}
-
-void arr_single(int x)
-{
-    x = 555;
-}
-
-void arr()
-{
-    java_array_single<int> *single = new java_array_single<int>({6, 74, 44});
-
-    //cout << (*single)[3] << endl;
-    java_array<java_array_single<int>> multi2(new int[2]{3, 1}, 2);
-    //java_array<java_array<java_array_single<int>>> multi2({{{1, 2, 11}, {3, 4}}, {{1, 2}, {3, 4}}});
-    //multi2.init(new int[3]{2, 1, 3}, 3);
-
-    cout << "len=" << multi2.length << endl;
-    cout << "len1=" << multi2[0].length << endl;
-    //cout << "len2=" << multi2[0][0].length << endl;
-
-    for (int i = 0; i < multi2.length; i++)
-    {
-        //cout << "lenx=" << multi2[i].length << endl;
-        for (int j = 0; j < multi2[0].length; j++)
-        {
-            cout << "elem=" << multi2[i][j] << endl;
-        }
+template <class T>
+void print_multi(array_multi<T> *arr){
+    for(int i=0;i<arr->length;i++){
+      cout<< i <<"="<<arr->get(i)<<endl;
     }
 }
 
-template <typename type> int prim(){
+void single()
+{
+    array_single<int> *dim1 = new array_single<int>({6, 74, 44});
+    //array_single<array_single<int>> dim2(new int[2]{3, 1}, 2);
+    //array_single<array_single<array_single<int>>> dim3({{{1, 2, 11}, {3, 4}}, {{1, 2}, {3, 4}}});
 
-    
+
+    cout << "len=" << dim1->length << endl;
+    //cout << "len1=" << dim1[0]->length << endl;
+    //cout << "len2=" << multi2[0][0].length << endl;
+
+    /*for (int i = 0; i < dim1.length; i++)
+    {
+        //cout << "lenx=" << multi2[i].length << endl;
+        for (int j = 0; j < dim1[0].length; j++)
+        {
+            cout << "elem=" << dim1[i][j] << endl;
+        }
+    }*/
+}
+
+void multi1(){
+    array_multi<int> *dim1 = new array_multi<int>({6, 74, 44});
+
+    cout << "len=" << dim1->length << endl;
+    print_multi(dim1);
+    //cout << "len1=" << dim1[0]->length << endl;
+    //cout << "len2=" << multi2[0][0].length << endl;
+
+    /*for (int i = 0; i < dim1.length; i++)
+    {
+        //cout << "lenx=" << multi2[i].length << endl;
+        for (int j = 0; j < dim1[0].length; j++)
+        {
+            cout << "elem=" << dim1[i][j] << endl;
+        }
+    }*/
+}
+
+void multi2(){
+    //array_multi<int> *dim1 = new array_multi<int>({6, 74, 44});
+    //int[][] arr=new int[5][10];50 elems
+    //int[] arr2=arr[0];
+    //print(arr2.length);
+    array_multi<array_multi<int>> *dim2=new array_multi<array_multi<int>>(2,{5,10});
+    //array_single<array_single<array_single<int>>> dim3({{{1, 2, 11}, {3, 4}}, {{1, 2}, {3, 4}}});
+
+
+    cout << "len=" << dim2->length << endl;
+    //print_multi(dim2);
+    //cout << "len1=" << dim1[0]->length << endl;
+    //cout << "len2=" << multi2[0][0].length << endl;
+
+    /*for (int i = 0; i < dim1.length; i++)
+    {
+        //cout << "lenx=" << multi2[i].length << endl;
+        for (int j = 0; j < dim1[0].length; j++)
+        {
+            cout << "elem=" << dim1[i][j] << endl;
+        }
+    }*/
+}
+
+template <typename type>
+int prim(){
+
     return 0;
 }
 
@@ -69,15 +88,6 @@ template <typename type> int prim(){
 */
 int main(void)
 {
-    /*car* mycar=car(2019);
-    mycar-print();
-    car_test(&mycar);
-    mycar.print();*/
-    //car::inner* in=new ns1::car::inner(500);
-    //print(in);
-    prim<void>();
-    
-    //arr();
-    //arr0();
-    //arr_prim();
+    multi2();
+
 }

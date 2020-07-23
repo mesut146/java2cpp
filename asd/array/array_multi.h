@@ -6,16 +6,20 @@
 #include <memory>
 #include <typeinfo>
 #include <typeindex>
+#include <cstdarg>
 
 using namespace std;
 
 template <typename T>
 class array_multi
 {
+
+private:
+    T *elems;
+
 public:
     int length;
-    T *elems;
-    array_multi *map;
+
 
     array_multi()
     {
@@ -38,7 +42,6 @@ public:
         {
             length = size;
             elems = new T[length];
-            map = new array_multi[length];
         }
     }
 
@@ -49,19 +52,17 @@ public:
         std::copy(list.begin(), list.end(), elems);
     }
 
-    /*(T* list, int size)
+    array_multi(int dimCount,std::initializer_list<int> dims)
     {
-        if (size < 0)
-        {
-            throw std::runtime_error("negative array size");
-        }
-        length = size;
-        elems = new T[length];
-        for (int i = 0; i < length; i++)
-        {
-            elems[i] = list[i];
-        }
-    }*/
+        cout<<"multi count="<<dimCount<<endl;
+        const int* ptr=dims.begin();
+        int dim1=*ptr;
+        array_multi<T>::array_multi(dim1);
+        /*cout<<"dim="<<*ptr<<endl;
+        cout<<"dim="<<*ptr<<endl;*/
+    }
+
+    //static array_multi *make_multi()
 
     bool isArray()
     {
@@ -119,7 +120,7 @@ public:
         }
     }
 
-    T get(int index){
+    T& get(int index){
         checkIndex(index);
         return elems[index];
     }

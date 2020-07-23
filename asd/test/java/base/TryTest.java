@@ -1,38 +1,34 @@
-import java.lang.String;
-import java.lang.String;
+public class TryTest {
 
-public class TryTest{
-
-    String normal(){
-        try{
-            if(1==1){
+    String normal() {
+        try {
+            if (1 == 1) {
                 return "in try";
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return "in catch";
         }
         return "default";
     }
 
-    String with_finally(){
-        try{
-            if(1==1){
+    String with_finally() {
+        try {
+            if (1 == 1) {
                 return "in try";
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return "in catch";
-        }
-        finally {
+        } finally {
             return "in finally";
         }
     }
 
-    void no_catch(){
-        try{
+    void no_catch() {
+        try {
             return;
-        }finally {
+        } finally {
 
         }
     }
