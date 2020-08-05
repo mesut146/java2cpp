@@ -1,6 +1,5 @@
 package com.mesut.j2cpp.cppast;
 
-import java.beans.Statement;
 import java.util.Iterator;
 import java.util.List;
 

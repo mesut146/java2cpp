@@ -38,13 +38,19 @@ public class TypeVisitor {
         else {
             String bin = binding.getBinaryName();
             String name;
-            if (bin.contains("$")) {
-                //inner
-                name = bin.replace("$", ".");
+            if (bin == null) {
+                name = binding.getQualifiedName();
             }
             else {
-                name = bin;
+                if (bin.contains("$")) {
+                    //inner
+                    name = bin.replace("$", ".");
+                }
+                else {
+                    name = bin;
+                }
             }
+
 
             type = new CType(name.replace(".", "::"));
 
@@ -62,12 +68,11 @@ public class TypeVisitor {
     public CType visit(SimpleType node) {
         //resolve
         ITypeBinding binding = node.resolveBinding();
-        //System.out.println("type=" + node + " bind=" + binding);
         if (binding == null) {
-            return new CType(node.getName().getFullyQualifiedName());
+            String str = node.getName().getFullyQualifiedName();
+            return new CType(str.replace(".", "::"));
         }
-        CType type = fromBinding(binding);
-        return type;
+        return fromBinding(binding);
     }
 
     public CType visit(ArrayType n) {
@@ -79,12 +84,10 @@ public class TypeVisitor {
 
     public CType visit(WildcardType n) {
         //<?>
-        CType type = new CType("java::lang::Object");
-        return type;
+        return new CType("java::lang::Object");
     }
 
     public CType visit(ParameterizedType n) {
-        //System.out.println("p.type=" + n.getType() + " " + n.typeArguments());
         CType type = visit(n.getType());
         for (Type param : (List<Type>) n.typeArguments()) {
             type.typeNames.add(visit(param));
@@ -118,7 +121,6 @@ public class TypeVisitor {
         return cType;
     }
 
-    //fields,methods,base class types,todo inner cls
     public CType visitType(Type type, CClass cc) {
         return visit(type);
     }

@@ -170,20 +170,20 @@ public class MainVisitor extends ASTVisitor {
         if (converter.debug_fields)
             System.out.println("field.decl=" + n.getType() + " " + n.fragments());
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
-            CField cf = new CField();
-            last().addField(cf);
-            cf.type = type;
-            cf.setName(frag.getName().getIdentifier());
-            cf.setPublic(Modifier.isPublic(n.getModifiers()));
-            cf.setStatic(Modifier.isStatic(n.getModifiers()));
+            CField field = new CField();
+            last().addField(field);
+            field.type = type;
+            field.setName(frag.getName().getIdentifier());
+            field.setPublic(Modifier.isPublic(n.getModifiers()));
+            field.setStatic(Modifier.isStatic(n.getModifiers()));
             if (last().isInterface) {
-                cf.setPublic(true);
+                field.setPublic(true);
             }
             if (frag.getInitializer() != null) {
                 Writer writer = new Writer();
                 exprVisitor.w = writer;
                 frag.getInitializer().accept(exprVisitor);
-                cf.right = writer.toString();
+                field.right = writer.toString();
             }
         }
         return false;

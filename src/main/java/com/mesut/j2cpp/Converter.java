@@ -22,22 +22,16 @@ import java.util.Objects;
 
 public class Converter {
 
-    SymbolTable table;
     Resolver resolver;
-    //JavaParser javaParser;
     String srcDir;//source folder
     String destDir;//destinaytion folder for c++ files
-    String sysPath;//openjdk sources
-    List<UnitMap> units;//parsed sources
     boolean includeAll = false;
     List<PackageName> includeDirs = new ArrayList<>();
     List<String> excludeDirs = new ArrayList<>();
     List<String> includeClasses = new ArrayList<>();
     List<String> excludeClasses = new ArrayList<>();
-    //look fist this while resolving
     List<PackageNode> packageHierarchy = new ArrayList<>();
     public List<String> classpath = new ArrayList<>();
-    //public SymbolResolver symbolResolver;
     public CMakeWriter cMakeWriter;
     public CMakeWriter.Target target;
     public boolean debug_header = false, debug_source = false;
@@ -73,20 +67,17 @@ public class Converter {
         this.includeAll = flag;
     }
 
-    public Resolver getResolver() {
-        return resolver;
+
+    //jar or dir
+    public void addClasspath(String path) {
+        classpath.add(path);
     }
 
-    public void fixImports() {
-
-    }
-
-
-    public void addClasspath(String dir) {
-        classpath.add(dir);
-    }
-
+    @SuppressWarnings("rawtypes,unchecked")
     public void initParser() {
+        if (parser != null) {
+            return;
+        }
         parser = ASTParser.newParser(AST.JLS13);
         List<String> cpDirs = new ArrayList<>();
         List<String> cpJars = new ArrayList<>();
@@ -99,6 +90,7 @@ public class Converter {
                 cpDirs.add(path);
             }
         }
+        cpDirs.add(srcDir);
         parser.setEnvironment(cpJars.toArray(new String[0]), cpDirs.toArray(new String[0]), null, false);
 
         parser.setResolveBindings(true);
@@ -108,25 +100,30 @@ public class Converter {
         Map options = JavaCore.getOptions();
         String ver = JavaCore.VERSION_13;
         options.put(JavaCore.COMPILER_COMPLIANCE, ver);
-        options.put(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, ver);
         options.put(JavaCore.COMPILER_SOURCE, ver);
+        options.put(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, ver);
         //options.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES,"true");
         parser.setCompilerOptions(options);
     }
 
-    public void setDebugAll(boolean val){
+    public void setDebugAll(boolean val) {
         setDebugSource(val);
-        debug_fields=val;
-        debug_methods=val;
+        setDebugMembers(val);
     }
 
-    public void setDebugSource(boolean val){
-        debug_header=val;
-        debug_source=val;
+    public void setDebugMembers(boolean val) {
+        debug_fields = val;
+        debug_methods = val;
+    }
+
+    public void setDebugSource(boolean val) {
+        debug_header = val;
+        debug_source = val;
     }
 
     public void convert() {
         try {
+            initParser();
             convertDir(new File(srcDir));
             writeCmake();
         } catch (IOException e) {

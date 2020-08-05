@@ -7,6 +7,7 @@ import java.util.List;
 //template <class A,class B,...>
 public class Template {
     public List<CType> list = new ArrayList<>();
+    public static boolean useTypeName = true;
 
     public void add(CType typeName) {
         list.add(typeName);
@@ -25,10 +26,15 @@ public class Template {
         StringBuilder sb = new StringBuilder();
         sb.append("template <");
         for (Iterator<CType> iterator = list.iterator(); iterator.hasNext(); ) {
-            sb.append("class ");
+            if (useTypeName) {
+                sb.append("typename ");
+            }
+            else {
+                sb.append("class ");
+            }
             sb.append(iterator.next());
             if (iterator.hasNext()) {
-                sb.append(",");
+                sb.append(", ");
             }
         }
         sb.append(">");

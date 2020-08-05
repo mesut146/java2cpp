@@ -195,7 +195,7 @@ public class ExprVisitor extends ASTVisitor {
     @Override
     public boolean visit(ClassInstanceCreation node) {
         if (node.getExpression() != null) {
-
+            w.append(node.getExpression().toString());
         }
         w.append("new ");
         CType type = typeVisitor.visitType(node.getType(), method);
@@ -322,10 +322,24 @@ public class ExprVisitor extends ASTVisitor {
 
 
     public boolean visit(StringLiteral n) {
+        //string1(n);
+        string2(n);
+        return false;
+    }
+
+    private void string1(StringLiteral n) {
+        ClassInstanceCreation creation = n.getAST().newClassInstanceCreation();
+        StringLiteral literal = n.getAST().newStringLiteral();
+        literal.setLiteralValue(n.getLiteralValue());
+        creation.arguments().add(literal);
+        creation.setType(n.getAST().newSimpleType(n.getAST().newName("java.lang.String")));
+        visit(creation);//causes overflow
+    }
+
+    private void string2(StringLiteral n) {
         w.append("new java::lang::String(\"");
         w.append(n.getLiteralValue());
         w.append("\")");
-        return false;
     }
 
     @Override
