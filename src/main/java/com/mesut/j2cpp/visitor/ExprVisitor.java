@@ -2,10 +2,7 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.Writer;
-import com.mesut.j2cpp.ast.CClass;
-import com.mesut.j2cpp.ast.CHeader;
-import com.mesut.j2cpp.ast.CMethod;
-import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.ast.*;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.Iterator;
@@ -401,8 +398,17 @@ public class ExprVisitor extends ASTVisitor {
         return false;
     }
 
-    /*public boolean visit(Name node) {
-        w.append(node.toString());
+    @Override
+    public boolean visit(SuperConstructorInvocation node) {
+        Writer writer = new Writer();
+        Call call = new Call();
+        for (Object o : node.arguments()) {
+
+        }
+        call.str = writer.toString();
+        method.superCall = call;
         return false;
-    }*/
+    }
+
+
 }

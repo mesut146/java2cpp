@@ -176,6 +176,7 @@ public class MainVisitor extends ASTVisitor {
             field.setName(frag.getName().getIdentifier());
             field.setPublic(Modifier.isPublic(n.getModifiers()));
             field.setStatic(Modifier.isStatic(n.getModifiers()));
+            field.setProtected(Modifier.isProtected(n.getModifiers()));
             if (last().isInterface) {
                 field.setPublic(true);
             }

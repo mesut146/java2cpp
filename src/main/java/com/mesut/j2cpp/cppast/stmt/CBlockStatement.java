@@ -1,9 +1,12 @@
-package com.mesut.j2cpp.cppast;
+package com.mesut.j2cpp.cppast.stmt;
+
+import com.mesut.j2cpp.cppast.CStatement;
 
 import java.util.Iterator;
 import java.util.List;
 
 /*
+{
  stmt1
  stmt2
 }

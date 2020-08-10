@@ -4,9 +4,38 @@ import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
 
-public class GenericVisitor<R, A> extends ASTVisitor {
+public class GenericVisitor<R, A> {
 
     //statements
+
+    public R visit(CompilationUnit node, A arg) {
+        R res = visit(node.getPackage(), arg);
+        visitNodes(node.imports(), arg);
+        visitNodes(node.types(), arg);
+        return res;
+    }
+
+    private void visitNodes(List nodes, A arg) {
+        for (Object node : nodes) {
+            visit((ASTNode) node, arg);
+        }
+    }
+
+    private R visit(ASTNode node, A arg) {
+        if (node instanceof CompilationUnit) {
+            return visit((CompilationUnit) node, arg);
+        }
+
+        return null;
+    }
+
+    public R visit(PackageDeclaration node, A arg) {
+        return visit(node.getName(), arg);
+    }
+
+    public R visit(Name name, A arg) {
+        return null;
+    }
 
     /*public R visit(Statement n, A arg) {
         return null;

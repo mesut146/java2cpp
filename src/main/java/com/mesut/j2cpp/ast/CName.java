@@ -1,6 +1,5 @@
 package com.mesut.j2cpp.ast;
 
-//a common name
 //var name,method name,param name,class name
 public class CName {
 
@@ -12,10 +11,9 @@ public class CName {
         this.name = name;
     }
 
-    public static CName from(String name){
+    public static CName from(String name) {
         return new CName(name);
     }
-
 
 
     @Override

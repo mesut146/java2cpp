@@ -6,10 +6,6 @@ public class Main {
     public static void main(String[] args) {
 
         try {
-            /*if (true) {
-                resolve();
-                return;
-            }*/
             Converter converter;
             String srcPath;
             String destPath;

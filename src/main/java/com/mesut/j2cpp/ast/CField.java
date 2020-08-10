@@ -11,15 +11,15 @@ public class CField extends ModifierNode {
     }
 
     public void print() {
-
         name.isPointer = type.isPointer();
         if (isStatic()) {
             append("static ");
         }
+
         append(type.normal());
         append(" ");
         append(name.toString());
-        if (right != null) {
+        if (right != null && !isStatic()) {
             append(" = ");
             append(right);
         }

@@ -17,8 +17,7 @@ public class CSource extends Node {
         includePath(header.getInclude());
         println();
         if (header.ns != null) {
-            append(header.ns);
-            up();
+            print_using(header.ns);
         }
         for (Namespace use : usings) {
             print_using(use);
@@ -27,21 +26,41 @@ public class CSource extends Node {
         for (CClass cc : header.classes) {
             printClass(cc);
         }
-        if (header.ns != null) {
-            down();
-        }
     }
 
     public void printClass(CClass cc) {
         cc.forHeader = false;
         //we directly write methods since class declarations already in CHeader
-        //write methods
+        printFields(cc);
+        printMethods(cc);
+        printInners(cc);
+    }
+
+    private void printFields(CClass cc) {
+        for (CField field : cc.fields) {
+            if (field.right != null && field.isStatic()) {
+                //clazz::name=val;
+                append(field.type);
+                append(" ");
+                append(cc.name);
+                append("::");
+                append(field.name.name);
+                append(" = ");
+                append(field.right);
+                appendln(";");
+            }
+        }
+    }
+
+    private void printMethods(CClass cc) {
         for (CMethod cm : cc.methods) {
             cm.level = 0;
             cm.init();
             append(cm);
         }
-        //write inner classes
+    }
+
+    private void printInners(CClass cc) {
         for (CClass in : cc.classes) {
             printClass(in);
         }

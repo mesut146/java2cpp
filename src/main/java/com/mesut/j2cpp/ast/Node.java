@@ -45,7 +45,7 @@ public abstract class Node {
         return this;
     }
 
-    public void clear(){
+    public void clear() {
         list.clear();
     }
 
@@ -64,7 +64,8 @@ public abstract class Node {
 
         if (list.size() == 0) {
             list.add(indention + str);
-        } else {
+        }
+        else {
             int idx = list.size() - 1;
             String last = list.get(idx);
             if (last.length() == 0) {
@@ -91,7 +92,8 @@ public abstract class Node {
             if (flag && n.firstBlock) {
                 flag = false;
                 append(s);
-            } else {
+            }
+            else {
                 list.add(s);
             }
         }
@@ -106,7 +108,8 @@ public abstract class Node {
             if (flag && n.firstBlock) {
                 flag = false;
                 append(s);
-            } else {
+            }
+            else {
                 list.add(indention + s);
             }
         }

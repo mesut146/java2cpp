@@ -8,6 +8,7 @@ public abstract class ModifierNode extends Node {
     Set<String> modifiers = new HashSet<>();
     final static String PUBLIC_NAME = "public";
     final static String PRIVATE_NAME = "private";
+    final static String PROTECTED_NAME = "protected";
     final static String STATIC_NAME = "static";
     final static String VIRTUAL_NAME = "virtual";
     final static String NATIVE_NAME = "native";
@@ -20,7 +21,8 @@ public abstract class ModifierNode extends Node {
     public void setPublic(boolean b) {
         if (b) {
             modifiers.add(PUBLIC_NAME);
-        } else {
+        }
+        else {
             modifiers.remove(PUBLIC_NAME);
         }
     }
@@ -33,8 +35,23 @@ public abstract class ModifierNode extends Node {
         setPublic(!b);
         if (b) {
             modifiers.add(PRIVATE_NAME);
-        } else {
+        }
+        else {
             modifiers.remove(PRIVATE_NAME);
+        }
+    }
+
+    public boolean isProtected() {
+        return modifiers.contains(PROTECTED_NAME);
+    }
+
+    public void setProtected(boolean b) {
+        setPublic(!b);
+        if (b) {
+            modifiers.add(PROTECTED_NAME);
+        }
+        else {
+            modifiers.remove(PROTECTED_NAME);
         }
     }
 
@@ -45,7 +62,8 @@ public abstract class ModifierNode extends Node {
     public void setStatic(boolean b) {
         if (b) {
             modifiers.add(STATIC_NAME);
-        } else {
+        }
+        else {
             modifiers.remove(STATIC_NAME);
         }
     }
@@ -58,7 +76,8 @@ public abstract class ModifierNode extends Node {
     public void setNative(boolean b) {
         if (b) {
             modifiers.add(NATIVE_NAME);
-        } else {
+        }
+        else {
             modifiers.remove(NATIVE_NAME);
         }
     }
@@ -71,7 +90,8 @@ public abstract class ModifierNode extends Node {
     public void setVirtual(boolean b) {
         if (b) {
             modifiers.add(VIRTUAL_NAME);
-        } else {
+        }
+        else {
             modifiers.remove(VIRTUAL_NAME);
         }
     }
@@ -84,7 +104,8 @@ public abstract class ModifierNode extends Node {
     public void setExtern(boolean b) {
         if (b) {
             modifiers.add(EXTERN_NAME);
-        } else {
+        }
+        else {
             modifiers.remove(EXTERN_NAME);
         }
     }

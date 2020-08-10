@@ -218,25 +218,5 @@ public class StatementVisitor extends ASTVisitor {
         return false;
     }
 
-    /*
-    public Object visit(ExplicitConstructorInvocationStmt n, Writer w) {
-        Writer p = new Writer();
-        Call c = new Call();
-        c.isThis = n.isThis();
-        if (n.isThis()) {
-            p.line(method.getName());
-        }
-        else {
-            if (n.getExpression().isPresent()) {
-                return null;
-            }
-            else {
-                p.line(method.getParent().base.get(0).type);
-            }
-        }
-        exprVisitor.args(n.getArguments(), p);
-        c.str = p.toString();
-        method.call = c;
-        return null;
-    }*/
+
 }

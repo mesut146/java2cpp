@@ -3,10 +3,10 @@ package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
+import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.MainVisitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
@@ -18,20 +18,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class Converter {
 
-    Resolver resolver;
     String srcDir;//source folder
-    String destDir;//destinaytion folder for c++ files
-    boolean includeAll = false;
-    List<PackageName> includeDirs = new ArrayList<>();
-    List<String> excludeDirs = new ArrayList<>();
-    List<String> includeClasses = new ArrayList<>();
-    List<String> excludeClasses = new ArrayList<>();
-    List<PackageNode> packageHierarchy = new ArrayList<>();
+    String destDir;//destination folder for c++ files
+    Filter filter = new Filter();
     public List<String> classpath = new ArrayList<>();
+    List<PackageNode> packageHierarchy = new ArrayList<>();
     public CMakeWriter cMakeWriter;
     public CMakeWriter.Target target;
     public boolean debug_header = false, debug_source = false;
@@ -47,26 +41,9 @@ public class Converter {
         target = cMakeWriter.addTarget("mylib", false);
     }
 
-    public void addIncludeDir(String prefix) {
-        includeDirs.add(new PackageName(prefix));
+    public Filter getFilter() {
+        return filter;
     }
-
-    public void addExcludeDir(String prefix) {
-        excludeDirs.add(prefix);
-    }
-
-    public void addIncludeClass(String name) {
-        includeClasses.add(name);
-    }
-
-    public void addExcludeClass(String name) {
-        excludeClasses.add(name);
-    }
-
-    public void setIncludeAll(boolean flag) {
-        this.includeAll = flag;
-    }
-
 
     //jar or dir
     public void addClasspath(String path) {
@@ -133,30 +110,26 @@ public class Converter {
     }
 
     void convertDir(File dir) throws IOException {
-        for (File file : Objects.requireNonNull(dir.listFiles())) {
-            if (file.isDirectory()) {
-                convertDir(file);
-            }
-            else if (file.getName().endsWith(".java")) {
-                parser.setSource(Util.read(file).toCharArray());
-                parser.setUnitName(file.getPath());
-                CompilationUnit unit = (CompilationUnit) parser.createAST(null);
-                convertSingle(Util.relative(file.getAbsolutePath(), srcDir), unit);
-                count++;
+        if (dir.isDirectory()) {
+            for (File file : dir.listFiles()) {
+                if (file.isDirectory()) {
+                    convertDir(file);
+                }
+                else if (file.getName().endsWith(".java")) {
+                    convertSingle(file.getAbsolutePath().substring(srcDir.length() + 1));
+                }
             }
         }
+
     }
 
-
-    String getPath(CompilationUnit cu) {
-        if (cu.getPackage() != null) {
-            return cu.getPackage().getName().getFullyQualifiedName().replace(".", "/");
+    public void convertSingle(String cls) throws IOException {
+        File file = new File(srcDir, cls);
+        if (filter.checkPath(file)) {
+            CompilationUnit unit = parse(file);
+            convertSingle(cls, unit);
+            count++;
         }
-        /*if (cu.getPackageDeclaration().isPresent()) {
-            String pkg = cu.getPackageDeclaration().get().getNameAsString();
-            return pkg.replace(".", "/");
-        }*/
-        return "";
     }
 
     public void convertSingle(String path, CompilationUnit cu) {
@@ -198,22 +171,11 @@ public class Converter {
         }
     }
 
-    public void convertSingle(String cls) throws IOException {
-        File file = new File(srcDir, cls);
-        CompilationUnit unit = parse(file);
-        convertSingle(cls, unit);
-    }
-
     CompilationUnit parse(File file) throws IOException {
         parser.setSource(Util.read(file).toCharArray());
         parser.setUnitName(file.getPath());
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
         return (CompilationUnit) parser.createAST(null);
-    }
-
-    public void printNode(ASTNode node, StringBuilder sb) {
-        sb.append(node.getClass());
-        sb.append(" ");
     }
 
     public void writeCmake() throws IOException {
@@ -226,4 +188,5 @@ public class Converter {
     }
 
 }
+
 

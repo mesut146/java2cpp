@@ -67,7 +67,7 @@ public class CType {
     }
 
     public boolean isPrim() {
-        return Helper.isPrim(type);
+        return dimensions == 0 && Helper.isPrim(type);
     }
 
     public boolean isPointer() {

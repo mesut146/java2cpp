@@ -12,9 +12,9 @@ public class CMethod extends ModifierNode {
     public Template template = new Template();
     public List<CParameter> params = new ArrayList<>();
     public boolean isCons = false;//is constructor
-    public boolean isOverride = false;//is necessary in c++?
     public CClass parent;
-    public Call call;//super call
+    public Call superCall;//super(args)
+    public Call thisCall;//this(args)
     public Writer bodyWriter = new Writer();
 
     public CClass getParent() {
@@ -53,9 +53,15 @@ public class CMethod extends ModifierNode {
             append(";");
         }
         else {
-            if (call != null) {
+            if (superCall != null) {
                 append(":");
-                append(call.str);
+                append(superCall.str);
+            }
+            if (thisCall != null) {
+                if (superCall != null) {
+                    append(", ");
+                }
+                append(thisCall.str);
             }
             append(bodyWriter);
             println();

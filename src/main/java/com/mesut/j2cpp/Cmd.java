@@ -43,7 +43,8 @@ public class Cmd {
             Converter converter = new Converter(srcDir, destDir);
             if (cp.isEmpty()) {
                 System.out.println("converting without classpath");
-            } else {
+            }
+            else {
                 converter.classpath.addAll(cp);
             }
             //converter.makeTable();
