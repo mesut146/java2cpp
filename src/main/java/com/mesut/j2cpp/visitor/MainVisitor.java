@@ -9,6 +9,7 @@ import java.util.Stack;
 
 //visitor for single compilation unit
 //fields,method decl,class decl
+@SuppressWarnings("unchecked")
 public class MainVisitor extends ASTVisitor {
 
     public CHeader header;
@@ -63,6 +64,7 @@ public class MainVisitor extends ASTVisitor {
         }
         return true;
     }
+
 
     @Override
     public boolean visit(TypeDeclaration node) {

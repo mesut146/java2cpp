@@ -23,8 +23,7 @@ public class TypeVisitor {
     }
 
     public CType visit(PrimitiveType n) {
-        CType type = new CType(Helper.toCType(n.toString()));
-        return type;
+        return new CType(Helper.toCType(n.toString()));
     }
 
     CType fromBinding(ITypeBinding binding) {

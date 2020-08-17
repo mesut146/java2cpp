@@ -1,5 +1,7 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.cppast.CFieldDef;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +10,7 @@ public class CSource extends Node {
     public CHeader header;
     public List<String> includes = new ArrayList<>();
     public List<Namespace> usings = new ArrayList<>();//todo header's using instead?
+    public List<CFieldDef> fieldDefs = new ArrayList<>();
     public List<CMethod> methods = new ArrayList<>();
 
     public CSource(CHeader header) {
@@ -32,33 +35,21 @@ public class CSource extends Node {
 
     public void printClass(CClass cc) {
         //we directly write methods since class declarations already in CHeader
-        printFields(cc);
-        printMethods(cc);
+        printFields();
+        printMethods();
         printInners(cc);
     }
 
-    private void printFields(CClass cc) {
-        for (CField field : cc.fields) {
-            if (field.right != null && field.isStatic()) {
-                //clazz::name=val;
-                append(field.type);
-                append(" ");
-                append(cc.name);
-                append("::");
-                append(field.name.name);
-                append(" = ");
-                append(field.right);
-                appendln(";");
-            }
+    private void printFields() {
+        for (CFieldDef field : fieldDefs) {
+            append(field.toString());
         }
     }
 
-    private void printMethods(CClass cc) {
-        /*for (CMethod cm : cc.methods) {
-            cm.level = 0;
-            cm.init();
-            append(cm);
-        }*/
+    private void printMethods() {
+        for (CMethod method : methods) {
+            append(method);
+        }
     }
 
     private void printInners(CClass cc) {

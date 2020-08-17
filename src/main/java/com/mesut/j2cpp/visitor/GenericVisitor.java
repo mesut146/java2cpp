@@ -1,24 +1,25 @@
 package com.mesut.j2cpp.visitor;
 
+import com.mesut.j2cpp.ast.Node;
+import com.mesut.j2cpp.cppast.CNode;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
 
 public class GenericVisitor<R, A> {
 
-    //statements
+    private void visitNodes(List nodes, A arg) {
+        for (Object node : nodes) {
+            visit((ASTNode) node, arg);
+        }
+    }
 
+    //statements
     public R visit(CompilationUnit node, A arg) {
         R res = visit(node.getPackage(), arg);
         visitNodes(node.imports(), arg);
         visitNodes(node.types(), arg);
         return res;
-    }
-
-    private void visitNodes(List nodes, A arg) {
-        for (Object node : nodes) {
-            visit((ASTNode) node, arg);
-        }
     }
 
     private R visit(ASTNode node, A arg) {
@@ -31,6 +32,18 @@ public class GenericVisitor<R, A> {
 
     public R visit(PackageDeclaration node, A arg) {
         return visit(node.getName(), arg);
+    }
+
+    public R visit(TypeDeclaration node, A arg) {
+        return null;
+    }
+
+    public R visit(MethodDeclaration n, CNode arg) {
+        return null;
+    }
+
+    public R visit(FieldDeclaration n, CNode arg) {
+        return null;
     }
 
     public R visit(Name name, A arg) {
@@ -71,8 +84,7 @@ public class GenericVisitor<R, A> {
         return null;
     }
 
-    public Object visit(IfStatement n, A arg) {
-
+    public R visit(IfStatement n, A arg) {
         return null;
     }
 

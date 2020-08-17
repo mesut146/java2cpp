@@ -54,7 +54,10 @@ public class CType {
                 sb.append(ns.getAll()).append("::");
             }
             else {
-                sb.append(ns.normalize(other)).append("::");
+                String norm = ns.normalize(other);
+                if (norm != null && !norm.isEmpty()) {
+                    sb.append(ns.normalize(other)).append("::");
+                }
             }
         }
         sb.append(type);

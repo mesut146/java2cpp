@@ -2,8 +2,10 @@ package com.mesut.j2cpp;
 
 
 import com.mesut.j2cpp.ast.CHeader;
+import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.MainVisitor;
+import com.mesut.j2cpp.visitor.SourceVisitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -137,14 +139,17 @@ public class Converter {
             System.out.println("converting " + path);
 
             CHeader header = new CHeader(path.substring(0, path.length() - 4) + "h");
-            //CSource cpp = new CSource(header);
+            CSource cpp = new CSource(header);
 
             /*HeaderWriter headerWriter = new HeaderWriter(cu);
             headerWriter.write();*/
 
-            //make .h and .cpp
+            //make header
             MainVisitor visitor = new MainVisitor(this, header);
             cu.accept(visitor);
+
+            SourceVisitor sourceVisitor = new SourceVisitor(this, cpp);
+            sourceVisitor.visit(cu, null);
 
             String header_str = header.toString();
             //String source_str = cpp.toString();

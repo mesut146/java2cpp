@@ -1,9 +1,11 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.cppast.CNode;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Node {
+public abstract class Node extends CNode {
     public String indention = "";
     public boolean useTab = false;
     public int level = 0;
