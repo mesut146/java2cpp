@@ -8,10 +8,10 @@ import java.util.stream.Collectors;
 
 public class CType {
     public Namespace ns;
+    public Namespace scope;
     public String type;
     public int dimensions = 0;//array dims
     public List<CType> typeNames = new ArrayList<>();//generics
-    public CType scope = null;//parent type
     public boolean isTemplate = false;//<T>
     public boolean isPointer = true;
 
@@ -21,7 +21,6 @@ public class CType {
         if (arr.length > 1) {
             ns = new Namespace(type.substring(0, type.lastIndexOf("::")));
         }
-        //this.type = type;
     }
 
     public CType(String type, boolean isTemplate) {
@@ -34,23 +33,29 @@ public class CType {
     }
 
     //print namespace and pointer
-    public String withPtr() {
-        StringBuilder sb = new StringBuilder();
-        if (ns != null) {
-            sb.append(ns.getAll()).append("::");
-        }
-        sb.append(type);
+    private String withPtr() {
+        StringBuilder sb = new StringBuilder(withoutPtr());
         if (isPointer()) {
             sb.append("*");
         }
         return sb.toString();
     }
 
-    //print namespace and pointer
-    public String withoutPtr() {
+
+    private String withoutPtr() {
+        return withoutPtr(scope);
+    }
+
+    //print namespace and type
+    private String withoutPtr(Namespace other) {
         StringBuilder sb = new StringBuilder();
         if (ns != null) {
-            sb.append(ns.getAll()).append("::");
+            if (other == null) {
+                sb.append(ns.getAll()).append("::");
+            }
+            else {
+                sb.append(ns.normalize(other)).append("::");
+            }
         }
         sb.append(type);
         return sb.toString();
@@ -59,6 +64,9 @@ public class CType {
     public CType copy() {
         CType copied = new CType(type, isTemplate);
         copied.isPointer = isPointer;
+        copied.dimensions = dimensions;
+        copied.ns = ns;
+        copied.typeNames = typeNames;
         return copied;
     }
 
@@ -71,17 +79,12 @@ public class CType {
     }
 
     public boolean isPointer() {
-        //return !isVoid() && (!isPrim() || isArray());
         return isPointer && !isVoid() && !isPrim() && !isTemplate;
     }
 
     public boolean isVoid() {
         return type.equals("void");
     }
-
-    /*public String toPointerString(){
-
-    }*/
 
     @Override
     public String toString() {
@@ -100,6 +103,12 @@ public class CType {
         return withPtr();
     }
 
+    public String normalize(Namespace other) {
+        if (isArray()) {
+            return strLevel(dimensions, false);
+        }
+        return withoutPtr(other);
+    }
 
     public String normal() {
         if (isArray()) {
@@ -126,14 +135,4 @@ public class CType {
         return "array_multi<" + strLevel(level - 1, ptr) + ">";
     }
 
-    public String getIncludePath() {
-        //todo
-        StringBuilder sb = new StringBuilder();
-        if (ns != null) {
-            sb.append(ns.getAll().replace("::", "/"));
-            sb.append("/");
-        }
-        sb.append(type);
-        return sb.toString();
-    }
 }

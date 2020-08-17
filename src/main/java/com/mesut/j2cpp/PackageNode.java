@@ -1,25 +1,26 @@
 package com.mesut.j2cpp;
-import java.util.*;
 
-public class PackageNode
-{
+import java.util.ArrayList;
+import java.util.List;
+
+public class PackageNode {
     String name;
-    List<PackageNode> nodes=new ArrayList<>();
-    
-    public PackageNode(String name){
-        this.name=name;
+    List<PackageNode> nodes = new ArrayList<>();
+
+    public PackageNode(String name) {
+        this.name = name;
     }
-    
-    public PackageNode addSub(String sub){
-        PackageNode subnode=new PackageNode(sub);
+
+    public PackageNode addSub(String sub) {
+        PackageNode subnode = new PackageNode(sub);
         nodes.add(subnode);
         return subnode;
     }
-    
-    public boolean has(String[] arr,int i){
-        if(name.equals(arr[i])){
-            for(PackageNode pn:nodes){
-                if(pn.has(arr,i++)){
+
+    public boolean has(String[] arr, int i) {
+        if (name.equals(arr[i])) {
+            for (PackageNode pn : nodes) {
+                if (pn.has(arr, i++)) {
                     return true;
                 }
             }
@@ -28,13 +29,12 @@ public class PackageNode
     }
 
     @Override
-    public String toString()
-    {
-        if(nodes.size()==0){
+    public String toString() {
+        if (nodes.size() == 0) {
             return name;
         }
-        StringBuffer sb=new StringBuffer();
-        for(PackageNode pn:nodes){
+        StringBuffer sb = new StringBuffer();
+        for (PackageNode pn : nodes) {
             sb.append(name);
             sb.append("->");
             sb.append(pn.toString());
@@ -42,6 +42,6 @@ public class PackageNode
         }
         return sb.toString();
     }
-    
-   
+
+
 }

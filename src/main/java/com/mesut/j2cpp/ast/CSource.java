@@ -6,7 +6,9 @@ import java.util.List;
 public class CSource extends Node {
 
     public CHeader header;
+    public List<String> includes = new ArrayList<>();
     public List<Namespace> usings = new ArrayList<>();//todo header's using instead?
+    public List<CMethod> methods = new ArrayList<>();
 
     public CSource(CHeader header) {
         this.header = header;
@@ -29,7 +31,6 @@ public class CSource extends Node {
     }
 
     public void printClass(CClass cc) {
-        cc.forHeader = false;
         //we directly write methods since class declarations already in CHeader
         printFields(cc);
         printMethods(cc);
@@ -53,11 +54,11 @@ public class CSource extends Node {
     }
 
     private void printMethods(CClass cc) {
-        for (CMethod cm : cc.methods) {
+        /*for (CMethod cm : cc.methods) {
             cm.level = 0;
             cm.init();
             append(cm);
-        }
+        }*/
     }
 
     private void printInners(CClass cc) {

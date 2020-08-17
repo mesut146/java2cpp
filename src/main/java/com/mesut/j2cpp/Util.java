@@ -35,4 +35,11 @@ public class Util<T> {
     public static String relative(File file, File root) {
         return relative(file.getAbsolutePath(), root.getAbsolutePath());
     }
+
+    public static String trimSuffix(String str, String suffix) {
+        if (str.endsWith(suffix)) {
+            return str.substring(0, str.length() - suffix.length());
+        }
+        return str;
+    }
 }

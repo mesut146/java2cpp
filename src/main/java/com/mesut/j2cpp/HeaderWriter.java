@@ -11,9 +11,9 @@ import java.util.Stack;
 
 public class HeaderWriter extends WriterVisitor {
 
+    public Stack<CClass> stack = new Stack<>();
     CHeader header;
     CompilationUnit unit;
-    public Stack<CClass> stack = new Stack<>();
 
     public HeaderWriter(CompilationUnit unit) {
         this.unit = unit;

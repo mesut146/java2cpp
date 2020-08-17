@@ -2,7 +2,6 @@ package com.mesut.j2cpp;
 
 
 import com.mesut.j2cpp.ast.CHeader;
-import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.MainVisitor;
 import org.eclipse.jdt.core.JavaCore;
@@ -21,22 +20,23 @@ import java.util.Map;
 
 public class Converter {
 
-    String srcDir;//source folder
-    String destDir;//destination folder for c++ files
-    Filter filter = new Filter();
     public List<String> classpath = new ArrayList<>();
-    List<PackageNode> packageHierarchy = new ArrayList<>();
     public CMakeWriter cMakeWriter;
     public CMakeWriter.Target target;
     public boolean debug_header = false, debug_source = false;
     public boolean debug_fields = false;
     public boolean debug_methods = false;
+    String srcDir;//source folder
+    String destDir;//destination folder for c++ files
+    Filter filter;
+    List<PackageNode> packageHierarchy = new ArrayList<>();
     ASTParser parser;
     int count = 0;
 
     public Converter(String srcDir, String destDir) {
         this.srcDir = srcDir;
         this.destDir = destDir;
+        filter = new Filter(srcDir);
         cMakeWriter = new CMakeWriter("myproject");
         target = cMakeWriter.addTarget("mylib", false);
     }
@@ -52,9 +52,9 @@ public class Converter {
 
     @SuppressWarnings("rawtypes,unchecked")
     public void initParser() {
-        if (parser != null) {
+        /*if (parser != null) {
             return;
-        }
+        }*/
         parser = ASTParser.newParser(AST.JLS13);
         List<String> cpDirs = new ArrayList<>();
         List<String> cpJars = new ArrayList<>();
@@ -68,7 +68,7 @@ public class Converter {
             }
         }
         cpDirs.add(srcDir);
-        parser.setEnvironment(cpJars.toArray(new String[0]), cpDirs.toArray(new String[0]), null, false);
+        parser.setEnvironment(cpJars.toArray(new String[0]), cpDirs.toArray(new String[0]), null, true);
 
         parser.setResolveBindings(true);
         parser.setBindingsRecovery(true);
@@ -137,7 +137,7 @@ public class Converter {
             System.out.println("converting " + path);
 
             CHeader header = new CHeader(path.substring(0, path.length() - 4) + "h");
-            CSource cpp = new CSource(header);
+            //CSource cpp = new CSource(header);
 
             /*HeaderWriter headerWriter = new HeaderWriter(cu);
             headerWriter.write();*/
@@ -147,7 +147,7 @@ public class Converter {
             cu.accept(visitor);
 
             String header_str = header.toString();
-            String source_str = cpp.toString();
+            //String source_str = cpp.toString();
 
             if (debug_header) {
                 System.out.println(header_str);
@@ -156,14 +156,14 @@ public class Converter {
             if (debug_source) {
                 if (debug_header)
                     System.out.println("---------------");
-                System.out.println(source_str);
+                //System.out.println(source_str);
             }
 
             File header_file = new File(destDir, path.replace(".java", ".h"));
             File source_file = new File(destDir, path.replace(".java", ".cpp"));
             header_file.getParentFile().mkdirs();
             Files.write(Paths.get(header_file.getAbsolutePath()), header_str.getBytes());
-            Files.write(Paths.get(source_file.getAbsolutePath()), source_str.getBytes());
+            //Files.write(Paths.get(source_file.getAbsolutePath()), source_str.getBytes());
 
             target.sourceFiles.add(Util.relative(source_file.getAbsolutePath(), srcDir));
         } catch (Exception e) {
@@ -172,6 +172,7 @@ public class Converter {
     }
 
     CompilationUnit parse(File file) throws IOException {
+        initParser();
         parser.setSource(Util.read(file).toCharArray());
         parser.setUnitName(file.getPath());
         parser.setKind(ASTParser.K_COMPILATION_UNIT);

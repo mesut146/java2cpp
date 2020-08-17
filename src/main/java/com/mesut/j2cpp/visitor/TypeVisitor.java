@@ -122,6 +122,8 @@ public class TypeVisitor {
     }
 
     public CType visitType(Type type, CClass cc) {
-        return visit(type);
+        CType cType = visit(type);
+        cType.scope = cc.ns;
+        return cType;
     }
 }

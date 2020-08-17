@@ -8,9 +8,9 @@ public abstract class Node {
     public boolean useTab = false;
     public int level = 0;
     public List<String> list = new ArrayList<>();
-    boolean isPrinted = false;
     public boolean firstBlock = false;
     public String cache = null;
+    boolean isPrinted = false;
 
     public abstract void print();
 
@@ -27,7 +27,6 @@ public abstract class Node {
     }
 
     public Node line(String str) {
-        //write(indention).write(indention).write(str);
         list.add(indention + str);
         return this;
     }

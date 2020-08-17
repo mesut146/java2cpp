@@ -46,26 +46,20 @@ public class CMethod extends ModifierNode {
              */
         }
         printDecl();
-        if (parent.isInterface) {//make it virtual
-            append(" = 0");
+
+        if (superCall != null) {
+            append(":");
+            append(superCall.str);
         }
-        if (parent.forHeader) {
-            append(";");
-        }
-        else {
+        if (thisCall != null) {
             if (superCall != null) {
-                append(":");
-                append(superCall.str);
+                append(", ");
             }
-            if (thisCall != null) {
-                if (superCall != null) {
-                    append(", ");
-                }
-                append(thisCall.str);
-            }
-            append(bodyWriter);
-            println();
+            append(thisCall.str);
         }
+        append(bodyWriter);
+        println();
+
 
     }
 
@@ -81,7 +75,7 @@ public class CMethod extends ModifierNode {
             append(type.toString());
             append(" ");
         }
-        if (parent.parent != null && !parent.parent.forHeader) {
+        if (parent.parent != null) {
             append(parent.name + "::");
         }
 

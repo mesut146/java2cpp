@@ -1,7 +1,6 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Converter;
-import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.ast.*;
 import org.eclipse.jdt.core.dom.*;
 
@@ -13,10 +12,7 @@ import java.util.Stack;
 public class MainVisitor extends ASTVisitor {
 
     public CHeader header;
-    //public MethodVisitor methodVisitor;
     public TypeVisitor typeVisitor;
-    public StatementVisitor statementVisitor;
-    public ExprVisitor exprVisitor;
     public Stack<CClass> stack = new Stack<>();
     public Converter converter;
 
@@ -24,8 +20,6 @@ public class MainVisitor extends ASTVisitor {
         this.converter = converter;
         this.header = header;
         this.typeVisitor = new TypeVisitor(converter, header);
-        this.exprVisitor = new ExprVisitor(converter, header, typeVisitor);
-        this.statementVisitor = new StatementVisitor(converter, header, exprVisitor, typeVisitor);
     }
 
     public CClass last() {
@@ -63,7 +57,6 @@ public class MainVisitor extends ASTVisitor {
         if (node.isOnDemand()) {
             //TODO
             //resolve seperately
-            header.importStar.add(imp);
         }
         else {
             header.includes.add(imp);
@@ -83,7 +76,6 @@ public class MainVisitor extends ASTVisitor {
         }
         stack.push(cc);
 
-        exprVisitor.clazz = cc;
         cc.name = node.getName().getFullyQualifiedName();
         cc.isInterface = node.isInterface();
 
@@ -132,7 +124,7 @@ public class MainVisitor extends ASTVisitor {
             last().addInner(cc);
         }
         stack.push(cc);
-        exprVisitor.clazz = cc;
+        //exprVisitor.clazz = cc;
 
         cc.isEnum = true;
         cc.name = n.getName().getFullyQualifiedName();
@@ -148,14 +140,10 @@ public class MainVisitor extends ASTVisitor {
             cf.setStatic(true);
             cf.type = new CType(cc.name);
             cf.setName(constant.getName().getIdentifier());
-            Writer rh = new Writer();
-            rh.append("new ").append(cc.name);
-            exprVisitor.w = rh;
-            exprVisitor.args(constant.arguments(), rh);
+
             if (constant.getAnonymousClassDeclaration() != null) {
                 throw new RuntimeException("enum body is not supported");
             }
-            cf.right = rh.toString();
         }
         if (!n.bodyDeclarations().isEmpty()) {
             n.bodyDeclarations().forEach(p -> ((BodyDeclaration) p).accept(this));
@@ -180,12 +168,12 @@ public class MainVisitor extends ASTVisitor {
             if (last().isInterface) {
                 field.setPublic(true);
             }
-            if (frag.getInitializer() != null) {
+            /*if (frag.getInitializer() != null) {
                 Writer writer = new Writer();
                 exprVisitor.w = writer;
                 frag.getInitializer().accept(exprVisitor);
                 field.right = writer.toString();
-            }
+            }*/
         }
         return false;
     }
@@ -195,39 +183,44 @@ public class MainVisitor extends ASTVisitor {
         if (converter.debug_methods)
             System.out.println("method.decl=" + n.getReturnType2() + " " + n.getName() + "()" + " cons=" + n.isConstructor() + " prent=" + parent().name);
         //System.out.println("res="+n.resolveBinding());
-        CMethod method = new CMethod();
+        CMethodDecl method = new CMethodDecl();
         last().addMethod(method);
 
         n.typeParameters().forEach(temp -> method.template.add(new CType(temp.toString())));
-        method.isCons = n.isConstructor();
-        //type could be template
-        if (!n.isConstructor() && n.getReturnType2() != null) {//todo rt2 is null sometimes
-            method.type = typeVisitor.visitType(n.getReturnType2(), method);
-            //System.out.println("name=" + n.getName() + " type=" + n.getReturnType2());
+
+        if (n.isConstructor()) {
+            method.isCons = true;
+        }
+        else {
+            Type type = n.getReturnType2();
+            if (type == null) {
+                method.isCons = true;
+            }
+            else {
+                method.type = typeVisitor.visitType(n.getReturnType2(), last());
+            }
         }
 
-        method.name = n.getName().getIdentifier();
+        //type could be template
+
+        method.name = new CName(n.getName().getIdentifier());
 
         method.setStatic(Modifier.isStatic(n.getModifiers()));
         method.setPublic(Modifier.isPublic(n.getModifiers()));
         method.setNative(Modifier.isNative(n.getModifiers()));
         if (last().isInterface) {
             method.setPublic(true);
+            method.isPureVirtual = true;
         }
 
         for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) n.parameters()) {
             CParameter cp = new CParameter();
-            cp.type = typeVisitor.visitType(param.getType(), method);
+            cp.type = typeVisitor.visitType(param.getType(), last());
             cp.type.isTemplate = false;
             cp.setName(param.getName().getIdentifier());
             method.params.add(cp);
         }
 
-        if (n.getBody() != null) {
-            method.bodyWriter.init();
-            statementVisitor.setMethod(method);
-            n.getBody().accept(statementVisitor);
-        }
         return false;
     }
 

@@ -16,6 +16,14 @@ public class CName {
     }
 
 
+    public String printPtr() {
+        return "*" + name;
+    }
+
+    public String printNormal() {
+        return name;
+    }
+
     @Override
     public String toString() {
         if (isPointer) {

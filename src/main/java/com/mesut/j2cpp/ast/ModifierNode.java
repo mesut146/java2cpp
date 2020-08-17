@@ -5,7 +5,6 @@ import java.util.Set;
 
 public abstract class ModifierNode extends Node {
 
-    Set<String> modifiers = new HashSet<>();
     final static String PUBLIC_NAME = "public";
     final static String PRIVATE_NAME = "private";
     final static String PROTECTED_NAME = "protected";
@@ -13,6 +12,7 @@ public abstract class ModifierNode extends Node {
     final static String VIRTUAL_NAME = "virtual";
     final static String NATIVE_NAME = "native";
     final static String EXTERN_NAME = "extern";
+    Set<String> modifiers = new HashSet<>();
 
     public boolean isPublic() {
         return modifiers.contains(PUBLIC_NAME);

@@ -24,6 +24,9 @@ public class Conv {
         String out = "/home/mesut/Desktop/j2cpp-dev/jdeps/conv";
         Converter converter = new Converter(dir, out);
         converter.addClasspath(rtJar);
+        //converter.getFilter().setIncludeAll(false);
+        //converter.getFilter().addIncludeClass("com/sun/tools/classfile/TypeAnnotation");
+        //converter.getFilter().addIncludeClass("com/sun/tools/classfile/AccessFlags");
         converter.getFilter().addIncludeDir("com/sun/tools/classfile");
         //converter.setDebugMembers(true);
         converter.convert();

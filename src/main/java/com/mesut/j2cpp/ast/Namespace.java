@@ -9,30 +9,43 @@ public class Namespace extends Node {
     public List<String> parts = new ArrayList<>();//java,lang,String
 
     public Namespace(String ns) {
-        all = ns.replace(".", "::");
-        Collections.addAll(parts, all.split("::"));
+        fromPkg(ns);
+    }
+
+    public Namespace(List<String> ns) {
+        parts = ns;
+        all = String.join("::", parts);
     }
 
     public Namespace() {
 
     }
 
+    public void fromPkg(String str) {
+        all = str.replace(".", "::");
+        Collections.addAll(parts, all.split("::"));
+    }
+
+    //trim common namespace
+    public String normalize(Namespace scope) {
+        int i = 0;
+        int len = Math.min(parts.size(), scope.parts.size());
+        List<String> list = new ArrayList<>(parts);
+        while (i < len) {
+            if (parts.get(i).equals(scope.parts.get(i))) {
+                i++;
+            }
+            else {
+                break;
+            }
+        }
+        return new Namespace(list.subList(i, list.size())).all;
+    }
+
     public String getAll() {
         return all;
     }
 
-    public void fromPkg(String str) {
-        int i = 0;
-        all = str.replace(".", "::");
-        Collections.addAll(parts, str.split("::"));
-    }
-
-    public Namespace appendNs(String str) {
-        if (all == null || all.length() == 0) {
-            return new Namespace(str);
-        }
-        return new Namespace(all + "::" + str);
-    }
 
     @Override
     public String toString() {

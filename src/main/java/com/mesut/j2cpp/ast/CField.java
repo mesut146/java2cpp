@@ -5,6 +5,8 @@ public class CField extends ModifierNode {
     public CType type;
     public CName name;
     public String right;
+    public CClass parent;
+    public boolean ptrOnType = false;
 
     public void setName(String name) {
         this.name = CName.from(name);
@@ -16,13 +18,9 @@ public class CField extends ModifierNode {
             append("static ");
         }
 
-        append(type.normal());
+        append(type.normalize(parent.ns));
         append(" ");
         append(name.toString());
-        if (right != null && !isStatic()) {
-            append(" = ");
-            append(right);
-        }
         append(";");
     }
 

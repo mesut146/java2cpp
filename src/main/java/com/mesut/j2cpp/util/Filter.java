@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.util;
 
 import com.mesut.j2cpp.PackageName;
+import com.mesut.j2cpp.Util;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -12,6 +13,12 @@ public class Filter {
     List<String> excludeDirs = new ArrayList<>();
     List<String> includeClasses = new ArrayList<>();
     List<String> excludeClasses = new ArrayList<>();
+    String srcDir;
+
+
+    public Filter(String srcDir) {
+        this.srcDir = srcDir;
+    }
 
     public void addIncludeDir(String prefix) {
         includeAll = false;
@@ -25,6 +32,7 @@ public class Filter {
     }
 
     public void addIncludeClass(String name) {
+        name = Util.trimSuffix(name, ".java");
         includeClasses.add(name);
     }
 
@@ -49,6 +57,14 @@ public class Filter {
         for (String ex : excludeDirs) {
             if (parent.endsWith(ex)) {
                 return false;
+            }
+        }
+        String clsName = Util.relative(file.getAbsolutePath(), srcDir);
+        clsName=Util.trimSuffix(clsName,".java");
+        for (String cls : includeClasses) {
+            cls = cls.replace(".", "/");
+            if (clsName.endsWith(cls)) {
+                return true;
             }
         }
         return false;

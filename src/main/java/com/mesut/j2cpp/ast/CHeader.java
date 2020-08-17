@@ -7,7 +7,6 @@ import java.util.List;
 public class CHeader extends Node {
     public String name;
     public List<String> includes = new ArrayList<>();
-    public List<String> importStar = new ArrayList<>();//import namespace for symbols on the fly(java.util.*)
     public List<CClass> classes = new ArrayList<>();
     public Namespace ns;
     public List<Namespace> using = new ArrayList<>();
@@ -38,11 +37,6 @@ public class CHeader extends Node {
         }
     }
 
-    public void addIncludeStar(String include) {
-        if (!importStar.contains(include)) {
-            importStar.add(include);
-        }
-    }
 
     public void useNamespace(Namespace ns) {
         if (!using.contains(ns)) {
@@ -90,7 +84,6 @@ public class CHeader extends Node {
         }
 
         for (CClass cc : classes) {
-            cc.forHeader = true;
             append(cc);
         }
         if (ns != null) {
