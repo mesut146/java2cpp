@@ -2,6 +2,7 @@ package com.mesut.j2cpp.cppast.stmt;
 
 import com.mesut.j2cpp.cppast.CStatement;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -12,7 +13,7 @@ import java.util.List;
 }
  */
 public class CBlockStatement extends CStatement {
-    List<CStatement> statements;
+    public List<CStatement> statements = new ArrayList<>();
 
     public void print() {
         Iterator<CStatement> it = statements.iterator();

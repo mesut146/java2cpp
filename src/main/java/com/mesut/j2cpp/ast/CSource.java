@@ -12,6 +12,7 @@ public class CSource extends Node {
     public List<Namespace> usings = new ArrayList<>();//todo header's using instead?
     public List<CFieldDef> fieldDefs = new ArrayList<>();
     public List<CMethod> methods = new ArrayList<>();
+    public boolean hasRuntime = false;
 
     public CSource(CHeader header) {
         this.header = header;
@@ -28,16 +29,9 @@ public class CSource extends Node {
             print_using(use);
         }
         println();
-        for (CClass cc : header.classes) {
-            printClass(cc);
-        }
-    }
-
-    public void printClass(CClass cc) {
-        //we directly write methods since class declarations already in CHeader
         printFields();
         printMethods();
-        printInners(cc);
+
     }
 
     private void printFields() {
@@ -49,12 +43,6 @@ public class CSource extends Node {
     private void printMethods() {
         for (CMethod method : methods) {
             append(method);
-        }
-    }
-
-    private void printInners(CClass cc) {
-        for (CClass in : cc.classes) {
-            printClass(in);
         }
     }
 

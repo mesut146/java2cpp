@@ -25,7 +25,7 @@ public class ExprVisitor extends ASTVisitor {
 
     public void setMethod(CMethod method) {
         this.method = method;
-        this.w = method.bodyWriter;
+        //this.w = method.bodyWriter;
     }
 
     public void args(List<Expression> expressions, Writer w) {

@@ -1,6 +1,6 @@
 package com.mesut.j2cpp.ast;
 
-import com.mesut.j2cpp.Writer;
+import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ public class CMethod extends ModifierNode {
     public CClass parent;
     public Call superCall;//super(args)
     public Call thisCall;//this(args)
-    public Writer bodyWriter = new Writer();
+    public CBlockStatement body;
 
     public CClass getParent() {
         return parent;
@@ -57,10 +57,8 @@ public class CMethod extends ModifierNode {
             }
             append(thisCall.str);
         }
-        append(bodyWriter);
+        append(body.toString());
         println();
-
-
     }
 
     public void printDecl() {
@@ -75,9 +73,10 @@ public class CMethod extends ModifierNode {
             append(type.toString());
             append(" ");
         }
-        if (parent.parent != null) {
+        /*if (parent.parent != null) {
             append(parent.name + "::");
-        }
+        }*/
+        append(parent.name + "::");
 
         append(name);
         append("(");
@@ -91,8 +90,5 @@ public class CMethod extends ModifierNode {
         append(")");
     }
 
-    public String dump() {
-        return getType() + " " + getName() + "()";
-    }
 
 }

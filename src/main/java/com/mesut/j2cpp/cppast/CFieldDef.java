@@ -20,6 +20,10 @@ public class CFieldDef extends CNode {
         return field.name;
     }
 
+    public void setExpression(CExpression expression) {
+        this.expression = expression;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

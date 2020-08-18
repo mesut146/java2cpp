@@ -1,5 +1,7 @@
 package com.mesut.j2cpp.ast;
 
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +14,7 @@ public class CMethodDecl extends ModifierNode {
     public boolean isCons = false;//is constructor
     public boolean isPureVirtual = false;
     public CClass parent;
+    public MethodDeclaration node;
 
     @Override
     public void print() {

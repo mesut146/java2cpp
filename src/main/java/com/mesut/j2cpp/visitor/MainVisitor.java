@@ -170,12 +170,7 @@ public class MainVisitor extends ASTVisitor {
             if (last().isInterface) {
                 field.setPublic(true);
             }
-            /*if (frag.getInitializer() != null) {
-                Writer writer = new Writer();
-                exprVisitor.w = writer;
-                frag.getInitializer().accept(exprVisitor);
-                field.right = writer.toString();
-            }*/
+            field.node = frag;
         }
         return false;
     }
@@ -222,6 +217,8 @@ public class MainVisitor extends ASTVisitor {
             cp.setName(param.getName().getIdentifier());
             method.params.add(cp);
         }
+
+        method.node = n;
 
         return false;
     }

@@ -149,10 +149,11 @@ public class Converter {
             cu.accept(visitor);
 
             SourceVisitor sourceVisitor = new SourceVisitor(this, cpp);
-            sourceVisitor.visit(cu, null);
+            sourceVisitor.convert();
+            //sourceVisitor.visit(cu, null);
 
             String header_str = header.toString();
-            //String source_str = cpp.toString();
+            String source_str = cpp.toString();
 
             if (debug_header) {
                 System.out.println(header_str);
@@ -161,14 +162,14 @@ public class Converter {
             if (debug_source) {
                 if (debug_header)
                     System.out.println("---------------");
-                //System.out.println(source_str);
+                System.out.println(source_str);
             }
 
             File header_file = new File(destDir, path.replace(".java", ".h"));
             File source_file = new File(destDir, path.replace(".java", ".cpp"));
             header_file.getParentFile().mkdirs();
             Files.write(Paths.get(header_file.getAbsolutePath()), header_str.getBytes());
-            //Files.write(Paths.get(source_file.getAbsolutePath()), source_str.getBytes());
+            Files.write(Paths.get(source_file.getAbsolutePath()), source_str.getBytes());
 
             target.sourceFiles.add(Util.relative(source_file.getAbsolutePath(), srcDir));
         } catch (Exception e) {

@@ -1,10 +1,17 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.cppast.CNode;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 //var name,method name,param name,class name
-public class CName {
+public class CName extends CNode {
 
     public Namespace namespace;//for class names
     public String name;
+    public List<CType> typeArgs = new ArrayList<>();//template method call
     public boolean isPointer = false;
 
     public CName(String name) {
@@ -26,9 +33,16 @@ public class CName {
 
     @Override
     public String toString() {
+        StringBuilder sb = new StringBuilder();
         if (isPointer) {
-            return "*" + name;
+            sb.append("*");
         }
-        return name;
+        sb.append(name);
+        if (!typeArgs.isEmpty()) {
+            sb.append("<");
+            sb.append(typeArgs.stream().map(CType::toString).collect(Collectors.joining(", ")));
+            sb.append(">");
+        }
+        return sb.toString();
     }
 }

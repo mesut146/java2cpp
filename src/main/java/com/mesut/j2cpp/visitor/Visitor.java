@@ -2,6 +2,7 @@ package com.mesut.j2cpp.visitor;
 
 import org.eclipse.jdt.core.dom.*;
 
+
 public interface Visitor<R, A> {
 
     R visit(CompilationUnit node, A arg);
@@ -33,6 +34,8 @@ public interface Visitor<R, A> {
     //statements
     R visit(Assignment node, A arg);
 
+    R visit(Block node, A arg);
+
     R visit(BreakStatement node, A arg);
 
     R visit(ContinueStatement node, A arg);
@@ -55,12 +58,48 @@ public interface Visitor<R, A> {
 
     R visit(LabeledStatement node, A arg);
 
+    R visit(ConstructorInvocation node, A arg);
+
+    R visit(ExpressionStatement node, A arg);
+
+    R visit(SuperConstructorInvocation node, A arg);
+
+    R visit(SwitchCase node, A arg);
+
+    R visit(SynchronizedStatement node, A arg);
+
+    R visit(ThrowStatement node, A arg);
+
+    R visit(TryStatement node, A arg);
+
+    R visit(TypeDeclarationStatement node, A arg);
+
+    R visit(VariableDeclarationStatement node, A arg);
+
+
     //expressions
     R visit(VariableDeclaration node, A arg);
 
     R visit(FieldAccess node, A arg);
 
     R visit(ClassInstanceCreation node, A arg);
+
+    R visit(ConditionalExpression node, A arg);
+
+    R visit(Name node, A arg);
+
+
+    R visit(SuperMethodInvocation node, A arg);
+
+    R visit(SwitchExpression node, A arg);
+
+    R visit(ThisExpression node, A arg);
+
+    R visit(VariableDeclarationExpression node, A arg);
+
+    R visit(NumberLiteral node, A arg);
+
+    R visit(SuperFieldAccess node, A arg);
 
     R visit(InfixExpression node, A arg);
 
@@ -88,4 +127,9 @@ public interface Visitor<R, A> {
     R visit(QualifiedType node, A arg);
 
     R visit(SimpleType node, A arg);
+
+
+    R visit(SimpleName node, A arg);
+
+    R visit(QualifiedName node, A arg);
 }

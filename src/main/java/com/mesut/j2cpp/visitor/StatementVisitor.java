@@ -30,7 +30,7 @@ public class StatementVisitor extends ASTVisitor {
     public void setMethod(CMethod method) {
         this.method = method;
         this.exprVisitor.setMethod(method);
-        this.w = method.bodyWriter;
+        //this.w = method.bodyWriter;
     }
 
     @Override
