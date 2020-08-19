@@ -1,12 +1,13 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Writer;
+import com.mesut.j2cpp.cppast.CNode;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CClass extends Node {
+public class CClass extends CNode {
 
     public String name;
     public Namespace ns = null;
@@ -188,5 +189,11 @@ public class CClass extends Node {
             }
         }
         return false;
+    }
+
+    static int anonyCount = 0;
+
+    public String getAnonyName() {
+        return "anony" + anonyCount++;
     }
 }

@@ -109,7 +109,7 @@ public class TryHelper {
             for (int i = 0; i < len; i++) {
                 Object obj = node.resources().get(i);
                 if (obj instanceof Name) {
-
+                    throw new RuntimeException("try with name expression: " + obj);
                 }
                 else {//expr
                     CExpression expr = (CExpression) visitor.visit((Expression) obj, null);

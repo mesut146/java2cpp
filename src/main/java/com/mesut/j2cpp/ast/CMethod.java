@@ -2,14 +2,10 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class CMethod extends ModifierNode {
 
     public CMethodDecl decl;
     public Template template = new Template();
-    public List<CParameter> params = new ArrayList<>();
     public Call superCall;//super(args)
     public Call thisCall;//this(args)
     public CBlockStatement body;
@@ -77,10 +73,10 @@ public class CMethod extends ModifierNode {
 
         append(getName());
         append("(");
-        for (int i = 0; i < params.size(); i++) {
-            CParameter cp = params.get(i);
+        for (int i = 0; i < decl.params.size(); i++) {
+            CParameter cp = decl.params.get(i);
             append(cp.toString());
-            if (i < params.size() - 1) {
+            if (i < decl.params.size() - 1) {
                 append(", ");
             }
         }

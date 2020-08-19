@@ -307,7 +307,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(LabeledStatement node, CNode arg) {
-        return null;
+        return new CLabeledStatement(node.getLabel().getIdentifier());
     }
 
     @Override
@@ -432,12 +432,32 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     public CNode visit(ClassInstanceCreation node, CNode arg) {
         if (node.getAnonymousClassDeclaration() == null) {
             CClassInstanceCreation classInstanceCreation = new CClassInstanceCreation();
+            classInstanceCreation.type = typeVisitor.visitType(node.getType(), clazz);
+            classInstanceCreation.type.isPointer = false;
+            for (Expression expression : (List<Expression>) node.arguments()) {
+                classInstanceCreation.args.add((CExpression) visit(expression, null));
+            }
             return classInstanceCreation;
         }
         else {
-
+            CClass anony = new CClass();
+            anony.name = clazz.getAnonyName();
+            anony.base.add(typeVisitor.visitType(node.getType(), clazz));
+            AnonymousClassDeclaration declaration = node.getAnonymousClassDeclaration();
+            DeclarationVisitor declarationVisitor = new DeclarationVisitor(typeVisitor);
+            for (BodyDeclaration body : (List<BodyDeclaration>) declaration.bodyDeclarations()) {
+                if (body instanceof FieldDeclaration) {
+                    declarationVisitor.visit((FieldDeclaration) body, anony);
+                }
+                else if (body instanceof MethodDeclaration) {
+                    declarationVisitor.visit((MethodDeclaration) body, anony);
+                }
+                else {
+                    throw new RuntimeException("ClassInstanceCreation anony");
+                }
+            }
+            return anony;
         }
-        return null;
     }
 
     @Override
