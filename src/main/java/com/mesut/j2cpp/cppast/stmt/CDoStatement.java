@@ -3,16 +3,17 @@ package com.mesut.j2cpp.cppast.stmt;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CStatement;
 
-public class CWhileStatement extends CStatement {
+public class CDoStatement extends CStatement {
     public CExpression expression;
-    public CStatement statement;
+    public CStatement body;
 
 
     @Override
     public void print() {
+        append("do");
+        append(body.toString());
         append("while(");
         append(expression.toString());
-        append(")");
-        append(statement);
+        append(");");
     }
 }

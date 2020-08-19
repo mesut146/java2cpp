@@ -1,21 +1,22 @@
 package com.mesut.j2cpp.cppast.stmt;
 
+import com.mesut.j2cpp.ast.CName;
+import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CStatement;
 
-//return exp
-public class CReturnStatement extends CStatement {
+public class CSingleVariableDeclaration extends CStatement {
+    public CType type;
+    public CName name;
     public CExpression expression;
 
-    public CReturnStatement(CExpression expression) {
-        this.expression = expression;
-    }
 
     @Override
     public void print() {
-        append("return");
+        append(type.toString());
+        append(" ");
+        append(name.toString());
         if (expression != null) {
-            append(" ");
             append(expression.toString());
         }
         append(";");

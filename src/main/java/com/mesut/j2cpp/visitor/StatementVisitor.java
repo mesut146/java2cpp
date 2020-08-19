@@ -171,16 +171,6 @@ public class StatementVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(TryStatement n) {
-        TryHelper helper = new TryHelper(exprVisitor, this);
-
-        if (n.getFinally() != null) {
-            header.addRuntime();
-            helper.with_finally(n, w);
-        }
-        else {
-            //no finally stmt just print it directly
-            helper.no_finally(n, w);
-        }
         return false;
     }
 

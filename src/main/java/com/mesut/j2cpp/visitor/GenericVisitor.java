@@ -12,6 +12,9 @@ public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
         if (n instanceof Block) {
             return visit((Block) n, arg);
         }
+        else if (n instanceof AssertStatement) {
+            return visit((AssertStatement) n, arg);
+        }
         else if (n instanceof BreakStatement) {
             return visit((BreakStatement) n, arg);
         }
@@ -85,6 +88,9 @@ public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
 
     //expressions
     public R visit(Expression n, A arg) {
+        if (n == null) {
+            return null;
+        }
         if (n instanceof ArrayAccess) {
             return visit((ArrayAccess) n, arg);
         }
@@ -157,6 +163,12 @@ public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
         }
         else if (n instanceof VariableDeclarationExpression) {
             return visit((VariableDeclarationExpression) n, arg);
+        }
+        else if (n instanceof MethodInvocation) {
+            return visit((MethodInvocation) n, arg);
+        }
+        else if (n instanceof FieldAccess) {
+            return visit((FieldAccess) n, arg);
         }
 
         return null;

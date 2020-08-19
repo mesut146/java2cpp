@@ -1,5 +1,12 @@
 package com.mesut.j2cpp.cppast.literal;
 
-public class CNumberLiteral {
-    String value;
+import com.mesut.j2cpp.cppast.CExpression;
+
+public class CNumberLiteral extends CExpression {
+    public String value;
+
+    @Override
+    public void print() {
+        append(value);
+    }
 }

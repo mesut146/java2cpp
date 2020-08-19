@@ -4,5 +4,15 @@ import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CStatement;
 
 public class CExpressionStatement extends CStatement {
-    CExpression expression;
+    public CExpression expression;
+
+    public CExpressionStatement(CExpression expression) {
+        this.expression = expression;
+    }
+
+    @Override
+    public void print() {
+        append(expression.toString());
+        append(";");
+    }
 }

@@ -54,6 +54,10 @@ public interface Visitor<R, A> {
 
     R visit(YieldStatement node, A arg);
 
+    R visit(AssertStatement node, A arg);
+
+    R visit(MethodInvocation node, A arg);
+
     R visit(SwitchStatement node, A arg);
 
     R visit(LabeledStatement node, A arg);
@@ -90,6 +94,8 @@ public interface Visitor<R, A> {
 
 
     R visit(SuperMethodInvocation node, A arg);
+
+    R visit(SingleVariableDeclaration node, A arg);
 
     R visit(SwitchExpression node, A arg);
 

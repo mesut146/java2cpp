@@ -12,6 +12,7 @@ public class CHeader extends Node {
     public List<Namespace> using = new ArrayList<>();
     public String rpath;//header path:java/lang/String.h
     boolean hasRuntime = false;
+    public CSource source;
 
     public CHeader(String path) {
         rpath = path;

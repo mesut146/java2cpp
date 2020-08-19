@@ -1,4 +1,11 @@
 package com.mesut.j2cpp.cppast;
 
-public class CNode {
+import com.mesut.j2cpp.ast.Node;
+
+public abstract class CNode extends Node {
+
+    @Override
+    public void print() {
+
+    }
 }

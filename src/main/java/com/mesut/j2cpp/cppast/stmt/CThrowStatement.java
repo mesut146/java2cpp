@@ -5,5 +5,9 @@ import com.mesut.j2cpp.cppast.CStatement;
 
 //throw expr
 public class CThrowStatement extends CStatement {
-    CExpression expression;
+    public CExpression expression;
+
+    public CThrowStatement(CExpression expression) {
+        this.expression = expression;
+    }
 }

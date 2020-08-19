@@ -4,5 +4,5 @@ import com.mesut.j2cpp.cppast.CExpression;
 
 // ( expr )
 public class CParenthesizedExpression extends CExpression {
-    CExpression expression;
+    public CExpression expression;
 }

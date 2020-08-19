@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CNode;
 
 import java.util.ArrayList;
@@ -7,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 //var name,method name,param name,class name
-public class CName extends CNode {
+public class CName extends CExpression {
 
     public Namespace namespace;//for class names
     public String name;

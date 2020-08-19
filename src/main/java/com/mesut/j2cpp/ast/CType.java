@@ -1,12 +1,13 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Helper;
+import com.mesut.j2cpp.cppast.CNode;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CType {
+public class CType extends CNode {
     public Namespace ns;
     public Namespace scope;
     public String type;

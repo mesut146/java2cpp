@@ -1,6 +1,8 @@
 package com.mesut.j2cpp.cppast.literal;
 
-public class CCharacterLiteral {
-    String value;
-    char charValue;
+import com.mesut.j2cpp.cppast.CExpression;
+
+public class CCharacterLiteral extends CExpression {
+    public String value;
+    public char charValue;
 }

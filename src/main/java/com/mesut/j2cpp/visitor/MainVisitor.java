@@ -1,7 +1,9 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Converter;
+import com.mesut.j2cpp.Helper;
 import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.cppast.CExpression;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
@@ -14,6 +16,7 @@ public class MainVisitor extends ASTVisitor {
 
     public CHeader header;
     public TypeVisitor typeVisitor;
+    SourceVisitor sourceVisitor;
     public Stack<CClass> stack = new Stack<>();
     public Converter converter;
 
@@ -21,6 +24,7 @@ public class MainVisitor extends ASTVisitor {
         this.converter = converter;
         this.header = header;
         this.typeVisitor = new TypeVisitor(converter, header);
+        this.sourceVisitor = new SourceVisitor(converter, header.source);
     }
 
     public CClass last() {
@@ -126,11 +130,10 @@ public class MainVisitor extends ASTVisitor {
             last().addInner(cc);
         }
         stack.push(cc);
-        //exprVisitor.clazz = cc;
 
         cc.isEnum = true;
         cc.name = n.getName().getFullyQualifiedName();
-        cc.base.add(new CType("java::lang::Enum"));
+        cc.base.add(Helper.getEnumType());
         header.addInclude("java/lang/Enum");
 
         n.superInterfaceTypes().forEach(iface -> cc.base.add(typeVisitor.visit((Type) iface)));
@@ -143,12 +146,17 @@ public class MainVisitor extends ASTVisitor {
             cf.type = new CType(cc.name);
             cf.setName(constant.getName().getIdentifier());
 
+            for (Expression val : (List<Expression>) constant.arguments()) {
+                cf.enumArgs.add((CExpression) sourceVisitor.visit(val, null));
+            }
+
+
             if (constant.getAnonymousClassDeclaration() != null) {
                 throw new RuntimeException("enum body is not supported");
             }
         }
         if (!n.bodyDeclarations().isEmpty()) {
-            n.bodyDeclarations().forEach(p -> ((BodyDeclaration) p).accept(this));
+            //n.bodyDeclarations().forEach(p -> ((BodyDeclaration) p).accept(this));
         }
         stack.pop();
         return false;

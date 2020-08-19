@@ -4,6 +4,6 @@ import com.mesut.j2cpp.cppast.CExpression;
 
 //[index]
 public class CArrayAccess extends CExpression {
-    CExpression left;
-    CExpression index;
+    public CExpression left;
+    public CExpression index;
 }

@@ -1,5 +1,7 @@
 package com.mesut.j2cpp;
 
+import com.mesut.j2cpp.ast.CType;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -30,5 +32,13 @@ public class Helper {
         return ty;
     }
 
+
+    public static CType getStringType() {
+        return new CType("java::lang::String");
+    }
+
+    public static CType getEnumType() {
+        return new CType("java::lang::Enum");
+    }
 
 }

@@ -16,6 +16,7 @@ public class CSource extends Node {
 
     public CSource(CHeader header) {
         this.header = header;
+        header.source = this;
     }
 
     @Override
