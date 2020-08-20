@@ -62,7 +62,9 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
         CBlockStatement res = new CBlockStatement();
         for (Statement statement : (List<Statement>) n.statements()) {
             CStatement cStatement = (CStatement) visit(statement, arg);
-            res.statements.add(cStatement);
+            if (!(cStatement instanceof CEmptyStatement)) {
+                res.statements.add(cStatement);
+            }
         }
         return res;
     }
@@ -303,12 +305,12 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
                     else {
                         Expression expr = switchCase.getExpression();
                         //expr must be const-expr
-                        if (expr instanceof Name) {
+                        if (expr instanceof Name || expr instanceof NumberLiteral) {
                             Object val = expr.resolveConstantExpressionValue();
                             res.expression = (CExpression) visit(expr, null);
                         }
                         else {
-                            throw new RuntimeException("case must have const-expr");
+                            throw new RuntimeException("case must have const-expr: " + expr);
                         }
 
                     }
@@ -626,9 +628,14 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
         return parenthesizedExpression;
     }
 
+    //{...}
     @Override
     public CNode visit(ArrayInitializer node, CNode arg) {
-        return null;
+        CArrayInitializer initializer = new CArrayInitializer();
+        for (Expression expression : (List<Expression>) node.expressions()) {
+            initializer.expressions.add((CExpression) visit(expression, arg));
+        }
+        return initializer;
     }
 
     @Override

@@ -212,7 +212,7 @@ public class MainVisitor extends ASTVisitor {
         method.setStatic(Modifier.isStatic(n.getModifiers()));
         method.setPublic(Modifier.isPublic(n.getModifiers()));
         method.setNative(Modifier.isNative(n.getModifiers()));
-        if (last().isInterface) {
+        if (last().isInterface || Modifier.isAbstract(n.getModifiers())) {
             method.setPublic(true);
             method.isPureVirtual = true;
         }

@@ -50,6 +50,9 @@ public class CSource extends Node {
     }
 
     private void printFields() {
+        if (!fieldDefs.isEmpty()) {
+            line("//fields");
+        }
         for (CFieldDef field : fieldDefs) {
             if (field.hasExpression()) {
                 line(field.toString());
@@ -58,6 +61,9 @@ public class CSource extends Node {
     }
 
     private void printMethods() {
+        if (!methods.isEmpty()) {
+            line("//methods");
+        }
         for (CMethod method : methods) {
             append(method);
         }

@@ -1,6 +1,6 @@
 todo list
 
-pointers: fields,method params,local vars,->all
+pointers: fields, method params, local vars
 
 # template pointers
 
@@ -11,16 +11,10 @@ array to pointer
 
 #cast
 
-#make base class meth virtual
+#make base class method virtual
 
-#call super
 
-#static member access should has namespace not pointer
-cls.obj.meth();       cls::obj->meth();
-cls.stv().meth();     cls::stv()->meth();
-mem.obj.meth();       mem->obj->meth();
 
-#anonymous class
 
 #try finally
 try{

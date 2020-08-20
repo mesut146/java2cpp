@@ -16,14 +16,14 @@ public class CBlockStatement extends CStatement {
     public List<CStatement> statements = new ArrayList<>();
 
     public void print() {
-        appendln("{");
+        append("{");
         up();
         for (CStatement statement : statements) {
             if (!(statement instanceof CEmptyStatement)) {
-                lineln(statement.toString());
+                line(statement.toString());
             }
         }
         down();
-        lineln("}");
+        line("}");
     }
 }
