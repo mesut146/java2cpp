@@ -2,7 +2,6 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Helper;
 import com.mesut.j2cpp.cppast.CExpression;
-import com.mesut.j2cpp.cppast.CNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +14,10 @@ public class CType extends CExpression {
     public int dimensions = 0;//array dims
     public List<CType> typeNames = new ArrayList<>();//generics
     public boolean isTemplate = false;//<T>
-    public boolean isPointer = true;
+    public boolean isPointer = false;
 
     public CType(String type) {
+        type = type.replace(".", "::");
         String[] arr = type.split("::");
         this.type = arr[arr.length - 1];
         if (arr.length > 1) {

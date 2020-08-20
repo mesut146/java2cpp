@@ -22,5 +22,6 @@ public class CVariableDeclaration extends CStatement {
                 append(", ");
             }
         }
+        append(";");
     }
 }

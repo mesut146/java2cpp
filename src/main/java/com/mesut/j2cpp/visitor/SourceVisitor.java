@@ -252,12 +252,14 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
             Expression scope = node.getExpression();
             methodInvocation.scope = (CExpression) visit(scope, arg);
             IMethodBinding binding = node.resolveMethodBinding();
+            ITypeBinding typeBinding = binding.getDeclaringClass();
 
-            if (Modifier.isStatic(binding.getModifiers())) {
-                methodInvocation.isArrow = false;
-            }
 
             if (scope instanceof Name) {//field or class or variable
+                if (Modifier.isStatic(binding.getModifiers())) {
+                    methodInvocation.isArrow = false;
+                    methodInvocation.scope = new CType(typeBinding.getQualifiedName());
+                }
                 String scopeName = ((Name) scope).getFullyQualifiedName();
                 if (scopeName.equals("this")) {
                     methodInvocation.isArrow = true;
@@ -265,9 +267,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
                     args((List<Expression>) node.arguments(), methodInvocation);
                     return methodInvocation;
                 }
-
-
-                methodInvocation.isArrow = binding == null || !Modifier.isStatic(binding.getModifiers());
+                methodInvocation.isArrow = !Modifier.isStatic(binding.getModifiers());
             }
             else {
                 //another method call or field access
@@ -290,10 +290,34 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
         Expression expression = node.getExpression();
         ITypeBinding binding = expression.resolveTypeBinding();
         if (binding.isPrimitive()) {
+            //normal switch
             CSwitchStatement switchStatement = new CSwitchStatement();
             switchStatement.expression = (CExpression) visit(expression, null);
             for (Statement statement : (List<Statement>) node.statements()) {
+                if (statement instanceof SwitchCase) {
+                    SwitchCase switchCase = (SwitchCase) statement;
+                    CSwitchCase res = new CSwitchCase();
+                    if (switchCase.isDefault()) {
+                        res.isDefault = true;
+                    }
+                    else {
+                        Expression expr = switchCase.getExpression();
+                        //expr must be const-expr
+                        if (expr instanceof Name) {
+                            Object val = expr.resolveConstantExpressionValue();
+                            res.expression = (CExpression) visit(expr, null);
+                        }
+                        else {
+                            throw new RuntimeException("case must have const-expr");
+                        }
 
+                    }
+                    switchStatement.statements.add(res);
+                }
+                else {
+                    //normal statement
+                    switchStatement.statements.add((CStatement) visit(statement, null));
+                }
             }
             return switchStatement;
         }
@@ -627,13 +651,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
         return typeVisitor.visit(node);
     }
 
-    CNode nameOrExpr(SimpleName node) {
-        return new CName(node.getIdentifier());
-    }
-
-
-    @Override
-    public CNode visit(SimpleName node, CNode arg) {
+    CNode resolvedName(SimpleName node) {
         ITypeBinding binding = node.resolveTypeBinding();
         if (binding != null) {
             if (binding.isClass()) {
@@ -641,6 +659,12 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
             CType type = typeVisitor.fromBinding(binding);
             return type;
         }
+        return new CName(node.getIdentifier());
+    }
+
+
+    @Override
+    public CNode visit(SimpleName node, CNode arg) {
         return new CName(node.getIdentifier());
     }
 
