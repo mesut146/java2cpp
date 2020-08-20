@@ -19,7 +19,9 @@ public class CBlockStatement extends CStatement {
         appendln("{");
         up();
         for (CStatement statement : statements) {
-            lineln(statement.toString());
+            if (!(statement instanceof CEmptyStatement)) {
+                lineln(statement.toString());
+            }
         }
         down();
         lineln("}");

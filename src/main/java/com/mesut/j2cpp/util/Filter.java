@@ -32,6 +32,7 @@ public class Filter {
     }
 
     public void addIncludeClass(String name) {
+        includeAll = false;
         name = Util.trimSuffix(name, ".java");
         includeClasses.add(name);
     }
@@ -60,7 +61,7 @@ public class Filter {
             }
         }
         String clsName = Util.relative(file.getAbsolutePath(), srcDir);
-        clsName=Util.trimSuffix(clsName,".java");
+        clsName = Util.trimSuffix(clsName, ".java");
         for (String cls : includeClasses) {
             cls = cls.replace(".", "/");
             if (clsName.endsWith(cls)) {

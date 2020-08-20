@@ -105,13 +105,13 @@ public abstract class Node {
     public Node appendIndent(Node n) {
         n.print();
         boolean flag = true;
-        for (String s : n.list) {
+        for (String line : n.list) {
             if (flag && n.firstBlock) {
                 flag = false;
-                append(s);
+                append(line);
             }
             else {
-                list.add(indention + s);
+                list.add(indention + line);
             }
         }
         return this;

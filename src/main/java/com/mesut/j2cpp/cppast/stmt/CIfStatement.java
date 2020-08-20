@@ -15,8 +15,11 @@ public class CIfStatement extends CStatement {
         append(")");
         if (!(thenStatement instanceof CBlockStatement)) {
             append("\n");
+            appendIndent(thenStatement);
         }
-        append(thenStatement.toString());
+        else {
+            append(thenStatement);
+        }
         if (elseStatement != null) {
             append("else");
             append(elseStatement.toString());

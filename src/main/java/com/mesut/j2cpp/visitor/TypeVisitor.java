@@ -15,7 +15,6 @@ public class TypeVisitor {
 
     Converter converter;
     CHeader header;
-    //CType type;
 
     public TypeVisitor(Converter converter, CHeader header) {
         this.converter = converter;

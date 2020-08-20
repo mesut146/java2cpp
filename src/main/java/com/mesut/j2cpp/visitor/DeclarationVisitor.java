@@ -1,10 +1,8 @@
 package com.mesut.j2cpp.visitor;
 
-import com.mesut.j2cpp.ast.CMethodDecl;
-import com.mesut.j2cpp.ast.CName;
-import com.mesut.j2cpp.ast.CParameter;
-import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CNode;
+import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
@@ -14,51 +12,57 @@ import java.util.List;
 
 public class DeclarationVisitor extends DefaultVisitor<CNode, CNode> {
 
+    SourceVisitor sourceVisitor;
     TypeVisitor typeVisitor;
 
-    public DeclarationVisitor(TypeVisitor typeVisitor) {
+    public DeclarationVisitor(SourceVisitor sourceVisitor, TypeVisitor typeVisitor) {
+        this.sourceVisitor = sourceVisitor;
         this.typeVisitor = typeVisitor;
     }
 
     @Override
     public CNode visit(MethodDeclaration node, CNode arg) {
-        CMethodDecl method = new CMethodDecl();
+        CClass clazz = (CClass) arg;
+        CMethodDecl methodDecl = new CMethodDecl();
+        CMethod method = new CMethod();
+        method.decl = methodDecl;
 
-        node.typeParameters().forEach(temp -> method.template.add(new CType(temp.toString())));
+        node.typeParameters().forEach(temp -> methodDecl.template.add(new CType(temp.toString())));
 
         if (node.isConstructor()) {
-            method.isCons = true;
+            methodDecl.isCons = true;
         }
         else {
             Type type = node.getReturnType2();
             if (type == null) {
-                method.isCons = true;
+                methodDecl.isCons = true;
             }
             else {
-                method.type = typeVisitor.visit(node.getReturnType2());
+                methodDecl.type = typeVisitor.visit(node.getReturnType2());
             }
         }
 
         //type could be template
-        method.name = new CName(node.getName().getIdentifier());
+        methodDecl.name = new CName(node.getName().getIdentifier());
 
-        method.setStatic(Modifier.isStatic(node.getModifiers()));
-        method.setPublic(Modifier.isPublic(node.getModifiers()));
-        method.setNative(Modifier.isNative(node.getModifiers()));
-        if (last().isInterface) {
-            method.setPublic(true);
-            method.isPureVirtual = true;
+        methodDecl.setStatic(Modifier.isStatic(node.getModifiers()));
+        methodDecl.setPublic(Modifier.isPublic(node.getModifiers()));
+        methodDecl.setNative(Modifier.isNative(node.getModifiers()));
+        if (clazz.isInterface) {
+            methodDecl.setPublic(true);
+            methodDecl.isPureVirtual = true;
         }
 
         for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) node.parameters()) {
             CParameter cp = new CParameter();
-            cp.type = typeVisitor.visitType(param.getType(), last());
+            cp.type = typeVisitor.visitType(param.getType(), clazz);
             cp.type.isTemplate = false;
             cp.setName(param.getName().getIdentifier());
-            method.params.add(cp);
+            methodDecl.params.add(cp);
         }
 
-        method.node = node;
+        methodDecl.node = node;
+        method.body = (CBlockStatement) sourceVisitor.visit(methodDecl.node.getBody(), null);
         return method;
     }
 }

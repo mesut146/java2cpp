@@ -16,6 +16,6 @@ public class CForEachStatement extends CStatement {
         append(" : ");
         append(right.toString());
         append(")");
-        append(body.toString());
+        appendIndent(body);
     }
 }

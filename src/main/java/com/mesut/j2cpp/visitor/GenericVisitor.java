@@ -125,9 +125,16 @@ public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
         else if (n instanceof InstanceofExpression) {
             return visit((InstanceofExpression) n, arg);
         }
-        else if (n instanceof Name) {
-            return visit((Name) n, arg);
+        else if (n instanceof QualifiedName) {
+            return visit((QualifiedName) n, arg);
         }
+        else if (n instanceof SimpleName) {
+            return visit((SimpleName) n, arg);
+        }
+        /*else if (n instanceof Name) {
+            return visit((Name) n, arg);
+        }*/
+
         else if (n instanceof NullLiteral) {
             return visit((NullLiteral) n, arg);
         }

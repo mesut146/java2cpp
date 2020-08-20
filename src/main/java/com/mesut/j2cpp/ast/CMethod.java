@@ -41,14 +41,19 @@ public class CMethod extends ModifierNode {
         printDecl();
 
         if (superCall != null) {
-            append(":");
-            append(superCall.str);
+            append(" : ");
+            append(getParent().base.get(0).normal());
+            append(superCall.toString());
         }
         if (thisCall != null) {
             if (superCall != null) {
                 append(", ");
             }
-            append(thisCall.str);
+            else {
+                append(" : ");
+            }
+            append(getParent().name);
+            append(thisCall.toString());
         }
         append(body.toString());
         println();

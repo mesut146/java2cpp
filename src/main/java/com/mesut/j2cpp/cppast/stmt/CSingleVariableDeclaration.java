@@ -5,7 +5,7 @@ import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CStatement;
 
-public class CSingleVariableDeclaration extends CStatement {
+public class CSingleVariableDeclaration extends CExpression {
     public CType type;
     public CName name;
     public CExpression expression;
@@ -19,6 +19,6 @@ public class CSingleVariableDeclaration extends CStatement {
         if (expression != null) {
             append(expression.toString());
         }
-        append(";");
+        //append(";");
     }
 }

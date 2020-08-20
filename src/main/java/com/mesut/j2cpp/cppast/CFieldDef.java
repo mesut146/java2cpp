@@ -24,11 +24,17 @@ public class CFieldDef extends CNode {
         this.expression = expression;
     }
 
+    public boolean hasExpression() {
+        return expression != null;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getType());
         sb.append(" ");
+        sb.append(field.parent.name);
+        sb.append("::");
         sb.append(getName());
         if (expression != null) {
             sb.append(" = ");

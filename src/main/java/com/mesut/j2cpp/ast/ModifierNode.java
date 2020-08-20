@@ -1,9 +1,11 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.cppast.CNode;
+
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class ModifierNode extends Node {
+public abstract class ModifierNode extends CNode {
 
     final static String PUBLIC_NAME = "public";
     final static String PRIVATE_NAME = "private";

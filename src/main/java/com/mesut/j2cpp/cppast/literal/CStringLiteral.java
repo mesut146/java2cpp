@@ -9,7 +9,6 @@ public class CStringLiteral extends CExpression {
         this.value = value;
     }
 
-
     @Override
     public void print() {
         append("\"");

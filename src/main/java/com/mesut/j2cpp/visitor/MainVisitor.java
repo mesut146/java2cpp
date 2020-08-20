@@ -187,7 +187,6 @@ public class MainVisitor extends ASTVisitor {
     public boolean visit(MethodDeclaration n) {
         if (converter.debug_methods)
             System.out.println("method.decl=" + n.getReturnType2() + " " + n.getName() + "()" + " cons=" + n.isConstructor() + " prent=" + parent().name);
-        //System.out.println("res="+n.resolveBinding());
         CMethodDecl method = new CMethodDecl();
         last().addMethod(method);
 
@@ -227,7 +226,6 @@ public class MainVisitor extends ASTVisitor {
         }
 
         method.node = n;
-
         return false;
     }
 

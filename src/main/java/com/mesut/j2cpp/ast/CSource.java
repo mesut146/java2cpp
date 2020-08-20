@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.cppast.CClassImpl;
 import com.mesut.j2cpp.cppast.CFieldDef;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ public class CSource extends Node {
     public List<CFieldDef> fieldDefs = new ArrayList<>();
     public List<CMethod> methods = new ArrayList<>();
     public boolean hasRuntime = false;
+    public List<CClassImpl> anony = new ArrayList<>();
 
     public CSource(CHeader header) {
         this.header = header;
@@ -30,14 +32,28 @@ public class CSource extends Node {
             print_using(use);
         }
         println();
+        printAnony();
+        line("");
         printFields();
+        line("");
         printMethods();
 
     }
 
+    void printAnony() {
+        if (!anony.isEmpty()) {
+            line("//anonymous classes");
+            for (CClassImpl impl : anony) {
+                append(impl);
+            }
+        }
+    }
+
     private void printFields() {
         for (CFieldDef field : fieldDefs) {
-            append(field.toString());
+            if (field.hasExpression()) {
+                line(field.toString());
+            }
         }
     }
 
