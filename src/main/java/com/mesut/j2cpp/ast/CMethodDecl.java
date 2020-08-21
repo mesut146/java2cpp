@@ -16,6 +16,15 @@ public class CMethodDecl extends ModifierNode {
     public CClass parent;
     public MethodDeclaration node;
 
+    public void addParam(CParameter param) {
+        param.method = this;
+        params.add(param);
+    }
+
+    public CHeader getHeader() {
+        return parent.header;
+    }
+
     @Override
     public void print() {
         list.clear();

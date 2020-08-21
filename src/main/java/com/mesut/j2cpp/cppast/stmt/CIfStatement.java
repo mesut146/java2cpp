@@ -10,19 +10,23 @@ public class CIfStatement extends CStatement {
 
     @Override
     public void print() {
+        clear();
         append("if(");
         append(condition.toString());
         append(")");
-        if (!(thenStatement instanceof CBlockStatement)) {
-            append("\n");
-            appendIndent(thenStatement);
-        }
-        else {
+        if (thenStatement instanceof CBlockStatement) {
             append(thenStatement);
         }
+        else {
+            up();
+            //thenStatement.setFrom(this);
+            line(thenStatement.toString());
+            down();
+        }
         if (elseStatement != null) {
-            append("else");
-            append(elseStatement.toString());
+            line("else ");
+            elseStatement.firstBlock = true;
+            appendIndent(elseStatement);
         }
     }
 }

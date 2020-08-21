@@ -1,7 +1,7 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Converter;
-import com.mesut.j2cpp.Helper;
+import com.mesut.j2cpp.util.Helper;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;

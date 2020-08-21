@@ -10,4 +10,12 @@ public class CThrowStatement extends CStatement {
     public CThrowStatement(CExpression expression) {
         this.expression = expression;
     }
+
+
+    @Override
+    public void print() {
+        append("throw ");
+        append(expression.toString());
+        append(";");
+    }
 }

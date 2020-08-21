@@ -1,7 +1,5 @@
 package com.mesut.j2cpp.ast;
 
-import com.mesut.j2cpp.cppast.CNode;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +7,7 @@ public abstract class Node {
     public String indention = "";
     public boolean useTab = false;
     public int level = 0;
-    public List<String> list = new ArrayList<>();
+    public List<String> list = new ArrayList<>();//list of lines
     public boolean firstBlock = false;
     public String cache = null;
     boolean isPrinted = false;
@@ -33,8 +31,14 @@ public abstract class Node {
         return this;
     }
 
+    public void line(Node node) {
+        node.print();
+        for (String line : node.list) {
+            
+        }
+    }
+
     public Node lineln(String str) {
-        //line(str).println();
         line(str);
         println();
         return this;
@@ -157,15 +161,9 @@ public abstract class Node {
         if (cache != null) {
             return cache;
         }
+        clear();
         print();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < list.size(); i++) {
-            sb.append(list.get(i));
-            if (i < list.size() - 1) {
-                sb.append("\n");
-            }
-        }
-        return cache = sb.toString();
+        return cache = String.join("\n", list);
     }
 
 

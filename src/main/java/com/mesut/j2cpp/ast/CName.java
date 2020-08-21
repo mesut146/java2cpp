@@ -1,9 +1,9 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CExpression;
-import com.mesut.j2cpp.cppast.CNode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,7 +16,11 @@ public class CName extends CExpression {
     public boolean isPointer = false;
 
     public CName(String name) {
-        this.name = name;
+        String[] arr = name.split("::");
+        if (arr.length > 1) {
+            namespace = new Namespace(Arrays.asList(arr));
+        }
+        this.name = arr[arr.length - 1];
     }
 
     public static CName from(String name) {

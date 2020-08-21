@@ -1,12 +1,12 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Converter;
-import com.mesut.j2cpp.Helper;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.*;
 import com.mesut.j2cpp.cppast.expr.*;
 import com.mesut.j2cpp.cppast.literal.*;
 import com.mesut.j2cpp.cppast.stmt.*;
+import com.mesut.j2cpp.util.Helper;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
@@ -29,31 +29,38 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
 
     public void convert() {
         for (CClass clazz : source.header.classes) {
-            this.clazz = clazz;
-            for (CField field : clazz.fields) {
-                if (field.node == null) {
-                    //enum args
+            convertClass(clazz);
+        }
+    }
 
-                }
-                else {
-                    Expression expression = field.node.getInitializer();
-                    if (expression != null) {
-                        CFieldDef fieldDef = new CFieldDef(field);
-                        fieldDef.setExpression((CExpression) visit(expression, null));
-                        source.fieldDefs.add(fieldDef);
-                    }
-                }
+    private void convertClass(CClass clazz) {
+        this.clazz = clazz;
+        for (CField field : clazz.fields) {
+            if (field.node == null) {
+                //enum args
 
             }
-            for (CMethodDecl methodDecl : clazz.methods) {
-                if (methodDecl.node.getBody() != null) {
-                    CMethod methodDef = new CMethod();
-                    methodDef.decl = methodDecl;
-                    this.method = methodDef;
-                    methodDef.body = (CBlockStatement) visit(methodDecl.node.getBody(), null);
-                    source.methods.add(methodDef);
+            else {
+                Expression expression = field.node.getInitializer();
+                if (expression != null) {
+                    CFieldDef fieldDef = new CFieldDef(field);
+                    fieldDef.setExpression((CExpression) visit(expression, null));
+                    source.fieldDefs.add(fieldDef);
                 }
             }
+
+        }
+        for (CMethodDecl methodDecl : clazz.methods) {
+            if (methodDecl.node.getBody() != null) {
+                CMethod methodDef = new CMethod();
+                methodDef.decl = methodDecl;
+                this.method = methodDef;
+                methodDef.body = (CBlockStatement) visit(methodDecl.node.getBody(), null);
+                source.methods.add(methodDef);
+            }
+        }
+        for (CClass inner : clazz.classes) {
+            convertClass(inner);
         }
     }
 
@@ -292,51 +299,19 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
         Expression expression = node.getExpression();
         ITypeBinding binding = expression.resolveTypeBinding();
         if (binding.isPrimitive()) {
-            //normal switch
-            CSwitchStatement switchStatement = new CSwitchStatement();
-            switchStatement.expression = (CExpression) visit(expression, null);
-            for (Statement statement : (List<Statement>) node.statements()) {
-                if (statement instanceof SwitchCase) {
-                    SwitchCase switchCase = (SwitchCase) statement;
-                    CSwitchCase res = new CSwitchCase();
-                    if (switchCase.isDefault()) {
-                        res.isDefault = true;
-                    }
-                    else {
-                        Expression expr = switchCase.getExpression();
-                        //expr must be const-expr
-                        if (expr instanceof Name || expr instanceof NumberLiteral) {
-                            Object val = expr.resolveConstantExpressionValue();
-                            res.expression = (CExpression) visit(expr, null);
-                        }
-                        else {
-                            throw new RuntimeException("case must have const-expr: " + expr);
-                        }
-
-                    }
-                    switchStatement.statements.add(res);
-                }
-                else {
-                    //normal statement
-                    switchStatement.statements.add((CStatement) visit(statement, null));
-                }
-            }
-            return switchStatement;
+            return new SwitchHelper(this).makeIfElse(node);
         }
         else if (binding.isEnum()) {
-            //ordinals
-            CSwitchStatement switchStatement = new CSwitchStatement();
+            //if else with ordinals
             //var->ordinal
-            CMethodInvocation methodInvocation = new CMethodInvocation();
+            /*CMethodInvocation methodInvocation = new CMethodInvocation();
             methodInvocation.isArrow = true;
             methodInvocation.scope = (CExpression) visit(expression, null);
-            methodInvocation.name = new CName("ordinal");
-            switchStatement.expression = methodInvocation;
+            methodInvocation.name = new CName("ordinal");*/
 
-            for (Statement statement : (List<Statement>) node.statements()) {
-
-            }
-            return switchStatement;
+            SwitchHelper helper = new SwitchHelper(this);
+            helper.isEnum = true;
+            return helper.makeIfElse(node);
         }
         else {
             //multiple if elses
@@ -658,13 +633,31 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
         return typeVisitor.visit(node);
     }
 
+
     CNode resolvedName(SimpleName node) {
-        ITypeBinding binding = node.resolveTypeBinding();
-        if (binding != null) {
-            if (binding.isClass()) {
+        IBinding binding = node.resolveBinding();
+        if (Modifier.isStatic(binding.getModifiers())) {
+            if (binding.getKind() == IBinding.VARIABLE) {
+                IVariableBinding variableBinding = (IVariableBinding) binding;
+                String qu = variableBinding.getDeclaringClass().getQualifiedName();
+
+                CFieldAccess fieldAccess = new CFieldAccess();
+                fieldAccess.name = new CName(node.getIdentifier());
+                fieldAccess.isArrow = false;
+                CType scope = new CType(qu.replace(".", "::"));
+                fieldAccess.scope = source.normalizeType(scope);
+                return fieldAccess;
             }
-            CType type = typeVisitor.fromBinding(binding);
-            return type;
+            else if (binding.getKind() == IBinding.METHOD) {
+                IMethodBinding methodBinding = (IMethodBinding) binding;
+            }
+        }
+
+        ITypeBinding typeBinding = node.resolveTypeBinding();
+        if (typeBinding != null) {
+
+            /*CType type = typeVisitor.fromBinding(binding);
+            return type;*/
         }
         return new CName(node.getIdentifier());
     }
@@ -672,16 +665,17 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(SimpleName node, CNode arg) {
-        return new CName(node.getIdentifier());
+        return resolvedName(node);
+        //return new CName(node.getIdentifier());
     }
 
     @Override
     public CNode visit(QualifiedName node, CNode arg) {
         IBinding binding = node.resolveBinding();
-        if (Modifier.isStatic(binding.getModifiers())) {
+        if (Modifier.isStatic(binding.getModifiers()) || binding instanceof IVariableBinding) {
             CFieldAccess fieldAccess = new CFieldAccess();
             fieldAccess.name = new CName(node.getName().getIdentifier());
-            fieldAccess.isArrow = false;
+            fieldAccess.isArrow = binding instanceof IVariableBinding;
             fieldAccess.scope = new CName(node.getQualifier().toString());
             return fieldAccess;
         }

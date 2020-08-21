@@ -1,6 +1,6 @@
 package com.mesut.j2cpp.ast;
 
-import com.mesut.j2cpp.Helper;
+import com.mesut.j2cpp.util.Helper;
 import com.mesut.j2cpp.cppast.CExpression;
 
 import java.util.ArrayList;

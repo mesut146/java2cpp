@@ -4,7 +4,7 @@ public class CParameter extends Node {
 
     public CType type;
     public CName name;
-
+    public CMethodDecl method;
 
     public void setName(String name) {
         this.name = new CName(name);
@@ -13,8 +13,7 @@ public class CParameter extends Node {
     public void print() {
         list.clear();
         name.isPointer = type.isPointer();
-        //append(type.toString().replace(".","::"));//normalize the type(base::type)
-        append(type.normal());
+        append(method.getHeader().normalizeType(type));
         append(" ");
         append(name.toString());
     }

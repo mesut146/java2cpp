@@ -2,6 +2,7 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CClassImpl;
 import com.mesut.j2cpp.cppast.CFieldDef;
+import com.mesut.j2cpp.util.Helper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,13 +22,16 @@ public class CSource extends Node {
         header.source = this;
     }
 
+    //trim type's namespace by usings
+    //java::lang::String   using java::lang -> String
+    public CType normalizeType(CType type) {
+        return Helper.normalizeType(type, usings);
+    }
+
     @Override
     public void print() {
         includePath(header.getInclude());
         println();
-        if (header.ns != null) {
-            print_using(header.ns);
-        }
         for (Namespace use : usings) {
             print_using(use);
         }

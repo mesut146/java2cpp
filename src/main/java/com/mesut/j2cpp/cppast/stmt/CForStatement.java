@@ -27,6 +27,7 @@ public class CForStatement extends CStatement {
             append(updaters.stream().map(CExpression::toString).collect(Collectors.joining(", ")));
         }
         append(")");
-        append(body.toString());
+        append(body);
+        //append(body.toString());
     }
 }

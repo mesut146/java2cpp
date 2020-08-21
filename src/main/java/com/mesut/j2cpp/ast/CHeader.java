@@ -1,5 +1,7 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.util.Helper;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class CHeader extends Node {
 
     public void addClass(CClass cc) {
         cc.ns = ns;
+        cc.header = this;
         classes.add(cc);
     }
 
@@ -49,18 +52,11 @@ public class CHeader extends Node {
         useNamespace(new Namespace(ns));
     }
 
-    /**
-     * make sure type is included
-     **/
-    public void validate(CType type) {
-        for (String inc : includes) {
-            int idx = inc.lastIndexOf("/");
-            String name = inc.substring(idx + 1, inc.length() - 2);
-            if (type.type.equals(name)) {
-                return;
-            }
-        }
-        //check asterisk imps
+
+    //trim type's namespace by usings
+    //java::lang::String   using java::lang -> String
+    public CType normalizeType(CType type) {
+        return Helper.normalizeType(type, using);
     }
 
     public void print() {
@@ -81,7 +77,9 @@ public class CHeader extends Node {
             up();
         }
         for (Namespace use : using) {
-            print_using(use);
+            if (ns == null || !use.all.equals(ns.all)) {//omit current namespace
+                print_using(use);
+            }
         }
 
         for (CClass cc : classes) {

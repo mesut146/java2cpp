@@ -1,6 +1,7 @@
-package com.mesut.j2cpp;
+package com.mesut.j2cpp.util;
 
 import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.ast.Namespace;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,6 +40,41 @@ public class Helper {
 
     public static CType getEnumType() {
         return new CType("java::lang::Enum");
+    }
+
+
+    //trim type's namespace by usings
+    //java::lang::String   using java::lang -> String
+    public static CType normalizeType(CType type, List<Namespace> usings) {
+        //find longest prefix
+        int max = 0;
+        Namespace maxNs = null;
+        Namespace typeNs = type.ns;
+        for (Namespace ns : usings) {
+            int cur = 0;
+            for (int i = 0; i < ns.parts.size(); i++) {
+                if (typeNs.parts.get(i).equals(ns.parts.get(i))) {
+                    cur++;
+                }
+                else {
+                    break;
+                }
+            }
+            if (cur > max) {
+                maxNs = ns;
+                max = cur;
+            }
+        }
+        if (maxNs != null) {
+            String res = typeNs.normalize(maxNs);
+            if (res.isEmpty()) {
+                type.ns = null;
+            }
+            else {
+                type.ns = new Namespace(res);
+            }
+        }
+        return type;
     }
 
 }

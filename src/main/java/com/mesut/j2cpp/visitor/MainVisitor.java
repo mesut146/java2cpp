@@ -1,9 +1,9 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Converter;
-import com.mesut.j2cpp.Helper;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.util.Helper;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
@@ -43,6 +43,8 @@ public class MainVisitor extends ASTVisitor {
         Namespace ns = new Namespace();
         ns.fromPkg(n.getName().getFullyQualifiedName());
         header.ns = ns;
+        header.using.add(header.ns);
+        header.source.usings.add(header.ns);
         return true;
     }
 
@@ -219,10 +221,11 @@ public class MainVisitor extends ASTVisitor {
 
         for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) n.parameters()) {
             CParameter cp = new CParameter();
+            cp.method = method;
             cp.type = typeVisitor.visitType(param.getType(), last());
             cp.type.isTemplate = false;
             cp.setName(param.getName().getIdentifier());
-            method.params.add(cp);
+            method.addParam(cp);
         }
 
         method.node = n;

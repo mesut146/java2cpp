@@ -19,10 +19,12 @@ public class CClass extends CNode {
     public boolean isInterface = false;
     public boolean isEnum = false;//todo
     public CClass parent;//outer
+    public CHeader header;
     public Writer staticBlock = null;
 
     public void addInner(CClass cc) {
         cc.parent = this;
+        cc.header = header;
         classes.add(cc);
     }
 
