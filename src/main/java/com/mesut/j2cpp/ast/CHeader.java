@@ -56,6 +56,9 @@ public class CHeader extends Node {
     //trim type's namespace by usings
     //java::lang::String   using java::lang -> String
     public CType normalizeType(CType type) {
+        if (type.ns == null) {
+            return type;
+        }
         return Helper.normalizeType(type, using);
     }
 

@@ -46,10 +46,14 @@ public class Helper {
     //trim type's namespace by usings
     //java::lang::String   using java::lang -> String
     public static CType normalizeType(CType type, List<Namespace> usings) {
+        if (type.ns == null) {
+            return type;
+        }
         //find longest prefix
+        CType copied = type.copy();
         int max = 0;
         Namespace maxNs = null;
-        Namespace typeNs = type.ns;
+        Namespace typeNs = copied.ns;
         for (Namespace ns : usings) {
             int cur = 0;
             for (int i = 0; i < ns.parts.size(); i++) {
@@ -68,13 +72,13 @@ public class Helper {
         if (maxNs != null) {
             String res = typeNs.normalize(maxNs);
             if (res.isEmpty()) {
-                type.ns = null;
+                copied.ns = null;
             }
             else {
-                type.ns = new Namespace(res);
+                copied.ns = new Namespace(res);
             }
         }
-        return type;
+        return copied;
     }
 
 }

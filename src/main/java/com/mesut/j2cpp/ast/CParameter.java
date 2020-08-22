@@ -11,7 +11,6 @@ public class CParameter extends Node {
     }
 
     public void print() {
-        list.clear();
         name.isPointer = type.isPointer();
         append(method.getHeader().normalizeType(type));
         append(" ");

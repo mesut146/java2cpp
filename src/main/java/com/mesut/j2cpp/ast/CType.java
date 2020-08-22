@@ -1,7 +1,7 @@
 package com.mesut.j2cpp.ast;
 
-import com.mesut.j2cpp.util.Helper;
 import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.util.Helper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 public class CType extends CExpression {
     public Namespace ns;
     public Namespace scope;
+    public CHeader header;
+    public CSource source;
     public String type;
     public int dimensions = 0;//array dims
     public List<CType> typeNames = new ArrayList<>();//generics

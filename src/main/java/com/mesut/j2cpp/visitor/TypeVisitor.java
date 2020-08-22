@@ -1,11 +1,11 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Converter;
-import com.mesut.j2cpp.util.Helper;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.util.Helper;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
@@ -103,16 +103,16 @@ public class TypeVisitor {
         if (type.isArrayType()) {
             cType = visit((ArrayType) type);
         }
-        if (type.isSimpleType()) {
+        else if (type.isSimpleType()) {
             cType = visit((SimpleType) type);
         }
-        if (type.isParameterizedType()) {
+        else if (type.isParameterizedType()) {
             cType = visit((ParameterizedType) type);
         }
-        if (type.isWildcardType()) {
+        else if (type.isWildcardType()) {
             cType = visit((WildcardType) type);
         }
-        if (type.isPrimitiveType()) {
+        else if (type.isPrimitiveType()) {
             cType = visit((PrimitiveType) type);
         }
         //System.out.println("type=" + type + " res=" + cType + " cls=" + type.getClass());
@@ -122,6 +122,8 @@ public class TypeVisitor {
     public CType visitType(Type type, CClass cc) {
         CType cType = visit(type);
         cType.scope = cc.ns;
+        cType.header = header;
+        cType.source = header.source;
         return cType;
     }
 }

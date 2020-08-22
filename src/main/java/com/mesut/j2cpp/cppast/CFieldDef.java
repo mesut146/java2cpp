@@ -31,7 +31,8 @@ public class CFieldDef extends CNode {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(getType());
+        //sb.append(getType());
+        sb.append(field.parent.header.normalizeType(getType()));
         sb.append(" ");
         sb.append(field.parent.name);
         sb.append("::");
