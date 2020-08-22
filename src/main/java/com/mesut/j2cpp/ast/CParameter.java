@@ -12,7 +12,7 @@ public class CParameter extends Node {
 
     public void print() {
         name.isPointer = type.isPointer();
-        append(method.getHeader().normalizeType(type));
+        append(type.toString());
         append(" ");
         append(name.toString());
     }

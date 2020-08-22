@@ -6,6 +6,10 @@ import com.mesut.j2cpp.cppast.CExpression;
 public class CParenthesizedExpression extends CExpression {
     public CExpression expression;
 
+    public CParenthesizedExpression(CExpression expression) {
+        this.expression = expression;
+    }
+
     @Override
     public void print() {
         append("(");

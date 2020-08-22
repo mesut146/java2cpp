@@ -7,10 +7,15 @@ public class CArrayCreation2 extends CExpression {
 
     public CType type;
 
+    public CArrayCreation2(CType type) {
+        this.type = type;
+    }
+
     @Override
     public void print() {
         append("new ");
-        append(type);
+        type.isPointer = false;
+        append(type.toString());
         append("(");
         append(")");
     }

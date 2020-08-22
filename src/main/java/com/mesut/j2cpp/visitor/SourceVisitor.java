@@ -26,6 +26,9 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
         typeVisitor = new TypeVisitor(converter, source.header);
     }
 
+    public CHeader getHeader() {
+        return source.header;
+    }
 
     public void convert() {
         for (CClass clazz : source.header.classes) {
@@ -120,6 +123,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     public CNode visit(StringLiteral node, CNode arg) {
         CObjectCreation objectCreation = new CObjectCreation();
         objectCreation.type = Helper.getStringType();
+        objectCreation.type.setHeader(source.header);
         objectCreation.args.add(new CStringLiteral(node.getLiteralValue()));
         return objectCreation;
     }
@@ -267,7 +271,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
             if (scope instanceof Name) {//field or class or variable
                 if (Modifier.isStatic(binding.getModifiers())) {
                     methodInvocation.isArrow = false;
-                    methodInvocation.scope = new CType(typeBinding.getQualifiedName());
+                    methodInvocation.scope = new CType(typeBinding.getQualifiedName(), source.header);
                 }
                 String scopeName = ((Name) scope).getFullyQualifiedName();
                 if (scopeName.equals("this")) {
@@ -478,7 +482,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
                 }
             }
             CClassInstanceCreation classInstanceCreation = new CClassInstanceCreation();
-            classInstanceCreation.type = new CType(anony.name);
+            classInstanceCreation.type = new CType(anony.name, source.header);
             source.anony.add(new CClassImpl(anony));
             return classInstanceCreation;
         }
@@ -580,11 +584,8 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
             return visit(node.getInitializer(), arg);
         }
         else {
-            CArrayCreation2 arrayCreation2 = new CArrayCreation2();
             CType typeName = typeVisitor.visitType(node.getType(), clazz).copy();
-            typeName.dimensions = node.dimensions().size();
-            arrayCreation2.type = typeName;
-            return arrayCreation2;
+            return new CArrayCreation2(new CArrayType(typeName, node.dimensions().size()));
         }
     }
 
@@ -598,9 +599,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(ParenthesizedExpression node, CNode arg) {
-        CParenthesizedExpression parenthesizedExpression = new CParenthesizedExpression();
-        parenthesizedExpression.expression = (CExpression) visit(node.getExpression(), arg);
-        return parenthesizedExpression;
+        return new CParenthesizedExpression((CExpression) visit(node.getExpression(), arg));
     }
 
     //{...}
@@ -644,7 +643,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
                 CFieldAccess fieldAccess = new CFieldAccess();
                 fieldAccess.name = new CName(node.getIdentifier());
                 fieldAccess.isArrow = false;
-                CType scope = new CType(qu.replace(".", "::"));
+                CType scope = new CType(qu.replace(".", "::"), getHeader());
                 fieldAccess.scope = source.normalizeType(scope);
                 return fieldAccess;
             }

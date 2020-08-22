@@ -1,10 +1,7 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Converter;
-import com.mesut.j2cpp.ast.CClass;
-import com.mesut.j2cpp.ast.CHeader;
-import com.mesut.j2cpp.ast.CMethod;
-import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.util.Helper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -74,10 +71,8 @@ public class TypeVisitor {
     }
 
     public CType visit(ArrayType n) {
-        CType type = visit(n.getElementType());
-        type = type.copy();
-        type.dimensions = n.getDimensions();
-        return type;
+        CType type = visit(n.getElementType()).copy();
+        return new CArrayType(type, n.getDimensions());
     }
 
     public CType visit(WildcardType n) {
@@ -121,9 +116,7 @@ public class TypeVisitor {
 
     public CType visitType(Type type, CClass cc) {
         CType cType = visit(type);
-        cType.scope = cc.ns;
-        cType.header = header;
-        cType.source = header.source;
+        cType.setHeader(header);
         return cType;
     }
 }

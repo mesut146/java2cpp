@@ -88,7 +88,7 @@ public class MainVisitor extends ASTVisitor {
         cc.isInterface = node.isInterface();
 
 
-        node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true)));
+        node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true).setHeader(header)));
         if (node.getSuperclassType() != null) {
             CType baseType = typeVisitor.visitType(node.getSuperclassType(), cc);
             baseType.isTemplate = false;
@@ -135,7 +135,7 @@ public class MainVisitor extends ASTVisitor {
 
         cc.isEnum = true;
         cc.name = n.getName().getFullyQualifiedName();
-        cc.base.add(Helper.getEnumType());
+        cc.base.add(Helper.getEnumType().setHeader(header));
         header.addInclude("java/lang/Enum");
 
         n.superInterfaceTypes().forEach(iface -> cc.base.add(typeVisitor.visit((Type) iface)));
@@ -145,7 +145,7 @@ public class MainVisitor extends ASTVisitor {
             cc.addField(cf);
             cf.setPublic(true);
             cf.setStatic(true);
-            cf.type = new CType(cc.name);
+            cf.type = new CType(cc.name, header);
             cf.setName(constant.getName().getIdentifier());
 
             for (Expression val : (List<Expression>) constant.arguments()) {

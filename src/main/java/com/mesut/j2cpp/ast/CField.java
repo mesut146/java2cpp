@@ -1,7 +1,6 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CExpression;
-import com.mesut.j2cpp.util.Helper;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 import java.util.ArrayList;
@@ -26,8 +25,7 @@ public class CField extends ModifierNode {
             append("static ");
         }
 
-        //append(type.normalize(parent.ns));
-        append(type.normalize(parent.ns));
+        append(type.toString());
         append(" ");
         append(name.toString());
         append(";");

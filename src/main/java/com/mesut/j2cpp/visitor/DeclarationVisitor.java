@@ -27,7 +27,9 @@ public class DeclarationVisitor extends DefaultVisitor<CNode, CNode> {
         CMethod method = new CMethod();
         method.decl = methodDecl;
 
-        node.typeParameters().forEach(temp -> methodDecl.template.add(new CType(temp.toString())));
+        node.typeParameters().forEach(temp -> {
+            methodDecl.template.add(new CType(temp.toString()).setHeader(sourceVisitor.source));
+        });
 
         if (node.isConstructor()) {
             methodDecl.isCons = true;
@@ -38,7 +40,7 @@ public class DeclarationVisitor extends DefaultVisitor<CNode, CNode> {
                 methodDecl.isCons = true;
             }
             else {
-                methodDecl.type = typeVisitor.visit(node.getReturnType2());
+                methodDecl.type = typeVisitor.visitType(node.getReturnType2(), clazz);
             }
         }
 

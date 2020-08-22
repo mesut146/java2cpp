@@ -9,14 +9,15 @@ import java.util.stream.Collectors;
 
 public class CType extends CExpression {
     public Namespace ns;
-    public Namespace scope;
     public CHeader header;
     public CSource source;
     public String type;
-    public int dimensions = 0;//array dims
     public List<CType> typeNames = new ArrayList<>();//generics
     public boolean isTemplate = false;//<T>
     public boolean isPointer = false;
+
+    public CType() {
+    }
 
     public CType(String type) {
         type = type.replace(".", "::");
@@ -25,6 +26,11 @@ public class CType extends CExpression {
         if (arr.length > 1) {
             ns = new Namespace(type.substring(0, type.lastIndexOf("::")));
         }
+    }
+
+    public CType(String type, CHeader header) {
+        this(type);
+        setHeader(header);
     }
 
     public CType(String type, boolean isTemplate) {
@@ -36,53 +42,19 @@ public class CType extends CExpression {
         return type;
     }
 
-    //print namespace and pointer
-    private String withPtr() {
-        StringBuilder sb = new StringBuilder(withoutPtr());
-        if (isPointer()) {
-            sb.append("*");
-        }
-        return sb.toString();
-    }
-
-
-    private String withoutPtr() {
-        return withoutPtr(scope);
-    }
-
-    //print namespace and type
-    private String withoutPtr(Namespace other) {
-        StringBuilder sb = new StringBuilder();
-        if (ns != null) {
-            if (other == null) {
-                sb.append(ns.getAll()).append("::");
-            }
-            else {
-                String norm = ns.normalize(other);
-                if (norm != null && !norm.isEmpty()) {
-                    sb.append(ns.normalize(other)).append("::");
-                }
-            }
-        }
-        sb.append(type);
-        return sb.toString();
-    }
 
     public CType copy() {
         CType copied = new CType(type, isTemplate);
         copied.isPointer = isPointer;
-        copied.dimensions = dimensions;
         copied.ns = ns;
         copied.typeNames = typeNames;
+        copied.setHeader(header);
         return copied;
     }
 
-    public boolean isArray() {
-        return dimensions > 0;
-    }
 
     public boolean isPrim() {
-        return dimensions == 0 && Helper.isPrim(type);
+        return Helper.isPrim(type);
     }
 
     public boolean isPointer() {
@@ -95,51 +67,51 @@ public class CType extends CExpression {
 
     @Override
     public String toString() {
-        if (isArray()) {
-            return strLevel(dimensions, true);
-        }
-        if (typeNames.size() > 0) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(withoutPtr());
-            sb.append("<");
-            sb.append(typeNames.stream().map(CType::withPtr).collect(Collectors.joining(",")));
-            sb.append(">");
-            if (isPointer()) sb.append("*");
-            return sb.toString();
-        }
-        return withPtr();
+        return normalized();
+        //return normal();
     }
 
-    public String normalize(Namespace other) {
-        if (isArray()) {
-            return strLevel(dimensions, false);
-        }
-        return withoutPtr(other);
+    public String normalized() {
+        return header.normalizeType(this).normal();
     }
 
     public String normal() {
-        if (isArray()) {
-            return strLevel(dimensions, false);
+        StringBuilder sb = new StringBuilder();
+        if (ns != null) {
+            sb.append(ns.getAll());
+            sb.append("::");
         }
+        sb.append(type);
         if (typeNames.size() > 0) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(withoutPtr());
             sb.append("<");
-            sb.append(typeNames.stream().map(CType::withPtr).collect(Collectors.joining(",")));
+            sb.append(typeNames.stream().map(CType::toString).collect(Collectors.joining(",")));
             sb.append(">");
-            return sb.toString();
         }
-        return withoutPtr();
+        if (isPointer()) sb.append("*");
+        return sb.toString();
     }
 
-    String strLevel(int level, boolean ptr) {
-        if (level == 0) {
-            return ptr ? withPtr() : withoutPtr();
+    //print namespace and pointer
+    String withPtr() {
+        StringBuilder sb = new StringBuilder(withoutPtr());
+        if (isPointer()) {
+            sb.append("*");
         }
-        else if (level == 1) {
-            return "array_single<" + strLevel(level - 1, ptr) + ">";
-        }
-        return "array_multi<" + strLevel(level - 1, ptr) + ">";
+        return sb.toString();
     }
 
+
+    String withoutPtr() {
+        return type;
+    }
+
+    public CType setHeader(CHeader header) {
+        this.header = header;
+        this.source = header.source;
+        return this;
+    }
+
+    public CType setHeader(CSource source) {
+        return setHeader(source.header);
+    }
 }

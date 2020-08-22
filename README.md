@@ -8,11 +8,11 @@ java runtime must be included seperately
 
 ### todo
 
-- [ ] type solving(scope based)
-- [ ] instance of
-- [ ] try finally
+- [x] type solving(scope based)
+- [x] instance of
+- [x] try finally
 - [ ] arrays(pointer)
 - [ ] cast(reinterpret,dynamic,static,direct) 
 - [ ] forward class declarations
-- [ ] anonymous classess
+- [x] anonymous classess
 - [ ] virtual methods(all virtual for now)
