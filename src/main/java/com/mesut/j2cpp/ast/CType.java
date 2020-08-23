@@ -75,6 +75,9 @@ public class CType extends CExpression {
         if (isPrim()) {
             return type;
         }
+        if (isTemplate) {
+            return type;
+        }
         return header.normalizeType(this).normal();
     }
 

@@ -40,7 +40,7 @@ public class SwitchHelper {
         //for enums ve call ordinal method store result in a var and make regular if elses
         if (isEnum) {
             CStatementList statementList = new CStatementList();
-            CVariableDeclaration ord = new CVariableDeclaration();
+            CVariableDeclarationStatement ord = new CVariableDeclarationStatement();
             CVariableDeclarationFragment frag = new CVariableDeclarationFragment();
             ord.type = new CType("int").setHeader(visitor.source);
             ordinalName = new CName("ordinal");

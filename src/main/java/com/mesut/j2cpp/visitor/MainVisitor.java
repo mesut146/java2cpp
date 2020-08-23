@@ -162,7 +162,7 @@ public class MainVisitor extends ASTVisitor {
             }
             else {
                 //todo make ordinals
-                throw new RuntimeException("ordinal");
+                //throw new RuntimeException("ordinal");
             }
 
             if (constant.getAnonymousClassDeclaration() != null) {
@@ -194,7 +194,9 @@ public class MainVisitor extends ASTVisitor {
                 field.setPublic(true);
             }
             if (frag.getInitializer() != null) {
+                sourceVisitor.clazz = last();
                 field.expression = (CExpression) sourceVisitor.visitExpr(frag.getInitializer(), null);
+                sourceVisitor.clazz = null;
             }
         }
         return false;
@@ -207,7 +209,7 @@ public class MainVisitor extends ASTVisitor {
         CMethodDecl method = new CMethodDecl();
         last().addMethod(method);
 
-        n.typeParameters().forEach(temp -> method.template.add(new CType(temp.toString())));
+        n.typeParameters().forEach(temp -> method.template.add(new CType(temp.toString(), true)));
 
         if (n.isConstructor()) {
             method.isCons = true;

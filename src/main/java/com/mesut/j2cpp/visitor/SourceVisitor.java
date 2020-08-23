@@ -74,6 +74,14 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     }
 
     @Override
+    public CNode visit(TypeDeclarationStatement node, CNode arg) {
+        TypeDeclaration typeDeclaration = (TypeDeclaration) node.getDeclaration();
+        MainVisitor mainVisitor = new MainVisitor(converter, getHeader());
+        mainVisitor.visit(typeDeclaration);
+        return null;
+    }
+
+    @Override
     public CNode visit(AssertStatement node, CNode arg) {
         return new CEmptyStatement();
     }
@@ -279,11 +287,9 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
         else {
             //multiple if elses
-            for (SwitchCase switchCase : (List<SwitchCase>) node.statements()) {
-
-            }
+            SwitchHelper helper = new SwitchHelper(this);
+            return helper.makeIfElse(node);
         }
-        return null;
     }
 
     @Override
@@ -303,17 +309,20 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             thisCall.args.add((CExpression) visitExpr(ar, arg));
         }
         thisCall.isThis = true;
+        thisCall.type = clazz.getType();
         method.thisCall = thisCall;
         return new CEmptyStatement();
     }
 
     @Override
     public CNode visit(SuperConstructorInvocation node, CNode arg) {
+        //todo not so simple
         Call superCall = new Call();
         superCall.isThis = false;
         for (Expression ar : (List<Expression>) node.arguments()) {
             superCall.args.add((CExpression) visitExpr(ar, arg));
         }
+        superCall.type = clazz.base.get(0);
         method.superCall = superCall;
         return new CEmptyStatement();
     }
@@ -348,7 +357,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(VariableDeclarationStatement node, CNode arg) {
         //split single or keep multi?
-        CVariableDeclaration variableDeclaration = new CVariableDeclaration();
+        CVariableDeclarationStatement variableDeclaration = new CVariableDeclarationStatement();
         CType type = typeVisitor.visitType(node.getType());
         variableDeclaration.type = type;
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
@@ -417,9 +426,10 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             return classInstanceCreation;
         }
         else {
-            System.out.printf("anony = %s %s\n", clazz.name, method != null ? method.getName() + "()" : "field");
+            //System.out.printf("anony = %s %s\n", clazz.name, method != null ? method.getName() + "()" : "field");
             CClass anony = new CClass();
             anony.name = clazz.getAnonyName();
+            anony.ns = clazz.ns;
             anony.base.add(typeVisitor.visitType(node.getType()));
             AnonymousClassDeclaration declaration = node.getAnonymousClassDeclaration();
             DeclarationVisitor declarationVisitor = new DeclarationVisitor(this, typeVisitor);
@@ -469,7 +479,15 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(VariableDeclarationExpression node, CNode arg) {
-        return null;
+        CVariableDeclarationExpression variableDeclaration = new CVariableDeclarationExpression();
+        variableDeclaration.type = typeVisitor.visitType(node.getType());
+        for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
+            CVariableDeclarationFragment declaration = new CVariableDeclarationFragment();
+            declaration.name = (CName) visit(frag.getName(), arg);
+            declaration.initializer = (CExpression) visitExpr(frag.getInitializer(), arg);
+            variableDeclaration.fragments.add(declaration);
+        }
+        return variableDeclaration;
     }
 
     @Override
@@ -585,7 +603,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     CNode resolvedName(SimpleName node) {
         IBinding binding = node.resolveBinding();
-        if (Modifier.isStatic(binding.getModifiers())) {
+        if (binding != null && Modifier.isStatic(binding.getModifiers())) {
             if (binding.getKind() == IBinding.VARIABLE) {
                 IVariableBinding variableBinding = (IVariableBinding) binding;
                 String qu = variableBinding.getDeclaringClass().getQualifiedName();

@@ -11,7 +11,7 @@ public class CDoStatement extends CStatement {
     @Override
     public void print() {
         append("do");
-        append(body.toString());
+        printBody(body);
         append("while(");
         append(expression.toString());
         append(");");

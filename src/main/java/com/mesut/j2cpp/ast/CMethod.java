@@ -42,7 +42,6 @@ public class CMethod extends ModifierNode {
 
         if (superCall != null) {
             append(" : ");
-            append(getParent().base.get(0).normal());
             append(superCall.toString());
         }
         if (thisCall != null) {
@@ -52,7 +51,6 @@ public class CMethod extends ModifierNode {
             else {
                 append(" : ");
             }
-            append(getParent().name);
             append(thisCall.toString());
         }
         append(body.toString());

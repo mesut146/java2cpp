@@ -18,6 +18,9 @@ public class CForStatement extends CStatement {
     @Override
     public void print() {
         append("for(");
+        if (!initializers.isEmpty()) {
+            append(initializers.stream().map(CExpression::toString).collect(Collectors.joining(", ")));
+        }
         append(";");
         if (condition != null) {
             append(condition.toString());
@@ -27,7 +30,6 @@ public class CForStatement extends CStatement {
             append(updaters.stream().map(CExpression::toString).collect(Collectors.joining(", ")));
         }
         append(")");
-        append(body);
-        //append(body.toString());
+        printBody(body);
     }
 }

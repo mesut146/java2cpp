@@ -200,9 +200,25 @@ public class CClass extends CNode {
         return false;
     }
 
-    static int anonyCount = 0;
+    int anonyCount = 0;
 
     public String getAnonyName() {
         return "anony" + anonyCount++;
     }
+
+    Namespace getNs() {
+        if (ns != null) {
+            return ns;
+        }
+        return parent.getNs();
+    }
+
+    public CType getType() {
+        if (type == null) {
+            return new CType(getNs().all + "::" + name, header);
+        }
+        return type;
+    }
+
+    CType type;
 }

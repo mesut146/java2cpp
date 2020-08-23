@@ -24,9 +24,12 @@ public class Conv {
         String out = "/home/mesut/Desktop/j2cpp-dev/jdeps/conv";
         Converter converter = new Converter(dir, out);
         converter.addClasspath(rtJar);
+        converter.addClasspath("/home/mesut/Desktop/ide-dev/ide-sdk/javac-ide/nio.min/src");
         //converter.getFilter().setIncludeAll(false);
-        converter.getFilter().addIncludeClass("com/sun/tools/classfile/TypeAnnotation");
+        //converter.getFilter().addIncludeClass("com/sun/tools/classfile/ClassFile");
+        //converter.getFilter().addIncludeClass("com/sun/tools/classfile/TypeAnnotation");
         //converter.getFilter().addIncludeClass("com/sun/tools/classfile/AccessFlags");
+        converter.getFilter().addIncludeClass("com/sun/tools/classfile/ConstantPool");
         //converter.getFilter().addIncludeDir("com/sun/tools/classfile");
         //converter.setDebugMembers(true);
         converter.convert();

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 //type frag1,frag2;
-public class CVariableDeclaration extends CStatement {
+public class CVariableDeclarationStatement extends CStatement {
     public CType type;
     public List<CVariableDeclarationFragment> fragments = new ArrayList<>();
 

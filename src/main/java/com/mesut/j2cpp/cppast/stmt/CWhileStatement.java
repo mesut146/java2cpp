@@ -7,12 +7,11 @@ public class CWhileStatement extends CStatement {
     public CExpression expression;
     public CStatement statement;
 
-
     @Override
     public void print() {
         append("while(");
         append(expression.toString());
         append(")");
-        append(statement);
+        printBody(statement);
     }
 }

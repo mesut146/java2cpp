@@ -14,15 +14,7 @@ public class CIfStatement extends CStatement {
         append("if(");
         append(condition.toString());
         append(")");
-        if (thenStatement instanceof CBlockStatement) {
-            append(thenStatement);
-        }
-        else {
-            up();
-            //thenStatement.setFrom(this);
-            line(thenStatement.toString());
-            down();
-        }
+        printBody(thenStatement);
         if (elseStatement != null) {
             line("else ");
             elseStatement.firstBlock = true;

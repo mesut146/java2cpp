@@ -10,12 +10,12 @@ import java.util.List;
 //super call in cons
 public class Call extends CNode {
     public boolean isThis;
-    public String str;
+    public CType type;//this class or base class
     public List<CExpression> args = new ArrayList<>();
-
 
     @Override
     public void print() {
+        append(type.toString());
         append("(");
         for (int i = 0; i < args.size(); i++) {
             append(args.get(i).toString());

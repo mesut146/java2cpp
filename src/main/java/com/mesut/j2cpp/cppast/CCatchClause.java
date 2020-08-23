@@ -1,11 +1,11 @@
 package com.mesut.j2cpp.cppast;
 
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
-import com.mesut.j2cpp.cppast.stmt.CVariableDeclaration;
+import com.mesut.j2cpp.cppast.stmt.CVariableDeclarationStatement;
 
 public class CCatchClause extends CNode {
 
-    public CVariableDeclaration expr;
+    public CVariableDeclarationStatement expr;
     public CBlockStatement body;
 
     @Override
