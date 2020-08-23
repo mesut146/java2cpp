@@ -112,7 +112,7 @@ public class TryHelper {
                     throw new RuntimeException("try with name expression: " + obj);
                 }
                 else {//expr
-                    CExpression expr = (CExpression) visitor.visit((Expression) obj, null);
+                    CExpression expr = (CExpression) visitor.visitExpr((Expression) obj, null);
                     tryStatement.body.statements.add(0, new CExpressionStatement(expr));
                 }
             }

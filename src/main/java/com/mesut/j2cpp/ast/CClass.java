@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.cppast.CNode;
 
@@ -21,6 +22,12 @@ public class CClass extends CNode {
     public CClass parent;//outer
     public CHeader header;
     public Writer staticBlock = null;
+
+    public CClass() {
+        if (Config.baseClassObject) {
+            base.add(new CType("java::lang::Object"));
+        }
+    }
 
     public void addInner(CClass cc) {
         cc.parent = this;

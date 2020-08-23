@@ -40,7 +40,7 @@ public class DeclarationVisitor extends DefaultVisitor<CNode, CNode> {
                 methodDecl.isCons = true;
             }
             else {
-                methodDecl.type = typeVisitor.visitType(node.getReturnType2(), clazz);
+                methodDecl.type = typeVisitor.visitType(node.getReturnType2());
             }
         }
 
@@ -57,7 +57,7 @@ public class DeclarationVisitor extends DefaultVisitor<CNode, CNode> {
 
         for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) node.parameters()) {
             CParameter cp = new CParameter();
-            cp.type = typeVisitor.visitType(param.getType(), clazz);
+            cp.type = typeVisitor.visitType(param.getType());
             cp.type.isTemplate = false;
             cp.setName(param.getName().getIdentifier());
             methodDecl.params.add(cp);

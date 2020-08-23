@@ -1,7 +1,6 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CClassImpl;
-import com.mesut.j2cpp.cppast.CFieldDef;
 import com.mesut.j2cpp.util.Helper;
 
 import java.util.ArrayList;
@@ -12,7 +11,7 @@ public class CSource extends Node {
     public CHeader header;
     public List<String> includes = new ArrayList<>();
     public List<Namespace> usings = new ArrayList<>();//todo header's using instead?
-    public List<CFieldDef> fieldDefs = new ArrayList<>();
+    public List<CField> fieldDefs = new ArrayList<>();
     public List<CMethod> methods = new ArrayList<>();
     public boolean hasRuntime = false;
     public List<CClassImpl> anony = new ArrayList<>();
@@ -54,12 +53,13 @@ public class CSource extends Node {
     }
 
     private void printFields() {
+        //todo separate by class
         if (!fieldDefs.isEmpty()) {
-            line("//fields");
+            line("//static fields");
         }
-        for (CFieldDef field : fieldDefs) {
-            if (field.hasExpression()) {
-                line(field.toString());
+        for (CField field : fieldDefs) {
+            if (field.isStatic() && field.expression != null) {
+                line(field.forSource());
             }
         }
     }

@@ -2,20 +2,22 @@ package com.mesut.j2cpp.ast;
 
 public class CArrayType extends CType {
     public int dimensions;
-    public CType type;
 
     public CArrayType(CType type, int dimensions) {
-        this.type = type;
+        this.type = type.type;
+        this.ns = type.ns;
+        this.typeNames = type.typeNames;
+        setHeader(type.header);
         this.dimensions = dimensions;
     }
 
     public CType copy() {
-        return new CArrayType(type, dimensions);
+        return new CArrayType(this, dimensions);
     }
 
     String strLevel(int level, boolean ptr) {
         if (level == 0) {
-            return ptr ? type.toString() : type.toString();
+            return ptr ? type : type;
         }
         else if (level == 1) {
             return "array_single<" + strLevel(level - 1, ptr) + ">";

@@ -2,7 +2,10 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.ast.*;
-import com.mesut.j2cpp.cppast.*;
+import com.mesut.j2cpp.cppast.CClassImpl;
+import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.cppast.CNode;
+import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.cppast.expr.*;
 import com.mesut.j2cpp.cppast.literal.*;
 import com.mesut.j2cpp.cppast.stmt.*;
@@ -12,7 +15,7 @@ import org.eclipse.jdt.core.dom.*;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
-public class SourceVisitor extends GenericVisitor<CNode, CNode> {
+public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     Converter converter;
     CSource source;
@@ -39,19 +42,10 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     private void convertClass(CClass clazz) {
         this.clazz = clazz;
         for (CField field : clazz.fields) {
-            if (field.node == null) {
-                //enum args
-
+            if (field.isStatic() && field.expression != null) {
+                //normal static field or enum constant
+                source.fieldDefs.add(field);
             }
-            else {
-                Expression expression = field.node.getInitializer();
-                if (expression != null) {
-                    CFieldDef fieldDef = new CFieldDef(field);
-                    fieldDef.setExpression((CExpression) visit(expression, null));
-                    source.fieldDefs.add(fieldDef);
-                }
-            }
-
         }
         for (CMethodDecl methodDecl : clazz.methods) {
             if (methodDecl.node.getBody() != null) {
@@ -71,7 +65,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     public CNode visit(Block n, CNode arg) {
         CBlockStatement res = new CBlockStatement();
         for (Statement statement : (List<Statement>) n.statements()) {
-            CStatement cStatement = (CStatement) visit(statement, arg);
+            CStatement cStatement = (CStatement) visitExpr(statement, arg);
             if (!(cStatement instanceof CEmptyStatement)) {
                 res.statements.add(cStatement);
             }
@@ -84,40 +78,6 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
         return new CEmptyStatement();
     }
 
-    @Override
-    public CNode visit(CompilationUnit node, CNode arg) {
-        return null;
-    }
-
-    @Override
-    public CNode visit(PackageDeclaration node, CNode arg) {
-        return null;
-    }
-
-    @Override
-    public CNode visit(ImportDeclaration node, CNode arg) {
-        return null;
-    }
-
-    @Override
-    public CNode visit(TypeDeclaration node, CNode arg) {
-        return null;
-    }
-
-    @Override
-    public CNode visit(EnumDeclaration node, CNode arg) {
-        return null;
-    }
-
-    @Override
-    public CNode visit(FieldDeclaration node, CNode arg) {
-        return null;
-    }
-
-    @Override
-    public CNode visit(MethodDeclaration node, CNode arg) {
-        return null;
-    }
 
     @Override
     public CNode visit(StringLiteral node, CNode arg) {
@@ -150,7 +110,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     @Override
     public CNode visit(TypeLiteral node, CNode arg) {
         //Class.forName(type)
-        CType type = typeVisitor.visitType(node.getType(), clazz);
+        CType type = typeVisitor.visitType(node.getType());
         CMethodInvocation methodInvocation = new CMethodInvocation();
         CName cls = new CName("Class");
         cls.namespace = new Namespace("java.lang");
@@ -164,9 +124,9 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     @Override
     public CNode visit(Assignment node, CNode arg) {
         CAssignment assignment = new CAssignment();
-        assignment.left = (CExpression) visit(node.getLeftHandSide(), arg);
+        assignment.left = (CExpression) visitExpr(node.getLeftHandSide(), arg);
         assignment.operator = node.getOperator().toString();
-        assignment.right = (CExpression) visit(node.getRightHandSide(), arg);
+        assignment.right = (CExpression) visitExpr(node.getRightHandSide(), arg);
         return assignment;
     }
 
@@ -190,16 +150,16 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(ReturnStatement node, CNode arg) {
-        return new CReturnStatement((CExpression) visit(node.getExpression(), arg));
+        return new CReturnStatement((CExpression) visitExpr(node.getExpression(), arg));
     }
 
     @Override
     public CNode visit(IfStatement node, CNode arg) {
         CIfStatement ifStatement = new CIfStatement();
-        ifStatement.condition = (CExpression) visit(node.getExpression(), arg);
-        ifStatement.thenStatement = (CStatement) visit(node.getThenStatement(), arg);
+        ifStatement.condition = (CExpression) visitExpr(node.getExpression(), arg);
+        ifStatement.thenStatement = (CStatement) visitExpr(node.getThenStatement(), arg);
         if (node.getElseStatement() != null) {
-            ifStatement.elseStatement = (CStatement) visit(node.getElseStatement(), arg);
+            ifStatement.elseStatement = (CStatement) visitExpr(node.getElseStatement(), arg);
         }
         return ifStatement;
     }
@@ -209,29 +169,29 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     public CNode visit(ForStatement node, CNode arg) {
         CForStatement forStatement = new CForStatement();
         for (Expression init : (List<Expression>) node.initializers()) {
-            forStatement.initializers.add((CExpression) visit(init, arg));
+            forStatement.initializers.add((CExpression) visitExpr(init, arg));
         }
-        forStatement.condition = (CExpression) visit(node.getExpression(), arg);
+        forStatement.condition = (CExpression) visitExpr(node.getExpression(), arg);
         for (Expression updater : (List<Expression>) node.updaters()) {
-            forStatement.updaters.add((CExpression) visit(updater, arg));
+            forStatement.updaters.add((CExpression) visitExpr(updater, arg));
         }
-        forStatement.body = (CStatement) visit(node.getBody(), arg);
+        forStatement.body = (CStatement) visitExpr(node.getBody(), arg);
         return forStatement;
     }
 
     @Override
     public CNode visit(EnhancedForStatement node, CNode arg) {
         CForEachStatement forEachStatement = new CForEachStatement();
-        forEachStatement.body = (CStatement) visit(node.getBody(), arg);
+        forEachStatement.body = (CStatement) visitExpr(node.getBody(), arg);
         forEachStatement.left = (CSingleVariableDeclaration) visit(node.getParameter(), arg);
-        forEachStatement.right = (CExpression) visit(node.getExpression(), arg);
+        forEachStatement.right = (CExpression) visitExpr(node.getExpression(), arg);
         return forEachStatement;
     }
 
     @Override
     public CNode visit(SingleVariableDeclaration node, CNode arg) {
         CSingleVariableDeclaration variableDeclaration = new CSingleVariableDeclaration();
-        variableDeclaration.type = typeVisitor.visitType(node.getType(), clazz);
+        variableDeclaration.type = typeVisitor.visitType(node.getType());
         variableDeclaration.name = new CName(node.getName().getIdentifier());
         return variableDeclaration;
     }
@@ -239,16 +199,16 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     @Override
     public CNode visit(WhileStatement node, CNode arg) {
         CWhileStatement whileStatement = new CWhileStatement();
-        whileStatement.expression = (CExpression) visit(node.getExpression(), arg);
-        whileStatement.statement = (CStatement) visit(node.getBody(), arg);
+        whileStatement.expression = (CExpression) visitExpr(node.getExpression(), arg);
+        whileStatement.statement = (CStatement) visitExpr(node.getBody(), arg);
         return whileStatement;
     }
 
     @Override
     public CNode visit(DoStatement node, CNode arg) {
         CDoStatement doStatement = new CDoStatement();
-        doStatement.body = (CStatement) visit(node.getBody(), arg);
-        doStatement.expression = (CExpression) visit(node.getExpression(), arg);
+        doStatement.body = (CStatement) visitExpr(node.getBody(), arg);
+        doStatement.expression = (CExpression) visitExpr(node.getExpression(), arg);
         return doStatement;
     }
 
@@ -263,7 +223,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
         CMethodInvocation methodInvocation = new CMethodInvocation();
         if (node.getExpression() != null) {//scope
             Expression scope = node.getExpression();
-            methodInvocation.scope = (CExpression) visit(scope, arg);
+            methodInvocation.scope = (CExpression) visitExpr(scope, arg);
             IMethodBinding binding = node.resolveMethodBinding();
             ITypeBinding typeBinding = binding.getDeclaringClass();
 
@@ -294,7 +254,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
 
     private void args(List<Expression> arguments, CMethodInvocation methodInvocation) {
         for (Expression expression : arguments) {
-            methodInvocation.arguments.add((CExpression) visit(expression, null));
+            methodInvocation.arguments.add((CExpression) visitExpr(expression, null));
         }
     }
 
@@ -333,14 +293,14 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(ExpressionStatement node, CNode arg) {
-        return new CExpressionStatement((CExpression) visit(node.getExpression(), arg));
+        return new CExpressionStatement((CExpression) visitExpr(node.getExpression(), arg));
     }
 
     @Override
     public CNode visit(ConstructorInvocation node, CNode arg) {
         Call thisCall = new Call();
         for (Expression ar : (List<Expression>) node.arguments()) {
-            thisCall.args.add((CExpression) visit(ar, arg));
+            thisCall.args.add((CExpression) visitExpr(ar, arg));
         }
         thisCall.isThis = true;
         method.thisCall = thisCall;
@@ -352,7 +312,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
         Call superCall = new Call();
         superCall.isThis = false;
         for (Expression ar : (List<Expression>) node.arguments()) {
-            superCall.args.add((CExpression) visit(ar, arg));
+            superCall.args.add((CExpression) visitExpr(ar, arg));
         }
         method.superCall = superCall;
         return new CEmptyStatement();
@@ -371,7 +331,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(ThrowStatement node, CNode arg) {
-        return new CThrowStatement((CExpression) visit(node.getExpression(), arg));
+        return new CThrowStatement((CExpression) visitExpr(node.getExpression(), arg));
     }
 
     @Override
@@ -386,15 +346,10 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     }
 
     @Override
-    public CNode visit(TypeDeclarationStatement node, CNode arg) {
-        return null;
-    }
-
-    @Override
     public CNode visit(VariableDeclarationStatement node, CNode arg) {
         //split single or keep multi?
         CVariableDeclaration variableDeclaration = new CVariableDeclaration();
-        CType type = typeVisitor.visitType(node.getType(), clazz);
+        CType type = typeVisitor.visitType(node.getType());
         variableDeclaration.type = type;
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
             /*CSingleVariableDeclaration declaration = new CSingleVariableDeclaration();
@@ -408,7 +363,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
             //----
             CVariableDeclarationFragment fragment = new CVariableDeclarationFragment();
             fragment.name = new CName(frag.getName().getIdentifier());
-            fragment.initializer = (CExpression) visit(frag.getInitializer(), arg);
+            fragment.initializer = (CExpression) visitExpr(frag.getInitializer(), arg);
 
             variableDeclaration.fragments.add(fragment);
         }
@@ -424,7 +379,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     public CNode visit(FieldAccess node, CNode arg) {
         CFieldAccess fieldAccess = new CFieldAccess();
         Expression scope = node.getExpression();
-        fieldAccess.scope = (CExpression) visit(scope, arg);
+        fieldAccess.scope = (CExpression) visitExpr(scope, arg);
 
         if (scope instanceof Name) {//field/var or class
             String scopeName = ((Name) scope).getFullyQualifiedName();
@@ -454,10 +409,10 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     public CNode visit(ClassInstanceCreation node, CNode arg) {
         if (node.getAnonymousClassDeclaration() == null) {
             CClassInstanceCreation classInstanceCreation = new CClassInstanceCreation();
-            classInstanceCreation.type = typeVisitor.visitType(node.getType(), clazz);
+            classInstanceCreation.type = typeVisitor.visitType(node.getType());
             classInstanceCreation.type.isPointer = false;
             for (Expression expression : (List<Expression>) node.arguments()) {
-                classInstanceCreation.args.add((CExpression) visit(expression, null));
+                classInstanceCreation.args.add((CExpression) visitExpr(expression, arg));
             }
             return classInstanceCreation;
         }
@@ -465,7 +420,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
             System.out.printf("anony = %s %s\n", clazz.name, method != null ? method.getName() + "()" : "field");
             CClass anony = new CClass();
             anony.name = clazz.getAnonyName();
-            anony.base.add(typeVisitor.visitType(node.getType(), clazz));
+            anony.base.add(typeVisitor.visitType(node.getType()));
             AnonymousClassDeclaration declaration = node.getAnonymousClassDeclaration();
             DeclarationVisitor declarationVisitor = new DeclarationVisitor(this, typeVisitor);
             for (BodyDeclaration body : (List<BodyDeclaration>) declaration.bodyDeclarations()) {
@@ -491,15 +446,10 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     @Override
     public CNode visit(ConditionalExpression node, CNode arg) {
         CTernaryExpression ternaryExpression = new CTernaryExpression();
-        ternaryExpression.condition = (CExpression) visit(node.getExpression(), arg);
-        ternaryExpression.thenExpr = (CExpression) visit(node.getThenExpression(), arg);
-        ternaryExpression.elseExpr = (CExpression) visit(node.getElseExpression(), arg);
+        ternaryExpression.condition = (CExpression) visitExpr(node.getExpression(), arg);
+        ternaryExpression.thenExpr = (CExpression) visitExpr(node.getThenExpression(), arg);
+        ternaryExpression.elseExpr = (CExpression) visitExpr(node.getElseExpression(), arg);
         return ternaryExpression;
-    }
-
-    @Override
-    public CNode visit(Name node, CNode arg) {
-        return new CName(node.getFullyQualifiedName());
     }
 
     @Override
@@ -538,8 +488,8 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     public CNode visit(InfixExpression node, CNode arg) {
         CInfixExpression infixExpression = new CInfixExpression();
         infixExpression.operator = node.getOperator().toString();
-        infixExpression.left = (CExpression) visit(node.getLeftOperand(), arg);
-        infixExpression.right = (CExpression) visit(node.getRightOperand(), arg);
+        infixExpression.left = (CExpression) visitExpr(node.getLeftOperand(), arg);
+        infixExpression.right = (CExpression) visitExpr(node.getRightOperand(), arg);
         return infixExpression;
     }
 
@@ -547,7 +497,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     public CNode visit(PostfixExpression node, CNode arg) {
         CPostfixExpression postfixExpression = new CPostfixExpression();
         postfixExpression.operator = node.getOperator().toString();
-        postfixExpression.expression = (CExpression) visit(node.getOperand(), arg);
+        postfixExpression.expression = (CExpression) visitExpr(node.getOperand(), arg);
         return postfixExpression;
     }
 
@@ -555,7 +505,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     public CNode visit(PrefixExpression node, CNode arg) {
         CPrefixExpression prefixExpression = new CPrefixExpression();
         prefixExpression.operator = node.getOperator().toString();
-        prefixExpression.expression = (CExpression) visit(node.getOperand(), arg);
+        prefixExpression.expression = (CExpression) visitExpr(node.getOperand(), arg);
         return prefixExpression;
     }
 
@@ -563,9 +513,9 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     public CNode visit(InstanceofExpression node, CNode arg) {
         source.hasRuntime = true;
         CMethodInvocation invocation = new CMethodInvocation();
-        invocation.arguments.add((CExpression) visit(node.getLeftOperand(), arg));
+        invocation.arguments.add((CExpression) visitExpr(node.getLeftOperand(), arg));
         invocation.name = new CName("instance_of");
-        CType type = typeVisitor.visitType(node.getRightOperand(), clazz);
+        CType type = typeVisitor.visitType(node.getRightOperand());
         invocation.name.typeArgs.add(type);
         return invocation;
     }
@@ -573,8 +523,8 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     @Override
     public CNode visit(ArrayAccess node, CNode arg) {
         CArrayAccess arrayAccess = new CArrayAccess();
-        arrayAccess.left = (CExpression) visit(node.getArray(), arg);
-        arrayAccess.index = (CExpression) visit(node.getIndex(), arg);
+        arrayAccess.left = (CExpression) visitExpr(node.getArray(), arg);
+        arrayAccess.index = (CExpression) visitExpr(node.getIndex(), arg);
         return arrayAccess;
     }
 
@@ -584,7 +534,7 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
             return visit(node.getInitializer(), arg);
         }
         else {
-            CType typeName = typeVisitor.visitType(node.getType(), clazz).copy();
+            CType typeName = typeVisitor.visitType(node.getType()).copy();
             return new CArrayCreation2(new CArrayType(typeName, node.dimensions().size()));
         }
     }
@@ -592,14 +542,14 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     @Override
     public CNode visit(CastExpression node, CNode arg) {
         CCastExpression castExpression = new CCastExpression();
-        castExpression.expression = (CExpression) visit(node.getExpression(), arg);
-        castExpression.targetType = typeVisitor.visitType(node.getType(), clazz);
+        castExpression.expression = (CExpression) visitExpr(node.getExpression(), arg);
+        castExpression.targetType = typeVisitor.visitType(node.getType());
         return castExpression;
     }
 
     @Override
     public CNode visit(ParenthesizedExpression node, CNode arg) {
-        return new CParenthesizedExpression((CExpression) visit(node.getExpression(), arg));
+        return new CParenthesizedExpression((CExpression) visitExpr(node.getExpression(), arg));
     }
 
     //{...}
@@ -607,14 +557,14 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     public CNode visit(ArrayInitializer node, CNode arg) {
         CArrayInitializer initializer = new CArrayInitializer();
         for (Expression expression : (List<Expression>) node.expressions()) {
-            initializer.expressions.add((CExpression) visit(expression, arg));
+            initializer.expressions.add((CExpression) visitExpr(expression, arg));
         }
         return initializer;
     }
 
     @Override
     public CNode visit(ArrayType node, CNode arg) {
-        return typeVisitor.visitType(node.getElementType(), clazz);
+        return typeVisitor.visitType(node.getElementType());
     }
 
     @Override
@@ -671,11 +621,12 @@ public class SourceVisitor extends GenericVisitor<CNode, CNode> {
     @Override
     public CNode visit(QualifiedName node, CNode arg) {
         IBinding binding = node.resolveBinding();
-        if (Modifier.isStatic(binding.getModifiers()) || binding instanceof IVariableBinding) {
+        boolean isStatic = Modifier.isStatic(binding.getModifiers());
+        if (isStatic || binding instanceof IVariableBinding) {
             CFieldAccess fieldAccess = new CFieldAccess();
             fieldAccess.name = new CName(node.getName().getIdentifier());
-            fieldAccess.isArrow = binding instanceof IVariableBinding;
-            fieldAccess.scope = new CName(node.getQualifier().toString());
+            fieldAccess.isArrow = !isStatic;
+            fieldAccess.scope = (CExpression) visitExpr(node.getQualifier(), arg);
             return fieldAccess;
         }
         return new CName(node.getFullyQualifiedName());

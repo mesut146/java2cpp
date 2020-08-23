@@ -8,7 +8,7 @@ import java.util.List;
 public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
 
 
-    public R visit(Statement n, A arg) {
+    public R visitExpr(Statement n, A arg) {
         if (n instanceof Block) {
             return visit((Block) n, arg);
         }
@@ -80,14 +80,14 @@ public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
 
     public R visit(Block n, A arg) {
         for (Statement statement : (List<Statement>) n.statements()) {
-            visit(statement, arg);
+            visitExpr(statement, arg);
         }
         return null;
     }
 
 
     //expressions
-    public R visit(Expression n, A arg) {
+    public R visitExpr(Expression n, A arg) {
         if (n == null) {
             return null;
         }
@@ -109,7 +109,6 @@ public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
         else if (n instanceof CastExpression) {
             return visit((CastExpression) n, arg);
         }
-
         else if (n instanceof CharacterLiteral) {
             return visit((CharacterLiteral) n, arg);
         }
@@ -125,15 +124,6 @@ public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
         else if (n instanceof InstanceofExpression) {
             return visit((InstanceofExpression) n, arg);
         }
-        else if (n instanceof QualifiedName) {
-            return visit((QualifiedName) n, arg);
-        }
-        else if (n instanceof SimpleName) {
-            return visit((SimpleName) n, arg);
-        }
-        /*else if (n instanceof Name) {
-            return visit((Name) n, arg);
-        }*/
 
         else if (n instanceof NullLiteral) {
             return visit((NullLiteral) n, arg);
@@ -177,7 +167,19 @@ public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
         else if (n instanceof FieldAccess) {
             return visit((FieldAccess) n, arg);
         }
+        else if (n instanceof Name) {
+            return visitName((Name) n, arg);
+        }
+        return null;
+    }
 
+    public R visitName(Name n, A arg) {
+        if (n instanceof QualifiedName) {
+            return visit((QualifiedName) n, arg);
+        }
+        else if (n instanceof SimpleName) {
+            return visit((SimpleName) n, arg);
+        }
         return null;
     }
 

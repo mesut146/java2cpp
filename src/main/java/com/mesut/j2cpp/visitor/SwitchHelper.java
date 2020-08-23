@@ -35,7 +35,7 @@ public class SwitchHelper {
 
     public CStatement makeIfElse(SwitchStatement node) {
         Expression expression = node.getExpression();
-        CExpression left = (CExpression) visitor.visit(expression, null);
+        CExpression left = (CExpression) visitor.visitExpr(expression, null);
         CName ordinalName;
         //for enums ve call ordinal method store result in a var and make regular if elses
         if (isEnum) {
@@ -102,7 +102,7 @@ public class SwitchHelper {
                     //special
                 }
                 else {
-                    expr.add((CExpression) visitor.visit(switchCase.getExpression(), null));
+                    expr.add((CExpression) visitor.visitExpr(switchCase.getExpression(), null));
                 }
 
             }
@@ -121,7 +121,7 @@ public class SwitchHelper {
                 break;
             }
             else if (!(statement instanceof BreakStatement)) {//skip breaks since we use if's
-                blockStatement.statements.add((CStatement) visitor.visit(statement, null));
+                blockStatement.statements.add((CStatement) visitor.visitExpr(statement, null));
             }
         }
         return blockStatement;
@@ -139,11 +139,6 @@ public class SwitchHelper {
 
             for (int j = 0; j < list.size(); j++) {
                 CInfixExpression infixExpression = makeInfix(left, list.get(j), "==");
-                //enum ordinal
-                if (isEnum) {
-                    infixExpression.right = ordinal(list.get(j));
-                }
-
                 if (j == 0) {
                     firstOr.left = infixExpression;
                 }
@@ -171,6 +166,10 @@ public class SwitchHelper {
         CInfixExpression infixExpression = new CInfixExpression();
         infixExpression.left = left;
         infixExpression.operator = op;
+
+        if ("==".equals(op)) {
+            right = ordinal(right);
+        }
         infixExpression.right = right;
         return infixExpression;
     }

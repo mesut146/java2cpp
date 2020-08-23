@@ -3,6 +3,7 @@ package com.mesut.j2cpp.visitor;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.cppast.expr.CClassInstanceCreation;
 import com.mesut.j2cpp.util.Helper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -17,7 +18,7 @@ public class MainVisitor extends ASTVisitor {
     public CHeader header;
     public TypeVisitor typeVisitor;
     SourceVisitor sourceVisitor;
-    public Stack<CClass> stack = new Stack<>();
+    public Stack<CClass> stack = new Stack<>();//class stack
     public Converter converter;
 
     public MainVisitor(Converter converter, CHeader header) {
@@ -72,6 +73,7 @@ public class MainVisitor extends ASTVisitor {
     }
 
 
+    //class or interface
     @Override
     public boolean visit(TypeDeclaration node) {
         //System.out.println("type.decl=" + node.getName());
@@ -90,14 +92,14 @@ public class MainVisitor extends ASTVisitor {
 
         node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true).setHeader(header)));
         if (node.getSuperclassType() != null) {
-            CType baseType = typeVisitor.visitType(node.getSuperclassType(), cc);
+            CType baseType = typeVisitor.visitType(node.getSuperclassType());
             baseType.isTemplate = false;
             baseType.isPointer = false;
             cc.base.add(baseType);
         }
 
         node.superInterfaceTypes().forEach(iface -> {
-            CType ifType = typeVisitor.visitType((Type) iface, cc);
+            CType ifType = typeVisitor.visitType((Type) iface);
             ifType.isTemplate = false;
             ifType.isPointer = false;
             cc.base.add(ifType);
@@ -110,7 +112,6 @@ public class MainVisitor extends ASTVisitor {
         }
         //inner classes
         for (TypeDeclaration member : node.getTypes()) {
-            //System.out.println("inner.type=" + member.getName());
             member.accept(this);
         }
         node.bodyDeclarations().forEach(body -> {
@@ -118,6 +119,9 @@ public class MainVisitor extends ASTVisitor {
                 ((EnumDeclaration) body).accept(this);
             }
         });
+        /*for (BodyDeclaration body : (List<BodyDeclaration>) node.bodyDeclarations()) {
+            body.accept(this);
+        }*/
         stack.pop();
         return false;
     }
@@ -141,32 +145,41 @@ public class MainVisitor extends ASTVisitor {
         n.superInterfaceTypes().forEach(iface -> cc.base.add(typeVisitor.visit((Type) iface)));
 
         for (EnumConstantDeclaration constant : (List<EnumConstantDeclaration>) n.enumConstants()) {
-            CField cf = new CField();
-            cc.addField(cf);
-            cf.setPublic(true);
-            cf.setStatic(true);
-            cf.type = new CType(cc.name, header);
-            cf.setName(constant.getName().getIdentifier());
+            CField field = new CField();
+            cc.addField(field);
+            field.setPublic(true);
+            field.setStatic(true);
+            field.type = new CType(cc.name, header);
+            field.setName(constant.getName().getIdentifier());
 
-            for (Expression val : (List<Expression>) constant.arguments()) {
-                cf.enumArgs.add((CExpression) sourceVisitor.visit(val, null));
+            if (!constant.arguments().isEmpty()) {
+                CClassInstanceCreation args = new CClassInstanceCreation();
+                args.type = field.type;
+                for (Expression val : (List<Expression>) constant.arguments()) {
+                    args.args.add((CExpression) sourceVisitor.visitExpr(val, null));
+                }
+                field.expression = args;
+            }
+            else {
+                //todo make ordinals
+                throw new RuntimeException("ordinal");
             }
 
-
             if (constant.getAnonymousClassDeclaration() != null) {
-                throw new RuntimeException("enum body is not supported");
+                throw new RuntimeException("anonymous enum constant is not supported");
             }
         }
         if (!n.bodyDeclarations().isEmpty()) {
-            //n.bodyDeclarations().forEach(p -> ((BodyDeclaration) p).accept(this));
+            n.bodyDeclarations().forEach(p -> ((BodyDeclaration) p).accept(this));
         }
+        //todo put values and valueOf method
         stack.pop();
         return false;
     }
 
     @Override
     public boolean visit(FieldDeclaration n) {
-        CType type = typeVisitor.visitType(n.getType(), last());
+        CType type = typeVisitor.visitType(n.getType());
         if (converter.debug_fields)
             System.out.println("field.decl=" + n.getType() + " " + n.fragments());
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
@@ -180,7 +193,9 @@ public class MainVisitor extends ASTVisitor {
             if (last().isInterface) {
                 field.setPublic(true);
             }
-            field.node = frag;
+            if (frag.getInitializer() != null) {
+                field.expression = (CExpression) sourceVisitor.visitExpr(frag.getInitializer(), null);
+            }
         }
         return false;
     }
@@ -203,7 +218,7 @@ public class MainVisitor extends ASTVisitor {
                 method.isCons = true;
             }
             else {
-                method.type = typeVisitor.visitType(n.getReturnType2(), last());
+                method.type = typeVisitor.visitType(n.getReturnType2());
             }
         }
 
@@ -222,7 +237,7 @@ public class MainVisitor extends ASTVisitor {
         for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) n.parameters()) {
             CParameter cp = new CParameter();
             cp.method = method;
-            cp.type = typeVisitor.visitType(param.getType(), last());
+            cp.type = typeVisitor.visitType(param.getType());
             cp.type.isTemplate = false;
             cp.setName(param.getName().getIdentifier());
             method.addParam(cp);

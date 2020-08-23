@@ -72,6 +72,9 @@ public class CType extends CExpression {
     }
 
     public String normalized() {
+        if (isPrim()) {
+            return type;
+        }
         return header.normalizeType(this).normal();
     }
 
@@ -106,8 +109,10 @@ public class CType extends CExpression {
     }
 
     public CType setHeader(CHeader header) {
-        this.header = header;
-        this.source = header.source;
+        if (header != null) {
+            this.header = header;
+            this.source = header.source;
+        }
         return this;
     }
 

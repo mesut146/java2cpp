@@ -6,6 +6,7 @@ import com.mesut.j2cpp.cppast.CExpression;
 import java.util.ArrayList;
 import java.util.List;
 
+//new Type(args)
 public class CClassInstanceCreation extends CExpression {
     public CType type;
     public List<CExpression> args = new ArrayList<>();

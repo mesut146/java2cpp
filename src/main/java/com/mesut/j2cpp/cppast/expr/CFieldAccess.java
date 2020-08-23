@@ -8,8 +8,6 @@ public class CFieldAccess extends CExpression {
     public CName name;
     public boolean isArrow;
 
-
-
     @Override
     public void print() {
         append(scope.toString());
