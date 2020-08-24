@@ -4,7 +4,7 @@ public class CParameter extends Node {
 
     public CType type;
     public CName name;
-    public CMethodDecl method;
+    public CMethod method;
 
     public void setName(String name) {
         this.name = new CName(name);

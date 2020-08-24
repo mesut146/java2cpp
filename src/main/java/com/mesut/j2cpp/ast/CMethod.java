@@ -1,90 +1,89 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CMethod extends ModifierNode {
 
-    public CMethodDecl decl;
+    public CType type;//return type
+    public CName name;
     public Template template = new Template();
+    public List<CParameter> params = new ArrayList<>();
+    public boolean isCons = false;//is constructor
+    public boolean isPureVirtual = false;
+    public CClass parent;
     public Call superCall;//super(args)
     public Call thisCall;//this(args)
     public CBlockStatement body;
+    public MethodDeclaration node;//body node
 
-    public CClass getParent() {
-        return decl.parent;
+    public void addParam(CParameter param) {
+        param.method = this;
+        params.add(param);
     }
 
-    public Template getTemplate() {
-        return template;
+    public CHeader getHeader() {
+        return parent.header;
     }
 
-    public String getName() {
-        return decl.name.name;
-    }
-
-    public CType getType() {
-        return decl.type;
-    }
-
+    @Override
     public void print() {
-        list.clear();
 
-        if (isNative()) {
-            //System.out.println("native method");
-            appendln("/*TODO native*/ ");
-            append("extern ");
-            /*
-             *extern to get rid of compilation errors
-             *later they will be implemented or,linked from openjdk
-             */
-        }
-        printDecl();
-
-        if (superCall != null) {
-            append(" : ");
-            append(superCall.toString());
-        }
-        if (thisCall != null) {
-            if (superCall != null) {
-                append(", ");
-            }
-            else {
-                append(" : ");
-            }
-            append(thisCall.toString());
-        }
-        append(body.toString());
-        println();
     }
 
-    public void printDecl() {
-        //some enums have null type for some reason
-        if (!decl.isCons && getType() != null) {
-            if (isStatic()) {
+    public void printAll(boolean source) {
+        clear();
+        if (!template.isEmpty()) {
+            lineln(template.toString());
+        }
+        if (!isCons) {
+            if (isStatic() && !source) {
                 append("static ");
             }
-            if (getParent().isInterface) {
+            if (isVirtual()) {
                 append("virtual ");
             }
-            append(getType().toString());
+            append(type);
             append(" ");
         }
-        /*if (parent.parent != null) {
+        if (!parent.isAnonymouse && source) {
             append(parent.name + "::");
-        }*/
-        append(decl.parent.name + "::");
-
-        append(getName());
-        append("(");
-        for (int i = 0; i < decl.params.size(); i++) {
-            CParameter cp = decl.params.get(i);
-            append(cp.toString());
-            if (i < decl.params.size() - 1) {
-                append(", ");
-            }
         }
+        append(name.name);
+
+        append("(");
+        append(params.stream().map(CParameter::toString).collect(Collectors.joining(", ")));
         append(")");
+        if (source) {
+            if (superCall != null) {
+                append(" : ");
+                append(superCall.toString());
+            }
+            if (thisCall != null) {
+                if (superCall != null) {
+                    append(", ");
+                }
+                else {
+                    append(" : ");
+                }
+                append(thisCall.toString());
+            }
+            append(body);
+        }
+        else {
+            if (isPureVirtual) {
+                append(" = 0");
+            }
+            append(";");
+        }
     }
 
+    public void printAnony() {
+
+    }
 
 }

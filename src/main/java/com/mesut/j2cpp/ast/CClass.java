@@ -2,26 +2,26 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Writer;
-import com.mesut.j2cpp.cppast.CNode;
+import com.mesut.j2cpp.cppast.CStatement;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CClass extends CNode {
+public class CClass extends CStatement {
 
     public String name;
+    public boolean isInterface = false;
     public Namespace ns = null;
     public List<CType> base = new ArrayList<>();
     public Template template = new Template();
     public List<CField> fields = new ArrayList<>();
-    public List<CMethodDecl> methods = new ArrayList<>();
+    public List<CMethod> methods = new ArrayList<>();
     public List<CClass> classes = new ArrayList<>();
-    public boolean isInterface = false;
-    public boolean isEnum = false;//todo
     public CClass parent;//outer
     public CHeader header;
     public Writer staticBlock = null;
+    public boolean isAnonymouse = false;
 
     public CClass() {
         if (Config.baseClassObject) {
@@ -35,7 +35,7 @@ public class CClass extends CNode {
         classes.add(cc);
     }
 
-    public void addMethod(CMethodDecl cm) {
+    public void addMethod(CMethod cm) {
         cm.parent = this;
         methods.add(cm);
     }
@@ -49,6 +49,13 @@ public class CClass extends CNode {
         return template;
     }
 
+    public CType getSuper() {
+        if (base.isEmpty()) {
+            return null;
+        }
+        return base.get(0);
+    }
+
     public Namespace getNamespace() {
         String str;
         if (parent == null) {//header level
@@ -58,20 +65,8 @@ public class CClass extends CNode {
         return new Namespace(str);
     }
 
-    public Namespace getNamespaceFull() {
-        String str;
-        Namespace n = new Namespace();
-        if (parent != null) {
-            str = parent.getNamespace().all + "::";
-            n.fromPkg(str);
-        }
-        else if (ns != null) {
-            n.fromPkg(ns.all + "::" + name);
-        }
-        return n;
-    }
-
     public void print() {
+        clear();
         printDecl();
         append("{");
         up();
@@ -82,9 +77,7 @@ public class CClass extends CNode {
             appendIndent(staticBlock);
             println();
         }
-        line("//fields");
         printFields();
-        line("//methods");
         printMethods();
         //inner classes
         for (CClass cc : classes) {
@@ -96,48 +89,49 @@ public class CClass extends CNode {
     }
 
     private void printDecl() {
+        if (isInterface) {
+            line("/*interface*/");
+        }
         if (!template.isEmpty()) {
             println();
             append(template.toString());
-        }
-        if (isInterface) {
-            line("/*interface*/");
         }
         //class decl
         line("class ");
         append(name);
         if (base.size() > 0) {
             append(": public ");
-            for (int i = 0; i < base.size(); i++) {
-                append(base.get(i).normal());
-                if (i < base.size() - 1) {
-                    append(",");
-                }
-            }
-        }
-    }
-
-    private void printMethods(List<CMethodDecl> list, String modifier) {
-        if (list.size() > 0) {
-            line(modifier);
-            up();
-            for (CMethodDecl cm : list) {
-                setTo(cm);
-                append(cm);
-            }
-            down();
+            append(base.stream().map(CType::toString).collect(Collectors.joining(" ,")));
         }
     }
 
     private void printMethods() {
-        List<CMethodDecl> public_methods = methods.stream().filter(CMethodDecl::isPublic).collect(Collectors.toList());
-        List<CMethodDecl> priv_methods = methods.stream().filter(CMethodDecl::isPrivate).collect(Collectors.toList());
+        if (!methods.isEmpty()) {
+            line("//methods");
+        }
+        List<CMethod> public_methods = methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
+        List<CMethod> priv_methods = methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
         printMethods(public_methods, "public:");
         printMethods(priv_methods, "private:");
         println();
     }
 
+    private void printMethods(List<CMethod> list, String modifier) {
+        if (list.size() > 0) {
+            line(modifier);
+            up();
+            for (CMethod cm : list) {
+                cm.printAll(false);
+                appendIndent(cm);
+            }
+            down();
+        }
+    }
+
     private void printFields() {
+        if (!fields.isEmpty()) {
+            line("//fields");
+        }
         List<CField> public_fields = fields.stream().filter(CField::isPublic).collect(Collectors.toList());
         List<CField> priv_fields = fields.stream().filter(CField::isPrivate).collect(Collectors.toList());
         printFields(public_fields, "public:");
@@ -150,8 +144,7 @@ public class CClass extends CNode {
             line(modifier);
             up();
             for (CField cf : list) {
-                setTo(cf);
-                append(cf);
+                appendIndent(cf);
             }
             down();
         }
@@ -159,48 +152,16 @@ public class CClass extends CNode {
 
     public void printDestructor() {
         //todo
+        CMethod decl = new CMethod();
+        decl.parent = this;
+        decl.name = new CName("~" + name);
+        decl.setVirtual(true);
         append("virtual ~").append(name).append("(){}");
     }
 
 
-    public boolean hasField(String fname) {
-        for (CField cf : fields) {
-            if (cf.name.equals(fname)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean hasFieldAny(String fname) {
-        for (CField cf : fields) {
-            if (cf.name.equals(fname)) {
-                return true;
-            }
-        }
-        for (CClass cc : classes) {
-            if (cc.hasFieldAny(fname)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean hasMethodAny(String mname) {
-        for (CMethodDecl cm : methods) {
-            if (cm.name.equals(mname)) {
-                return true;
-            }
-        }
-        for (CClass cc : classes) {
-            if (cc.hasMethodAny(mname)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     int anonyCount = 0;
+    CType type;
 
     public String getAnonyName() {
         return "anony" + anonyCount++;
@@ -220,5 +181,5 @@ public class CClass extends CNode {
         return type;
     }
 
-    CType type;
+
 }

@@ -10,7 +10,7 @@ public abstract class Node {
     public List<String> list = new ArrayList<>();//list of lines
     public boolean firstBlock = false;
     public String cache = null;
-    boolean isPrinted = false;
+    protected boolean isPrinted = false;
 
     public abstract void print();
 
@@ -34,7 +34,7 @@ public abstract class Node {
     public void line(Node node) {
         node.print();
         for (String line : node.list) {
-            
+
         }
     }
 
@@ -90,11 +90,11 @@ public abstract class Node {
     }
 
     //no indention
-    public Node append(Node n) {
-        n.print();
+    public Node append(Node node) {
+        node.ensurePrint();
         boolean flag = true;
-        for (String s : n.list) {
-            if (flag && n.firstBlock) {
+        for (String s : node.list) {
+            if (flag && node.firstBlock) {
                 flag = false;
                 append(s);
             }
@@ -105,12 +105,19 @@ public abstract class Node {
         return this;
     }
 
+    void ensurePrint() {
+        if (!isPrinted) {
+            print();
+            isPrinted = true;
+        }
+    }
+
     //append with indention
-    public Node appendIndent(Node n) {
-        n.print();
+    public Node appendIndent(Node node) {
+        node.ensurePrint();
         boolean flag = true;
-        for (String line : n.list) {
-            if (flag && n.firstBlock) {
+        for (String line : node.list) {
+            if (flag && node.firstBlock) {
                 flag = false;
                 append(line);
             }

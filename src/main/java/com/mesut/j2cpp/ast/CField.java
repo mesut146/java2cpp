@@ -2,17 +2,13 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CExpression;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class CField extends ModifierNode {
+public class CField extends ModifierNode/*statement*/ {
 
     public CType type;
     public CName name;
     public CClass parent;
     public boolean ptrOnType = false;
     public CExpression expression;
-    public List<CExpression> enumArgs = new ArrayList<>();
 
     public void setName(String name) {
         this.name = CName.from(name);
@@ -20,7 +16,6 @@ public class CField extends ModifierNode {
 
     //for header
     public void print() {
-        name.isPointer = type.isPointer();
         if (isStatic()) {
             append("static ");
         }
@@ -31,6 +26,27 @@ public class CField extends ModifierNode {
         if (!isStatic() && expression != null) {
             append(" = ");
             append(expression.toString());
+        }
+        append(";");
+    }
+
+    public void printAll(boolean source) {
+        if (!source && isStatic()) {
+            append("static ");
+        }
+
+        append(type.toString());
+        append(" ");
+        if (source) {
+            append(parent.name);
+        }
+        append(name.toString());
+
+        if (expression != null) {
+            if (isStatic() && source || !isStatic() && !source) {
+                append(" = ");
+                append(expression.toString());
+            }
         }
         append(";");
     }

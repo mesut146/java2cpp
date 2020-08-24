@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +29,7 @@ public class Converter {
     public boolean debug_methods = false;
     String srcDir;//source folder
     String destDir;//destination folder for c++ files
+    File headerDir;
     Filter filter;
     List<PackageNode> packageHierarchy = new ArrayList<>();
     ASTParser parser;
@@ -102,6 +102,13 @@ public class Converter {
 
     public void convert() {
         try {
+            if (Config.separateInclude) {
+                headerDir = new File(destDir, "include");
+                headerDir.mkdirs();
+            }
+            else {
+                headerDir = new File(destDir);
+            }
             initParser();
             convertDir(new File(srcDir));
             writeCmake();
@@ -165,11 +172,10 @@ public class Converter {
                 System.out.println(source_str);
             }
 
-            File header_file = new File(destDir, path.replace(".java", ".h"));
+            File header_file = new File(headerDir, path.replace(".java", ".h"));
             File source_file = new File(destDir, path.replace(".java", ".cpp"));
-            header_file.getParentFile().mkdirs();
-            Files.write(Paths.get(header_file.getAbsolutePath()), header_str.getBytes());
-            Files.write(Paths.get(source_file.getAbsolutePath()), source_str.getBytes());
+            Files.write(header_file.toPath(), header_str.getBytes());
+            Files.write(source_file.toPath(), source_str.getBytes());
 
             target.sourceFiles.add(Util.relative(source_file.getAbsolutePath(), srcDir));
         } catch (Exception e) {

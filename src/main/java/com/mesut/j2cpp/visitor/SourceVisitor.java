@@ -26,7 +26,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public SourceVisitor(Converter converter, CSource source) {
         this.converter = converter;
         this.source = source;
-        typeVisitor = new TypeVisitor(converter, source.header);
+        typeVisitor = new TypeVisitor(source.header);
     }
 
     public CHeader getHeader() {
@@ -34,6 +34,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     }
 
     public void convert() {
+        //System.out.printf("count %s = %s\n", source.header.rpath, source.header.classes.size());
         for (CClass clazz : source.header.classes) {
             convertClass(clazz);
         }
@@ -47,13 +48,9 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 source.fieldDefs.add(field);
             }
         }
-        for (CMethodDecl methodDecl : clazz.methods) {
-            if (methodDecl.node.getBody() != null) {
-                CMethod methodDef = new CMethod();
-                methodDef.decl = methodDecl;
-                this.method = methodDef;
-                methodDef.body = (CBlockStatement) visit(methodDecl.node.getBody(), null);
-                source.methods.add(methodDef);
+        for (CMethod methodDecl : clazz.methods) {
+            if (methodDecl.body != null) {
+                source.methods.add(methodDecl);
             }
         }
         for (CClass inner : clazz.classes) {
@@ -76,9 +73,9 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(TypeDeclarationStatement node, CNode arg) {
         TypeDeclaration typeDeclaration = (TypeDeclaration) node.getDeclaration();
-        MainVisitor mainVisitor = new MainVisitor(converter, getHeader());
-        mainVisitor.visit(typeDeclaration);
-        return null;
+        DeclarationVisitor visitor = new DeclarationVisitor(this, typeVisitor);
+        CClass cls = visitor.visit(typeDeclaration, null);
+        return cls;
     }
 
     @Override
@@ -428,19 +425,21 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         else {
             //System.out.printf("anony = %s %s\n", clazz.name, method != null ? method.getName() + "()" : "field");
             CClass anony = new CClass();
+            anony.isAnonymouse = true;
             anony.name = clazz.getAnonyName();
             anony.ns = clazz.ns;
             anony.base.add(typeVisitor.visitType(node.getType()));
             AnonymousClassDeclaration declaration = node.getAnonymousClassDeclaration();
             DeclarationVisitor declarationVisitor = new DeclarationVisitor(this, typeVisitor);
+            //todo find local & class references
             for (BodyDeclaration body : (List<BodyDeclaration>) declaration.bodyDeclarations()) {
                 if (body instanceof FieldDeclaration) {
+                    declarationVisitor.visit((FieldDeclaration) body, anony);
                     //throw new RuntimeException("anonymous field");
-                    //declarationVisitor.visit((FieldDeclaration) body, anony);
                 }
                 else if (body instanceof MethodDeclaration) {
                     CMethod method = (CMethod) declarationVisitor.visit((MethodDeclaration) body, anony);
-                    anony.methods.add(method.decl);
+                    anony.addMethod(method);
                 }
                 else {
                     throw new RuntimeException("ClassInstanceCreation anony");
@@ -464,12 +463,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(SuperMethodInvocation node, CNode arg) {
-        return null;//todo
-    }
-
-    @Override
-    public CNode visit(SwitchExpression node, CNode arg) {
-        return null;
+        throw new RuntimeException("SuperMethodInvocation");
     }
 
     @Override
@@ -499,7 +493,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(SuperFieldAccess node, CNode arg) {
-        return null;
+        throw new RuntimeException("SuperFieldAccess");
     }
 
     @Override
@@ -579,27 +573,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
         return initializer;
     }
-
-    @Override
-    public CNode visit(ArrayType node, CNode arg) {
-        return typeVisitor.visitType(node.getElementType());
-    }
-
-    @Override
-    public CNode visit(PrimitiveType node, CNode arg) {
-        return typeVisitor.visit(node);
-    }
-
-    @Override
-    public CNode visit(QualifiedType node, CNode arg) {
-        return typeVisitor.visit(node);
-    }
-
-    @Override
-    public CNode visit(SimpleType node, CNode arg) {
-        return typeVisitor.visit(node);
-    }
-
 
     CNode resolvedName(SimpleName node) {
         IBinding binding = node.resolveBinding();

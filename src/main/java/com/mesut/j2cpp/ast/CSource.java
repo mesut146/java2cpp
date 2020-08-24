@@ -69,7 +69,9 @@ public class CSource extends Node {
             line("//methods");
         }
         for (CMethod method : methods) {
+            method.printAll(true);
             append(method);
+            println();
         }
     }
 

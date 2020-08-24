@@ -21,7 +21,7 @@ public class TryHelper {
         CTryStatement tryStatement = new CTryStatement();
         tryStatement.body = (CBlockStatement) visitor.visit(node.getBody(), null);
         CMethod method = visitor.method;
-        if (method.decl.isCons || method.getType().isVoid()) {
+        if (method.isCons || method.type.isVoid()) {
             return with_void(node);
         }/*
         String retStr = "if(0){ return";

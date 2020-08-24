@@ -4,6 +4,7 @@ import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.expr.CClassInstanceCreation;
+import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.util.Helper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -24,7 +25,7 @@ public class MainVisitor extends ASTVisitor {
     public MainVisitor(Converter converter, CHeader header) {
         this.converter = converter;
         this.header = header;
-        this.typeVisitor = new TypeVisitor(converter, header);
+        this.typeVisitor = new TypeVisitor(header);
         this.sourceVisitor = new SourceVisitor(converter, header.source);
     }
 
@@ -137,7 +138,6 @@ public class MainVisitor extends ASTVisitor {
         }
         stack.push(cc);
 
-        cc.isEnum = true;
         cc.name = n.getName().getFullyQualifiedName();
         cc.base.add(Helper.getEnumType().setHeader(header));
         header.addInclude("java/lang/Enum");
@@ -206,7 +206,7 @@ public class MainVisitor extends ASTVisitor {
     public boolean visit(MethodDeclaration n) {
         if (converter.debug_methods)
             System.out.println("method.decl=" + n.getReturnType2() + " " + n.getName() + "()" + " cons=" + n.isConstructor() + " prent=" + parent().name);
-        CMethodDecl method = new CMethodDecl();
+        CMethod method = new CMethod();
         last().addMethod(method);
 
         n.typeParameters().forEach(temp -> method.template.add(new CType(temp.toString(), true)));
@@ -233,6 +233,7 @@ public class MainVisitor extends ASTVisitor {
         method.setNative(Modifier.isNative(n.getModifiers()));
         if (last().isInterface || Modifier.isAbstract(n.getModifiers())) {
             method.setPublic(true);
+            method.setVirtual(true);
             method.isPureVirtual = true;
         }
 
@@ -245,7 +246,9 @@ public class MainVisitor extends ASTVisitor {
             method.addParam(cp);
         }
 
-        method.node = n;
+        sourceVisitor.clazz = last();
+        sourceVisitor.method = method;
+        method.body = (CBlockStatement) sourceVisitor.visitExpr(n.getBody(), null);
         return false;
     }
 

@@ -1,6 +1,5 @@
 package com.mesut.j2cpp.visitor;
 
-import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.ast.CArrayType;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CType;
@@ -12,11 +11,9 @@ import java.util.List;
 //visit types and ensures type is included
 public class TypeVisitor {
 
-    Converter converter;
     CHeader header;
 
-    public TypeVisitor(Converter converter, CHeader header) {
-        this.converter = converter;
+    public TypeVisitor(CHeader header) {
         this.header = header;
     }
 
