@@ -55,7 +55,6 @@ public abstract class Node {
     }
 
     public void println() {
-        //write("\n");
         list.add("");
     }
 

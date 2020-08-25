@@ -1,14 +1,26 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.ast.CMethod;
+import com.mesut.j2cpp.ast.CName;
+import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.ast.CUnionType;
+import com.mesut.j2cpp.cppast.CCatchClause;
 import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.cppast.CLambdaExpression;
+import com.mesut.j2cpp.cppast.CLineCommentStatement;
+import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
+import com.mesut.j2cpp.cppast.stmt.CSingleVariableDeclaration;
 import com.mesut.j2cpp.cppast.stmt.CTryStatement;
-import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.core.dom.CatchClause;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.TryStatement;
 
 import java.util.List;
 
+@SuppressWarnings("unchecked")
 public class TryHelper {
 
     SourceVisitor visitor;
@@ -17,92 +29,54 @@ public class TryHelper {
         this.visitor = visitor;
     }
 
-    public CTryStatement with_finally(TryStatement node) {
+    public CBlockStatement with_finally(TryStatement node) {
+        CBlockStatement blockStatement = new CBlockStatement();
+        blockStatement.addStatement(new CLineCommentStatement("try_catch"));
         CTryStatement tryStatement = new CTryStatement();
+
+        printCatches(node.catchClauses(), tryStatement);
+
         tryStatement.body = (CBlockStatement) visitor.visit(node.getBody(), null);
+
         CMethod method = visitor.method;
         if (method.isCons || method.type.isVoid()) {
-            return with_void(node);
-        }/*
-        String retStr = "if(0){ return";
-        CType type = method.getType();
-        if (type.isPrim()) {
-            retStr += " 0";
+            with_void(node, tryStatement, blockStatement);
         }
-        else {
-            retStr += " nullptr";
-        }
-        retStr += "; }";
-        w.append("bool tryReturned = true,finallyReturned = true;");
-        w.line(type.toString()).append(" result_tryBlock = valued_finally<" + type + ">([&](){");
-
-
-        node.getBody().accept(statementVisitor);
-
-        w.appendIndent(try_writer);
-        if (node.catchClauses().isEmpty()) {
-            w.line("catch(int x){}");
-            CCatchClause catchClause = new CCatchClause();
-            catchClause
-        }
-        else {
-            printCatch(node.catchClauses(), w);
-        }
-        w.line(retStr);
-        w.line("tryReturned = false;");
-
-        w.lineln("},[&](){");
-
-
-        node.getFinally().accept(statementVisitor);
-        w.appendIndent(fin);
-        w.line(retStr);
-        w.line("finReturned = false;");
-        w.down();
-        w.line("});");
-        if (!method.decl.isCons && !method.getType().isVoid()) {
-            CIfStatement ifStatement = new CIfStatement();
-            CInfixExpression infixExpression = new CInfixExpression();
-            infixExpression.left = new CName("");
-            infixExpression.right = new CName("");
-            infixExpression.operator = "||";
-            ifStatement.condition = infixExpression;
-            ifStatement.thenStatement = new CReturnStatement(new CName("result_tryBlock"));
-        }*/
-        return tryStatement;
+        return blockStatement;
     }
 
-    public CTryStatement with_void(TryStatement node) {
-        CTryStatement tryStatement = new CTryStatement();
-        //lambda
-        /*
-        w.line("void_finally([&](){");
+    private void with_void(TryStatement node, CTryStatement tryStatement, CBlockStatement blockStatement) {
+        //make lambda
+        CLambdaExpression lambdaExpression = new CLambdaExpression();
+        lambdaExpression.byReference = true;
+        CBlockStatement lambdaBlock = new CBlockStatement();
+        lambdaBlock.addStatement(tryStatement);
+        lambdaExpression.body = lambdaBlock;
+        //handle catches
 
-        w.line("try");
-        Writer try_writer = new Writer();
 
-        node.getBody().accept(statementVisitor);
-        w.appendIndent(try_writer);
-        if (node.catchClauses().isEmpty()) {
-            w.line("catch(int x){}");
-        }
-        else {
-            printCatch(node.catchClauses(), w);
-        }
-        w.down();
-        w.lineln("},[&](){");
-        w.up();
-        Writer fin = new Writer();
+        //call helper
+        CMethodInvocation invocation = new CMethodInvocation();
+        invocation.isArrow = false;
+        invocation.name = new CName("helper");
+        invocation.arguments.add(lambdaExpression);
 
-        node.getFinally().accept(statementVisitor);
-        w.appendIndent(fin);
-        w.down();
-        w.line("});");*/
-        return tryStatement;
+        blockStatement.addStatement(new CExpressionStatement(invocation));
+        blockStatement.addStatement(new CLineCommentStatement("finally"));
+        blockStatement.addStatement(getFinally(node));
+        //call finally
+
+
+    }
+
+
+    CBlockStatement getFinally(TryStatement node) {
+        return (CBlockStatement) visitor.visit(node.getFinally(), null);
     }
 
     public CTryStatement no_finally(TryStatement node) {
         CTryStatement tryStatement = new CTryStatement();
+        printCatches(node.catchClauses(), tryStatement);
         tryStatement.body = (CBlockStatement) visitor.visit(node.getBody(), null);
         int len = node.resources().size();
         if (len > 0) {
@@ -117,37 +91,50 @@ public class TryHelper {
                 }
             }
         }
-        printCatch(node.catchClauses());
+
         return tryStatement;
     }
 
-    void printCatch(List list) {
-        for (Object obj : list) {
-            CatchClause cc = (CatchClause) obj;
+    void printCatches(List<CatchClause> list, CTryStatement tryStatement) {
+        if (list.isEmpty()) {
+            addCatch(tryStatement);//c++ requires a catch clause
+        }
+        for (CatchClause cc : list) {
+            CSingleVariableDeclaration var = (CSingleVariableDeclaration) visitor.visit(cc.getException(), null);
+            CBlockStatement body = (CBlockStatement) visitor.visit(cc.getBody(), null);
 
-            SingleVariableDeclaration exc = cc.getException();
+            if (var.type instanceof CUnionType) {
+                //make multiple catch clauses
+                for (CType type : ((CUnionType) var.type).types) {
+                    CCatchClause catchClause = new CCatchClause();
+                    CSingleVariableDeclaration varDecl = new CSingleVariableDeclaration();
+                    varDecl.type = type;
+                    varDecl.name = var.name;
 
-            /*Parameter parameter = cc.getParameter();
-            if (parameter.getType().isUnionType()) {
-                //todo maybe just java::lang:Exception is fine
-                //extract union types as separate catch stmt
-                for (Type type : parameter.getType().asUnionType().getElements()) {
-                    w.append("catch(");
-                    w.append(type.accept(statementVisitor.typeVisitor, null));
-                    w.append(" ");
-                    w.append(parameter.getNameAsString());
-                    w.append(")");
-                    cc.getBody().accept(statementVisitor, w);
+                    catchClause.expr = varDecl;
+                    catchClause.body = body;
+                    tryStatement.catchClauses.add(catchClause);
                 }
-            } else {
-                w.append("catch(");
-                w.append(parameter.getType().accept(statementVisitor.typeVisitor, null));
-                w.append(" ");
-                w.append(parameter.getNameAsString());
-                w.append(")");
-                cc.getBody().accept(statementVisitor, w);
-            }*/
+            }
+            else {
+                CCatchClause catchClause = new CCatchClause();
+                catchClause.expr = var;
+                catchClause.body = body;
+                tryStatement.catchClauses.add(catchClause);
+            }
+
 
         }
     }
+
+    void addCatch(CTryStatement tryStatement) {
+
+        CCatchClause catchClause = new CCatchClause();
+        catchClause.body = new CBlockStatement();
+        catchClause.catchAll = true;
+        tryStatement.catchClauses.add(catchClause);
+
+    }
+
+
 }

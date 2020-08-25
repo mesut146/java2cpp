@@ -3,6 +3,7 @@ package com.mesut.j2cpp.ast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class Namespace extends Node {
     public String all;//java:lang,org
@@ -57,5 +58,16 @@ public class Namespace extends Node {
 
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Namespace namespace = (Namespace) o;
+        return Objects.equals(parts, namespace.parts);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(parts);
+    }
 }

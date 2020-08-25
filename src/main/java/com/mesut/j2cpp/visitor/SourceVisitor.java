@@ -22,6 +22,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     TypeVisitor typeVisitor;
     CClass clazz;
     CMethod method;
+    Catcher catcher;
 
     public SourceVisitor(Converter converter, CSource source) {
         this.converter = converter;
@@ -155,7 +156,29 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(ReturnStatement node, CNode arg) {
+        if (catcher != null) {
+            return catcher.visit(node);
+        }
         return new CReturnStatement((CExpression) visitExpr(node.getExpression(), arg));
+    }
+
+    @Override
+    public CNode visit(ThrowStatement node, CNode arg) {
+        if (catcher != null) {
+            return catcher.visit(node);
+        }
+        return new CThrowStatement((CExpression) visitExpr(node.getExpression(), arg));
+    }
+
+    @Override
+    public CNode visit(TryStatement node, CNode arg) {
+        TryHelper helper = new TryHelper(this);
+        if (node.getFinally() == null) {
+            return helper.no_finally(node);
+        }
+        else {
+            return helper.with_finally(node);
+        }
     }
 
     @Override
@@ -336,22 +359,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     }
 
     @Override
-    public CNode visit(ThrowStatement node, CNode arg) {
-        return new CThrowStatement((CExpression) visitExpr(node.getExpression(), arg));
-    }
-
-    @Override
-    public CNode visit(TryStatement node, CNode arg) {
-        TryHelper helper = new TryHelper(this);
-        if (node.getFinally() == null) {
-            return helper.no_finally(node);
-        }
-        else {
-            return helper.with_finally(node);
-        }
-    }
-
-    @Override
     public CNode visit(VariableDeclarationStatement node, CNode arg) {
         //split single or keep multi?
         CVariableDeclarationStatement variableDeclaration = new CVariableDeclarationStatement();
@@ -425,7 +432,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         else {
             //System.out.printf("anony = %s %s\n", clazz.name, method != null ? method.getName() + "()" : "field");
             CClass anony = new CClass();
-            anony.isAnonymouse = true;
+            anony.isAnonymous = true;
             anony.name = clazz.getAnonyName();
             anony.ns = clazz.ns;
             anony.base.add(typeVisitor.visitType(node.getType()));
@@ -463,7 +470,15 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(SuperMethodInvocation node, CNode arg) {
-        throw new RuntimeException("SuperMethodInvocation");
+        if (node.getQualifier() != null) {
+            throw new RuntimeException("SuperMethodInvocation");
+        }
+        CMethodInvocation methodInvocation = new CMethodInvocation();
+        methodInvocation.scope = clazz.getSuper();
+        methodInvocation.name = (CName) visitName(node.getName(), null);
+        args(node.arguments(), methodInvocation);
+        methodInvocation.isArrow = false;
+        return methodInvocation;
     }
 
     @Override

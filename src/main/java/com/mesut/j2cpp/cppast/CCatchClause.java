@@ -1,18 +1,24 @@
 package com.mesut.j2cpp.cppast;
 
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
-import com.mesut.j2cpp.cppast.stmt.CVariableDeclarationStatement;
+import com.mesut.j2cpp.cppast.stmt.CSingleVariableDeclaration;
 
 public class CCatchClause extends CNode {
 
-    public CVariableDeclarationStatement expr;
+    public CSingleVariableDeclaration expr;
     public CBlockStatement body;
+    public boolean catchAll = false;
 
     @Override
     public void print() {
         append("catch(");
-        append(expr.toString());
+        if (catchAll) {
+            append("...");
+        }
+        else {
+            append(expr.toString());
+        }
         append(")");
-        append(body.toString());
+        printBody(body);
     }
 }

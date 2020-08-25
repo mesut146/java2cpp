@@ -174,6 +174,8 @@ public class Converter {
 
             File header_file = new File(headerDir, path.replace(".java", ".h"));
             File source_file = new File(destDir, path.replace(".java", ".cpp"));
+            header_file.getParentFile().mkdirs();
+            source_file.getParentFile().mkdirs();
             Files.write(header_file.toPath(), header_str.getBytes());
             Files.write(source_file.toPath(), source_str.getBytes());
 

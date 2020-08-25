@@ -5,6 +5,7 @@ import com.mesut.j2cpp.util.Helper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class CType extends CExpression {
@@ -72,7 +73,7 @@ public class CType extends CExpression {
     }
 
     public String normalized() {
-        if (isPrim()) {
+        if (isPrim() || type.equals("auto")) {
             return type;
         }
         if (isTemplate) {
@@ -121,5 +122,31 @@ public class CType extends CExpression {
 
     public CType setHeader(CSource source) {
         return setHeader(source.header);
+    }
+
+
+    public void forward() {
+        if (!(this instanceof CUnionType) && !isPrim() && !isVoid() && !isTemplate && !(this instanceof CArrayType)) {//has to be class type
+            header.forwardDeclarator.add(this);
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CType other = (CType) o;
+        if (!Objects.equals(ns, other.ns)) {
+            return false;
+        }
+        return Objects.equals(type, other.type);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = ns != null ? ns.hashCode() : 0;
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        return result;
     }
 }

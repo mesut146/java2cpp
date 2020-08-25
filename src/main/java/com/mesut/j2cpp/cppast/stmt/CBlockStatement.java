@@ -15,6 +15,11 @@ import java.util.List;
 public class CBlockStatement extends CStatement {
     public List<CStatement> statements = new ArrayList<>();
 
+
+    public void addStatement(CStatement statement) {
+        statements.add(statement);
+    }
+
     public void print() {
         append("{");
         up();

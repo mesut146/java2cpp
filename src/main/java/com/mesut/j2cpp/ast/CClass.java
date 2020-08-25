@@ -21,7 +21,7 @@ public class CClass extends CStatement {
     public CClass parent;//outer
     public CHeader header;
     public Writer staticBlock = null;
-    public boolean isAnonymouse = false;
+    public boolean isAnonymous = false;
 
     public CClass() {
         if (Config.baseClassObject) {
@@ -32,6 +32,7 @@ public class CClass extends CStatement {
     public void addInner(CClass cc) {
         cc.parent = this;
         cc.header = header;
+        cc.ns = ns;
         classes.add(cc);
     }
 
@@ -54,15 +55,6 @@ public class CClass extends CStatement {
             return null;
         }
         return base.get(0);
-    }
-
-    public Namespace getNamespace() {
-        String str;
-        if (parent == null) {//header level
-            return ns;
-        }
-        str = parent.getNamespace().all + "::" + name;
-        return new Namespace(str);
     }
 
     public void print() {

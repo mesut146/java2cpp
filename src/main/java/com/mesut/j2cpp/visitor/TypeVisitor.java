@@ -3,6 +3,7 @@ package com.mesut.j2cpp.visitor;
 import com.mesut.j2cpp.ast.CArrayType;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.ast.CUnionType;
 import com.mesut.j2cpp.util.Helper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -87,6 +88,13 @@ public class TypeVisitor {
         return type;
     }
 
+    public CType visit(UnionType n) {
+        CUnionType unionType = new CUnionType();
+        for (Type type : (List<Type>) n.types()) {
+            unionType.types.add(visitType(type));
+        }
+        return unionType;
+    }
 
     public CType visit(Type type) {
         CType cType = null;
@@ -105,6 +113,9 @@ public class TypeVisitor {
         else if (type.isPrimitiveType()) {
             cType = visit((PrimitiveType) type);
         }
+        else if (type.isUnionType()) {
+            cType = visit((UnionType) type);
+        }
         //System.out.println("type=" + type + " res=" + cType + " cls=" + type.getClass());
         return cType;
     }
@@ -112,6 +123,7 @@ public class TypeVisitor {
     public CType visitType(Type type) {
         CType cType = visit(type);
         cType.setHeader(header);
+        cType.forward();
         return cType;
     }
 }

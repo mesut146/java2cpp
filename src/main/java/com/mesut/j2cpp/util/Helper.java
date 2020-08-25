@@ -42,6 +42,10 @@ public class Helper {
         return new CType("java::lang::Enum");
     }
 
+    public static CType getAutoType() {
+        return new CType("auto");
+    }
+
 
     //trim type's namespace by usings
     //java::lang::String   using java::lang -> String

@@ -50,7 +50,7 @@ public class CMethod extends ModifierNode {
             append(type);
             append(" ");
         }
-        if (!parent.isAnonymouse && source) {
+        if (!parent.isAnonymous && source) {
             append(parent.name + "::");
         }
         append(name.name);

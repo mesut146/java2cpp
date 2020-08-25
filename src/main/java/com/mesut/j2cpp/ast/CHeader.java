@@ -15,6 +15,7 @@ public class CHeader extends Node {
     public String rpath;//header path:java/lang/String.h
     boolean hasRuntime = false;
     public CSource source;
+    public LocalForwardDeclarator forwardDeclarator = new LocalForwardDeclarator(this);
 
     public CHeader(String path) {
         rpath = path;
@@ -73,6 +74,10 @@ public class CHeader extends Node {
             include("Helper");
         }
         println();
+
+        append(forwardDeclarator);
+        println();
+
         if (ns != null) {
             line("namespace ");
             append(ns.all);

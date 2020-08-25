@@ -2,8 +2,6 @@ package com.mesut.j2cpp.visitor;
 
 import org.eclipse.jdt.core.dom.*;
 
-import java.util.List;
-
 @SuppressWarnings("unchecked")
 public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
 
@@ -76,15 +74,6 @@ public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
 
         return null;
     }
-
-
-    public R visit(Block n, A arg) {
-        for (Statement statement : (List<Statement>) n.statements()) {
-            visitExpr(statement, arg);
-        }
-        return null;
-    }
-
 
     //expressions
     public R visitExpr(Expression n, A arg) {

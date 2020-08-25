@@ -22,6 +22,7 @@ public class MainVisitor extends ASTVisitor {
     public Stack<CClass> stack = new Stack<>();//class stack
     public Converter converter;
 
+
     public MainVisitor(Converter converter, CHeader header) {
         this.converter = converter;
         this.header = header;
@@ -88,6 +89,7 @@ public class MainVisitor extends ASTVisitor {
         stack.push(cc);
 
         cc.name = node.getName().getFullyQualifiedName();
+        cc.getType().forward();
         cc.isInterface = node.isInterface();
 
 
@@ -140,6 +142,7 @@ public class MainVisitor extends ASTVisitor {
 
         cc.name = n.getName().getFullyQualifiedName();
         cc.base.add(Helper.getEnumType().setHeader(header));
+        cc.getType().forward();
         header.addInclude("java/lang/Enum");
 
         n.superInterfaceTypes().forEach(iface -> cc.base.add(typeVisitor.visit((Type) iface)));

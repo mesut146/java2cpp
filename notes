@@ -1,8 +1,17 @@
 todo list
+#pointers
+  field type
+  method return type
+  method param type
+  local var type
+  template arg
 
-pointers: fields, method params, local vars
+#non-pointers
+  new statement
+  template type(sender already makes it pointer)
+  base classes
 
-# template pointers
+
 
 #forward class dec
 
@@ -33,5 +42,3 @@ stmt;
 if return,run finally first then return
 if throw exception,run finally again
 be sure both try&finally cant have return or throw
-
-public <A extends Annotation> A getAnnotation(Class<A> annotationClass) A resolve
