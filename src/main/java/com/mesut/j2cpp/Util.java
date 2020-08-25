@@ -29,7 +29,13 @@ public class Util<T> {
     }
 
     public static String relative(String file, String root) {
-        return file.substring(root.length() + 1);
+        if (file.equals(root)) {
+            return "";
+        }
+        if (file.startsWith(root)) {
+            return file.substring(root.length() + 1);
+        }
+        return file;
     }
 
     public static String relative(File file, File root) {

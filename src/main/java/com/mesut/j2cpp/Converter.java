@@ -31,7 +31,6 @@ public class Converter {
     String destDir;//destination folder for c++ files
     File headerDir;
     Filter filter;
-    List<PackageNode> packageHierarchy = new ArrayList<>();
     ASTParser parser;
     int count = 0;
 
@@ -40,6 +39,7 @@ public class Converter {
         this.destDir = destDir;
         filter = new Filter(srcDir);
         cMakeWriter = new CMakeWriter("myproject");
+        cMakeWriter.sourceDir = destDir;
         target = cMakeWriter.addTarget("mylib", false);
     }
 
@@ -179,7 +179,9 @@ public class Converter {
             Files.write(header_file.toPath(), header_str.getBytes());
             Files.write(source_file.toPath(), source_str.getBytes());
 
-            target.sourceFiles.add(Util.relative(source_file.getAbsolutePath(), srcDir));
+            target.addInclude(destDir);
+            target.addInclude(headerDir.getAbsolutePath());
+            target.sourceFiles.add(source_file.getAbsolutePath());
         } catch (Exception e) {
             e.printStackTrace();
         }

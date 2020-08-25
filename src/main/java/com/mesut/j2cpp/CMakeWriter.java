@@ -7,6 +7,7 @@ public class CMakeWriter {
 
     public String projectName;
     public List<Target> targets = new ArrayList<>();
+    public String sourceDir;
 
     public CMakeWriter(String projectName) {
         this.projectName = projectName;
@@ -32,15 +33,23 @@ public class CMakeWriter {
             sb.append("\n");
             for (String src : target.sourceFiles) {
                 sb.append("  ");//indention
-                sb.append(src);
+                sb.append(Util.relative(src, sourceDir));
                 sb.append("\n");
             }
             sb.append(")\n");
             sb.append("target_include_directories(");
-            sb.append(target.name).append(" ${CMAKE_SOURCE_DIR}\n");
+            sb.append(target.name);
+            if (!target.includeDirs.isEmpty()) {
+                sb.append("\n");
+            }
             for (String dir : target.includeDirs) {
                 sb.append("  ");//indent
-                sb.append(dir);
+                sb.append("${CMAKE_SOURCE_DIR}");
+                String path = Util.relative(dir, sourceDir);
+                if (!path.isEmpty()) {
+                    sb.append("/");
+                    sb.append(path);
+                }
                 sb.append("\n");
             }
             sb.append(")\n");
@@ -54,6 +63,12 @@ public class CMakeWriter {
         public String name;
         public List<String> sourceFiles = new ArrayList<>();
         public List<String> includeDirs = new ArrayList<>();
+
+        public void addInclude(String dir) {
+            if (!includeDirs.contains(dir)) {
+                includeDirs.add(dir);
+            }
+        }
     }
 }
 
