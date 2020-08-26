@@ -30,6 +30,11 @@ public class CForStatement extends CStatement {
             append(updaters.stream().map(CExpression::toString).collect(Collectors.joining(", ")));
         }
         append(")");
-        printBody(body);
+        if (body == null) {
+            append(";");
+        }
+        else {
+            printBody(body);
+        }
     }
 }

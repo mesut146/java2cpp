@@ -13,7 +13,9 @@ public class Conv {
         String dir = "/home/mesut/Desktop/j2cpp-dev/src7";
         String out = "/home/mesut/Desktop/j2cpp-dev/src7-cpp";
         Converter converter = new Converter(dir, out);
-        //converter.addClasspath(rtJar);
+        //converter.addClasspath(dir);
+        converter.getFilter().addIncludeDir("java.lang");
+        //converter.getFilter().addIncludeClass("java.lang.CharacterData01.java");
         //converter.setDebugMembers(true);
         converter.convert();
     }
@@ -31,31 +33,9 @@ public class Conv {
         //converter.getFilter().addIncludeClass("com/sun/tools/classfile/ClassWriter");
         //converter.getFilter().addIncludeClass("com/sun/tools/classfile/ConstantPool");
         //converter.getFilter().addIncludeDir("com/sun/tools/classfile");
-        //converter.setDebugMembers(true);
+        converter.setDebugMembers(true);
         converter.convert();
     }
 
-    @Test
-    public void tt() {
-        System.out.println(asd());
-    }
 
-    static int asd() {
-        try {
-            return inner1();
-        } finally {
-            inner2();
-        }
-    }
-
-    static int inner1() {
-        System.out.println("inner1");
-        throw new RuntimeException("haha");
-        //return 5;
-    }
-
-    static int inner2() {
-        System.out.println("inner2");
-        return 10;
-    }
 }

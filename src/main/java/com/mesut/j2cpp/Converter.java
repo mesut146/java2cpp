@@ -55,9 +55,6 @@ public class Converter {
 
     @SuppressWarnings("rawtypes,unchecked")
     public void initParser() {
-        /*if (parser != null) {
-            return;
-        }*/
         parser = ASTParser.newParser(AST.JLS13);
         List<String> cpDirs = new ArrayList<>();
         List<String> cpJars = new ArrayList<>();

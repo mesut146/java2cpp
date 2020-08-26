@@ -3,16 +3,24 @@ package com.mesut.j2cpp.cppast.literal;
 import com.mesut.j2cpp.cppast.CExpression;
 
 public class CStringLiteral extends CExpression {
-    public String value;
+    public String literalValue;
+    public String escapedValue;
 
-    public CStringLiteral(String value) {
-        this.value = value;
+    public CStringLiteral(String value, String escapedValue) {
+        this.literalValue = value;
+        this.escapedValue = escapedValue;
     }
 
     @Override
     public void print() {
-        append("\"");
-        append(value);
-        append("\"");
+        if (escapedValue == null) {
+            append("\"");
+            append(literalValue);
+            append("\"");
+        }
+        else {
+            append(escapedValue);
+        }
+
     }
 }

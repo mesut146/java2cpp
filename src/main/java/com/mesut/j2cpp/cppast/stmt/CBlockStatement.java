@@ -20,6 +20,10 @@ public class CBlockStatement extends CStatement {
         statements.add(statement);
     }
 
+    public void addStatement(int i, CStatement statement) {
+        statements.add(i, statement);
+    }
+
     public void print() {
         append("{");
         up();

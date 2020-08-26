@@ -56,16 +56,19 @@ public class SwitchHelper {
 
         CIfStatement lastIf = null, firstIf = null;
 
+        CBlockStatement defaultStmt = null;
+
         for (i = 0; i < statements.size(); ) {
             Statement statement = statements.get(i);
             if (statement instanceof SwitchCase) {
                 SwitchCase switchCase = (SwitchCase) statement;
                 if (switchCase.isDefault()) {
-                    if (lastIf != null) {
-                        i++;//skip default
-                        lastIf.elseStatement = collectStatements();
-                    }
-                    break;
+                    i++;//skip default
+                    defaultStmt = collectStatements();
+                    /*Statement next = statements.get(i + 1);
+                    if (next instanceof SwitchCase || lastIf != null) {
+                        //i++;
+                    }*/
                 }
                 else {
                     List<CExpression> cases = collectCases();
@@ -89,6 +92,7 @@ public class SwitchHelper {
                 throw new RuntimeException("invalid switch statement");
             }
         }
+        lastIf.elseStatement = defaultStmt;
         return firstIf;
     }
 
@@ -122,7 +126,7 @@ public class SwitchHelper {
                 break;
             }
             else if (!(statement instanceof BreakStatement)) {//skip breaks since we use if's
-                blockStatement.statements.add((CStatement) visitor.visitExpr(statement, null));
+                blockStatement.addStatement((CStatement) visitor.visitExpr(statement, null));
             }
         }
         return blockStatement;

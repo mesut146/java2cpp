@@ -8,6 +8,14 @@ public class CInfixExpression extends CExpression {
     public CExpression right;
     public String operator;
 
+    public CInfixExpression() {
+    }
+
+    public CInfixExpression(CExpression left, CExpression right, String operator) {
+        this.left = left;
+        this.right = right;
+        this.operator = operator;
+    }
 
     @Override
     public void print() {

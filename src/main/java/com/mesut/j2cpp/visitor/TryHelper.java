@@ -87,7 +87,7 @@ public class TryHelper {
                 }
                 else {//expr
                     CExpression expr = (CExpression) visitor.visitExpr((Expression) obj, null);
-                    tryStatement.body.statements.add(0, new CExpressionStatement(expr));
+                    tryStatement.body.addStatement(0, new CExpressionStatement(expr));
                 }
             }
         }

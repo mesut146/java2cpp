@@ -7,11 +7,20 @@ public class CWhileStatement extends CStatement {
     public CExpression expression;
     public CStatement statement;
 
+    public void setStatement(CStatement statement) {
+        this.statement = statement;
+    }
+
     @Override
     public void print() {
         append("while(");
         append(expression.toString());
         append(")");
-        printBody(statement);
+        if (statement == null) {
+            append(";");
+        }
+        else {
+            printBody(statement);
+        }
     }
 }

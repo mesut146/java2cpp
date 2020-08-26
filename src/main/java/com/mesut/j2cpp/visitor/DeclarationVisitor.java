@@ -30,6 +30,9 @@ public class DeclarationVisitor {
             if (decl instanceof EnumDeclaration) {
                 visit((EnumDeclaration) decl, null);
             }
+            else if (decl instanceof AnnotationTypeDeclaration) {
+                visit((AnnotationTypeDeclaration) decl, null);
+            }
             else {
                 visit((TypeDeclaration) decl, null);
             }
@@ -45,6 +48,22 @@ public class DeclarationVisitor {
         header.source.usings.add(header.ns);
     }
 
+    public CClass visit(AnnotationTypeDeclaration node, CClass clazz) {
+        CClass cc = new CClass();
+        if (clazz != null) {
+            clazz.addInner(cc);
+        }
+        else {
+            header.addClass(cc);
+        }
+        cc.isInterface = true;
+        cc.base.add(new CType("java::lang::Annotation", header));
+
+        cc.name = node.getName().getIdentifier();
+
+        node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
+        return cc;
+    }
 
     public CClass visit(TypeDeclaration node, CClass clazz) {
         //System.out.println("type.decl=" + node.getName());
@@ -148,10 +167,19 @@ public class DeclarationVisitor {
     public void visit(FieldDeclaration n, CClass clazz) {
         CType type = typeVisitor.visitType(n.getType());
 
+
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
             CField field = new CField();
             clazz.addField(field);
-            field.setType(type);
+            if (frag.getExtraDimensions() > 0) {
+                //c style array
+                CArrayType arrayType = new CArrayType(type.copy(), frag.getExtraDimensions());
+                field.setType(arrayType);
+            }
+            else {
+                field.setType(type);
+            }
+
             field.setName(frag.getName().getIdentifier());
             field.setPublic(Modifier.isPublic(n.getModifiers()));
             field.setStatic(Modifier.isStatic(n.getModifiers()));
@@ -196,7 +224,21 @@ public class DeclarationVisitor {
         for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) node.parameters()) {
             CParameter cp = new CParameter();
             cp.method = method;
-            cp.setType(typeVisitor.visitType(param.getType()));
+            CType ptype = typeVisitor.visitType(param.getType());
+
+
+            if (param.isVarargs()) {//todo not just array, maybe as vararg
+                cp.setType(new CArrayType(ptype, 1));
+            }
+            else {
+                if (param.getExtraDimensions() > 0) {
+                    CArrayType arrayType = new CArrayType(ptype, param.getExtraDimensions());
+                    cp.setType(arrayType);
+                }
+                else {
+                    cp.setType(ptype);
+                }
+            }
 
             cp.setName(param.getName().getIdentifier());
             method.addParam(cp);

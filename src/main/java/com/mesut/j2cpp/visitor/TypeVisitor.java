@@ -73,6 +73,7 @@ public class TypeVisitor {
 
     public CType visit(ArrayType n) {
         CType type = visit(n.getElementType());
+        type.setPointer(true);//?
         return new CArrayType(type, n.getDimensions());
     }
 

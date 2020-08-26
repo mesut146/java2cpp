@@ -1,10 +1,7 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.ast.*;
-import com.mesut.j2cpp.cppast.CClassImpl;
-import com.mesut.j2cpp.cppast.CExpression;
-import com.mesut.j2cpp.cppast.CNode;
-import com.mesut.j2cpp.cppast.CStatement;
+import com.mesut.j2cpp.cppast.*;
 import com.mesut.j2cpp.cppast.expr.*;
 import com.mesut.j2cpp.cppast.literal.*;
 import com.mesut.j2cpp.cppast.stmt.*;
@@ -67,7 +64,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         for (Statement statement : (List<Statement>) n.statements()) {
             CStatement cStatement = (CStatement) visitExpr(statement, arg);
             if (!(cStatement instanceof CEmptyStatement)) {
-                res.statements.add(cStatement);
+                res.addStatement(cStatement);
             }
         }
         return res;
@@ -91,7 +88,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         CObjectCreation objectCreation = new CObjectCreation();
         objectCreation.type = Helper.getStringType();
         objectCreation.type.setHeader(source.header);
-        objectCreation.args.add(new CStringLiteral(node.getLiteralValue()));
+        objectCreation.args.add(new CStringLiteral(node.getLiteralValue(), node.getEscapedValue()));
         return objectCreation;
     }
 
@@ -124,7 +121,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         methodInvocation.scope = cls;
         methodInvocation.name = new CName("forName");
         methodInvocation.isArrow = true;
-        methodInvocation.arguments.add(new CStringLiteral(type.toString()));
+        methodInvocation.arguments.add(new CStringLiteral(type.toString(), null));
         return methodInvocation;
     }
 
@@ -229,7 +226,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(WhileStatement node, CNode arg) {
         CWhileStatement whileStatement = new CWhileStatement();
         whileStatement.expression = (CExpression) visitExpr(node.getExpression(), arg);
-        whileStatement.statement = (CStatement) visitExpr(node.getBody(), arg);
+        whileStatement.setStatement((CStatement) visitExpr(node.getBody(), arg));
         return whileStatement;
     }
 
@@ -243,7 +240,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(YieldStatement node, CNode arg) {
-        return null;
+        throw new RuntimeException("yield");
     }
 
     @SuppressWarnings("unchecked")
@@ -253,23 +250,34 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         if (node.getExpression() != null) {//scope
             Expression scope = node.getExpression();
             methodInvocation.scope = (CExpression) visitExpr(scope, arg);
-            IMethodBinding binding = node.resolveMethodBinding();
-            ITypeBinding typeBinding = binding.getDeclaringClass();
 
-
-            if (scope instanceof Name) {//field or class or variable
-                if (Modifier.isStatic(binding.getModifiers())) {
-                    methodInvocation.isArrow = false;
-                    methodInvocation.scope = new CType(typeBinding.getQualifiedName(), source.header);
-                }
+            if (scope instanceof Name) {
+                //field or class or variable
                 String scopeName = ((Name) scope).getFullyQualifiedName();
-                if (scopeName.equals("this")) {
+                if (scopeName.equals("this")) {//trim this
                     methodInvocation.isArrow = true;
                     methodInvocation.name = (CName) visit(node.getName(), null);
+                    methodInvocation.scope = null;
                     args((List<Expression>) node.arguments(), methodInvocation);
                     return methodInvocation;
                 }
-                methodInvocation.isArrow = !Modifier.isStatic(binding.getModifiers());
+                else {
+                    IMethodBinding binding = node.resolveMethodBinding();
+                    if (binding == null) {
+                        methodInvocation.isArrow = false;
+                    }
+                    else {
+                        ITypeBinding typeBinding = binding.getDeclaringClass();
+                        if (Modifier.isStatic(binding.getModifiers())) {
+                            methodInvocation.isArrow = false;
+                            methodInvocation.scope = new CType(typeBinding.getQualifiedName(), source.header);
+                        }
+                        else {
+                            methodInvocation.isArrow = true;
+                        }
+                    }
+                }
+
             }
             else {
                 //another method call or field access
@@ -344,13 +352,10 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
 
     @Override
-    public CNode visit(SwitchCase node, CNode arg) {
-        return null;
-    }
-
-    @Override
     public CNode visit(SynchronizedStatement node, CNode arg) {
-        return null;
+        CBlockStatement block = (CBlockStatement) visit(node.getBody(), arg);
+        block.addStatement(0, new CLineCommentStatement("synchronized"));
+        return block;
     }
 
     @Override
@@ -507,10 +512,17 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(InfixExpression node, CNode arg) {
+        //todo if string concatenation make string type non pointer so that '+' operator work
         CInfixExpression infixExpression = new CInfixExpression();
         infixExpression.operator = node.getOperator().toString();
         infixExpression.left = (CExpression) visitExpr(node.getLeftOperand(), arg);
         infixExpression.right = (CExpression) visitExpr(node.getRightOperand(), arg);
+        if (node.hasExtendedOperands()) {
+            for (Expression expression : (List<Expression>) node.extendedOperands()) {
+                CExpression exp = (CExpression) visitExpr(expression, arg);
+                infixExpression.right = new CInfixExpression(infixExpression.right, exp, infixExpression.operator);
+            }
+        }
         return infixExpression;
     }
 
