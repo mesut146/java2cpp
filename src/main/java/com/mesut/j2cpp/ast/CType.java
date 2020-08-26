@@ -14,7 +14,7 @@ public class CType extends CExpression {
     public CSource source;
     public String type;
     public List<CType> typeNames = new ArrayList<>();//generics
-    public boolean isTemplate = false;//<T>
+    public boolean isTemplate = false;//<T>,dynamic type
     public boolean isPointer = false;
 
     public CType() {
@@ -43,6 +43,11 @@ public class CType extends CExpression {
         return type;
     }
 
+    public void setPointer(boolean pointer) {
+        if (!isPrim() && !isTemplate) {
+            isPointer = pointer;
+        }
+    }
 
     public CType copy() {
         CType copied = new CType(type, isTemplate);
@@ -98,19 +103,6 @@ public class CType extends CExpression {
         return sb.toString();
     }
 
-    //print namespace and pointer
-    String withPtr() {
-        StringBuilder sb = new StringBuilder(withoutPtr());
-        if (isPointer()) {
-            sb.append("*");
-        }
-        return sb.toString();
-    }
-
-
-    String withoutPtr() {
-        return type;
-    }
 
     public CType setHeader(CHeader header) {
         if (header != null) {

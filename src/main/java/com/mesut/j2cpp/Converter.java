@@ -4,7 +4,7 @@ package com.mesut.j2cpp;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.util.Filter;
-import com.mesut.j2cpp.visitor.MainVisitor;
+import com.mesut.j2cpp.visitor.DeclarationVisitor;
 import com.mesut.j2cpp.visitor.SourceVisitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
@@ -24,7 +24,8 @@ public class Converter {
     public List<String> classpath = new ArrayList<>();
     public CMakeWriter cMakeWriter;
     public CMakeWriter.Target target;
-    public boolean debug_header = false, debug_source = false;
+    public boolean debug_header = false;
+    public boolean debug_source = false;
     public boolean debug_fields = false;
     public boolean debug_methods = false;
     String srcDir;//source folder
@@ -152,12 +153,11 @@ public class Converter {
             headerWriter.write();*/
 
             //make header
-            MainVisitor visitor = new MainVisitor(this, header);
-            cu.accept(visitor);
+            SourceVisitor sourceVisitor = new SourceVisitor(cpp);
+            DeclarationVisitor headerVisitor = new DeclarationVisitor(sourceVisitor);
 
-            SourceVisitor sourceVisitor = new SourceVisitor(this, cpp);
+            headerVisitor.convert(cu);
             sourceVisitor.convert();
-            //sourceVisitor.visit(cu, null);
 
             String header_str = header.toString();
             String source_str = cpp.toString();

@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.CExpression;
 
 public class CField extends ModifierNode/*statement*/ {
@@ -7,11 +8,15 @@ public class CField extends ModifierNode/*statement*/ {
     public CType type;
     public CName name;
     public CClass parent;
-    public boolean ptrOnType = false;
     public CExpression expression;
 
     public void setName(String name) {
         this.name = CName.from(name);
+    }
+
+    public void setType(CType type) {
+        this.type = type.copy();
+        this.type.setPointer(Config.ptr_field);
     }
 
     //for header
@@ -26,27 +31,6 @@ public class CField extends ModifierNode/*statement*/ {
         if (!isStatic() && expression != null) {
             append(" = ");
             append(expression.toString());
-        }
-        append(";");
-    }
-
-    public void printAll(boolean source) {
-        if (!source && isStatic()) {
-            append("static ");
-        }
-
-        append(type.toString());
-        append(" ");
-        if (source) {
-            append(parent.name);
-        }
-        append(name.toString());
-
-        if (expression != null) {
-            if (isStatic() && source || !isStatic() && !source) {
-                append(" = ");
-                append(expression.toString());
-            }
         }
         append(";");
     }

@@ -20,7 +20,7 @@ public class CArrayType extends CType {
             return ptr ? type : type;
         }
         else if (level == 1) {
-            return "array_single<" + strLevel(level - 1, ptr) + ">";
+            return "array_single<" + strLevel(0, ptr) + ">";
         }
         return "array_multi<" + strLevel(level - 1, ptr) + ">";
     }

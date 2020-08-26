@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.visitor;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.CArrayType;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CType;
@@ -83,7 +84,11 @@ public class TypeVisitor {
     public CType visit(ParameterizedType n) {
         CType type = visit(n.getType());
         for (Type param : (List<Type>) n.typeArguments()) {
-            type.typeNames.add(visitType(param));
+            CType arg = visitType(param);
+            if (Config.ptr_typeArg) {
+                arg.setPointer(true);
+            }
+            type.typeNames.add(arg);
         }
         return type;
     }

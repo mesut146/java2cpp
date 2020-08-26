@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
@@ -24,6 +25,11 @@ public class CMethod extends ModifierNode {
     public void addParam(CParameter param) {
         param.method = this;
         params.add(param);
+    }
+
+    public void setType(CType type) {
+        this.type = type.copy();
+        this.type.setPointer(Config.ptr_method);
     }
 
     public CHeader getHeader() {
@@ -85,5 +91,6 @@ public class CMethod extends ModifierNode {
     public void printAnony() {
 
     }
+
 
 }

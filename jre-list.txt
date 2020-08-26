@@ -100,4 +100,9 @@ java.io.Writer
 
 
 
-java.lang.reflect.Constructor;
+java.lang.reflect.Array
+java.lang.reflect.Constructor
+java.lang.reflect.Field
+java.lang.reflect.Method
+java.lang.reflect.Modifier
+java.lang.reflect.Parameter

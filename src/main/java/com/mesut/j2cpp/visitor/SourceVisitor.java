@@ -1,6 +1,5 @@
 package com.mesut.j2cpp.visitor;
 
-import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CClassImpl;
 import com.mesut.j2cpp.cppast.CExpression;
@@ -17,17 +16,20 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
-    Converter converter;
+
     CSource source;
     TypeVisitor typeVisitor;
     CClass clazz;
     CMethod method;
     Catcher catcher;
 
-    public SourceVisitor(Converter converter, CSource source) {
-        this.converter = converter;
+    public SourceVisitor(CSource source) {
         this.source = source;
-        typeVisitor = new TypeVisitor(source.header);
+        this.typeVisitor = new TypeVisitor(source.header);
+    }
+
+    public TypeVisitor getTypeVisitor() {
+        return typeVisitor;
     }
 
     public CHeader getHeader() {
@@ -74,9 +76,8 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(TypeDeclarationStatement node, CNode arg) {
         TypeDeclaration typeDeclaration = (TypeDeclaration) node.getDeclaration();
-        DeclarationVisitor visitor = new DeclarationVisitor(this, typeVisitor);
-        CClass cls = visitor.visit(typeDeclaration, null);
-        return cls;
+        DeclarationVisitor visitor = new DeclarationVisitor(this);
+        return visitor.visit(typeDeclaration, null);
     }
 
     @Override
@@ -295,12 +296,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
         else if (binding.isEnum()) {
             //if else with ordinals
-            //var->ordinal
-            /*CMethodInvocation methodInvocation = new CMethodInvocation();
-            methodInvocation.isArrow = true;
-            methodInvocation.scope = (CExpression) visit(expression, null);
-            methodInvocation.name = new CName("ordinal");*/
-
             SwitchHelper helper = new SwitchHelper(this);
             helper.isEnum = true;
             return helper.makeIfElse(node);
@@ -363,7 +358,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         //split single or keep multi?
         CVariableDeclarationStatement variableDeclaration = new CVariableDeclarationStatement();
         CType type = typeVisitor.visitType(node.getType());
-        variableDeclaration.type = type;
+        variableDeclaration.setType(type);
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
             /*CSingleVariableDeclaration declaration = new CSingleVariableDeclaration();
             declaration.type = type;
@@ -422,8 +417,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(ClassInstanceCreation node, CNode arg) {
         if (node.getAnonymousClassDeclaration() == null) {
             CClassInstanceCreation classInstanceCreation = new CClassInstanceCreation();
-            classInstanceCreation.type = typeVisitor.visitType(node.getType());
-            classInstanceCreation.type.isPointer = false;
+            classInstanceCreation.setType(typeVisitor.visitType(node.getType()));
             for (Expression expression : (List<Expression>) node.arguments()) {
                 classInstanceCreation.args.add((CExpression) visitExpr(expression, arg));
             }
@@ -437,7 +431,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             anony.ns = clazz.ns;
             anony.base.add(typeVisitor.visitType(node.getType()));
             AnonymousClassDeclaration declaration = node.getAnonymousClassDeclaration();
-            DeclarationVisitor declarationVisitor = new DeclarationVisitor(this, typeVisitor);
+            DeclarationVisitor declarationVisitor = new DeclarationVisitor(this);
             //todo find local & class references
             for (BodyDeclaration body : (List<BodyDeclaration>) declaration.bodyDeclarations()) {
                 if (body instanceof FieldDeclaration) {
@@ -453,7 +447,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 }
             }
             CClassInstanceCreation classInstanceCreation = new CClassInstanceCreation();
-            classInstanceCreation.type = new CType(anony.name, source.header);
+            classInstanceCreation.setType(new CType(anony.name, source.header));
             source.anony.add(new CClassImpl(anony));
             return classInstanceCreation;
         }
@@ -570,7 +564,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(CastExpression node, CNode arg) {
         CCastExpression castExpression = new CCastExpression();
         castExpression.expression = (CExpression) visitExpr(node.getExpression(), arg);
-        castExpression.targetType = typeVisitor.visitType(node.getType());
+        castExpression.setTargetType(typeVisitor.visitType(node.getType()));
         return castExpression;
     }
 

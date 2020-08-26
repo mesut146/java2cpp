@@ -17,8 +17,14 @@ public class CIfStatement extends CStatement {
         printBody(thenStatement);
         if (elseStatement != null) {
             line("else ");
-            elseStatement.firstBlock = true;
-            appendIndent(elseStatement);
+            if (elseStatement instanceof CIfStatement) {
+                elseStatement.firstBlock = true;
+                append(elseStatement);
+            }
+            else {
+                printBody(elseStatement);
+            }
+
         }
     }
 }

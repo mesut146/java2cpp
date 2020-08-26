@@ -1,5 +1,7 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.Config;
+
 public class CParameter extends Node {
 
     public CType type;
@@ -10,8 +12,12 @@ public class CParameter extends Node {
         this.name = new CName(name);
     }
 
+    public void setType(CType type) {
+        this.type = type.copy();
+        this.type.setPointer(Config.ptr_parameter);
+    }
+
     public void print() {
-        name.isPointer = type.isPointer();
         append(type.toString());
         append(" ");
         append(name.toString());

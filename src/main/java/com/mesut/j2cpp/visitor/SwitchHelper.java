@@ -5,9 +5,6 @@ import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.cppast.expr.CInfixExpression;
-import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
-import com.mesut.j2cpp.cppast.literal.CCharacterLiteral;
-import com.mesut.j2cpp.cppast.literal.CNumberLiteral;
 import com.mesut.j2cpp.cppast.stmt.*;
 import org.eclipse.jdt.core.dom.*;
 
@@ -17,25 +14,24 @@ import java.util.List;
 public class SwitchHelper {
 
     SourceVisitor visitor;
-    SwitchStatement node;
-    CExpression left;
     List<Statement> statements;
     public boolean isEnum = false;
-    int i;
+    int i;//statement index
 
     public SwitchHelper(SourceVisitor visitor) {
         this.visitor = visitor;
     }
 
     CExpression ordinal(CExpression expression) {
-        if (expression instanceof CNumberLiteral || expression instanceof CCharacterLiteral) {
+        return expression;
+        /*if (expression instanceof CNumberLiteral || expression instanceof CCharacterLiteral) {
             return expression;
         }
         CMethodInvocation methodInvocation = new CMethodInvocation();
         methodInvocation.isArrow = true;
         methodInvocation.scope = expression;
         methodInvocation.name = new CName("ordinal");
-        return methodInvocation;
+        return methodInvocation;*/
     }
 
     public CStatement makeIfElse(SwitchStatement node) {

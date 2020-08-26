@@ -1,16 +1,19 @@
 todo list
+
 #pointers
   field type
   method return type
   method param type
   local var type
   template arg
+  array type
+  cast type
 
 #non-pointers
   new statement
   template type(sender already makes it pointer)
   base classes
-
+  primitive
 
 
 #forward class dec
@@ -23,6 +26,14 @@ array to pointer
 #make base class method virtual
 
 
+#1st pass
+parse all sources
+scan method and field names
+
+#2nd pass
+convert normally with name map
+
+update all references to members
 
 
 #try finally

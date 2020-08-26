@@ -17,11 +17,34 @@ public class DeclarationVisitor {
     TypeVisitor typeVisitor;
     public CHeader header;
 
-    public DeclarationVisitor(SourceVisitor sourceVisitor, TypeVisitor typeVisitor) {
+    public DeclarationVisitor(SourceVisitor sourceVisitor) {
         this.sourceVisitor = sourceVisitor;
-        this.typeVisitor = typeVisitor;
+        this.typeVisitor = sourceVisitor.getTypeVisitor();
         this.header = sourceVisitor.getHeader();
     }
+
+
+    public void convert(CompilationUnit cu) {
+        visit(cu.getPackage());
+        for (AbstractTypeDeclaration decl : (List<AbstractTypeDeclaration>) cu.types()) {
+            if (decl instanceof EnumDeclaration) {
+                visit((EnumDeclaration) decl, null);
+            }
+            else {
+                visit((TypeDeclaration) decl, null);
+            }
+        }
+    }
+
+
+    public void visit(PackageDeclaration n) {
+        Namespace ns = new Namespace();
+        ns.fromPkg(n.getName().getFullyQualifiedName());
+        header.ns = ns;
+        header.using.add(header.ns);
+        header.source.usings.add(header.ns);
+    }
+
 
     public CClass visit(TypeDeclaration node, CClass clazz) {
         //System.out.println("type.decl=" + node.getName());
@@ -29,8 +52,12 @@ public class DeclarationVisitor {
         if (clazz != null) {
             clazz.addInner(cc);
         }
+        else {
+            header.addClass(cc);
+        }
 
         cc.name = node.getName().getFullyQualifiedName();
+        cc.getType().forward();
         cc.isInterface = node.isInterface();
 
         node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true).setHeader(header)));
@@ -69,15 +96,17 @@ public class DeclarationVisitor {
     }
 
     public CClass visit(EnumDeclaration n, CClass clazz) {
-        //System.out.println("enum.decl=" + n.getName());
         CClass cc = new CClass();
         if (clazz != null) {
             clazz.addInner(cc);
         }
-
+        else {
+            header.addClass(cc);
+        }
 
         cc.name = n.getName().getFullyQualifiedName();
         cc.base.add(Helper.getEnumType().setHeader(header));
+        cc.getType().forward();
         header.addInclude("java/lang/Enum");
 
         n.superInterfaceTypes().forEach(iface -> cc.base.add(typeVisitor.visit((Type) iface)));
@@ -87,12 +116,12 @@ public class DeclarationVisitor {
             cc.addField(field);
             field.setPublic(true);
             field.setStatic(true);
-            field.type = new CType(cc.name, header);
+            field.setType(new CType(cc.name, header));
             field.setName(constant.getName().getIdentifier());
 
             if (!constant.arguments().isEmpty()) {
                 CClassInstanceCreation args = new CClassInstanceCreation();
-                args.type = field.type;
+                args.setType(field.type);
                 for (Expression val : (List<Expression>) constant.arguments()) {
                     args.args.add((CExpression) sourceVisitor.visitExpr(val, null));
                 }
@@ -100,25 +129,29 @@ public class DeclarationVisitor {
             }
             else {
                 //todo make ordinals
-                //throw new RuntimeException("ordinal");
+                CClassInstanceCreation args = new CClassInstanceCreation();
+                args.setType(field.type);
+                field.expression = args;
             }
 
             if (constant.getAnonymousClassDeclaration() != null) {
                 throw new RuntimeException("anonymous enum constant is not supported");
             }
         }
-        n.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
+        if (!n.bodyDeclarations().isEmpty()) {
+            n.bodyDeclarations().forEach(p -> visitBody((BodyDeclaration) p, cc));
+        }
         //todo put values and valueOf method
         return cc;
     }
 
     public void visit(FieldDeclaration n, CClass clazz) {
         CType type = typeVisitor.visitType(n.getType());
-        //System.out.println("field.decl=" + n.getType() + " " + n.fragments());
+
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
             CField field = new CField();
             clazz.addField(field);
-            field.type = type;
+            field.setType(type);
             field.setName(frag.getName().getIdentifier());
             field.setPublic(Modifier.isPublic(n.getModifiers()));
             field.setStatic(Modifier.isStatic(n.getModifiers()));
@@ -127,54 +160,51 @@ public class DeclarationVisitor {
                 field.setPublic(true);
             }
             if (frag.getInitializer() != null) {
-                SourceVisitor visitor = new SourceVisitor(sourceVisitor.converter, header.source);
-                visitor.clazz = clazz;
-                field.expression = (CExpression) visitor.visitExpr(frag.getInitializer(), null);
+                sourceVisitor.clazz = clazz;
+                field.expression = (CExpression) sourceVisitor.visitExpr(frag.getInitializer(), null);
+                sourceVisitor.clazz = null;
             }
         }
     }
 
 
     public CNode visit(MethodDeclaration node, CClass clazz) {
-        CMethod methodDecl = new CMethod();
+        CMethod method = new CMethod();
+        clazz.addMethod(method);
 
-        node.typeParameters().forEach(temp -> {
-            methodDecl.template.add(new CType(temp.toString()).setHeader(sourceVisitor.source));
-        });
+        node.typeParameters().forEach(temp -> method.template.add(new CType(temp.toString(), true)));
 
         if (node.isConstructor()) {
-            methodDecl.isCons = true;
+            method.isCons = true;
         }
         else {
             Type type = node.getReturnType2();
-            if (type == null) {
-                methodDecl.isCons = true;
-            }
-            else {
-                methodDecl.type = typeVisitor.visitType(node.getReturnType2());
-            }
+            method.setType(typeVisitor.visitType(type));
         }
 
-        //type could be template
-        methodDecl.name = new CName(node.getName().getIdentifier());
+        method.name = new CName(node.getName().getIdentifier());
 
-        methodDecl.setStatic(Modifier.isStatic(node.getModifiers()));
-        methodDecl.setPublic(Modifier.isPublic(node.getModifiers()));
-        methodDecl.setNative(Modifier.isNative(node.getModifiers()));
-        if (clazz.isInterface) {
-            methodDecl.setPublic(true);
-            methodDecl.isPureVirtual = true;
+        method.setStatic(Modifier.isStatic(node.getModifiers()));
+        method.setPublic(Modifier.isPublic(node.getModifiers()));
+        method.setNative(Modifier.isNative(node.getModifiers()));
+        if (clazz.isInterface || Modifier.isAbstract(node.getModifiers())) {
+            method.setPublic(true);
+            method.setVirtual(true);
+            method.isPureVirtual = true;
         }
 
         for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) node.parameters()) {
             CParameter cp = new CParameter();
-            cp.type = typeVisitor.visitType(param.getType());
-            cp.type.isTemplate = false;
+            cp.method = method;
+            cp.setType(typeVisitor.visitType(param.getType()));
+
             cp.setName(param.getName().getIdentifier());
-            methodDecl.params.add(cp);
+            method.addParam(cp);
         }
 
-        methodDecl.body = (CBlockStatement) sourceVisitor.visit(node.getBody(), null);
-        return methodDecl;
+        sourceVisitor.clazz = clazz;
+        sourceVisitor.method = method;
+        method.body = (CBlockStatement) sourceVisitor.visitExpr(node.getBody(), null);
+        return method;
     }
 }

@@ -13,7 +13,6 @@ public class CName extends CExpression {
     public Namespace namespace;//for class names
     public String name;
     public List<CType> typeArgs = new ArrayList<>();//template method call
-    public boolean isPointer = false;
 
     public CName(String name) {
         String[] arr = name.split("::");
@@ -28,20 +27,9 @@ public class CName extends CExpression {
     }
 
 
-    public String printPtr() {
-        return "*" + name;
-    }
-
-    public String printNormal() {
-        return name;
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if (isPointer) {
-            sb.append("*");
-        }
         sb.append(name);
         if (!typeArgs.isEmpty()) {
             sb.append("<");

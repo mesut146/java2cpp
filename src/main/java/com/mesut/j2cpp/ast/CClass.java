@@ -144,10 +144,10 @@ public class CClass extends CStatement {
 
     public void printDestructor() {
         //todo
-        CMethod decl = new CMethod();
-        decl.parent = this;
-        decl.name = new CName("~" + name);
-        decl.setVirtual(true);
+        CMethod destructor = new CMethod();
+        destructor.parent = this;
+        destructor.name = new CName("~" + name);
+        destructor.setVirtual(true);
         append("virtual ~").append(name).append("(){}");
     }
 
@@ -163,7 +163,10 @@ public class CClass extends CStatement {
         if (ns != null) {
             return ns;
         }
-        return parent.getNs();
+        if (parent != null) {
+            return parent.getNs();
+        }
+        return null;
     }
 
     public CType getType() {
