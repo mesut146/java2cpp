@@ -1,10 +1,15 @@
 package com.mesut.j2cpp.visitor;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CNode;
+import com.mesut.j2cpp.cppast.expr.CAssignment;
 import com.mesut.j2cpp.cppast.expr.CClassInstanceCreation;
+import com.mesut.j2cpp.cppast.expr.CFieldAccess;
+import com.mesut.j2cpp.cppast.expr.CThisExpression;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
+import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
 import com.mesut.j2cpp.util.Helper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -68,7 +73,8 @@ public class DeclarationVisitor {
     public CClass visit(TypeDeclaration node, CClass clazz) {
         //System.out.println("type.decl=" + node.getName());
         CClass cc = new CClass();
-        if (clazz != null) {
+
+        if (!Config.move_inners && clazz != null) {
             clazz.addInner(cc);
         }
         else {
@@ -96,6 +102,35 @@ public class DeclarationVisitor {
         });
 
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
+
+        //handle inner's parent reference
+        if (clazz != null) {
+            CName this_parent = CName.from("_this_parent");
+            //make constructor for parent reference
+            CField field = new CField();
+            field.setType(clazz.getType());
+            field.setName(this_parent);
+            cc.addField(field);
+            //make or get constructor for init field
+            CMethod cons = cc.getMethod(true, null, clazz.getType());
+            if (cons == null) {
+                cons = new CMethod();
+                cons.isCons = true;
+                cons.name = CName.from(cc.name);
+                cons.body = new CBlockStatement();
+                cc.addMethod(cons);
+            }
+            CParameter parameter = new CParameter();
+            parameter.setType(clazz.getType());
+            parameter.setName(this_parent);
+            cons.addParam(parameter);
+            CFieldAccess access = new CFieldAccess();
+            access.isArrow = true;
+            access.scope = new CThisExpression();
+            access.name = this_parent;
+            cons.body.addStatement(new CExpressionStatement(new CAssignment(access, this_parent, "=")));
+            //replace references with scoped references
+        }
         return cc;
     }
 
@@ -116,7 +151,7 @@ public class DeclarationVisitor {
 
     public CClass visit(EnumDeclaration n, CClass clazz) {
         CClass cc = new CClass();
-        if (clazz != null) {
+        if (!Config.move_inners && clazz != null) {
             clazz.addInner(cc);
         }
         else {

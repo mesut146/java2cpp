@@ -15,7 +15,7 @@ public class CHeader extends Node {
     public String rpath;//header path:java/lang/String.h
     boolean hasRuntime = false;
     public CSource source;
-    public LocalForwardDeclarator forwardDeclarator = new LocalForwardDeclarator(this);
+    //public LocalForwardDeclarator forwardDeclarator = new LocalForwardDeclarator(this);
 
     public CHeader(String path) {
         rpath = path;
@@ -75,7 +75,7 @@ public class CHeader extends Node {
         }
         println();
 
-        append(forwardDeclarator);
+        //append(forwardDeclarator);
         println();
 
         if (ns != null) {
@@ -111,5 +111,9 @@ public class CHeader extends Node {
             }
         }
         return false;
+    }
+
+    public void forward(CType type) {
+        //forwardDeclarator.add(type);
     }
 }

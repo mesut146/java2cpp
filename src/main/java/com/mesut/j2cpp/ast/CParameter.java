@@ -13,6 +13,10 @@ public class CParameter extends Node {
         this.name = new CName(name);
     }
 
+    public void setName(CName name) {
+        this.name = name;
+    }
+
     public void setType(CType type) {
         this.type = type.copy();
         this.type.setPointer(Config.ptr_parameter);

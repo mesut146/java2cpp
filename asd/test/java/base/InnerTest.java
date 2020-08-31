@@ -7,9 +7,14 @@ public class InnerTest {
 
     class Inner {
 
+        Inner(InnerTest parent) {
+          parent.toString();
+        }
+        
         void innerMeth() {
             //inner can access parent instance
-            System.out.println(x + " = " + str);
+            //anony class can access parent instance
+            System.out.println(x + " = " + str + " " + InnerTest.this.x);
         }
     }
 }

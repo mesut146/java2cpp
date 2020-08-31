@@ -57,6 +57,24 @@ public class CClass extends CStatement {
         return base.get(0);
     }
 
+    public CMethod getMethod(boolean cons, String name, CType... params) {
+        for (CMethod method : methods) {
+            if (method.isCons == cons && (cons || method.name.name.equals(name)) && method.params.size() == params.length) {
+                boolean found = true;
+                for (int i = 0; i < params.length; i++) {
+                    if (!method.params.get(i).type.equals(params[i])) {
+                        found = false;
+                        break;
+                    }
+                }
+                if (found) {
+                    return method;
+                }
+            }
+        }
+        return null;
+    }
+
     public void print() {
         clear();
         printDecl();

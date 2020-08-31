@@ -38,6 +38,10 @@ public class Helper {
         return new CType("java::lang::String");
     }
 
+    public static CType getVectorType() {
+        return new CType("std::vector");
+    }
+
     public static CType getEnumType() {
         return new CType("java::lang::Enum");
     }
@@ -60,7 +64,7 @@ public class Helper {
         Namespace typeNs = copied.ns;
         for (Namespace ns : usings) {
             int cur = 0;
-            for (int i = 0; i < ns.parts.size(); i++) {
+            for (int i = 0; i < Math.min(ns.parts.size(), typeNs.parts.size()); i++) {
                 if (typeNs.parts.get(i).equals(ns.parts.get(i))) {
                     cur++;
                 }

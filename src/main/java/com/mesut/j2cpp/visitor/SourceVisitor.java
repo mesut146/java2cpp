@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.visitor;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.*;
 import com.mesut.j2cpp.cppast.expr.*;
@@ -564,11 +565,17 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(ArrayCreation node, CNode arg) {
         if (node.getInitializer() != null) {
+            //initializer doesn't need dimensions
             return visit(node.getInitializer(), arg);
         }
         else {
             CType typeName = typeVisitor.visitType(node.getType()).copy();
-            return new CArrayCreation2(new CArrayType(typeName, node.dimensions().size()));
+            CArrayCreation2 arrayCreation2 = new CArrayCreation2(typeName);
+            for (Expression dim : (List<Expression>) node.dimensions()) {
+                CExpression dim2 = (CExpression) visitExpr(dim, arg);
+                arrayCreation2.dimensions.add(dim2);
+            }
+            return arrayCreation2;
         }
     }
 
@@ -633,12 +640,30 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(QualifiedName node, CNode arg) {
         IBinding binding = node.resolveBinding();
+        if (binding == null) {
+            System.out.println("QualifiedName = " + node);
+        }
         boolean isStatic = Modifier.isStatic(binding.getModifiers());
         if (isStatic || binding instanceof IVariableBinding) {
+            CExpression scope = (CExpression) visitExpr(node.getQualifier(), arg);
+
+            if (node.getName().getIdentifier().equals("length")) {
+                IVariableBinding variableBinding = (IVariableBinding) binding;
+                if (variableBinding.getDeclaringClass() == null) {//array.length
+                    if (Config.use_vector) {
+                        CMethodInvocation methodInvocation = new CMethodInvocation();
+                        methodInvocation.isArrow = true;
+                        methodInvocation.scope = scope;
+                        methodInvocation.name = new CName("size");
+                        return methodInvocation;
+                    }
+                }
+            }
             CFieldAccess fieldAccess = new CFieldAccess();
             fieldAccess.name = new CName(node.getName().getIdentifier());
             fieldAccess.isArrow = !isStatic;
-            fieldAccess.scope = (CExpression) visitExpr(node.getQualifier(), arg);
+            fieldAccess.scope = scope;
+
             return fieldAccess;
         }
         return new CName(node.getFullyQualifiedName());

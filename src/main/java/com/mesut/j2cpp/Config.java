@@ -15,4 +15,10 @@ public class Config {
     public static boolean ptr_new = false;
     public static boolean ptr_varDecl = true;
     public static boolean ptr_cast = true;
+    //move inner classes to uppermost parent level(still in same file)
+    public static boolean move_inners = true;
+    //move inner classes to separate file(implementation still in same file)
+    public static boolean move_inners_out = true;
+
+    public static boolean use_vector = true;
 }

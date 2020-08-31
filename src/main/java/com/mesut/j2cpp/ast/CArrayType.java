@@ -1,5 +1,9 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.util.Helper;
+import com.mesut.j2cpp.util.VectorHelper;
+
 public class CArrayType extends CType {
     public int dimensions;
 
@@ -27,6 +31,11 @@ public class CArrayType extends CType {
 
     @Override
     public String toString() {
-        return strLevel(dimensions, true);
+        if (Config.use_vector) {
+            return VectorHelper.printLeft(dimensions, this);
+        }
+        else {
+            return strLevel(dimensions, true);
+        }
     }
 }

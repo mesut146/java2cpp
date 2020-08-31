@@ -164,9 +164,9 @@ public abstract class Node {
 
     @Override
     public String toString() {
-        if (cache != null) {
+        /*if (cache != null) {
             return cache;
-        }
+        }*/
         clear();
         print();
         return cache = String.join("\n", list);

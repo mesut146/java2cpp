@@ -14,6 +14,10 @@ public class CField extends ModifierNode/*statement*/ {
         this.name = CName.from(name);
     }
 
+    public void setName(CName name) {
+        this.name = name;
+    }
+
     public void setType(CType type) {
         this.type = type.copy();
         this.type.setPointer(Config.ptr_field);

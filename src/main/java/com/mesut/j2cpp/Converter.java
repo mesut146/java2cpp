@@ -135,6 +135,7 @@ public class Converter {
         if (filter.checkPath(file)) {
             CompilationUnit unit = parse(file);
             convertSingle(cls, unit);
+            units.add(unit);
             count++;
         }
     }
@@ -184,6 +185,8 @@ public class Converter {
         }
 
     }
+
+    List<CompilationUnit> units = new ArrayList<>();
 
     CompilationUnit parse(File file) throws IOException {
         initParser();

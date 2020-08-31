@@ -10,6 +10,15 @@ public class CAssignment extends CExpression {
     //op is one of = < > <= >= <<= >>=
 
 
+    public CAssignment() {
+    }
+
+    public CAssignment(CExpression left, CExpression right, String operator) {
+        this.left = left;
+        this.right = right;
+        this.operator = operator;
+    }
+
     @Override
     public void print() {
         append(left.toString());

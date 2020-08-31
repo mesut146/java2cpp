@@ -31,14 +31,14 @@ public class CSource extends Node {
     public void print() {
         includePath(header.getInclude());
         println();
-        for (Namespace use : usings) {
-            print_using(use);
+        if (!usings.isEmpty()) {
+            for (Namespace use : usings) {
+                print_using(use);
+            }
+            println();
         }
-        println();
         printAnony();
-        line("");
         printFields();
-        line("");
         printMethods();
 
     }
@@ -49,6 +49,7 @@ public class CSource extends Node {
             for (CClassImpl impl : anony) {
                 append(impl);
             }
+            println();
         }
     }
 
@@ -56,23 +57,27 @@ public class CSource extends Node {
         //todo separate by class
         if (!fieldDefs.isEmpty()) {
             line("//static fields");
-        }
-        for (CField field : fieldDefs) {
-            if (field.isStatic() && field.expression != null) {
-                line(field.forSource());
+            for (CField field : fieldDefs) {
+                if (field.isStatic() && field.expression != null) {
+                    line(field.forSource());
+                }
             }
+            println();
         }
+
     }
 
     private void printMethods() {
         if (!methods.isEmpty()) {
             line("//methods");
-        }
-        for (CMethod method : methods) {
-            method.printAll(true);
-            append(method);
+            for (CMethod method : methods) {
+                method.printAll(true);
+                append(method);
+                println();
+            }
             println();
         }
+
     }
 
 

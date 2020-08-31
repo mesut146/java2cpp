@@ -2,8 +2,14 @@
 #include <iostream>
 #include <array>
 #include <typeinfo>
+#include <vector>
 
 using namespace std;
+
+template <typename T>
+void log(T arg){
+  std::cout << arg << "\n";
+}
 
 
 /*template <class T>
@@ -38,9 +44,14 @@ void multi1(){
 
 }
 
-void multi2(){
-
-
+void vect(){
+  class cls;
+  std::vector<cls*>* arr = new std::vector<cls*>(10);
+  std::vector<std::vector<cls*>*> *a2 = new std::vector<std::vector<cls*>*>(5,new std::vector<cls*>(10));
+  log(arr->size());
+  log(arr->at(0));
+  log(a2->size());
+  log(a2->at(0)->size());
 }
 
 template <typename type>
@@ -55,7 +66,7 @@ int prim(){
 */
 int main(void)
 {
-    //multi2();
-    single();
+    vect();
+    //single();
 
 }

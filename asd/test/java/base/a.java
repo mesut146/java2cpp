@@ -6,7 +6,8 @@ public class a extends Object implements Runnable {
     private static final Runnable r = null;
     String str[][] = {{"test"}, {"asd"}};
     long mylong[];
-    short myshort[][];
+    short myshort[][]=new short[10][20];
+    int[][][][] arr4 = new int[1][2][3][str.length]; 
     char mychar;
     byte mybyte;
     float myFloat;
