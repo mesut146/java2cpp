@@ -79,6 +79,9 @@ public class TypeVisitor {
 
     public CType visit(WildcardType n) {
         //<?>
+        if (n.getBound() != null) {
+            return visit(n.getBound());
+        }
         return new CType("java::lang::Object");
     }
 
