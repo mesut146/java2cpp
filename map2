@@ -1,0 +1,14 @@
+Collections
+  emptySet():Set
+  emptyList():List
+  synchronizedList(List):List
+  unmodifiableList(List):List
+  
+Objects.requireNonNull(obj,message:string)
+
+CharSequence
+
+Locale
+
+
+? extends
