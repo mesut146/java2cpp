@@ -1,0 +1,168 @@
+{
+  "classes": [
+    {
+      "name": "java.util.List,java.util.ArrayList",
+      "target": "std::vector",
+      "include": "CppHelper.h,<vector>",
+      "methods": [
+        {
+          "name": "add",
+          "params": "<T>",
+          "target": "push_back($1)"
+        },
+        {
+          "name": "add",
+          "params": "int,<T>",
+          "target": "insert($1, $2)"
+        },
+        {
+          "name": "addAll",
+          "params": "java.util.Collection",
+          "target": "insert()"
+        },
+        {
+          "name": "get",
+          "params": "int",
+          "target": "at($1)"
+        },
+        {
+          "name": "remove",
+          "params": "int",
+          "target": "erase($1)"
+        },
+        {
+          "name": "remove",
+          "params": "<T>",
+          "target": "erase(CppHelper::indexOf($varName, $1))"
+        },
+        {
+          "name": "indexOf",
+          "params": "<T>",
+          "target": "CppHelper::indexOf($varName, $1)"
+        },
+        {
+          "name": "size",
+          "target": "size()"
+        },
+        {
+          "name": "isEmpty",
+          "target": "empty()"
+        },
+        {
+          "name": "clear",
+          "target": "clear()"
+        }
+      ]
+    },
+    {
+      "name": "java.lang.String",
+      "target": "std::string",
+      "include": "<string>,StringHelper.h",
+      "methods:": [
+        {
+          "name": "length",
+          "target": "size()"
+        },
+        {
+          "name": "substring",
+          "params": "int",
+          "target": "substr($1)"
+        },
+        {
+          "name": "substring",
+          "params": "int,int",
+          "target": "substr($1, $2 - $1)"
+        },
+        {
+          "name": "indexOf",
+          "params": "java.lang.String",
+          "target": "find($1)"
+        },
+        {
+          "name": "indexOf",
+          "params": "java.lang.String,int",
+          "target": "find($1, $2)"
+        },
+        {
+          "name": "indexOf",
+          "params": "int",
+          "target": "find($1)"
+        },
+        {
+          "name": "indexOf",
+          "params": "int,int",
+          "target": "find($1, $2)"
+        },
+        {
+          "name": "toCharArray",
+          "target": "data()"
+        },
+        {
+          "name": "compareTo",
+          "params": "java.lang.String",
+          "target": "compare(*$1)"
+        },
+        {
+          "name": "charAt",
+          "params": "int",
+          "target": "at($1)"
+        },
+        {
+          "name": "contains",
+          "params": "java.lang.String",
+          "target": "(find($1) != std::string::npos)"
+        },
+        {
+          "name": "endsWith",
+          "params": "java.lang.String",
+          "target": "compare($varName.length() - $1.length(), $1.length(), $1)"
+        },
+        {
+          "name": "equals",
+          "params": "java.lang.Object",
+          "target": "compare((std::string*)$1) == 0"
+        },
+        {
+          "name": "format",
+          "params": "java.lang.String,java.lang.Object...",
+          "target": "StringHelper.format($1, $2)"
+        },
+        {
+          "name": "getBytes",
+          "target": "data()"
+        },
+        {
+          "name": "lastIndexOf",
+          "params": "java.lang.String",
+          "target": "rfind($1)"
+        },
+        {
+          "name": "replace",
+          "params": "java.lang.String,java.lang.String",
+          "target": "StringHelper::replace($varName, $1, $2)"
+        }
+      ]
+    },
+    {
+      "name": "java.util.Set",
+      "target": "std::unordered_set",
+      "include": "<unordered_set>",
+      "methods:": [
+        { "name": "add", "params": "<T>", "target": "insert($1)" },
+        {
+          "name": "remove",
+          "params": "java.lang.Object",
+          "target": "erase($1)"
+        },
+        { "name": "size", "target": "size()" },
+        { "name": "clear", "target": "clear()" },
+        { "name": "isEmpty", "target": "empty()" },
+        {
+          "name": "contains",
+          "params": "java.lang.Object",
+          "target": "(find($1) != $varName.end())"
+        }
+      ]
+    }
+  ]
+}

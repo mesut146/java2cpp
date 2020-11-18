@@ -1,27 +1,4 @@
-#List to std::vector
-  add -> push_back()
-  get -> &at()
-  size -> size()
-  isEmpty -> empty()
-  remove(elem) -> vec.erase(std::remove(vec.begin(), vec.end(), value), vec.end());
-  remove(index) -> v.erase(v.begin()+index)
 
-#String to std::string
-  substring(i,j) -> s.substr(i,s.size() - j)
-  indexOf(s,i) -> s.find(s,i)
-  lastIndexOf(seq) -> ?
-  length() -> size() , length()
-
-
-#Array to vector
-
-#Set,HashSet to std::unordered_set
-  add(e) -> insert(e)
-  addAll(c) -> insert(c.begin(),c.end());
-  isEmpty() -> empty()
-  size() -> size()
-  clear() -> clear()
-  indexOf(e) -> ?
 
 
 #Map,HashMap to std::unordered_map
