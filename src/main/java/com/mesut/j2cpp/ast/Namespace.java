@@ -19,7 +19,7 @@ public class Namespace extends Node {
     }
 
     public Namespace() {
-
+        all = "";
     }
 
     public void fromPkg(String str) {
@@ -27,26 +27,9 @@ public class Namespace extends Node {
         Collections.addAll(parts, all.split("::"));
     }
 
-    //trim common namespace
-    public String normalize(Namespace scope) {
-        int i = 0;
-        int len = Math.min(parts.size(), scope.parts.size());
-        List<String> list = new ArrayList<>(parts);
-        while (i < len) {
-            if (parts.get(i).equals(scope.parts.get(i))) {
-                i++;
-            }
-            else {
-                break;
-            }
-        }
-        return new Namespace(list.subList(i, list.size())).all;
-    }
-
     public String getAll() {
         return all;
     }
-
 
     @Override
     public String toString() {

@@ -15,7 +15,7 @@ public class CThrowStatement extends CStatement {
     @Override
     public void print() {
         append("throw ");
-        append(expression.toString());
+        append(expression);
         append(";");
     }
 }

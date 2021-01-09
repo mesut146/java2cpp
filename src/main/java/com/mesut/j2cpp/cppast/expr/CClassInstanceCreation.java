@@ -3,10 +3,10 @@ package com.mesut.j2cpp.cppast.expr;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 //new Type(args)
 public class CClassInstanceCreation extends CExpression {
@@ -19,11 +19,7 @@ public class CClassInstanceCreation extends CExpression {
     }
 
     @Override
-    public void print() {
-        append("new ");
-        append(type.toString());
-        append("(");
-        append(args.stream().map(CExpression::toString).collect(Collectors.joining(", ")));
-        append(")");
+    public String toString() {
+        return "new " + type.normalized(scope) + "(" + PrintHelper.join(args, ", ", scope) + ")";
     }
 }

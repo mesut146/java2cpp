@@ -16,8 +16,18 @@ public abstract class CNode extends Node {
         }
         else {
             up();
+            body.scope = scope;
             line(body.toString());
             down();
+        }
+    }
+
+    public String strBody(CNode body) {
+        if (body instanceof CBlockStatement) {
+            return body.toString();
+        }
+        else {
+            return "    " + body;
         }
     }
 }

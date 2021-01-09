@@ -19,17 +19,11 @@ public class CArrayCreation2 extends CExpression {
     }
 
     @Override
-    public void print() {
-        //append("new ");
+    public String toString() {
         if (Config.use_vector) {
-            append(VectorHelper.printRight(dimensions, type, 0));
+            return "new " + VectorHelper.printRight(dimensions, type, 0);
         }
-        else {
-            type.isPointer = false;
-            append(type.toString());
-            append("(");
-            append(")");
-        }
-
+        type.isPointer = false;
+        return "new " + type + "()";
     }
 }

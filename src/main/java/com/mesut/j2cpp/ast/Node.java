@@ -9,8 +9,7 @@ public abstract class Node {
     public int level = 0;
     public List<String> list = new ArrayList<>();//list of lines
     public boolean firstBlock = false;
-    public String cache = null;
-    protected boolean isPrinted = false;
+    public Object scope;
 
     public abstract void print();
 
@@ -29,13 +28,6 @@ public abstract class Node {
     public Node line(String str) {
         list.add(indention + str);
         return this;
-    }
-
-    public void line(Node node) {
-        node.print();
-        for (String line : node.list) {
-
-        }
     }
 
     public Node lineln(String str) {
@@ -90,6 +82,7 @@ public abstract class Node {
 
     //no indention
     public Node append(Node node) {
+        node.scope = scope;
         node.ensurePrint();
         boolean flag = true;
         for (String s : node.list) {
@@ -105,14 +98,12 @@ public abstract class Node {
     }
 
     void ensurePrint() {
-        if (!isPrinted) {
-            print();
-            isPrinted = true;
-        }
+        print();
     }
 
     //append with indention
     public Node appendIndent(Node node) {
+        node.scope = scope;
         node.ensurePrint();
         boolean flag = true;
         for (String line : node.list) {
@@ -164,13 +155,21 @@ public abstract class Node {
 
     @Override
     public String toString() {
-        /*if (cache != null) {
-            return cache;
-        }*/
         clear();
         print();
-        return cache = String.join("\n", list);
+        return String.join("\n", list);
     }
 
+    public void getScope(Node... arr) {
+        for (Node node : arr) {
+            if (node != null)
+                node.scope = scope;
+        }
+    }
 
+    public <T extends Node> void getScope(List<T> arr) {
+        for (Node node : arr) {
+            node.scope = scope;
+        }
+    }
 }

@@ -6,12 +6,7 @@ public class CContinueStatement extends CStatement {
     public String label;
 
     @Override
-    public void print() {
-        append("continue");
-        if (label != null) {
-            append(" ");
-            append(label);
-        }
-        append(";");
+    public String toString() {
+        return String.format("continue %s;", label == null ? ":" : label);
     }
 }

@@ -3,6 +3,7 @@ package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
+import com.mesut.j2cpp.ast.Namespace;
 import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
 import com.mesut.j2cpp.visitor.SourceVisitor;
@@ -157,30 +158,18 @@ public class Converter {
             headerVisitor.convert(cu);
             sourceVisitor.convert();
 
-            String header_str = header.toString();
-            String source_str = cpp.toString();
-
-            if (debug_header) {
-                System.out.println(header_str);
-
-            }
-            if (debug_source) {
-                if (debug_header)
-                    System.out.println("---------------");
-                System.out.println(source_str);
-            }
-
             File header_file = new File(headerDir, path.replace(".java", ".h"));
             File source_file = new File(destDir, path.replace(".java", ".cpp"));
             header_file.getParentFile().mkdirs();
             source_file.getParentFile().mkdirs();
-            Files.write(header_file.toPath(), header_str.getBytes());
-            Files.write(source_file.toPath(), source_str.getBytes());
+            Files.write(header_file.toPath(), header.toString().getBytes());
+            Files.write(source_file.toPath(), cpp.toString().getBytes());
 
             target.addInclude(destDir);
             target.addInclude(headerDir.getAbsolutePath());
             target.sourceFiles.add(source_file.getAbsolutePath());
         } catch (Exception e) {
+            System.err.println("cant convert "+path);
             e.printStackTrace();
         }
 

@@ -12,7 +12,7 @@ public class CIfStatement extends CStatement {
     public void print() {
         clear();
         append("if(");
-        append(condition.toString());
+        append(condition);
         append(")");
         printBody(thenStatement);
         if (elseStatement != null) {

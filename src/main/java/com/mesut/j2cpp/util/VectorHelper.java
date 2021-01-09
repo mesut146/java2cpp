@@ -13,7 +13,7 @@ public class VectorHelper {
             return type.normal();
         }
         StringBuilder sb = new StringBuilder();
-        CType vect = Helper.getVectorType();
+        CType vect = TypeHelper.getVectorType();
         sb.append(vect.normal());
         sb.append("<");
         sb.append(printLeft(dim - 1, type));
@@ -23,7 +23,7 @@ public class VectorHelper {
 
     public static String printRight(List<CExpression> dims, CType type, int i) {
         StringBuilder sb = new StringBuilder();
-        CType vect = Helper.getVectorType();
+        CType vect = TypeHelper.getVectorType();
 
         sb.append(vect.normal());
         sb.append("<");

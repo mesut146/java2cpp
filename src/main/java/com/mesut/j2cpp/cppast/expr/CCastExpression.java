@@ -15,10 +15,7 @@ public class CCastExpression extends CExpression {
     }
 
     @Override
-    public void print() {
-        append("(");
-        append(targetType);
-        append(")");
-        append(expression.toString());
+    public String toString() {
+        return "(" + targetType.normalized(scope) + ")" + expression;
     }
 }

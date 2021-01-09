@@ -7,13 +7,9 @@ public class CDoStatement extends CStatement {
     public CExpression expression;
     public CStatement body;
 
-
     @Override
-    public void print() {
-        append("do");
-        printBody(body);
-        append("while(");
-        append(expression.toString());
-        append(");");
+    public String toString() {
+        getScope(expression, body);
+        return String.format("do%s\nwhile(%s);", body, expression);
     }
 }

@@ -5,7 +5,7 @@ import com.mesut.j2cpp.ast.CArrayType;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.ast.CUnionType;
-import com.mesut.j2cpp.util.Helper;
+import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class TypeVisitor {
     }
 
     public CType visit(PrimitiveType n) {
-        return new CType(Helper.toCType(n.toString()));
+        return new CType(TypeHelper.toCType(n.toString()));
     }
 
     CType fromBinding(ITypeBinding binding) {
@@ -131,8 +131,7 @@ public class TypeVisitor {
 
     public CType visitType(Type type) {
         CType cType = visit(type);
-        cType.setHeader(header);
-        cType.forward();
+        cType.forward(header);
         return cType;
     }
 }

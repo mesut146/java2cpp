@@ -14,7 +14,7 @@ public class CVariableDeclarationFragment extends CNode {
         append(name.toString());
         if (initializer != null) {
             append(" = ");
-            append(initializer.toString());
+            append(initializer);
         }
     }
 }

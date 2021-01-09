@@ -2,10 +2,10 @@ package com.mesut.j2cpp.cppast.expr;
 
 import com.mesut.j2cpp.ast.CName;
 import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CMethodInvocation extends CExpression {
     public CExpression scope;
@@ -15,8 +15,10 @@ public class CMethodInvocation extends CExpression {
 
     @Override
     public void print() {
+        getScope(scope, name);
+        getScope(arguments);
         if (scope != null) {
-            append(scope.toString());
+            append(scope);
             if (isArrow) {
                 append("->");
             }
@@ -24,9 +26,10 @@ public class CMethodInvocation extends CExpression {
                 append("::");
             }
         }
+        name.scope = this.scope;
         append(name.toString());
         append("(");
-        append(arguments.stream().map(CExpression::toString).collect(Collectors.joining(", ")));
+        PrintHelper.join(this, arguments, ", ", this.scope);
         append(")");
     }
 }

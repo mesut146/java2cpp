@@ -15,7 +15,7 @@ public class CSwitchCase extends CStatement {
         }
         else {
             append("case ");
-            append(expression.toString());
+            append(expression);
             append(":\n");
         }
     }

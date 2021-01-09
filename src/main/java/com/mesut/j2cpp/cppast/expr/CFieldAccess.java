@@ -9,14 +9,13 @@ public class CFieldAccess extends CExpression {
     public boolean isArrow;
 
     @Override
-    public void print() {
-        append(scope.toString());
+    public String toString() {
+        getScope(scope, name);
         if (isArrow) {
-            append("->");
+            return scope + "->" + name;
         }
         else {
-            append("::");
+            return scope + "::" + name;
         }
-        append(name.toString());
     }
 }

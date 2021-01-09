@@ -1,6 +1,6 @@
 package base;
-//import java.util.*;
 
+import java.util.*;
 
 public class Generic<T, V> extends ArrayList<T> {
 
@@ -14,6 +14,7 @@ public class Generic<T, V> extends ArrayList<T> {
     List<String> add() {
         T obj = (T) new Object();
         add(obj);
+        super.add(obj);
         return null;
     }
 }

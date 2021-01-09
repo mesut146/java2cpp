@@ -15,10 +15,10 @@ public class Call extends CNode {
 
     @Override
     public void print() {
-        append(type.toString());
+        append(type.normalized(scope));
         append("(");
         for (int i = 0; i < args.size(); i++) {
-            append(args.get(i).toString());
+            append(args.get(i));
             if (i < args.size() - 1) {
                 append(", ");
             }

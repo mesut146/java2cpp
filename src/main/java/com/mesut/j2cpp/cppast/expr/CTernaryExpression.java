@@ -8,13 +8,9 @@ public class CTernaryExpression extends CExpression {
     public CExpression thenExpr;
     public CExpression elseExpr;
 
-
     @Override
-    public void print() {
-        append(condition.toString());
-        append(" ? ");
-        append(thenExpr.toString());
-        append(" : ");
-        append(elseExpr.toString());
+    public String toString() {
+        getScope(condition, thenExpr, elseExpr);
+        return String.format("%s ? %s : %s", condition, thenExpr, elseExpr);
     }
 }

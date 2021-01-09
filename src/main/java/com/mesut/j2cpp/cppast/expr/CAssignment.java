@@ -20,11 +20,8 @@ public class CAssignment extends CExpression {
     }
 
     @Override
-    public void print() {
-        append(left.toString());
-        append(" ");
-        append(operator);
-        append(" ");
-        append(right.toString());
+    public String toString() {
+        return left + " " + operator + " " + right;
     }
+
 }

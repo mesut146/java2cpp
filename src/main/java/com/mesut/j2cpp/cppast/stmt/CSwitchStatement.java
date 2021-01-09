@@ -14,12 +14,12 @@ public class CSwitchStatement extends CStatement {
     @Override
     public void print() {
         append("switch(");
-        append(expression.toString());
+        append(expression);
         appendln("){");
 
         if (!statements.isEmpty()) {
             for (CStatement statement : statements) {
-                append(statement.toString());
+                append(statement);
             }
         }
         line("}");

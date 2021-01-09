@@ -2,9 +2,7 @@ package com.mesut.j2cpp.visitor;
 
 import org.eclipse.jdt.core.dom.*;
 
-@SuppressWarnings("unchecked")
 public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
-
 
     public R visitExpr(Statement n, A arg) {
         if (n instanceof Block) {

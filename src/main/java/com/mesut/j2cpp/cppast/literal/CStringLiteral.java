@@ -12,15 +12,10 @@ public class CStringLiteral extends CExpression {
     }
 
     @Override
-    public void print() {
+    public String toString() {
         if (escapedValue == null) {
-            append("\"");
-            append(literalValue);
-            append("\"");
+            return "\"" + literalValue + "\"";
         }
-        else {
-            append(escapedValue);
-        }
-
+        return escapedValue;
     }
 }

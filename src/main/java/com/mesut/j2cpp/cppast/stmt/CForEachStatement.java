@@ -8,14 +8,9 @@ public class CForEachStatement extends CStatement {
     public CSingleVariableDeclaration left;//parameter
     public CExpression right;//expression
 
-
     @Override
-    public void print() {
-        append("for(");
-        append(left.toString());
-        append(" : ");
-        append(right.toString());
-        append(")");
-        printBody(body);
+    public String toString() {
+        getScope(left, right, body);
+        return String.format("for(%s : %s)%s", left, right, body);
     }
 }

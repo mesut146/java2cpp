@@ -1,11 +1,11 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 //var name,method name,param name,class name
 public class CName extends CExpression {
@@ -33,7 +33,7 @@ public class CName extends CExpression {
         sb.append(name);
         if (!typeArgs.isEmpty()) {
             sb.append("<");
-            sb.append(typeArgs.stream().map(CType::toString).collect(Collectors.joining(", ")));
+            PrintHelper.join(sb, typeArgs, ", ", scope);
             sb.append(">");
         }
         return sb.toString();

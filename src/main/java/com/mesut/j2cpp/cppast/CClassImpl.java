@@ -53,6 +53,7 @@ public class CClassImpl extends CExpression {
             line(modifier);
             up();
             for (CMethod cm : list) {
+                cm.scope = scope;
                 cm.printAll(true);
                 appendIndent(cm);
                 println();

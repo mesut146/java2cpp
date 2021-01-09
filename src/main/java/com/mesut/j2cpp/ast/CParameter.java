@@ -22,13 +22,24 @@ public class CParameter extends Node {
         this.type.setPointer(Config.ptr_parameter);
     }
 
-    public void print() {
-        append(type.toString());
-        append(" ");
-        if (isVarArg) {
-            append("...");
+    public String printFor(Object scope) {
+        StringBuilder sb = new StringBuilder();
+        if (scope instanceof CHeader) {
+            sb.append(type.normalized(method.getHeader()));
         }
-        append(name.toString());
+        else {
+            sb.append(type.normalized(method.getHeader().source));
+        }
+        sb.append(" ");
+        if (isVarArg) {
+            sb.append("...");
+        }
+        sb.append(name.toString());
+        return sb.toString();
+    }
+
+    public void print() {
+
     }
 
 

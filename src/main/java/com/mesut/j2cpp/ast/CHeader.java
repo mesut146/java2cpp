@@ -1,6 +1,6 @@
 package com.mesut.j2cpp.ast;
 
-import com.mesut.j2cpp.util.Helper;
+import com.mesut.j2cpp.util.TypeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +19,7 @@ public class CHeader extends Node {
 
     public CHeader(String path) {
         rpath = path;
+        scope = this;
     }
 
     String getPathNoExt() {
@@ -57,10 +58,13 @@ public class CHeader extends Node {
     //trim type's namespace by usings
     //java::lang::String   using java::lang -> String
     public CType normalizeType(CType type) {
-        if (type.ns == null) {
-            return type;
-        }
-        return Helper.normalizeType(type, using);
+        return TypeHelper.normalizeType(type, using);
+    }
+
+    int anonyCount = 0;
+
+    public String getAnonyName() {
+        return "anony" + anonyCount++;
     }
 
     public void print() {
@@ -78,7 +82,7 @@ public class CHeader extends Node {
         //append(forwardDeclarator);
         println();
 
-        if (ns != null) {
+        if (ns != null && !ns.all.equals("")) {
             line("namespace ");
             append(ns.all);
             appendln("{");
@@ -93,7 +97,7 @@ public class CHeader extends Node {
         for (CClass cc : classes) {
             append(cc);
         }
-        if (ns != null) {
+        if (ns != null && !ns.all.equals("")) {
             down();
             lineln("}//namespace " + ns.all);
         }

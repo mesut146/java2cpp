@@ -1,30 +1,8 @@
 package base;
 
-public class a extends Object implements Runnable {
+public class a {
 
-    public int myInt = 5, eint;
     private static final Runnable r = null;
-    String str[][] = {{"test"}, {"asd"}};
-    long mylong[];
-    short myshort[][]=new short[10][20];
-    int[][][][] arr4 = new int[1][2][3][str.length]; 
-    char mychar;
-    byte mybyte;
-    float myFloat;
-    double myDouble;
-    Object myObj = new second();
-
-    class inner {
-        int inner_field = 4;
-
-        void inner_meth() {
-        }
-
-        class inner_inner {
-            void inner_inner_method() {
-            }
-        }
-    }
 
     public static void main(String[] args) {
         System.out.println("Hello World!");
@@ -45,10 +23,6 @@ public class a extends Object implements Runnable {
         return null;
     }
 
-    @Override
-    public void run() {
-
-    }
 
     public boolean is() {
         return this instanceof second;
@@ -56,14 +30,4 @@ public class a extends Object implements Runnable {
 
 }
 
-class second {
-    int second_field = 55555;
-    static String second_static = null;
-    String second_normal = null;
 
-    static void second_st_method() {
-    }
-
-    void second_normal_method() {
-    }
-}

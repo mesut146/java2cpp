@@ -22,10 +22,12 @@ public class CVariableDeclarationStatement extends CStatement {
     public void print() {
         append(type);
         append(" ");
-        append(fragments
-                .stream()
-                .map(CVariableDeclarationFragment::toString)
-                .collect(Collectors.joining(", ")));
+        int i = 0;
+        for (CVariableDeclarationFragment fragment : fragments) {
+            append(fragment);
+            if (i < fragments.size() - 1) append(", ");
+            i++;
+        }
         append(";");
     }
 }

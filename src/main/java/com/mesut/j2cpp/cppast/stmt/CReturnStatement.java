@@ -16,7 +16,7 @@ public class CReturnStatement extends CStatement {
         append("return");
         if (expression != null) {
             append(" ");
-            append(expression.toString());
+            append(expression);
         }
         append(";");
     }

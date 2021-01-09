@@ -12,7 +12,13 @@ public class CExpressionStatement extends CStatement {
 
     @Override
     public void print() {
-        append(expression.toString());
+        append(expression);
         append(";");
+    }
+
+    @Override
+    public String toString() {
+        getScope(expression);
+        return expression + ";";
     }
 }

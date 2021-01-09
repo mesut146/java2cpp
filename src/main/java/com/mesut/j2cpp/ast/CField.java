@@ -23,25 +23,28 @@ public class CField extends ModifierNode/*statement*/ {
         this.type.setPointer(Config.ptr_field);
     }
 
-    //for header
-    public void print() {
+    public String forHeader() {
+        StringBuilder sb = new StringBuilder();
         if (isStatic()) {
-            append("static ");
+            sb.append("static ");
         }
 
-        append(type.toString());
-        append(" ");
-        append(name.toString());
+        sb.append(type.normalized(parent.header));
+        sb.append(" ");
+        sb.append(name.toString());
         if (!isStatic() && expression != null) {
-            append(" = ");
-            append(expression.toString());
+            sb.append(" = ");
+            expression.scope = parent.header;
+            sb.append(expression);
         }
-        append(";");
+        sb.append(";");
+        return sb.toString();
     }
+
 
     public String forSource() {
         StringBuilder sb = new StringBuilder();
-        sb.append(type.toString());
+        sb.append(type.normalized(parent.header.source));
         sb.append(" ");
         sb.append(parent.name);
         sb.append("::");

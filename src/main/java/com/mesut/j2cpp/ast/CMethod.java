@@ -6,7 +6,6 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CMethod extends ModifierNode {
 
@@ -53,7 +52,12 @@ public class CMethod extends ModifierNode {
             if (isVirtual()) {
                 append("virtual ");
             }
-            append(type);
+            if (source) {
+                append(type.normalized(getHeader().source));
+            }
+            else {
+                append(type.normalized(getHeader()));
+            }
             append(" ");
         }
         if (!parent.isAnonymous && source) {
@@ -62,12 +66,22 @@ public class CMethod extends ModifierNode {
         append(name.name);
 
         append("(");
-        append(params.stream().map(CParameter::toString).collect(Collectors.joining(", ")));
+        for (int i = 0; i < params.size(); i ++) {
+            CParameter cp = params.get(i);
+            if (source) {
+                append(cp.printFor(getHeader().source));
+            }
+            else {
+                append(cp.printFor(getHeader()));
+            }
+            if (i < params.size() - 1)
+                append(", ");
+        }
         append(")");
         if (source) {
             if (superCall != null) {
                 append(" : ");
-                append(superCall.toString());
+                append(superCall);
             }
             if (thisCall != null) {
                 if (superCall != null) {
@@ -76,7 +90,7 @@ public class CMethod extends ModifierNode {
                 else {
                     append(" : ");
                 }
-                append(thisCall.toString());
+                append(thisCall);
             }
             append(body);
         }
@@ -86,10 +100,6 @@ public class CMethod extends ModifierNode {
             }
             append(";");
         }
-    }
-
-    public void printAnony() {
-
     }
 
 

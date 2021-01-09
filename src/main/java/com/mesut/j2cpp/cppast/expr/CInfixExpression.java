@@ -18,11 +18,8 @@ public class CInfixExpression extends CExpression {
     }
 
     @Override
-    public void print() {
-        append(left.toString());
-        append(" ");
-        append(operator);
-        append(" ");
-        append(right.toString());
+    public String toString() {
+        getScope(left, right);
+        return left.toString() + " " + operator + " " + right;
     }
 }

@@ -2,18 +2,20 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.*;
-import com.mesut.j2cpp.cppast.*;
+import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.cppast.CLineCommentStatement;
+import com.mesut.j2cpp.cppast.CNode;
+import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.cppast.expr.*;
 import com.mesut.j2cpp.cppast.literal.*;
 import com.mesut.j2cpp.cppast.stmt.*;
-import com.mesut.j2cpp.util.Helper;
+import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
 
 @SuppressWarnings("unchecked")
 public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
-
 
     CSource source;
     TypeVisitor typeVisitor;
@@ -87,8 +89,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(StringLiteral node, CNode arg) {
         CObjectCreation objectCreation = new CObjectCreation();
-        objectCreation.type = Helper.getStringType();
-        objectCreation.type.setHeader(source.header);
+        objectCreation.type = TypeHelper.getStringType();
         objectCreation.args.add(new CStringLiteral(node.getLiteralValue(), node.getEscapedValue()));
         return objectCreation;
     }
@@ -271,7 +272,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                         ITypeBinding typeBinding = binding.getDeclaringClass();
                         if (Modifier.isStatic(binding.getModifiers())) {
                             methodInvocation.isArrow = false;
-                            methodInvocation.scope = new CType(typeBinding.getQualifiedName(), source.header);
+                            methodInvocation.scope = new CType(typeBinding.getQualifiedName());
                         }
                         else {
                             methodInvocation.isArrow = true;
@@ -366,15 +367,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         CType type = typeVisitor.visitType(node.getType());
         variableDeclaration.setType(type);
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
-            /*CSingleVariableDeclaration declaration = new CSingleVariableDeclaration();
-            declaration.type = type;
-            declaration.name = (CName) visit(frag.getName(), null);
-
-            if (frag.getInitializer() != null) {
-                declaration.expression = (CExpression) visit(frag.getInitializer(), arg);
-
-            }*/
-            //----
             CVariableDeclarationFragment fragment = new CVariableDeclarationFragment();
             fragment.name = new CName(frag.getName().getIdentifier());
             fragment.initializer = (CExpression) visitExpr(frag.getInitializer(), arg);
@@ -430,32 +422,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             return classInstanceCreation;
         }
         else {
-            //System.out.printf("anony = %s %s\n", clazz.name, method != null ? method.getName() + "()" : "field");
-            CClass anony = new CClass();
-            anony.isAnonymous = true;
-            anony.name = clazz.getAnonyName();
-            anony.ns = clazz.ns;
-            anony.base.add(typeVisitor.visitType(node.getType()));
-            AnonymousClassDeclaration declaration = node.getAnonymousClassDeclaration();
-            DeclarationVisitor declarationVisitor = new DeclarationVisitor(this);
-            //todo find local & class references
-            for (BodyDeclaration body : (List<BodyDeclaration>) declaration.bodyDeclarations()) {
-                if (body instanceof FieldDeclaration) {
-                    declarationVisitor.visit((FieldDeclaration) body, anony);
-                    //throw new RuntimeException("anonymous field");
-                }
-                else if (body instanceof MethodDeclaration) {
-                    CMethod method = (CMethod) declarationVisitor.visit((MethodDeclaration) body, anony);
-                    anony.addMethod(method);
-                }
-                else {
-                    throw new RuntimeException("ClassInstanceCreation anony");
-                }
-            }
-            CClassInstanceCreation classInstanceCreation = new CClassInstanceCreation();
-            classInstanceCreation.setType(new CType(anony.name, source.header));
-            source.anony.add(new CClassImpl(anony));
-            return classInstanceCreation;
+            return AnonyHandler.handle(node.getAnonymousClassDeclaration(), typeVisitor.visitType(node.getType()), clazz, this);
         }
     }
 
@@ -501,9 +468,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(NumberLiteral node, CNode arg) {
-        CNumberLiteral numberLiteral = new CNumberLiteral();
-        numberLiteral.value = node.getToken();
-        return numberLiteral;
+        return new CNumberLiteral(node.getToken());
     }
 
     @Override
@@ -612,7 +577,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 CFieldAccess fieldAccess = new CFieldAccess();
                 fieldAccess.name = new CName(node.getIdentifier());
                 fieldAccess.isArrow = false;
-                CType scope = new CType(qu.replace(".", "::"), getHeader());
+                CType scope = new CType(qu.replace(".", "::"));
                 fieldAccess.scope = source.normalizeType(scope);
                 return fieldAccess;
             }
@@ -637,35 +602,55 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         //return new CName(node.getIdentifier());
     }
 
+    //qualified class,array.length,
     @Override
     public CNode visit(QualifiedName node, CNode arg) {
         IBinding binding = node.resolveBinding();
-        if (binding == null) {
-            System.out.println("QualifiedName = " + node);
-        }
-        boolean isStatic = Modifier.isStatic(binding.getModifiers());
-        if (isStatic || binding instanceof IVariableBinding) {
+
+        if (binding != null) {
+            ITypeBinding typeBinding = node.getQualifier().resolveTypeBinding();
+            if (typeBinding == null) {
+                //qualifier is not a type so it is a package
+                return new CName(node.getFullyQualifiedName());
+            }
+            boolean isStatic = Modifier.isStatic(binding.getModifiers());
+            CType type = typeVisitor.fromBinding(typeBinding);
+            type.isPointer = false;
             CExpression scope = (CExpression) visitExpr(node.getQualifier(), arg);
 
-            if (node.getName().getIdentifier().equals("length")) {
-                IVariableBinding variableBinding = (IVariableBinding) binding;
-                if (variableBinding.getDeclaringClass() == null) {//array.length
-                    if (Config.use_vector) {
-                        CMethodInvocation methodInvocation = new CMethodInvocation();
-                        methodInvocation.isArrow = true;
-                        methodInvocation.scope = scope;
-                        methodInvocation.name = new CName("size");
-                        return methodInvocation;
+            if (isStatic) {
+
+                if (node.getName().getIdentifier().equals("length")) {
+                    IVariableBinding variableBinding = (IVariableBinding) binding;
+                    if (variableBinding.getDeclaringClass() == null) {//array.length
+                        if (Config.use_vector) {
+                            CMethodInvocation methodInvocation = new CMethodInvocation();
+                            methodInvocation.isArrow = true;
+                            methodInvocation.scope = scope;
+                            methodInvocation.name = new CName("size");
+                            return methodInvocation;
+                        }
                     }
                 }
-            }
-            CFieldAccess fieldAccess = new CFieldAccess();
-            fieldAccess.name = new CName(node.getName().getIdentifier());
-            fieldAccess.isArrow = !isStatic;
-            fieldAccess.scope = scope;
+                else {
+                    CFieldAccess fieldAccess = new CFieldAccess();
+                    fieldAccess.name = new CName(node.getName().getIdentifier());
+                    fieldAccess.isArrow = !isStatic;
+                    fieldAccess.scope = type;
 
-            return fieldAccess;
+                    return fieldAccess;
+                }
+            }
+            else {
+                CFieldAccess fieldAccess = new CFieldAccess();
+                fieldAccess.name = new CName(node.getName().getIdentifier());
+                fieldAccess.isArrow = true;
+                fieldAccess.scope = scope;
+
+                return fieldAccess;
+            }
         }
+        //normal qualified name access
         return new CName(node.getFullyQualifiedName());
     }
 }

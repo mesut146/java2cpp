@@ -23,7 +23,7 @@ public class CForStatement extends CStatement {
         }
         append(";");
         if (condition != null) {
-            append(condition.toString());
+            append(condition);
         }
         append(";");
         if (!updaters.isEmpty()) {

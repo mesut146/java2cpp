@@ -10,7 +10,7 @@ public class CBooleanLiteral extends CExpression {
     }
 
     @Override
-    public void print() {
-        append(String.valueOf(value));
+    public String toString() {
+        return String.valueOf(value);
     }
 }

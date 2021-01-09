@@ -43,7 +43,7 @@ public class SwitchHelper {
             CStatementList statementList = new CStatementList();
             CVariableDeclarationStatement ord = new CVariableDeclarationStatement();
             CVariableDeclarationFragment frag = new CVariableDeclarationFragment();
-            ord.type = new CType("int").setHeader(visitor.source);
+            ord.type = new CType("int");
             ordinalName = new CName("ordinal");
             left = ordinalName;
             frag.name = ordinalName;

@@ -7,10 +7,9 @@ public class CPostfixExpression extends CExpression {
     public CExpression expression;
     public String operator;
 
-
     @Override
-    public void print() {
-        append(expression.toString());
-        append(operator);
+    public String toString() {
+        getScope(expression);
+        return expression + operator;
     }
 }

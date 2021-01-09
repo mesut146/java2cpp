@@ -4,9 +4,8 @@ import com.mesut.j2cpp.Converter;
 import org.junit.Test;
 
 public class Conv {
-
-
     public static String rtJar = "/home/mesut/Desktop/j2cpp-dev/rt7.jar";
+
 
     @Test
     public void testRt() {
@@ -16,6 +15,19 @@ public class Conv {
         //converter.addClasspath(dir);
         //converter.getFilter().addIncludeDir("java.lang");
         //converter.getFilter().addIncludeClass("java.lang.CharacterData01.java");
+        //converter.setDebugMembers(true);
+        converter.convert();
+    }
+
+    @Test
+    public void testDx() {
+        String dir = "/home/mesut/Desktop/j2cpp-dev/dx-org";
+        String out = "/home/mesut/Desktop/j2cpp-dev/dx-cpp";
+        Converter converter = new Converter(dir, out);
+        //converter.addClasspath(dir);
+        //converter.getFilter().addIncludeDir("java.lang");
+        //converter.getFilter().addIncludeClass("com/android/dx/io/instructions/InstructionCodec");
+        converter.getFilter().addIncludeClass("com/android/dx/command/findusages/FindUsages.java");
         //converter.setDebugMembers(true);
         converter.convert();
     }
@@ -46,7 +58,7 @@ public class Conv {
         Converter converter = new Converter(dir, out);
         converter.addClasspath(rtJar);
         //converter.getFilter().addIncludeClass("base.InnerTest");
-        converter.getFilter().addIncludeClass("base.a");
+        converter.getFilter().addIncludeClass("base.Prims");
         converter.setDebugMembers(true);
         converter.convert();
     }

@@ -11,9 +11,8 @@ public class CParenthesizedExpression extends CExpression {
     }
 
     @Override
-    public void print() {
-        append("(");
-        append(expression.toString());
-        append(")");
+    public String toString() {
+        getScope(expression);
+        return "(" + expression + ")";
     }
 }

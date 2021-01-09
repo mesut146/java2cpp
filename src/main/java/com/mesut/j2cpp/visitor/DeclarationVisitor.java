@@ -10,7 +10,7 @@ import com.mesut.j2cpp.cppast.expr.CFieldAccess;
 import com.mesut.j2cpp.cppast.expr.CThisExpression;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
-import com.mesut.j2cpp.util.Helper;
+import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
@@ -28,9 +28,9 @@ public class DeclarationVisitor {
         this.header = sourceVisitor.getHeader();
     }
 
-
     public void convert(CompilationUnit cu) {
         visit(cu.getPackage());
+
         for (AbstractTypeDeclaration decl : (List<AbstractTypeDeclaration>) cu.types()) {
             if (decl instanceof EnumDeclaration) {
                 visit((EnumDeclaration) decl, null);
@@ -44,10 +44,11 @@ public class DeclarationVisitor {
         }
     }
 
-
     public void visit(PackageDeclaration n) {
         Namespace ns = new Namespace();
-        ns.fromPkg(n.getName().getFullyQualifiedName());
+        if (n != null) {
+            ns.fromPkg(n.getName().getFullyQualifiedName());
+        }
         header.ns = ns;
         header.using.add(header.ns);
         header.source.usings.add(header.ns);
@@ -62,8 +63,7 @@ public class DeclarationVisitor {
             header.addClass(cc);
         }
         cc.isInterface = true;
-        cc.base.add(new CType("java::lang::Annotation", header));
-
+        cc.base.add(new CType("java::lang::Annotation"));
         cc.name = node.getName().getIdentifier();
 
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
@@ -71,7 +71,6 @@ public class DeclarationVisitor {
     }
 
     public CClass visit(TypeDeclaration node, CClass clazz) {
-        //System.out.println("type.decl=" + node.getName());
         CClass cc = new CClass();
 
         if (!Config.move_inners && clazz != null) {
@@ -82,10 +81,10 @@ public class DeclarationVisitor {
         }
 
         cc.name = node.getName().getFullyQualifiedName();
-        cc.getType().forward();
         cc.isInterface = node.isInterface();
+        cc.getType().forward(header);
 
-        node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true).setHeader(header)));
+        node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true)));
 
         if (node.getSuperclassType() != null) {
             CType baseType = typeVisitor.visitType(node.getSuperclassType());
@@ -159,8 +158,8 @@ public class DeclarationVisitor {
         }
 
         cc.name = n.getName().getFullyQualifiedName();
-        cc.base.add(Helper.getEnumType().setHeader(header));
-        cc.getType().forward();
+        cc.base.add(TypeHelper.getEnumType());
+        cc.getType().forward(header);
         header.addInclude("java/lang/Enum");
 
         n.superInterfaceTypes().forEach(iface -> cc.base.add(typeVisitor.visit((Type) iface)));
@@ -170,26 +169,22 @@ public class DeclarationVisitor {
             cc.addField(field);
             field.setPublic(true);
             field.setStatic(true);
-            field.setType(new CType(cc.name, header));
+            field.setType(new CType(cc.name));
             field.setName(constant.getName().getIdentifier());
 
+            CClassInstanceCreation rhs = new CClassInstanceCreation();
+            field.expression = rhs;
+            rhs.setType(field.type);
+
             if (!constant.arguments().isEmpty()) {
-                CClassInstanceCreation args = new CClassInstanceCreation();
-                args.setType(field.type);
                 for (Expression val : (List<Expression>) constant.arguments()) {
-                    args.args.add((CExpression) sourceVisitor.visitExpr(val, null));
+                    rhs.args.add((CExpression) sourceVisitor.visitExpr(val, null));
                 }
-                field.expression = args;
-            }
-            else {
-                //todo make ordinals
-                CClassInstanceCreation args = new CClassInstanceCreation();
-                args.setType(field.type);
-                field.expression = args;
             }
 
             if (constant.getAnonymousClassDeclaration() != null) {
-                throw new RuntimeException("anonymous enum constant is not supported");
+                CClassInstanceCreation creation = AnonyHandler.handle(constant.getAnonymousClassDeclaration(), cc.getType(), cc, sourceVisitor);
+                rhs.setType(creation.type);
             }
         }
         if (!n.bodyDeclarations().isEmpty()) {
@@ -201,7 +196,6 @@ public class DeclarationVisitor {
 
     public void visit(FieldDeclaration n, CClass clazz) {
         CType type = typeVisitor.visitType(n.getType());
-
 
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
             CField field = new CField();
@@ -246,10 +240,10 @@ public class DeclarationVisitor {
         }
 
         method.name = new CName(node.getName().getIdentifier());
-
         method.setStatic(Modifier.isStatic(node.getModifiers()));
         method.setPublic(Modifier.isPublic(node.getModifiers()));
         method.setNative(Modifier.isNative(node.getModifiers()));
+
         if (clazz.isInterface || Modifier.isAbstract(node.getModifiers())) {
             method.setPublic(true);
             method.setVirtual(true);

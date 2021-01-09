@@ -22,6 +22,7 @@ public class CClass extends CStatement {
     public CHeader header;
     public Writer staticBlock = null;
     public boolean isAnonymous = false;
+    CType type;
 
     public CClass() {
         if (Config.baseClassObject) {
@@ -154,7 +155,7 @@ public class CClass extends CStatement {
             line(modifier);
             up();
             for (CField cf : list) {
-                appendIndent(cf);
+                line(cf.forHeader());
             }
             down();
         }
@@ -170,13 +171,6 @@ public class CClass extends CStatement {
     }
 
 
-    int anonyCount = 0;
-    CType type;
-
-    public String getAnonyName() {
-        return "anony" + anonyCount++;
-    }
-
     Namespace getNs() {
         if (ns != null) {
             return ns;
@@ -189,7 +183,7 @@ public class CClass extends CStatement {
 
     public CType getType() {
         if (type == null) {
-            return new CType(getNs().all + "::" + name, header);
+            type = new CType(getNs().all + "::" + name);
         }
         return type;
     }

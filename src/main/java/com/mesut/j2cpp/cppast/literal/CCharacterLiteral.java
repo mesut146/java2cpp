@@ -8,7 +8,7 @@ public class CCharacterLiteral extends CExpression {
 
 
     @Override
-    public void print() {
-        append(value);
+    public String toString() {
+        return value;
     }
 }

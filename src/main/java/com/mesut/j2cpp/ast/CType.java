@@ -1,7 +1,8 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CExpression;
-import com.mesut.j2cpp.util.Helper;
+import com.mesut.j2cpp.util.PrintHelper;
+import com.mesut.j2cpp.util.TypeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,8 +11,6 @@ import java.util.stream.Collectors;
 
 public class CType extends CExpression {
     public Namespace ns;
-    public CHeader header;
-    public CSource source;
     public String type;
     public List<CType> typeNames = new ArrayList<>();//generics
     public boolean isTemplate = false;//<T>,dynamic type
@@ -27,11 +26,6 @@ public class CType extends CExpression {
         if (arr.length > 1) {
             ns = new Namespace(type.substring(0, type.lastIndexOf("::")));
         }
-    }
-
-    public CType(String type, CHeader header) {
-        this(type);
-        setHeader(header);
     }
 
     public CType(String type, boolean isTemplate) {
@@ -54,13 +48,11 @@ public class CType extends CExpression {
         copied.isPointer = isPointer;
         copied.ns = ns;
         copied.typeNames = typeNames;
-        copied.setHeader(header);
         return copied;
     }
 
-
     public boolean isPrim() {
-        return Helper.isPrim(type);
+        return TypeHelper.isPrim(type);
     }
 
     public boolean isPointer() {
@@ -71,20 +63,17 @@ public class CType extends CExpression {
         return type.equals("void");
     }
 
-    @Override
-    public String toString() {
-        return normalized();
-        //return normal();
-    }
-
-    public String normalized() {
+    public String normalized(Object scope) {
         if (isPrim() || type.equals("auto")) {
             return type;
         }
         if (isTemplate) {
             return type;
         }
-        return header.normalizeType(this).normal();
+        if (scope instanceof CHeader) {
+            return ((CHeader) scope).normalizeType(this).normal();
+        }
+        return ((CSource) scope).normalizeType(this).normal();
     }
 
     public String normal() {
@@ -96,28 +85,14 @@ public class CType extends CExpression {
         sb.append(type);
         if (typeNames.size() > 0) {
             sb.append("<");
-            sb.append(typeNames.stream().map(CType::toString).collect(Collectors.joining(",")));
+            PrintHelper.join(sb, typeNames, ",");
             sb.append(">");
         }
         if (isPointer()) sb.append("*");
         return sb.toString();
     }
 
-
-    public CType setHeader(CHeader header) {
-        if (header != null) {
-            this.header = header;
-            this.source = header.source;
-        }
-        return this;
-    }
-
-    public CType setHeader(CSource source) {
-        return setHeader(source.header);
-    }
-
-
-    public void forward() {
+    public void forward(CHeader header) {
         if (!(this instanceof CUnionType) && !isPrim() && !isVoid() && !isTemplate && !(this instanceof CArrayType)) {//has to be class type
             header.forward(this);
         }

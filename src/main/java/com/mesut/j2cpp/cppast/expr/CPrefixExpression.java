@@ -8,8 +8,8 @@ public class CPrefixExpression extends CExpression {
     public CExpression expression;
 
     @Override
-    public void print() {
-        append(operator);
-        append(expression.toString());
+    public String toString() {
+        getScope(expression);
+        return operator + expression;
     }
 }
