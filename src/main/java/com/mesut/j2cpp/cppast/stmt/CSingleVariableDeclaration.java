@@ -12,12 +12,17 @@ public class CSingleVariableDeclaration extends CExpression {
 
 
     @Override
-    public void print() {
-        append(type.toString());
-        append(" ");
-        append(name.toString());
+    public String toString() {
+        getScope(type, name, expression);
+        StringBuilder sb = new StringBuilder();
+        sb.append(type);
+        sb.append(" ");
+        sb.append(name);
         if (expression != null) {
-            append(expression.toString());
+            sb.append(expression);
         }
+        return sb.toString();
     }
+
+
 }

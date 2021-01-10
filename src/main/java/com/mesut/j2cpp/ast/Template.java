@@ -1,11 +1,13 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.cppast.CNode;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 //template <class A,class B,...>
-public class Template {
+public class Template extends CNode {
     public static boolean useTypeName = true;//or class
     public List<CType> list = new ArrayList<>();
 
@@ -23,6 +25,7 @@ public class Template {
 
     @Override
     public String toString() {
+        getScope(list);
         StringBuilder sb = new StringBuilder();
         sb.append("template <");
         for (Iterator<CType> iterator = list.iterator(); iterator.hasNext(); ) {

@@ -2,6 +2,7 @@ package com.mesut.j2cpp.cppast.stmt;
 
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CStatement;
+import com.mesut.j2cpp.util.PrintHelper;
 
 public class CIfStatement extends CStatement {
     public CExpression condition;
@@ -9,22 +10,15 @@ public class CIfStatement extends CStatement {
     public CStatement elseStatement;
 
     @Override
-    public void print() {
-        clear();
-        append("if(");
-        append(condition);
-        append(")");
-        printBody(thenStatement);
+    public String toString() {
+        getScope(condition, thenStatement, elseStatement);
+        StringBuilder sb = new StringBuilder();
+        sb.append("if(").append(condition).append(")\n");
+        sb.append(PrintHelper.body(thenStatement.toString(), "    "));
         if (elseStatement != null) {
-            line("else ");
-            if (elseStatement instanceof CIfStatement) {
-                elseStatement.firstBlock = true;
-                append(elseStatement);
-            }
-            else {
-                printBody(elseStatement);
-            }
-
+            sb.append("\nelse ");
+            sb.append(PrintHelper.body(elseStatement.toString(), "    "));
         }
+        return sb.toString();
     }
 }

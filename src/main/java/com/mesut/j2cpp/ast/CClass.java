@@ -1,11 +1,13 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
-import com.mesut.j2cpp.Writer;
 import com.mesut.j2cpp.cppast.CStatement;
+import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CClass extends CStatement {
@@ -20,9 +22,10 @@ public class CClass extends CStatement {
     public List<CClass> classes = new ArrayList<>();
     public CClass parent;//outer
     public CHeader header;
-    public Writer staticBlock = null;
+    public Node staticBlock = null;
     public boolean isAnonymous = false;
     CType type;
+    Set<CType> types = new HashSet<>();
 
     public CClass() {
         if (Config.baseClassObject) {
@@ -45,6 +48,11 @@ public class CClass extends CStatement {
     public void addField(CField cf) {
         cf.parent = this;
         fields.add(cf);
+    }
+
+    //add reference type that this class use
+    public void addType(CType type) {
+        types.add(type);
     }
 
     public Template getTemplate() {
@@ -76,88 +84,88 @@ public class CClass extends CStatement {
         return null;
     }
 
-    public void print() {
-        clear();
-        printDecl();
-        append("{");
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        printDecl(sb);
+        sb.append("{\n");
         up();
         //impl
         if (staticBlock != null) {
-            println();
-            println();
-            appendIndent(staticBlock);
-            println();
+            sb.append("\n\n");
+            sb.append(getIndent()).append(staticBlock);
+            sb.append("\n");
         }
-        printFields();
-        printMethods();
+        printFields(sb);
+        printMethods(sb);
         //inner classes
         for (CClass cc : classes) {
-            setTo(cc);
-            append(cc);
+            sb.append(cc);
         }
-        down();
-        lineln("};//class " + name);
+        sb.append("};//class ").append(name);
+        return sb.toString();
     }
 
-    private void printDecl() {
+    private void printDecl(StringBuilder sb) {
+        getScope(template);
+        getScope(base);
         if (isInterface) {
-            line("/*interface*/");
+            sb.append("/*interface*/\n");
         }
         if (!template.isEmpty()) {
-            println();
-            append(template.toString());
+            sb.append("\n").append(template);
         }
         //class decl
-        line("class ");
-        append(name);
+        sb.append("class ").append(name);
         if (base.size() > 0) {
-            append(": public ");
-            append(base.stream().map(CType::toString).collect(Collectors.joining(" ,")));
+            sb.append(": public ");
+            sb.append(base.stream().map(CType::toString).collect(Collectors.joining(" ,")));
+        }
+        else {
+            sb.append("\n");
         }
     }
 
-    private void printMethods() {
+    private void printMethods(StringBuilder sb) {
         if (!methods.isEmpty()) {
-            line("//methods");
+            getScope(methods);
+            sb.append("//methods\n");
+            List<CMethod> public_methods = methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
+            List<CMethod> priv_methods = methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
+            printMethods(public_methods, "public:", sb);
+            printMethods(priv_methods, "private:", sb);
+            sb.append("\n");
         }
-        List<CMethod> public_methods = methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
-        List<CMethod> priv_methods = methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
-        printMethods(public_methods, "public:");
-        printMethods(priv_methods, "private:");
-        println();
     }
 
-    private void printMethods(List<CMethod> list, String modifier) {
+    private void printMethods(List<CMethod> list, String modifier, StringBuilder sb) {
         if (list.size() > 0) {
-            line(modifier);
-            up();
+            getScope(list);
+            sb.append(getIndent()).append(modifier).append("\n");
             for (CMethod cm : list) {
-                cm.printAll(false);
-                appendIndent(cm);
+                sb.append(PrintHelper.body(cm.toString(), getIndent())).append("\n");
             }
-            down();
         }
     }
 
-    private void printFields() {
+    private void printFields(StringBuilder sb) {
         if (!fields.isEmpty()) {
-            line("//fields");
+            getScope(fields);
+            sb.append(getIndent()).append("//fields\n");
+            List<CField> public_fields = fields.stream().filter(CField::isPublic).collect(Collectors.toList());
+            List<CField> priv_fields = fields.stream().filter(CField::isPrivate).collect(Collectors.toList());
+            printFields(public_fields, "public:", sb);
+            printFields(priv_fields, "private:", sb);
+            sb.append("\n");
         }
-        List<CField> public_fields = fields.stream().filter(CField::isPublic).collect(Collectors.toList());
-        List<CField> priv_fields = fields.stream().filter(CField::isPrivate).collect(Collectors.toList());
-        printFields(public_fields, "public:");
-        printFields(priv_fields, "private:");
-        println();
     }
 
-    private void printFields(List<CField> list, String modifier) {
+    private void printFields(List<CField> list, String modifier, StringBuilder sb) {
         if (list.size() > 0) {
-            line(modifier);
-            up();
+            sb.append(modifier).append("\n");
             for (CField cf : list) {
-                line(cf.forHeader());
+                sb.append(getIndent()).append(cf).append("\n");
             }
-            down();
         }
     }
 

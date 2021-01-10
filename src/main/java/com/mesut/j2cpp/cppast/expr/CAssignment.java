@@ -21,6 +21,7 @@ public class CAssignment extends CExpression {
 
     @Override
     public String toString() {
+        getScope(left, right);
         return left + " " + operator + " " + right;
     }
 

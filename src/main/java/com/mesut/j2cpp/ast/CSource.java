@@ -1,12 +1,14 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CClassImpl;
+import com.mesut.j2cpp.cppast.CNode;
+import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CSource extends Node {
+public class CSource extends CNode {
 
     public CHeader header;
     public List<String> includes = new ArrayList<>();
@@ -29,54 +31,55 @@ public class CSource extends Node {
     }
 
     @Override
-    public void print() {
-        includePath(header.getInclude());
-        println();
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(PrintHelper.include(header.getInclude()));
+        sb.append("\n\n");
         if (!usings.isEmpty()) {
             for (Namespace use : usings) {
-                print_using(use);
+                sb.append(PrintHelper.using(use)).append("\n");
             }
-            println();
         }
-        printAnony();
-        printFields();
-        printMethods();
+        sb.append("\n");
+        printAnony(sb);
+        printFields(sb);
+        printMethods(sb);
+        return sb.toString();
     }
 
-    void printAnony() {
+    void printAnony(StringBuilder sb) {
         if (!anony.isEmpty()) {
-            line("//anonymous classes");
+            getScope(anony);
+            sb.append("//anonymous classes\n");
             for (CClassImpl impl : anony) {
-                scope = this;
-                append(impl);
+                sb.append(PrintHelper.body(impl.toString(), "")).append("\n");
             }
-            println();
+            sb.append("\n");
         }
     }
 
-    private void printFields() {
+    private void printFields(StringBuilder sb) {
         //todo separate by class
         if (!fieldDefs.isEmpty()) {
-            line("//static fields");
+            getScope(fieldDefs);
+            sb.append("//static fields\n");
             for (CField field : fieldDefs) {
                 if (field.isStatic() && field.expression != null) {
-                    line(field.forSource());
+                    sb.append(field).append("\n");
                 }
             }
-            println();
+            sb.append("\n");
         }
     }
 
-    private void printMethods() {
+    private void printMethods(StringBuilder sb) {
         if (!methods.isEmpty()) {
-            line("//methods");
+            sb.append("//methods\n");
+            getScope(methods);
             for (CMethod method : methods) {
-                method.scope = this;
-                method.printAll(true);
-                append(method);
-                println();
+                sb.append(PrintHelper.body(method.toString(), "")).append("\n");
             }
-            println();
+            sb.append("\n");
         }
 
     }

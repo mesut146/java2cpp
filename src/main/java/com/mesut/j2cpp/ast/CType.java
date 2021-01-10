@@ -7,7 +7,6 @@ import com.mesut.j2cpp.util.TypeHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class CType extends CExpression {
     public Namespace ns;
@@ -63,7 +62,9 @@ public class CType extends CExpression {
         return type.equals("void");
     }
 
-    public String normalized(Object scope) {
+
+    @Override
+    public String toString() {
         if (isPrim() || type.equals("auto")) {
             return type;
         }
@@ -71,12 +72,12 @@ public class CType extends CExpression {
             return type;
         }
         if (scope instanceof CHeader) {
-            return ((CHeader) scope).normalizeType(this).normal();
+            return ((CHeader) scope).normalizeType(this).normal(scope);
         }
-        return ((CSource) scope).normalizeType(this).normal();
+        return ((CSource) scope).normalizeType(this).normal(scope);
     }
 
-    public String normal() {
+    public String normal(Object scope) {
         StringBuilder sb = new StringBuilder();
         if (ns != null) {
             sb.append(ns.getAll());
@@ -85,10 +86,21 @@ public class CType extends CExpression {
         sb.append(type);
         if (typeNames.size() > 0) {
             sb.append("<");
-            PrintHelper.join(sb, typeNames, ",");
+            PrintHelper.join(sb, typeNames, ",", scope);
             sb.append(">");
         }
         if (isPointer()) sb.append("*");
+        return sb.toString();
+    }
+
+    //binary name
+    public String basicForm() {
+        StringBuilder sb = new StringBuilder();
+        if (ns != null) {
+            sb.append(ns.getAll());
+            sb.append("::");
+        }
+        sb.append(type);
         return sb.toString();
     }
 

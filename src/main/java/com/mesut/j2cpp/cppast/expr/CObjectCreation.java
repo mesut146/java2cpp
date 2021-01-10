@@ -7,13 +7,15 @@ import com.mesut.j2cpp.util.PrintHelper;
 import java.util.ArrayList;
 import java.util.List;
 
-//new ns::Type(args)
+//new type(args)
 public class CObjectCreation extends CExpression {
     public CType type;
     public List<CExpression> args = new ArrayList<>();
 
     @Override
     public String toString() {
-        return String.join("new %s()", type.normalized(scope), PrintHelper.join(args, ", ", scope));
+        getScope(type);
+        getScope(args);
+        return String.format("new %s(%s)", type, PrintHelper.join(args, ", ", scope));
     }
 }

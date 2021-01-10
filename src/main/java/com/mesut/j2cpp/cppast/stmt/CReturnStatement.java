@@ -12,12 +12,11 @@ public class CReturnStatement extends CStatement {
     }
 
     @Override
-    public void print() {
-        append("return");
-        if (expression != null) {
-            append(" ");
-            append(expression);
+    public String toString() {
+        getScope(expression);
+        if (expression == null) {
+            return "return;";
         }
-        append(";");
+        return "return " + expression + ";";
     }
 }

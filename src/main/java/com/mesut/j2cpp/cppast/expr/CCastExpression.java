@@ -16,6 +16,7 @@ public class CCastExpression extends CExpression {
 
     @Override
     public String toString() {
-        return "(" + targetType.normalized(scope) + ")" + expression;
+        getScope(targetType, expression);
+        return "(" + targetType + ")" + expression;
     }
 }

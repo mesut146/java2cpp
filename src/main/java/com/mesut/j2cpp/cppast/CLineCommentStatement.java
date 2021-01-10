@@ -7,10 +7,8 @@ public class CLineCommentStatement extends CStatement {
         this.value = value;
     }
 
-
     @Override
-    public void print() {
-        append("//");
-        append(value);
+    public String toString() {
+        return "//" + value;
     }
 }

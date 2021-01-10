@@ -3,10 +3,10 @@ package com.mesut.j2cpp.cppast.stmt;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CStatement;
+import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 //type frag1,frag2;
 public class CVariableDeclarationStatement extends CStatement {
@@ -18,16 +18,15 @@ public class CVariableDeclarationStatement extends CStatement {
         this.type.setPointer(Config.ptr_varDecl);
     }
 
+
     @Override
-    public void print() {
-        append(type);
-        append(" ");
-        int i = 0;
-        for (CVariableDeclarationFragment fragment : fragments) {
-            append(fragment);
-            if (i < fragments.size() - 1) append(", ");
-            i++;
-        }
-        append(";");
+    public String toString() {
+        getScope(type);
+        getScope(fragments);
+        StringBuilder sb = new StringBuilder();
+        sb.append(type).append(" ");
+        PrintHelper.join(sb, fragments, ", ", scope);
+        sb.append(";");
+        return sb.toString();
     }
 }

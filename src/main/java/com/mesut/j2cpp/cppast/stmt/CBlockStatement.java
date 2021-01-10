@@ -20,13 +20,11 @@ public class CBlockStatement extends CStatement {
     public String toString() {
         getScope(statements);
         StringBuilder sb = new StringBuilder();
-        sb.append("{");
+        sb.append("{\n");
+        up();
         for (CStatement statement : statements) {
             if (!(statement instanceof CEmptyStatement)) {
-                appendIndent(statement);
-                sb.append("    ");
-                sb.append(statement);
-                sb.append("\n");
+                sb.append(getIndent()).append(statement).append("\n");
             }
         }
         sb.append("}");

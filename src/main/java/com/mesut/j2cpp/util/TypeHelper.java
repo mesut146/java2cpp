@@ -37,6 +37,10 @@ public class TypeHelper {
         return new CType("java::lang::String");
     }
 
+    public static CType getClassType() {
+        return new CType("java::lang::Class");
+    }
+
     public static CType getVectorType() {
         return new CType("std::vector");
     }

@@ -1,8 +1,9 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.cppast.CNode;
 
-public class CParameter extends Node {
+public class CParameter extends CNode {
 
     public CType type;
     public CName name;
@@ -22,14 +23,10 @@ public class CParameter extends Node {
         this.type.setPointer(Config.ptr_parameter);
     }
 
-    public String printFor(Object scope) {
+    public String toString() {
+        getScope(type);
         StringBuilder sb = new StringBuilder();
-        if (scope instanceof CHeader) {
-            sb.append(type.normalized(method.getHeader()));
-        }
-        else {
-            sb.append(type.normalized(method.getHeader().source));
-        }
+        sb.append(type);
         sb.append(" ");
         if (isVarArg) {
             sb.append("...");
@@ -38,9 +35,6 @@ public class CParameter extends Node {
         return sb.toString();
     }
 
-    public void print() {
-
-    }
 
 
 }

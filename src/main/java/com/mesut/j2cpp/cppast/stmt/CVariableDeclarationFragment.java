@@ -10,11 +10,11 @@ public class CVariableDeclarationFragment extends CNode {
 
 
     @Override
-    public void print() {
-        append(name.toString());
-        if (initializer != null) {
-            append(" = ");
-            append(initializer);
+    public String toString() {
+        if (initializer == null) {
+            return name.toString();
         }
+        getScope(initializer);
+        return name + " = " + initializer;
     }
 }

@@ -10,11 +10,11 @@ public class VectorHelper {
     //std::vector<std::vector<std::vector<type*>*>*>*
     public static String printLeft(int dim, CType type) {
         if (dim == 0) {
-            return type.normal();
+            return type.normal(type.scope);
         }
         StringBuilder sb = new StringBuilder();
         CType vect = TypeHelper.getVectorType();
-        sb.append(vect.normal());
+        sb.append(vect.normal(type.scope));
         sb.append("<");
         sb.append(printLeft(dim - 1, type));
         sb.append(">*");//pointer
@@ -25,7 +25,7 @@ public class VectorHelper {
         StringBuilder sb = new StringBuilder();
         CType vect = TypeHelper.getVectorType();
 
-        sb.append(vect.normal());
+        sb.append(vect.normal(type.scope));
         sb.append("<");
         sb.append(printLeft(dims.size() - i - 1, type));
         sb.append(">");

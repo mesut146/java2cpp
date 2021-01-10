@@ -20,6 +20,6 @@ public class CInfixExpression extends CExpression {
     @Override
     public String toString() {
         getScope(left, right);
-        return left.toString() + " " + operator + " " + right;
+        return left + " " + operator + " " + right;
     }
 }

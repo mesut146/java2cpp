@@ -2,6 +2,7 @@ package com.mesut.j2cpp.cppast;
 
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.cppast.stmt.CSingleVariableDeclaration;
+import com.mesut.j2cpp.util.PrintHelper;
 
 public class CCatchClause extends CNode {
 
@@ -10,15 +11,20 @@ public class CCatchClause extends CNode {
     public boolean catchAll = false;
 
     @Override
-    public void print() {
-        append("catch(");
+    public String toString() {
+        getScope(expr, body);
+        StringBuilder sb = new StringBuilder();
+        sb.append("catch(");
         if (catchAll) {
-            append("...");
+            sb.append("...");
         }
         else {
-            append(expr.toString());
+            sb.append(expr);
         }
-        append(")");
-        printBody(body);
+        sb.append(")");
+        sb.append(PrintHelper.strBody(body));
+        return sb.toString();
     }
+
+
 }

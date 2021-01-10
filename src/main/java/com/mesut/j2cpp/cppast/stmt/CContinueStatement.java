@@ -7,6 +7,6 @@ public class CContinueStatement extends CStatement {
 
     @Override
     public String toString() {
-        return String.format("continue %s;", label == null ? ":" : label);
+        return String.format("continue %s;", label == null ? "" : label);
     }
 }

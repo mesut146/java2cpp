@@ -4,6 +4,7 @@ import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CField;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,70 +18,69 @@ public class CClassImpl extends CExpression {
     }
 
     @Override
-    public void print() {
-        clear();
-        append("class ");
-        append(clazz.name);
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("class ");
+        sb. append(clazz.name);
 
         if (!clazz.base.isEmpty()) {
-            append(" : public ");
-            append(clazz.base.stream().map(CType::toString).collect(Collectors.joining(", ")));
+            sb.append(" : public ");
+            getScope(clazz.base);
+            sb.append(clazz.base.stream().map(CType::toString).collect(Collectors.joining(", ")));
         }
-        appendln("{");
+        sb.append("{\n");
         up();
 
-        printFields();
-        printMethods();
+        printFields(sb);
+        printMethods(sb);
 
-        down();//public
-        line("};");
-        append("//" + clazz.name);
+        sb.append("};\n");
+        sb.append("//").append(clazz.name);
+        return sb.toString();
     }
 
-    private void printMethods() {
+    private void printMethods(StringBuilder sb) {
         if (!clazz.methods.isEmpty()) {
-            line("//methods");
+            sb.append(getIndent()).append("//methods\n");
+
+            List<CMethod> public_methods = clazz.methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
+            List<CMethod> priv_methods = clazz.methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
+            printMethods(public_methods, "public:", sb);
+            printMethods(priv_methods, "private:", sb);
+            sb.append("\n");
         }
-        List<CMethod> public_methods = clazz.methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
-        List<CMethod> priv_methods = clazz.methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
-        printMethods(public_methods, "public:");
-        printMethods(priv_methods, "private:");
-        println();
     }
 
-    private void printMethods(List<CMethod> list, String modifier) {
+    private void printMethods(List<CMethod> list, String modifier, StringBuilder sb) {
         if (list.size() > 0) {
-            line(modifier);
-            up();
+            getScope(list);
+            sb.append(modifier).append("\n");
             for (CMethod cm : list) {
-                cm.scope = scope;
-                cm.printAll(true);
-                appendIndent(cm);
-                println();
+                sb.append(PrintHelper.body(cm.toString(), getIndent()));
+                sb.append("\n");
             }
-            down();
         }
     }
 
-    private void printFields() {
+    private void printFields(StringBuilder sb) {
         if (!clazz.methods.isEmpty()) {
-            line("//fields");
+            sb.append(getIndent()).append("//fields\n");
+            List<CField> public_fields = clazz.fields.stream().filter(CField::isPublic).collect(Collectors.toList());
+            List<CField> priv_fields = clazz.fields.stream().filter(CField::isPrivate).collect(Collectors.toList());
+            printFields(public_fields, "public:", sb);
+            printFields(priv_fields, "private:", sb);
+            sb.append("\n");
         }
-        List<CField> public_fields = clazz.fields.stream().filter(CField::isPublic).collect(Collectors.toList());
-        List<CField> priv_fields = clazz.fields.stream().filter(CField::isPrivate).collect(Collectors.toList());
-        printFields(public_fields, "public:");
-        printFields(priv_fields, "private:");
-        println();
     }
 
-    private void printFields(List<CField> list, String modifier) {
+    private void printFields(List<CField> list, String modifier, StringBuilder sb) {
         if (list.size() > 0) {
-            line(modifier);
-            up();
+            getScope(list);
+            sb.append(modifier).append("\n");
             for (CField cf : list) {
-                appendIndent(cf);
+                sb.append(PrintHelper.body(cf.toString(), getIndent()));
+                sb.append("\n");
             }
-            down();
         }
     }
 

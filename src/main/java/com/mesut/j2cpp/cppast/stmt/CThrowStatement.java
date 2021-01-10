@@ -11,11 +11,9 @@ public class CThrowStatement extends CStatement {
         this.expression = expression;
     }
 
-
     @Override
-    public void print() {
-        append("throw ");
-        append(expression);
-        append(";");
+    public String toString() {
+        getScope(expression);
+        return "throw " + expression + ";";
     }
 }

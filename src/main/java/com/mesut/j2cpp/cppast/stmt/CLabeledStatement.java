@@ -9,10 +9,8 @@ public class CLabeledStatement extends CStatement {
         this.label = label;
     }
 
-
     @Override
-    public void print() {
-        append(label);
-        append(":");
+    public String toString() {
+        return label + ":";
     }
 }

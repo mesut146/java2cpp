@@ -3,7 +3,6 @@ package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
-import com.mesut.j2cpp.ast.Namespace;
 import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
 import com.mesut.j2cpp.visitor.SourceVisitor;
@@ -136,7 +135,6 @@ public class Converter {
         if (filter.checkPath(file)) {
             CompilationUnit unit = parse(file);
             convertSingle(cls, unit);
-            units.add(unit);
             count++;
         }
     }
@@ -145,13 +143,9 @@ public class Converter {
         try {
             System.out.println("converting " + path);
 
-            CHeader header = new CHeader(path.substring(0, path.length() - 4) + "h");
+            CHeader header = new CHeader(Util.trimSuffix(path, "java") + "h");
             CSource cpp = new CSource(header);
 
-            /*HeaderWriter headerWriter = new HeaderWriter(cu);
-            headerWriter.write();*/
-
-            //make header
             SourceVisitor sourceVisitor = new SourceVisitor(cpp);
             DeclarationVisitor headerVisitor = new DeclarationVisitor(sourceVisitor);
 
@@ -169,13 +163,11 @@ public class Converter {
             target.addInclude(headerDir.getAbsolutePath());
             target.sourceFiles.add(source_file.getAbsolutePath());
         } catch (Exception e) {
-            System.err.println("cant convert "+path);
+            System.err.println("cant convert " + path);
             e.printStackTrace();
         }
 
     }
-
-    List<CompilationUnit> units = new ArrayList<>();
 
     CompilationUnit parse(File file) throws IOException {
         initParser();

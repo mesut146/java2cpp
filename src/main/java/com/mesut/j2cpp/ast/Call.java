@@ -3,6 +3,7 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CNode;
+import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,15 +15,14 @@ public class Call extends CNode {
     public List<CExpression> args = new ArrayList<>();
 
     @Override
-    public void print() {
-        append(type.normalized(scope));
-        append("(");
-        for (int i = 0; i < args.size(); i++) {
-            append(args.get(i));
-            if (i < args.size() - 1) {
-                append(", ");
-            }
-        }
-        append(")");
+    public String toString() {
+        getScope(type);
+        getScope(args);
+        StringBuilder sb = new StringBuilder();
+        sb.append(type);
+        sb.append("(");
+        PrintHelper.join(sb, args, ", ", scope);
+        sb.append(")");
+        return sb.toString();
     }
 }

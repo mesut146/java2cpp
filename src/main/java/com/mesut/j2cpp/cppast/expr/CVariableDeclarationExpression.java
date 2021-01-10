@@ -14,6 +14,8 @@ public class CVariableDeclarationExpression extends CExpression {
 
     @Override
     public String toString() {
-        return type.normalized(scope) + " " + PrintHelper.join(fragments, ", ", scope);
+        getScope(type);
+        getScope(fragments);
+        return type + " " + PrintHelper.join(fragments, ", ", scope);
     }
 }

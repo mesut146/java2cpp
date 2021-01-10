@@ -2,10 +2,10 @@ package com.mesut.j2cpp.cppast.stmt;
 
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CStatement;
+import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 //for(init;cond;update) stmt
 public class CForStatement extends CStatement {
@@ -14,27 +14,30 @@ public class CForStatement extends CStatement {
     public List<CExpression> updaters = new ArrayList<>();
     public CStatement body;
 
-
     @Override
-    public void print() {
-        append("for(");
+    public String toString() {
+        getScope(condition, body);
+        getScope(initializers, updaters);
+        StringBuilder sb = new StringBuilder();
+        sb.append("for(");
         if (!initializers.isEmpty()) {
-            append(initializers.stream().map(CExpression::toString).collect(Collectors.joining(", ")));
+            PrintHelper.join(sb, initializers, ", ", scope);
         }
-        append(";");
+        sb.append(";");
         if (condition != null) {
-            append(condition);
+            sb.append(condition);
         }
-        append(";");
+        sb.append(";");
         if (!updaters.isEmpty()) {
-            append(updaters.stream().map(CExpression::toString).collect(Collectors.joining(", ")));
+            PrintHelper.join(sb, updaters, ", ", scope);
         }
-        append(")");
+        sb.append(")");
         if (body == null) {
-            append(";");
+            sb.append(";");
         }
         else {
-            printBody(body);
+            sb.append("\n").append(PrintHelper.body(body.toString(), "    "));
         }
+        return sb.toString();
     }
 }

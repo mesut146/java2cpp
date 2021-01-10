@@ -7,6 +7,6 @@ public class CBreakStatement extends CStatement {
 
     @Override
     public String toString() {
-        return String.format("break %s;", label == null ? ":" : label);
+        return String.format("break %s;", label == null ? "" : label);
     }
 }

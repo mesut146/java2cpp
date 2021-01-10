@@ -2,6 +2,7 @@ package com.mesut.j2cpp.cppast;
 
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
+import com.mesut.j2cpp.util.PrintHelper;
 
 public class CLambdaExpression extends CExpression {
 
@@ -10,17 +11,20 @@ public class CLambdaExpression extends CExpression {
     public CBlockStatement body;
 
     @Override
-    public void print() {
-        append("[");
+    public String toString() {
+        getScope(rtype, body);
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
         if (byReference) {
-            append("&");
+            sb.append("&");
         }
-        append("]");
+        sb.append("]");
         if (rtype != null) {
-            append("()");//no arguments
-            append(" -> ");
-            append(rtype.toString());
+            sb.append("()");//no arguments
+            sb.append(" -> ");
+            sb.append(rtype);
         }
-        printBody(body);
+        sb.append(PrintHelper.body(body.toString(), "    "));
+        return sb.toString();
     }
 }

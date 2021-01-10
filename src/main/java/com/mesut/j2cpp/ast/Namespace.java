@@ -33,12 +33,7 @@ public class Namespace extends Node {
 
     @Override
     public String toString() {
-        return all;
-    }
-
-    @Override
-    public void print() {
-
+        return getAll();
     }
 
     @Override

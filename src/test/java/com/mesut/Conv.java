@@ -27,7 +27,7 @@ public class Conv {
         //converter.addClasspath(dir);
         //converter.getFilter().addIncludeDir("java.lang");
         //converter.getFilter().addIncludeClass("com/android/dx/io/instructions/InstructionCodec");
-        converter.getFilter().addIncludeClass("com/android/dx/command/findusages/FindUsages.java");
+        //converter.getFilter().addIncludeClass("com/android/dx/command/findusages/FindUsages.java");
         //converter.setDebugMembers(true);
         converter.convert();
     }
@@ -58,7 +58,8 @@ public class Conv {
         Converter converter = new Converter(dir, out);
         converter.addClasspath(rtJar);
         //converter.getFilter().addIncludeClass("base.InnerTest");
-        converter.getFilter().addIncludeClass("base.Prims");
+        //converter.getFilter().addIncludeClass("base.Prims");
+        converter.getFilter().addIncludeClass("base.iface");
         converter.setDebugMembers(true);
         converter.convert();
     }

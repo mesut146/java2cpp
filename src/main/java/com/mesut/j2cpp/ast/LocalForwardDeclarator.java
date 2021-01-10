@@ -44,8 +44,9 @@ public class LocalForwardDeclarator extends CNode {
     }
 
     @Override
-    public void print() {
-        line("//forward declarations");
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("//forward declarations\n");
         //group ny namespace
         for (CType type : list) {
             NamespaceDecl decl = getDecl(type.ns);
@@ -55,6 +56,7 @@ public class LocalForwardDeclarator extends CNode {
         for (NamespaceDecl dec : baseList) {
             append(dec);
         }
+        return sb.toString();
     }
 
     static class ClassDecl extends CNode {

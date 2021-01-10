@@ -1,10 +1,7 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
-import com.mesut.j2cpp.ast.CArrayType;
-import com.mesut.j2cpp.ast.CHeader;
-import com.mesut.j2cpp.ast.CType;
-import com.mesut.j2cpp.ast.CUnionType;
+import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -47,15 +44,14 @@ public class TypeVisitor {
                 }
             }
 
-
-            type = new CType(name.replace(".", "::"));
-
+            type = new CType(name);
             /*for (ITypeBinding tp : binding.getTypeArguments()) {
                 type.typeNames.add(fromBinding(tp));
             }*/
-
             if (!binding.isGenericType() && !binding.isNested()) {
-                header.addInclude(name.replace(".", "/"));//inner classes too?
+                if (!binding.isFromSource()) {
+                    header.addInclude(name.replace(".", "/"));//inner classes too?
+                }
             }
         }
         return type;
@@ -66,7 +62,7 @@ public class TypeVisitor {
         ITypeBinding binding = node.resolveBinding();
         if (binding == null) {
             String str = node.getName().getFullyQualifiedName();
-            return new CType(str.replace(".", "::"));
+            return new CType(str);
         }
         return fromBinding(binding);
     }
@@ -88,7 +84,7 @@ public class TypeVisitor {
     public CType visit(ParameterizedType n) {
         CType type = visit(n.getType());
         for (Type param : (List<Type>) n.typeArguments()) {
-            CType arg = visitType(param);
+            CType arg = visit(param);
             if (Config.ptr_typeArg) {
                 arg.setPointer(true);
             }
@@ -100,7 +96,7 @@ public class TypeVisitor {
     public CType visit(UnionType n) {
         CUnionType unionType = new CUnionType();
         for (Type type : (List<Type>) n.types()) {
-            unionType.types.add(visitType(type));
+            unionType.types.add(visit(type));
         }
         return unionType;
     }
@@ -125,13 +121,14 @@ public class TypeVisitor {
         else if (type.isUnionType()) {
             cType = visit((UnionType) type);
         }
-        //System.out.println("type=" + type + " res=" + cType + " cls=" + type.getClass());
         return cType;
     }
 
-    public CType visitType(Type type) {
+    public CType visitType(Type type, CClass clazz) {
         CType cType = visit(type);
         cType.forward(header);
+        //add to ref
+        clazz.addType(cType);
         return cType;
     }
 }

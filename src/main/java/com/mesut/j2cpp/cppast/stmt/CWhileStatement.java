@@ -2,6 +2,7 @@ package com.mesut.j2cpp.cppast.stmt;
 
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CStatement;
+import com.mesut.j2cpp.util.PrintHelper;
 
 public class CWhileStatement extends CStatement {
     public CExpression expression;
@@ -12,15 +13,11 @@ public class CWhileStatement extends CStatement {
     }
 
     @Override
-    public void print() {
-        append("while(");
-        append(expression.toString());
-        append(")");
+    public String toString() {
+        getScope(expression, statement);
         if (statement == null) {
-            append(";");
+            return String.format("while(%s);", expression);
         }
-        else {
-            printBody(statement);
-        }
+        return String.format("while(%s)\n%s", expression, PrintHelper.body(statement.toString(),"    "));
     }
 }

@@ -1,12 +1,14 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.cppast.CNode;
+import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 
-//represents simple c++ header (.hpp)
-public class CHeader extends Node {
+//represents c++ header (.hpp)
+public class CHeader extends CNode {
     public String name;
     public List<String> includes = new ArrayList<>();
     public List<CClass> classes = new ArrayList<>();
@@ -32,9 +34,6 @@ public class CHeader extends Node {
         classes.add(cc);
     }
 
-    public void addRuntime() {
-        hasRuntime = true;
-    }
 
     public void addInclude(String include) {
         //prevent same header includes itself and other duplications
@@ -43,17 +42,11 @@ public class CHeader extends Node {
         }
     }
 
-
     public void useNamespace(Namespace ns) {
         if (!using.contains(ns)) {
             using.add(ns);
         }
     }
-
-    public void useNamespace(String ns) {
-        useNamespace(new Namespace(ns));
-    }
-
 
     //trim type's namespace by usings
     //java::lang::String   using java::lang -> String
@@ -67,55 +60,46 @@ public class CHeader extends Node {
         return "anony" + anonyCount++;
     }
 
-    public void print() {
-        append("#pragma once");
-        println();
-        println();
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("#pragma once\n\n");
         for (String imp : includes) {
-            include(imp);
+            sb.append(String.format("#include \"%s.h\"", imp));
+            sb.append("\n");
         }
         if (hasRuntime) {
-            include("Helper");
+            sb.append(String.format("#include \"%s.h\"", "Helper"));
+            sb.append("\n");
         }
-        println();
-
+        sb.append("\n");
         //append(forwardDeclarator);
-        println();
+        sb.append("\n");
 
         if (ns != null && !ns.all.equals("")) {
-            line("namespace ");
-            append(ns.all);
-            appendln("{");
+            sb.append("namespace ").append(ns.getAll()).append("{\n");
             up();
         }
         for (Namespace use : using) {
-            if (ns == null || !use.all.equals(ns.all)) {//omit current namespace
-                print_using(use);
+            if (ns == null || !use.getAll().equals(ns.getAll())) {//omit current namespace
+                sb.append(getIndent()).append(PrintHelper.using(use));
+                sb.append("\n");
             }
         }
-
+        getScope(classes);
         for (CClass cc : classes) {
-            append(cc);
+            sb.append(PrintHelper.body(cc.toString(), getIndent()));
+            sb.append("\n");
         }
-        if (ns != null && !ns.all.equals("")) {
-            down();
-            lineln("}//namespace " + ns.all);
+        if (ns != null && !ns.getAll().equals("")) {
+            sb.append("}//namespace ").append(ns.getAll());
         }
+        return sb.toString();
     }
 
     public String getInclude() {
         return rpath;
     }
 
-
-    public boolean isIncluded(String path) {
-        for (String str : includes) {
-            if (str.equals(path)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public void forward(CType type) {
         //forwardDeclarator.add(type);

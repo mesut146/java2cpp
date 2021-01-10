@@ -20,6 +20,8 @@ public class CClassInstanceCreation extends CExpression {
 
     @Override
     public String toString() {
-        return "new " + type.normalized(scope) + "(" + PrintHelper.join(args, ", ", scope) + ")";
+        getScope(type);
+        getScope(args);
+        return "new " + type + "(" + PrintHelper.join(args, ", ", scope) + ")";
     }
 }

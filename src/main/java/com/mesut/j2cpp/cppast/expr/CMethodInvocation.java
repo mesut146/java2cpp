@@ -14,22 +14,24 @@ public class CMethodInvocation extends CExpression {
     public boolean isArrow;//pointer or dot
 
     @Override
-    public void print() {
+    public String toString() {
         getScope(scope, name);
         getScope(arguments);
+        StringBuilder sb = new StringBuilder();
         if (scope != null) {
-            append(scope);
+            sb.append(scope);
             if (isArrow) {
-                append("->");
+                sb.append("->");
             }
             else {
-                append("::");
+                sb.append("::");
             }
         }
-        name.scope = this.scope;
-        append(name.toString());
-        append("(");
-        PrintHelper.join(this, arguments, ", ", this.scope);
-        append(")");
+        sb.append(name.toString());
+        sb.append("(");
+        PrintHelper.join(sb, arguments, ", ", super.scope);
+        sb.append(")");
+        return sb.toString();
     }
+
 }

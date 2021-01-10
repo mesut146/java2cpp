@@ -2,6 +2,7 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
+import com.mesut.j2cpp.util.PrintHelper;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import java.util.ArrayList;
@@ -40,66 +41,56 @@ public class CMethod extends ModifierNode {
 
     }
 
-    public void printAll(boolean source) {
-        clear();
+    public String toString() {
+        getScope(template, type, body, thisCall, superCall);
+        getScope(params);
+        boolean source = scope instanceof CSource;
+        StringBuilder sb = new StringBuilder();
         if (!template.isEmpty()) {
-            lineln(template.toString());
+            getScope(template);
+            sb.append(template.toString());
         }
         if (!isCons) {
             if (isStatic() && !source) {
-                append("static ");
+                sb.append("static ");
             }
             if (isVirtual()) {
-                append("virtual ");
+                sb.append("virtual ");
             }
-            if (source) {
-                append(type.normalized(getHeader().source));
-            }
-            else {
-                append(type.normalized(getHeader()));
-            }
-            append(" ");
+            sb.append(type);
+            sb.append(" ");
         }
         if (!parent.isAnonymous && source) {
-            append(parent.name + "::");
+            sb.append(parent.name).append("::");
         }
-        append(name.name);
+        sb.append(name.name);
 
-        append("(");
-        for (int i = 0; i < params.size(); i ++) {
-            CParameter cp = params.get(i);
-            if (source) {
-                append(cp.printFor(getHeader().source));
-            }
-            else {
-                append(cp.printFor(getHeader()));
-            }
-            if (i < params.size() - 1)
-                append(", ");
-        }
-        append(")");
+        sb.append("(");
+        PrintHelper.join(sb, params, ", ", scope);
+        sb.append(")");
         if (source) {
             if (superCall != null) {
-                append(" : ");
-                append(superCall);
+                sb.append(" : ");
+                sb.append(superCall);
             }
             if (thisCall != null) {
                 if (superCall != null) {
-                    append(", ");
+                    sb.append(", ");
                 }
                 else {
-                    append(" : ");
+                    sb.append(" : ");
                 }
-                append(thisCall);
+                sb.append(thisCall);
             }
-            append(body);
+            sb.append("\n").append(body.toString());
         }
         else {
             if (isPureVirtual) {
-                append(" = 0");
+                sb.append(" = 0");
             }
-            append(";");
+            sb.append(";");
         }
+        return sb.toString();
     }
 
 
