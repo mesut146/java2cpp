@@ -47,7 +47,7 @@ public class DeclarationVisitor {
     public void visit(PackageDeclaration n) {
         Namespace ns = new Namespace();
         if (n != null) {
-            ns.fromPkg(n.getName().getFullyQualifiedName());
+            ns = new Namespace(n.getName().getFullyQualifiedName());
         }
         header.ns = ns;
         header.using.add(header.ns);
@@ -94,7 +94,7 @@ public class DeclarationVisitor {
         }
 
         node.superInterfaceTypes().forEach(iface -> {
-            CType ifType = typeVisitor.visitType((Type) iface,cc);
+            CType ifType = typeVisitor.visitType((Type) iface, cc);
             ifType.isTemplate = false;
             ifType.isPointer = false;
             cc.base.add(ifType);
@@ -162,7 +162,7 @@ public class DeclarationVisitor {
         cc.getType().forward(header);
         header.addInclude("java/lang/Enum");
 
-        n.superInterfaceTypes().forEach(iface -> cc.base.add(typeVisitor.visitType((Type) iface,cc)));
+        n.superInterfaceTypes().forEach(iface -> cc.base.add(typeVisitor.visitType((Type) iface, cc)));
 
         for (EnumConstantDeclaration constant : (List<EnumConstantDeclaration>) n.enumConstants()) {
             CField field = new CField();
@@ -195,7 +195,7 @@ public class DeclarationVisitor {
     }
 
     public void visit(FieldDeclaration n, CClass clazz) {
-        CType type = typeVisitor.visitType(n.getType(),clazz);
+        CType type = typeVisitor.visitType(n.getType(), clazz);
 
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
             CField field = new CField();
@@ -236,7 +236,7 @@ public class DeclarationVisitor {
         }
         else {
             Type type = node.getReturnType2();
-            method.setType(typeVisitor.visitType(type,clazz));
+            method.setType(typeVisitor.visitType(type, clazz));
         }
 
         method.name = new CName(node.getName().getIdentifier());
@@ -253,7 +253,7 @@ public class DeclarationVisitor {
         for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) node.parameters()) {
             CParameter cp = new CParameter();
             cp.method = method;
-            CType ptype = typeVisitor.visitType(param.getType(),clazz);
+            CType ptype = typeVisitor.visitType(param.getType(), clazz);
 
 
             if (param.isVarargs()) {//todo not just array, maybe as vararg

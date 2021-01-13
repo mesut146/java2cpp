@@ -4,10 +4,7 @@ import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.util.PrintHelper;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CClass extends CStatement {
@@ -33,6 +30,10 @@ public class CClass extends CStatement {
         }
     }
 
+    public void addBase(CType... type) {
+        Collections.addAll(base, type);
+    }
+
     public void addInner(CClass cc) {
         cc.parent = this;
         cc.header = header;
@@ -53,6 +54,10 @@ public class CClass extends CStatement {
     //add reference type that this class use
     public void addType(CType type) {
         types.add(type);
+    }
+
+    public boolean hasType(CClass type) {
+        return types.contains(type.getType());
     }
 
     public Template getTemplate() {
@@ -119,7 +124,7 @@ public class CClass extends CStatement {
         sb.append("class ").append(name);
         if (base.size() > 0) {
             sb.append(": public ");
-            sb.append(base.stream().map(CType::toString).collect(Collectors.joining(" ,")));
+            sb.append(PrintHelper.join(base, ", ", scope));
         }
         else {
             sb.append("\n");
@@ -191,6 +196,9 @@ public class CClass extends CStatement {
 
     public CType getType() {
         if (type == null) {
+            if (getNs() == null) {
+                return new CType(name);
+            }
             type = new CType(getNs().all + "::" + name);
         }
         return type;

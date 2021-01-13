@@ -24,14 +24,20 @@ public class CHeader extends CNode {
         scope = this;
     }
 
+    public String getInclude() {
+        return rpath;
+    }
+
     String getPathNoExt() {
         return rpath.substring(0, rpath.length() - 2);
     }
 
-    public void addClass(CClass cc) {
-        cc.ns = ns;
-        cc.header = this;
-        classes.add(cc);
+    public void addClass(CClass... arr) {
+        for (CClass cc : arr) {
+            cc.ns = ns;
+            cc.header = this;
+            classes.add(cc);
+        }
     }
 
 
@@ -94,10 +100,6 @@ public class CHeader extends CNode {
             sb.append("}//namespace ").append(ns.getAll());
         }
         return sb.toString();
-    }
-
-    public String getInclude() {
-        return rpath;
     }
 
 

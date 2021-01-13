@@ -97,4 +97,16 @@ public abstract class Node {
             }
         }
     }
+
+    /*@SafeVarargs
+    public final void getScope(Object... arr) {
+        for (Object list : arr) {
+            if (list instanceof List) {
+                getScope((List<? extends Node>) list);
+            }
+            else if (list != null) {
+                ((Node) list).scope = scope;
+            }
+        }
+    }*/
 }

@@ -10,7 +10,8 @@ public class Namespace extends Node {
     public List<String> parts = new ArrayList<>();//java,lang,String
 
     public Namespace(String ns) {
-        fromPkg(ns);
+        all = ns.replace(".", "::");
+        Collections.addAll(parts, all.split("::"));
     }
 
     public Namespace(List<String> ns) {
@@ -20,11 +21,6 @@ public class Namespace extends Node {
 
     public Namespace() {
         all = "";
-    }
-
-    public void fromPkg(String str) {
-        all = str.replace(".", "::");
-        Collections.addAll(parts, all.split("::"));
     }
 
     public String getAll() {

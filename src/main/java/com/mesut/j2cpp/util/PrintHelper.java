@@ -4,7 +4,6 @@ import com.mesut.j2cpp.ast.Namespace;
 import com.mesut.j2cpp.ast.Node;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class PrintHelper {
