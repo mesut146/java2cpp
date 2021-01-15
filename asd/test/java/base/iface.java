@@ -2,7 +2,7 @@ package base;
 
 public interface iface extends base {
     int x = 8;
-    Object obj = null;
+    base obj = null;
 
     void asd();
 
@@ -10,4 +10,15 @@ public interface iface extends base {
 
 interface base {
     void baseMeth();
+}
+
+class test implements iface{
+  void asd(){
+  
+  }
+  
+  void baseMeth(){
+  
+  }
+
 }

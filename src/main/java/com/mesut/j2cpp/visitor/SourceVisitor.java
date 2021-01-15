@@ -116,7 +116,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(TypeLiteral node, CNode arg) {
         //Class::forName(type)
-        CType type = typeVisitor.visitType(node.getType(),clazz);
+        CType type = typeVisitor.visitType(node.getType(), clazz);
         CType classType = TypeHelper.getClassType();
         type.scope = getHeader().source;
         classType.scope = getHeader().source;
@@ -221,7 +221,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(SingleVariableDeclaration node, CNode arg) {
         CSingleVariableDeclaration variableDeclaration = new CSingleVariableDeclaration();
-        variableDeclaration.type = typeVisitor.visitType(node.getType(),clazz);
+        variableDeclaration.type = typeVisitor.visitType(node.getType(), clazz);
         variableDeclaration.name = new CName(node.getName().getIdentifier());
         return variableDeclaration;
     }
@@ -251,6 +251,20 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(MethodInvocation node, CNode arg) {
         CMethodInvocation methodInvocation = new CMethodInvocation();
+        IMethodBinding binding = node.resolveMethodBinding();
+        if (binding != null) {
+            CType type = typeVisitor.fromBinding(binding.getDeclaringClass());
+            //todo super.meth
+            if (!type.equals(clazz.getType()) && node.getExpression() == null) {
+                //parent method called, set parent as scope
+                methodInvocation.name = (CName) visit(node.getName(), null);
+                methodInvocation.scope = new CName(Config.parentName);
+                methodInvocation.isArrow = true;
+                args(node.arguments(), methodInvocation);
+                return methodInvocation;
+            }
+        }
+
         if (node.getExpression() != null) {//scope
             Expression scope = node.getExpression();
             methodInvocation.scope = (CExpression) visitExpr(scope, arg);
@@ -266,7 +280,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                     return methodInvocation;
                 }
                 else {
-                    IMethodBinding binding = node.resolveMethodBinding();
                     if (binding == null) {
                         methodInvocation.isArrow = false;
                     }
@@ -366,7 +379,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(VariableDeclarationStatement node, CNode arg) {
         //split single or keep multi?
         CVariableDeclarationStatement variableDeclaration = new CVariableDeclarationStatement();
-        CType type = typeVisitor.visitType(node.getType(),clazz);
+        CType type = typeVisitor.visitType(node.getType(), clazz);
         variableDeclaration.setType(type);
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
             CVariableDeclarationFragment fragment = new CVariableDeclarationFragment();
@@ -417,14 +430,14 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(ClassInstanceCreation node, CNode arg) {
         if (node.getAnonymousClassDeclaration() == null) {
             CClassInstanceCreation classInstanceCreation = new CClassInstanceCreation();
-            classInstanceCreation.setType(typeVisitor.visitType(node.getType(),clazz));
+            classInstanceCreation.setType(typeVisitor.visitType(node.getType(), clazz));
             for (Expression expression : (List<Expression>) node.arguments()) {
                 classInstanceCreation.args.add((CExpression) visitExpr(expression, arg));
             }
             return classInstanceCreation;
         }
         else {
-            return AnonyHandler.handle(node.getAnonymousClassDeclaration(), typeVisitor.visitType(node.getType(),clazz), clazz, this);
+            return AnonyHandler.handle(node.getAnonymousClassDeclaration(), typeVisitor.visitType(node.getType(), clazz), clazz, this);
         }
     }
 
@@ -458,7 +471,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(VariableDeclarationExpression node, CNode arg) {
         CVariableDeclarationExpression variableDeclaration = new CVariableDeclarationExpression();
-        variableDeclaration.type = typeVisitor.visitType(node.getType(),clazz);
+        variableDeclaration.type = typeVisitor.visitType(node.getType(), clazz);
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
             CVariableDeclarationFragment declaration = new CVariableDeclarationFragment();
             declaration.name = (CName) visit(frag.getName(), arg);
@@ -516,7 +529,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         CMethodInvocation invocation = new CMethodInvocation();
         invocation.arguments.add((CExpression) visitExpr(node.getLeftOperand(), arg));
         invocation.name = new CName("instance_of");
-        CType type = typeVisitor.visitType(node.getRightOperand(),clazz);
+        CType type = typeVisitor.visitType(node.getRightOperand(), clazz);
         invocation.name.typeArgs.add(type);
         return invocation;
     }
@@ -536,7 +549,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             return visit(node.getInitializer(), arg);
         }
         else {
-            CType typeName = typeVisitor.visitType(node.getType(),clazz).copy();
+            CType typeName = typeVisitor.visitType(node.getType(), clazz).copy();
             CArrayCreation2 arrayCreation2 = new CArrayCreation2(typeName);
             for (Expression dim : (List<Expression>) node.dimensions()) {
                 CExpression dim2 = (CExpression) visitExpr(dim, arg);
@@ -550,7 +563,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(CastExpression node, CNode arg) {
         CCastExpression castExpression = new CCastExpression();
         castExpression.expression = (CExpression) visitExpr(node.getExpression(), arg);
-        castExpression.setTargetType(typeVisitor.visitType(node.getType(),clazz));
+        castExpression.setTargetType(typeVisitor.visitType(node.getType(), clazz));
         return castExpression;
     }
 
@@ -571,28 +584,29 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     CNode resolvedName(SimpleName node) {
         IBinding binding = node.resolveBinding();
-        if (binding != null && Modifier.isStatic(binding.getModifiers())) {
+        if (binding != null) {
             if (binding.getKind() == IBinding.VARIABLE) {
                 IVariableBinding variableBinding = (IVariableBinding) binding;
-                String qu = variableBinding.getDeclaringClass().getQualifiedName();
-
-                CFieldAccess fieldAccess = new CFieldAccess();
-                fieldAccess.name = new CName(node.getIdentifier());
-                fieldAccess.isArrow = false;
-                CType scope = new CType(qu.replace(".", "::"));
-                fieldAccess.scope = source.normalizeType(scope);
-                return fieldAccess;
+                CType type = typeVisitor.fromBinding(variableBinding.getDeclaringClass());
+                if (!type.equals(clazz.getType())) {
+                    //parent field
+                    CFieldAccess fieldAccess = new CFieldAccess();
+                    fieldAccess.name = new CName(node.getIdentifier());
+                    fieldAccess.isArrow = true;
+                    fieldAccess.scope = new CName(Config.parentName);
+                    return fieldAccess;
+                }
+                if (Modifier.isStatic(binding.getModifiers())) {
+                    CFieldAccess fieldAccess = new CFieldAccess();
+                    fieldAccess.name = new CName(node.getIdentifier());
+                    fieldAccess.isArrow = false;
+                    fieldAccess.scope = type;
+                    return fieldAccess;
+                }
             }
             else if (binding.getKind() == IBinding.METHOD) {
                 IMethodBinding methodBinding = (IMethodBinding) binding;
             }
-        }
-
-        ITypeBinding typeBinding = node.resolveTypeBinding();
-        if (typeBinding != null) {
-
-            /*CType type = typeVisitor.fromBinding(binding);
-            return type;*/
         }
         return new CName(node.getIdentifier());
     }
@@ -604,7 +618,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         //return new CName(node.getIdentifier());
     }
 
-    //qualified class,array.length,
+    //qualified class,array.length,field access
     @Override
     public CNode visit(QualifiedName node, CNode arg) {
         IBinding binding = node.resolveBinding();

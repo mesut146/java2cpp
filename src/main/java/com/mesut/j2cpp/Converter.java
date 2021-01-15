@@ -3,6 +3,7 @@ package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
+import com.mesut.j2cpp.util.BaseForward;
 import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
 import com.mesut.j2cpp.visitor.SourceVisitor;
@@ -151,6 +152,8 @@ public class Converter {
 
             headerVisitor.convert(cu);
             sourceVisitor.convert();
+
+            new BaseForward(header).sort();
 
             File header_file = new File(headerDir, path.replace(".java", ".h"));
             File source_file = new File(destDir, path.replace(".java", ".cpp"));

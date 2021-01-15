@@ -24,4 +24,6 @@ public class Config {
 
     //put use namespace stmt if class has types that are longer than limit
     public static int shrinkNsLimit = 3;
+
+    public static String parentName = "_this_parent";
 }

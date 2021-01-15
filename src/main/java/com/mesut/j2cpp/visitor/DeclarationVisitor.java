@@ -104,7 +104,7 @@ public class DeclarationVisitor {
 
         //handle inner's parent reference
         if (clazz != null) {
-            CName this_parent = CName.from("_this_parent");
+            CName this_parent = CName.from(Config.parentName);
             //make constructor for parent reference
             CField field = new CField();
             field.setType(clazz.getType());

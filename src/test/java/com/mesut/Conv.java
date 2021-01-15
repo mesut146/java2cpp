@@ -57,9 +57,8 @@ public class Conv {
         String out = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/cpp";
         Converter converter = new Converter(dir, out);
         converter.addClasspath(rtJar);
-        //converter.getFilter().addIncludeClass("base.InnerTest");
-        //converter.getFilter().addIncludeClass("base.Prims");
-        converter.getFilter().addIncludeClass("base.iface");
+        converter.getFilter().addIncludeClass("base.InnerTest");
+        //converter.getFilter().addIncludeClass("base.iface");
         converter.setDebugMembers(true);
         converter.convert();
     }

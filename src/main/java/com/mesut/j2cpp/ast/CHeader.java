@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CNode;
+import com.mesut.j2cpp.util.BaseForward;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 
@@ -66,6 +67,7 @@ public class CHeader extends CNode {
         return "anony" + anonyCount++;
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("#pragma once\n\n");
