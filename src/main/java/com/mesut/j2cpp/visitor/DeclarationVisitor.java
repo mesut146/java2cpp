@@ -103,7 +103,7 @@ public class DeclarationVisitor {
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
 
         //handle inner's parent reference
-        if (clazz != null) {
+        if (clazz != null && !Modifier.isStatic(node.getModifiers())) {
             CName this_parent = CName.from(Config.parentName);
             //make constructor for parent reference
             CField field = new CField();
@@ -223,7 +223,6 @@ public class DeclarationVisitor {
             }
         }
     }
-
 
     public CNode visit(MethodDeclaration node, CClass clazz) {
         CMethod method = new CMethod();

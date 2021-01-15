@@ -255,7 +255,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         if (binding != null) {
             CType type = typeVisitor.fromBinding(binding.getDeclaringClass());
             //todo super.meth
-            if (!type.equals(clazz.getType()) && node.getExpression() == null) {
+            if (!type.equals(clazz.getType()) &&type.equals(clazz.getSuper())&& node.getExpression() == null) {
                 //parent method called, set parent as scope
                 methodInvocation.name = (CName) visit(node.getName(), null);
                 methodInvocation.scope = new CName(Config.parentName);
@@ -453,13 +453,13 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(SuperMethodInvocation node, CNode arg) {
         if (node.getQualifier() != null) {
-            throw new RuntimeException("SuperMethodInvocation");
+            throw new RuntimeException("qualified SuperMethodInvocation");
         }
         CMethodInvocation methodInvocation = new CMethodInvocation();
         methodInvocation.scope = clazz.getSuper();
         methodInvocation.name = (CName) visitName(node.getName(), null);
-        args(node.arguments(), methodInvocation);
         methodInvocation.isArrow = false;
+        args(node.arguments(), methodInvocation);
         return methodInvocation;
     }
 
