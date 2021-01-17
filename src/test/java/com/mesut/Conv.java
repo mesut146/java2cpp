@@ -58,7 +58,8 @@ public class Conv {
         Converter converter = new Converter(dir, out);
         converter.addClasspath(rtJar);
         //converter.getFilter().addIncludeClass("base.InnerTest");
-        converter.getFilter().addIncludeClass("base.SuperTest");
+        //converter.getFilter().addIncludeClass("base.SuperTest");
+        converter.getFilter().addIncludeClass("base.AnonyTest");
         //converter.getFilter().addIncludeClass("base.iface");
         converter.setDebugMembers(true);
         converter.convert();

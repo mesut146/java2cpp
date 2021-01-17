@@ -22,6 +22,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     CClass clazz;
     CMethod method;
     Catcher catcher;
+    boolean inInner=false;
 
     public SourceVisitor(CSource source) {
         this.source = source;
@@ -37,7 +38,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     }
 
     public void convert() {
-        //System.out.printf("count %s = %s\n", source.header.rpath, source.header.classes.size());
         for (CClass clazz : source.header.classes) {
             convertClass(clazz);
         }
@@ -588,6 +588,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             if (binding.getKind() == IBinding.VARIABLE) {
                 IVariableBinding variableBinding = (IVariableBinding) binding;
                 CType type = typeVisitor.fromBinding(variableBinding.getDeclaringClass());
+                //check if we are non static inner or anonymous class
                 if (!type.equals(clazz.getType())) {
                     //parent field
                     CFieldAccess fieldAccess = new CFieldAccess();
