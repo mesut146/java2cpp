@@ -23,28 +23,20 @@ public class TypeVisitor {
     CType fromBinding(ITypeBinding binding) {
         CType type;
 
-        if (binding.isTypeVariable()) {
+        if (binding.isTypeVariable()) {//<T>
             type = new CType(binding.getName());
             type.isTemplate = true;
             type.isPointer = false;
         }
         else {
-            String bin = binding.getBinaryName();
-            String name;
-            if (bin == null) {
-                name = binding.getQualifiedName();
+            String name = getBinaryName(binding);
+            if (binding.isNested() && Config.move_inners) {//trim parent class ns
+                type = new CType(header.ns.getAll() + "::" + binding.getName());
             }
             else {
-                if (bin.contains("$")) {
-                    //inner
-                    name = bin.replace("$", ".");
-                }
-                else {
-                    name = bin;
-                }
+                type = new CType(name);
             }
 
-            type = new CType(name);
             /*for (ITypeBinding tp : binding.getTypeArguments()) {
                 type.typeNames.add(fromBinding(tp));
             }*/
@@ -55,6 +47,24 @@ public class TypeVisitor {
             }
         }
         return type;
+    }
+
+    private String getBinaryName(ITypeBinding binding) {
+        String binaryName = binding.getBinaryName();
+        String name;
+        if (binaryName == null) {
+            name = binding.getQualifiedName();
+        }
+        else {
+            if (binaryName.contains("$")) {
+                //inner
+                name = binaryName.replace("$", ".");
+            }
+            else {
+                name = binaryName;
+            }
+        }
+        return name;
     }
 
     public CType visit(SimpleType node) {

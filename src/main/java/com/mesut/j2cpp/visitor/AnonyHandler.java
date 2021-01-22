@@ -18,6 +18,7 @@ public class AnonyHandler {
     public static CClassInstanceCreation handle(AnonymousClassDeclaration declaration, CType type, CClass clazz, SourceVisitor visitor) {
         CClass anony = new CClass();
         anony.header = clazz.header;
+        anony.parent = clazz;
         anony.isAnonymous = true;
         anony.name = clazz.header.getAnonyName();
         anony.ns = clazz.ns;

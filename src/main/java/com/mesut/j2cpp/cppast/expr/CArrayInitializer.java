@@ -13,6 +13,7 @@ public class CArrayInitializer extends CExpression {
 
     @Override
     public String toString() {
-        return "{" + PrintHelper.join(expressions, ", ", scope) + "}";
+        getScope(expressions);
+        return "{" + PrintHelper.joinStr(expressions, ", ") + "}";
     }
 }

@@ -16,6 +16,6 @@ public class CObjectCreation extends CExpression {
     public String toString() {
         getScope(type);
         getScope(args);
-        return String.format("new %s(%s)", type, PrintHelper.join(args, ", ", scope));
+        return String.format("new %s(%s)", type, PrintHelper.joinStr(args, ", "));
     }
 }

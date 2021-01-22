@@ -23,7 +23,6 @@ public class CMethod extends ModifierNode {
     public MethodDeclaration node;//body node
 
     public void addParam(CParameter param) {
-        param.method = this;
         params.add(param);
     }
 
@@ -65,9 +64,9 @@ public class CMethod extends ModifierNode {
         }
         sb.append(name.name);
 
-        sb.append("(");
-        PrintHelper.join(sb, params, ", ", scope);
-        sb.append(")");
+        //params
+        sb.append("(").append(PrintHelper.joinStr(params, ", ")).append(")");
+
         if (source) {
             if (superCall != null) {
                 sb.append(" : ");
@@ -82,7 +81,7 @@ public class CMethod extends ModifierNode {
                 }
                 sb.append(thisCall);
             }
-            sb.append("\n").append(body.toString());
+            sb.append("\n").append(body);
         }
         else {
             if (isPureVirtual) {

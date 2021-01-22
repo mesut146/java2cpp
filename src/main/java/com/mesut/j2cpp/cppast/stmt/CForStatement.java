@@ -21,7 +21,7 @@ public class CForStatement extends CStatement {
         StringBuilder sb = new StringBuilder();
         sb.append("for(");
         if (!initializers.isEmpty()) {
-            PrintHelper.join(sb, initializers, ", ", scope);
+            sb.append(PrintHelper.joinStr(initializers, ", "));
         }
         sb.append(";");
         if (condition != null) {
@@ -29,7 +29,7 @@ public class CForStatement extends CStatement {
         }
         sb.append(";");
         if (!updaters.isEmpty()) {
-            PrintHelper.join(sb, updaters, ", ", scope);
+            sb.append(PrintHelper.joinStr(updaters, ", "));
         }
         sb.append(")");
         if (body == null) {

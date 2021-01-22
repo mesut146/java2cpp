@@ -47,7 +47,6 @@ public class Cmd {
             else {
                 converter.classpath.addAll(cp);
             }
-            //converter.makeTable();
             converter.convert();
         }
     }

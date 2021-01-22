@@ -20,6 +20,11 @@ public class Config {
     //move inner classes to separate file(implementation still in same file)
     public static boolean move_inners_out = true;
 
+    //make all fields public
+    public static boolean fields_public = true;
+    //make all methods public
+    public static boolean methods_public = true;
+
     public static boolean use_vector = true;
 
     //put use namespace stmt if class has types that are longer than limit

@@ -30,11 +30,10 @@ public class CName extends CExpression {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        getScope(typeArgs);
         sb.append(name);
         if (!typeArgs.isEmpty()) {
-            sb.append("<");
-            PrintHelper.join(sb, typeArgs, ", ", scope);
-            sb.append(">");
+            sb.append("<").append(PrintHelper.joinStr(typeArgs, ", ")).append(">");
         }
         return sb.toString();
     }

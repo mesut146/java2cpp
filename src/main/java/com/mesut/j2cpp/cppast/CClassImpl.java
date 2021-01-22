@@ -42,7 +42,6 @@ public class CClassImpl extends CExpression {
     private void printMethods(StringBuilder sb) {
         if (!clazz.methods.isEmpty()) {
             sb.append(getIndent()).append("//methods\n");
-
             List<CMethod> public_methods = clazz.methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
             List<CMethod> priv_methods = clazz.methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
             printMethods(public_methods, "public:", sb);
@@ -52,7 +51,7 @@ public class CClassImpl extends CExpression {
     }
 
     private void printMethods(List<CMethod> list, String modifier, StringBuilder sb) {
-        if (list.size() > 0) {
+        if (!list.isEmpty()) {
             getScope(list);
             sb.append(modifier).append("\n");
             for (CMethod cm : list) {

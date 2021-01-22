@@ -16,6 +16,6 @@ public class CVariableDeclarationExpression extends CExpression {
     public String toString() {
         getScope(type);
         getScope(fragments);
-        return type + " " + PrintHelper.join(fragments, ", ", scope);
+        return type + " " + PrintHelper.joinStr(fragments, ", ");
     }
 }

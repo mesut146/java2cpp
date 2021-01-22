@@ -98,6 +98,13 @@ public abstract class Node {
         }
     }
 
+    public final <T extends Node> void setScope(Object scope, List<T> arr) {
+        for (T t : arr) {
+            if (t != null)
+                t.scope = scope;
+        }
+    }
+
     /*@SafeVarargs
     public final void getScope(Object... arr) {
         for (Object list : arr) {

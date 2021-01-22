@@ -71,10 +71,11 @@ public class CType extends CExpression {
         if (isTemplate) {
             return type;
         }
-        if (scope instanceof CHeader) {
+        return normal(scope);
+        /*if (scope instanceof CHeader) {
             return ((CHeader) scope).normalizeType(this).normal(scope);
         }
-        return ((CSource) scope).normalizeType(this).normal(scope);
+        return ((CSource) scope).normalizeType(this).normal(scope);*/
     }
 
     public String normal(Object scope) {
@@ -85,9 +86,8 @@ public class CType extends CExpression {
         }
         sb.append(type);
         if (typeNames.size() > 0) {
-            sb.append("<");
-            PrintHelper.join(sb, typeNames, ",", scope);
-            sb.append(">");
+            setScope(scope, typeNames);
+            sb.append("<").append(PrintHelper.joinStr(typeNames, ", ")).append(">");
         }
         if (isPointer()) sb.append("*");
         return sb.toString();

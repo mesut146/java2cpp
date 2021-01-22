@@ -1,16 +1,16 @@
 package base;
 
-public class InnerTest {
+public class InnerTest2 {
 
     int x = 123456;
     Inner obj;
     Inner.Inner2 obj2;
     
     void print(){
-      obj2.innerRef();
+      //obj2.innerRef();
     }
     
-    void anonyTest(){
+    /*void anonyTest(){
        new InnerTest(){
          void print(){
            int val = x;//ref.x or super.x , both works?
@@ -25,7 +25,7 @@ public class InnerTest {
          }
        };
     
-    }
+    }*/
 
     class Inner {
         
@@ -35,17 +35,17 @@ public class InnerTest {
             obj.innerMeth();//ref.obj.innerMeth
         }
         
-        void anonyRef(){
+        /*void anonyRef(){
           new MyType(){
             void asd(){
               int val = x;//ref.ref.x
             }
           };
-        }
+        }*/
         
         class Inner2{
           void innerRef(){
-            int val_inner2 = x;//ref.ref.x
+            //int val_inner2 = x;//ref.ref.x
           }
         }
     }

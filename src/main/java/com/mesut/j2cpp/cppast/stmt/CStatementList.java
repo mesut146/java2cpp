@@ -11,6 +11,7 @@ public class CStatementList extends CStatement {
 
     @Override
     public String toString() {
-        return PrintHelper.join(statements, "\n", scope);
+        getScope(statements);
+        return PrintHelper.joinStr(statements, "\n");
     }
 }

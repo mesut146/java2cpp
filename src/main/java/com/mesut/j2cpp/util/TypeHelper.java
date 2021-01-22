@@ -37,6 +37,10 @@ public class TypeHelper {
         return new CType("java::lang::String");
     }
 
+    public static CType getObjectType() {
+        return new CType("java::lang::Object");
+    }
+
     public static CType getClassType() {
         return new CType("java::lang::Class");
     }

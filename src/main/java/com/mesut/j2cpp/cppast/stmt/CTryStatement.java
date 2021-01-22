@@ -15,6 +15,6 @@ public class CTryStatement extends CStatement {
     public String toString() {
         getScope(body);
         getScope(catchClauses);
-        return "try" + PrintHelper.body(body.toString(), "    ") + PrintHelper.join(catchClauses, "\n", scope);
+        return "try" + PrintHelper.body(body.toString(), "    ") + PrintHelper.joinStr(catchClauses, "\n");
     }
 }

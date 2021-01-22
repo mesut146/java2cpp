@@ -22,6 +22,6 @@ public class CClassInstanceCreation extends CExpression {
     public String toString() {
         getScope(type);
         getScope(args);
-        return "new " + type + "(" + PrintHelper.join(args, ", ", scope) + ")";
+        return "new " + type + "(" + PrintHelper.joinStr(args, ", ") + ")";
     }
 }

@@ -3,6 +3,7 @@ package com.mesut.j2cpp.ast;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.util.PrintHelper;
+import com.mesut.j2cpp.util.TypeHelper;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,7 +27,7 @@ public class CClass extends CStatement {
 
     public CClass() {
         if (Config.baseClassObject) {
-            base.add(new CType("java::lang::Object"));
+            base.add(TypeHelper.getObjectType());
         }
     }
 
@@ -103,9 +104,10 @@ public class CClass extends CStatement {
         }
         printFields(sb);
         printMethods(sb);
+
         //inner classes
         for (CClass cc : classes) {
-            sb.append(cc);
+            sb.append(PrintHelper.body(cc.toString(), getIndent()));
         }
         sb.append("};//class ").append(name);
         return sb.toString();
@@ -123,8 +125,9 @@ public class CClass extends CStatement {
         //class decl
         sb.append("class ").append(name);
         if (base.size() > 0) {
+            getScope(base);
             sb.append(": public ");
-            sb.append(PrintHelper.join(base, ", ", scope));
+            sb.append(PrintHelper.joinStr(base, ", "));
         }
         else {
             sb.append("\n");
@@ -133,20 +136,24 @@ public class CClass extends CStatement {
 
     private void printMethods(StringBuilder sb) {
         if (!methods.isEmpty()) {
-            getScope(methods);
             sb.append("//methods\n");
-            List<CMethod> public_methods = methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
-            List<CMethod> priv_methods = methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
-            printMethods(public_methods, "public:", sb);
-            printMethods(priv_methods, "private:", sb);
+            if (Config.methods_public) {
+                printMethods(methods, "public:", sb);
+            }
+            else {
+                List<CMethod> public_methods = methods.stream().filter(CMethod::isPublic).collect(Collectors.toList());
+                List<CMethod> priv_methods = methods.stream().filter(CMethod::isPrivate).collect(Collectors.toList());
+                printMethods(public_methods, "public:", sb);
+                printMethods(priv_methods, "private:", sb);
+            }
             sb.append("\n");
         }
     }
 
     private void printMethods(List<CMethod> list, String modifier, StringBuilder sb) {
-        if (list.size() > 0) {
+        if (!list.isEmpty()) {
             getScope(list);
-            sb.append(getIndent()).append(modifier).append("\n");
+            sb.append(modifier).append("\n");
             for (CMethod cm : list) {
                 sb.append(PrintHelper.body(cm.toString(), getIndent())).append("\n");
             }
@@ -155,18 +162,24 @@ public class CClass extends CStatement {
 
     private void printFields(StringBuilder sb) {
         if (!fields.isEmpty()) {
-            getScope(fields);
-            sb.append(getIndent()).append("//fields\n");
-            List<CField> public_fields = fields.stream().filter(CField::isPublic).collect(Collectors.toList());
-            List<CField> priv_fields = fields.stream().filter(CField::isPrivate).collect(Collectors.toList());
-            printFields(public_fields, "public:", sb);
-            printFields(priv_fields, "private:", sb);
+            sb.append("//fields\n");
+            if (Config.fields_public) {
+                printFields(fields, "public:", sb);
+            }
+            else {
+                List<CField> public_fields = fields.stream().filter(CField::isPublic).collect(Collectors.toList());
+                List<CField> priv_fields = fields.stream().filter(CField::isPrivate).collect(Collectors.toList());
+                printFields(public_fields, "public:", sb);
+                printFields(priv_fields, "private:", sb);
+            }
+
             sb.append("\n");
         }
     }
 
     private void printFields(List<CField> list, String modifier, StringBuilder sb) {
         if (list.size() > 0) {
+            getScope(list);
             sb.append(modifier).append("\n");
             for (CField cf : list) {
                 sb.append(getIndent()).append(cf).append("\n");
@@ -183,13 +196,13 @@ public class CClass extends CStatement {
         append("virtual ~").append(name).append("(){}");
     }
 
-
     Namespace getNs() {
         if (ns != null) {
             return ns;
         }
         if (parent != null) {
-            return parent.getNs();
+            //return parent.getNs();
+            throw new RuntimeException("getNs deprecated code");
         }
         return null;
     }

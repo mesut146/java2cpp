@@ -78,6 +78,9 @@ public class DeclarationVisitor {
         }
         else {
             header.addClass(cc);
+            if (clazz != null) {
+                cc.parent = clazz;
+            }
         }
 
         cc.name = node.getName().getFullyQualifiedName();
@@ -251,7 +254,6 @@ public class DeclarationVisitor {
 
         for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) node.parameters()) {
             CParameter cp = new CParameter();
-            cp.method = method;
             CType ptype = typeVisitor.visitType(param.getType(), clazz);
 
 

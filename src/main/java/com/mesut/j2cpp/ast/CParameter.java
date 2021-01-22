@@ -7,7 +7,6 @@ public class CParameter extends CNode {
 
     public CType type;
     public CName name;
-    public CMethod method;
     public boolean isVarArg = false;
 
     public void setName(String name) {
@@ -24,17 +23,16 @@ public class CParameter extends CNode {
     }
 
     public String toString() {
-        getScope(type);
+        getScope(type, name);
         StringBuilder sb = new StringBuilder();
         sb.append(type);
         sb.append(" ");
         if (isVarArg) {
             sb.append("...");
         }
-        sb.append(name.toString());
+        sb.append(name);
         return sb.toString();
     }
-
 
 
 }

@@ -27,10 +27,8 @@ public class CMethodInvocation extends CExpression {
                 sb.append("::");
             }
         }
-        sb.append(name.toString());
-        sb.append("(");
-        PrintHelper.join(sb, arguments, ", ", super.scope);
-        sb.append(")");
+        sb.append(name);
+        sb.append("(").append(PrintHelper.joinStr(arguments, ", ")).append(")");
         return sb.toString();
     }
 

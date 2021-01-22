@@ -18,15 +18,10 @@ public class CVariableDeclarationStatement extends CStatement {
         this.type.setPointer(Config.ptr_varDecl);
     }
 
-
     @Override
     public String toString() {
         getScope(type);
         getScope(fragments);
-        StringBuilder sb = new StringBuilder();
-        sb.append(type).append(" ");
-        PrintHelper.join(sb, fragments, ", ", scope);
-        sb.append(";");
-        return sb.toString();
+        return type + " " + PrintHelper.joinStr(fragments, ", ") + ";";
     }
 }

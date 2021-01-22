@@ -18,11 +18,6 @@ public class Call extends CNode {
     public String toString() {
         getScope(type);
         getScope(args);
-        StringBuilder sb = new StringBuilder();
-        sb.append(type);
-        sb.append("(");
-        PrintHelper.join(sb, args, ", ", scope);
-        sb.append(")");
-        return sb.toString();
+        return String.format("%s (%s)", type, PrintHelper.joinStr(args, ", "));
     }
 }
