@@ -10,12 +10,13 @@ public class CCastExpression extends CExpression {
     public CExpression expression;
 
     public void setTargetType(CType targetType) {
-        this.targetType = targetType.copy();
-        this.targetType.setPointer(Config.ptr_cast);
+        this.targetType = targetType;
     }
 
     @Override
     public String toString() {
+        this.targetType = targetType.copy();
+        this.targetType.setPointer(Config.ptr_cast);
         getScope(targetType, expression);
         return "(" + targetType + ")" + expression;
     }

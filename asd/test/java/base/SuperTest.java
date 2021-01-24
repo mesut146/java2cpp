@@ -10,9 +10,9 @@ public class SuperTest{
   
   
     void print2(){
-      print();
-      super.print();
-      this.print2();
+      print();//this->print()
+      super.print();//SuperTest::print
+      this.print2();//this->print2()
     }
   }
 }

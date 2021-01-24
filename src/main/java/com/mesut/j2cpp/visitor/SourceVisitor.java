@@ -3,16 +3,14 @@ package com.mesut.j2cpp.visitor;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.*;
-import com.mesut.j2cpp.cppast.CExpression;
-import com.mesut.j2cpp.cppast.CLineCommentStatement;
-import com.mesut.j2cpp.cppast.CNode;
-import com.mesut.j2cpp.cppast.CStatement;
+import com.mesut.j2cpp.cppast.*;
 import com.mesut.j2cpp.cppast.expr.*;
 import com.mesut.j2cpp.cppast.literal.*;
 import com.mesut.j2cpp.cppast.stmt.*;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
@@ -215,6 +213,12 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         forEachStatement.body = (CStatement) visitExpr(node.getBody(), arg);
         forEachStatement.left = (CSingleVariableDeclaration) visit(node.getParameter(), arg);
         forEachStatement.right = (CExpression) visitExpr(node.getExpression(), arg);
+        if (Config.use_vector) {
+            forEachStatement.right = new DeferenceExpr(forEachStatement.right);
+        }
+        else {
+            //todo
+        }
         return forEachStatement;
     }
 
@@ -335,7 +339,24 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(FieldAccess node, CNode arg) {
         CFieldAccess fieldAccess = new CFieldAccess();
         Expression scope = node.getExpression();
-        fieldAccess.scope = (CExpression) visitExpr(scope, arg);
+        CExpression scopeExpr = (CExpression) visitExpr(scope, arg);
+        fieldAccess.scope = scopeExpr;
+
+        ITypeBinding typeBinding = scope.resolveTypeBinding();
+        if (typeBinding == null) {
+            Logger.logBinding(clazz, node.toString());
+        }
+        else {
+            if (typeBinding.isArray() && node.getName().getIdentifier().equals("length")) {
+                if (Config.use_vector) {
+                    CMethodInvocation invocation = new CMethodInvocation();
+                    invocation.name = new CName("size");
+                    invocation.scope = scopeExpr;
+                    invocation.isArrow = true;
+                    return invocation;
+                }
+            }
+        }
 
         if (scope instanceof Name) {//field/var or class
             String scopeName = ((Name) scope).getFullyQualifiedName();
@@ -486,27 +507,63 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(ArrayAccess node, CNode arg) {
-        CArrayAccess arrayAccess = new CArrayAccess();
-        arrayAccess.left = (CExpression) visitExpr(node.getArray(), arg);
-        arrayAccess.index = (CExpression) visitExpr(node.getIndex(), arg);
-        return arrayAccess;
+        CExpression expr = (CExpression) visitExpr(node.getArray(), arg);
+        CExpression index = (CExpression) visitExpr(node.getIndex(), arg);
+
+        if (Config.use_vector) {
+            if (Config.array_access_bracket) {
+                CArrayAccess arrayAccess = new CArrayAccess();
+                arrayAccess.left = expr;
+                arrayAccess.index = index;
+                return arrayAccess;
+            }
+            else {
+                CMethodInvocation invocation = new CMethodInvocation();
+                invocation.name = new CName("at");
+                invocation.isArrow = true;
+                invocation.scope = expr;
+                invocation.arguments.add(index);
+                return invocation;
+            }
+        }
+        else {
+            //todo custom array
+            CArrayAccess arrayAccess = new CArrayAccess();
+            arrayAccess.left = expr;
+            arrayAccess.index = index;
+            return arrayAccess;
+        }
     }
 
     @Override
     public CNode visit(ArrayCreation node, CNode arg) {
+        CType type = typeVisitor.visitType(node.getType(), clazz).copy();
         if (node.getInitializer() != null) {
             //initializer doesn't need dimensions
-            return visit(node.getInitializer(), arg);
+            //todo nope
+            CClassInstanceCreation creation = new CClassInstanceCreation();
+            creation.setType(type);
+            type.setPointer(false);
+            creation.args.add((CExpression) visitExpr(node.getInitializer(), arg));
+            return creation;
         }
         else {
-            CType typeName = typeVisitor.visitType(node.getType(), clazz).copy();
-            CArrayCreation2 arrayCreation2 = new CArrayCreation2(typeName);
-            for (Expression dim : (List<Expression>) node.dimensions()) {
-                CExpression dim2 = (CExpression) visitExpr(dim, arg);
-                arrayCreation2.dimensions.add(dim2);
+            CArrayCreation arrayCreation2 = new CArrayCreation(type);
+            int dims = node.getType().getDimensions();
+            List<CExpression> list = list(node.dimensions());
+            arrayCreation2.dimensions.addAll(list);
+            //fill non specified size
+            for (int i = node.dimensions().size(); i < dims; i++) {
+                arrayCreation2.dimensions.add(new CNumberLiteral("0"));
             }
             return arrayCreation2;
         }
+    }
+
+    //{...}
+    @Override
+    public CNode visit(ArrayInitializer node, CNode arg) {
+        return new CArrayInitializer(list(node.expressions()));
     }
 
     @Override
@@ -520,16 +577,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(ParenthesizedExpression node, CNode arg) {
         return new CParenthesizedExpression((CExpression) visitExpr(node.getExpression(), arg));
-    }
-
-    //{...}
-    @Override
-    public CNode visit(ArrayInitializer node, CNode arg) {
-        CArrayInitializer initializer = new CArrayInitializer();
-        for (Expression expression : (List<Expression>) node.expressions()) {
-            initializer.expressions.add((CExpression) visitExpr(expression, arg));
-        }
-        return initializer;
     }
 
     @SuppressWarnings("unchecked")
@@ -582,9 +629,15 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     }
 
     private void args(List<Expression> arguments, CMethodInvocation methodInvocation) {
+        methodInvocation.arguments.addAll(list(arguments));
+    }
+
+    private List<CExpression> list(List<Expression> arguments) {
+        List<CExpression> list = new ArrayList<>();
         for (Expression expression : arguments) {
-            methodInvocation.arguments.add((CExpression) visitExpr(expression, null));
+            list.add((CExpression) visitExpr(expression, null));
         }
+        return list;
     }
 
     CNode resolvedName(SimpleName node) {
@@ -639,40 +692,45 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(QualifiedName node, CNode arg) {
         IBinding binding = node.resolveBinding();
-
-        if (binding != null) {
+        if (binding == null) {
+            Logger.logBinding(clazz, node.toString());
+            //normal qualified name access
+            return new CName(node.getFullyQualifiedName());
+        }
+        else {
             ITypeBinding typeBinding = node.getQualifier().resolveTypeBinding();
+
             if (typeBinding == null) {
                 //qualifier is not a type so it is a package
                 return new CName(node.getFullyQualifiedName());
             }
+
             boolean isStatic = Modifier.isStatic(binding.getModifiers());
             CType type = typeVisitor.fromBinding(typeBinding);
             type.isPointer = false;
             CExpression scope = (CExpression) visitExpr(node.getQualifier(), arg);
 
-            if (isStatic) {
 
-                if (node.getName().getIdentifier().equals("length")) {
-                    IVariableBinding variableBinding = (IVariableBinding) binding;
-                    if (variableBinding.getDeclaringClass() == null) {//array.length
-                        if (Config.use_vector) {
-                            CMethodInvocation methodInvocation = new CMethodInvocation();
-                            methodInvocation.isArrow = true;
-                            methodInvocation.scope = scope;
-                            methodInvocation.name = new CName("size");
-                            return methodInvocation;
-                        }
+            if (typeBinding.isArray() && node.getName().getIdentifier().equals("length")) {
+                IVariableBinding variableBinding = (IVariableBinding) binding;
+                if (variableBinding.getDeclaringClass() == null) {//array.length
+                    if (Config.use_vector) {
+                        CMethodInvocation methodInvocation = new CMethodInvocation();
+                        methodInvocation.isArrow = true;
+                        methodInvocation.scope = scope;
+                        methodInvocation.name = new CName("size");
+                        return methodInvocation;
                     }
                 }
-                else {
-                    CFieldAccess fieldAccess = new CFieldAccess();
-                    fieldAccess.name = new CName(node.getName().getIdentifier());
-                    fieldAccess.isArrow = !isStatic;
-                    fieldAccess.scope = type;
+            }
 
-                    return fieldAccess;
-                }
+
+            if (isStatic) {
+                CFieldAccess fieldAccess = new CFieldAccess();
+                fieldAccess.name = new CName(node.getName().getIdentifier());
+                fieldAccess.isArrow = false;
+                fieldAccess.scope = type;
+                return fieldAccess;
             }
             else {
                 CFieldAccess fieldAccess = new CFieldAccess();
@@ -683,7 +741,5 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 return fieldAccess;
             }
         }
-        //normal qualified name access
-        return new CName(node.getFullyQualifiedName());
     }
 }

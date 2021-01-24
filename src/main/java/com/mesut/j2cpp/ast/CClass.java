@@ -210,9 +210,12 @@ public class CClass extends CStatement {
     public CType getType() {
         if (type == null) {
             if (getNs() == null) {
-                return new CType(name);
+                type = new CType(name);
             }
-            type = new CType(getNs().all + "::" + name);
+            else {
+                type = new CType(getNs().all + "::" + name);
+            }
+            type.scope = header;
         }
         return type;
     }

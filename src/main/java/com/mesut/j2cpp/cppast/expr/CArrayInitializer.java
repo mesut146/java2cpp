@@ -11,6 +11,13 @@ public class CArrayInitializer extends CExpression {
 
     public List<CExpression> expressions = new ArrayList<>();
 
+    public CArrayInitializer(List<CExpression> expressions) {
+        this.expressions = expressions;
+    }
+
+    public CArrayInitializer() {
+    }
+
     @Override
     public String toString() {
         getScope(expressions);

@@ -10,6 +10,6 @@ public class CArrayAccess extends CExpression {
     @Override
     public String toString() {
         getScope(left, index);
-        return String.format("%s->get(%s)", left, index);
+        return String.format("%s[%s]", left, index);
     }
 }

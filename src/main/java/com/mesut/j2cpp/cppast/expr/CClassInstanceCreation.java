@@ -14,12 +14,13 @@ public class CClassInstanceCreation extends CExpression {
     public List<CExpression> args = new ArrayList<>();
 
     public void setType(CType type) {
-        this.type = type.copy();
-        this.type.setPointer(Config.ptr_new);
+        this.type = type;
     }
 
     @Override
     public String toString() {
+        this.type = type.copy();
+        this.type.setPointer(false);
         getScope(type);
         getScope(args);
         return "new " + type + "(" + PrintHelper.joinStr(args, ", ") + ")";

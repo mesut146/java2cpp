@@ -12,7 +12,6 @@ public class Config {
     public static boolean ptr_method = true;
     public static boolean ptr_field = true;
     public static boolean ptr_typeArg = true;
-    public static boolean ptr_new = false;
     public static boolean ptr_varDecl = true;
     public static boolean ptr_cast = true;
     //move inner classes to uppermost parent level(still in same file)
@@ -27,15 +26,16 @@ public class Config {
     public static boolean methods_public = true;
 
     public static boolean use_vector = true;
+    public static boolean array_access_bracket=false;
 
     //put use namespace stmt if class has types that are longer than limit
     public static int shrinkNsLimit = 3;
 
     //shrink types based on namespaces
-    public static boolean normalizeTypes=true;
+    public static boolean normalizeTypes = true;
 
     public static boolean printParamNames = false;
 
     public static String parentName = "_parent_ref";
-    public static String refSetterName="setRef";
+    public static String refSetterName = "setRef";
 }

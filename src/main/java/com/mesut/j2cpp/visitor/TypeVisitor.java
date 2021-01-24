@@ -46,6 +46,9 @@ public class TypeVisitor {
                 }
             }
         }
+        if (type.ns == null) {
+            type.ns = new Namespace();
+        }
         return type;
     }
 

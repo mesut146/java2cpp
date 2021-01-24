@@ -14,12 +14,13 @@ public class CVariableDeclarationStatement extends CStatement {
     public List<CVariableDeclarationFragment> fragments = new ArrayList<>();
 
     public void setType(CType type) {
-        this.type = type.copy();
-        this.type.setPointer(Config.ptr_varDecl);
+        this.type = type;
     }
 
     @Override
     public String toString() {
+        this.type = type.copy();
+        this.type.setPointer(Config.ptr_varDecl);
         getScope(type);
         getScope(fragments);
         return type + " " + PrintHelper.joinStr(fragments, ", ") + ";";

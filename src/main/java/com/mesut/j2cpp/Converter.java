@@ -116,6 +116,9 @@ public class Converter {
             initParser();
             convertDir(new File(srcDir));
             writeCmake();
+            if(Logger.hasErrors){
+                System.err.println("conversion has errors check logs");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
