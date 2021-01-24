@@ -43,6 +43,11 @@ public class Converter {
         cMakeWriter = new CMakeWriter("myproject");
         cMakeWriter.sourceDir = destDir;
         target = cMakeWriter.addTarget("mylib", false);
+        try {
+            Logger.init(new File(destDir, "log.txt"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public Filter getFilter() {

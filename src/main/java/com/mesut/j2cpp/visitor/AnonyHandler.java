@@ -25,19 +25,19 @@ public class AnonyHandler {
         anony.base.add(type);
 
         DeclarationVisitor declarationVisitor = new DeclarationVisitor(visitor);
-        //todo find local & class references
         for (BodyDeclaration body : (List<BodyDeclaration>) declaration.bodyDeclarations()) {
             if (body instanceof FieldDeclaration) {
                 declarationVisitor.visit((FieldDeclaration) body, anony);
             }
             else if (body instanceof MethodDeclaration) {
-                CMethod method = (CMethod) declarationVisitor.visit((MethodDeclaration) body, anony);
-                anony.addMethod(method);
+                declarationVisitor.visit((MethodDeclaration) body, anony);
             }
             else {
                 throw new RuntimeException("ClassInstanceCreation anony");
             }
         }
+        InnerHelper.handleRef(anony, clazz);
+
         CClassInstanceCreation creation = new CClassInstanceCreation();
         creation.setType(new CType(anony.name));
         clazz.header.source.anony.add(new CClassImpl(anony));

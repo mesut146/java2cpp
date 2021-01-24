@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
@@ -36,12 +37,6 @@ public class CType extends CExpression {
         return type;
     }
 
-    public void setPointer(boolean pointer) {
-        if (!isPrim() && !isTemplate) {
-            isPointer = pointer;
-        }
-    }
-
     public CType copy() {
         CType copied = new CType(type, isTemplate);
         copied.isPointer = isPointer;
@@ -58,6 +53,12 @@ public class CType extends CExpression {
         return isPointer && !isVoid() && !isPrim() && !isTemplate;
     }
 
+    public void setPointer(boolean pointer) {
+        if (!isPrim() && !isTemplate) {
+            isPointer = pointer;
+        }
+    }
+
     public boolean isVoid() {
         return type.equals("void");
     }
@@ -71,11 +72,13 @@ public class CType extends CExpression {
         if (isTemplate) {
             return type;
         }
-        return normal(scope);
-        /*if (scope instanceof CHeader) {
-            return ((CHeader) scope).normalizeType(this).normal(scope);
+        if (Config.normalizeTypes) {
+            if (scope instanceof CHeader) {
+                return ((CHeader) scope).normalizeType(this).normal(scope);
+            }
+            return ((CSource) scope).normalizeType(this).normal(scope);
         }
-        return ((CSource) scope).normalizeType(this).normal(scope);*/
+        return normal(scope);
     }
 
     public String normal(Object scope) {

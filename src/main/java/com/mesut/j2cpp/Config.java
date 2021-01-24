@@ -19,7 +19,8 @@ public class Config {
     public static boolean move_inners = true;
     //move inner classes to separate file(implementation still in same file)
     public static boolean move_inners_out = true;
-
+    //take outer ref as constructor arg otherwise create setter
+    public static boolean outer_ref_cons_arg = false;
     //make all fields public
     public static boolean fields_public = true;
     //make all methods public
@@ -30,5 +31,11 @@ public class Config {
     //put use namespace stmt if class has types that are longer than limit
     public static int shrinkNsLimit = 3;
 
+    //shrink types based on namespaces
+    public static boolean normalizeTypes=true;
+
+    public static boolean printParamNames = false;
+
     public static String parentName = "_parent_ref";
+    public static String refSetterName="setRef";
 }

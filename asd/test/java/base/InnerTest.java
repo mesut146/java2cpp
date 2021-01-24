@@ -5,9 +5,14 @@ public class InnerTest {
     int x = 123456;
     Inner obj;
     Inner.Inner2 obj2;
+    static int x_static = 22;
     
     void print(){
       obj2.innerRef();
+      obj = new Inner();
+    }
+    
+    static void print_static(){
     }
     
     void anonyTest(){
@@ -45,7 +50,10 @@ public class InnerTest {
         
         class Inner2{
           void innerRef(){
-            int val_inner2 = x;//ref.ref.x
+            int val_inner2 = x;//ref->ref->x
+            print();//ref->ref->print()
+            print_static();//InnerTest::print_static()
+            x_static = 55;//InnerTest::x_static
           }
         }
     }

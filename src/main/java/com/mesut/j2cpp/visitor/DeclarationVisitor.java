@@ -4,12 +4,8 @@ import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CNode;
-import com.mesut.j2cpp.cppast.expr.CAssignment;
 import com.mesut.j2cpp.cppast.expr.CClassInstanceCreation;
-import com.mesut.j2cpp.cppast.expr.CFieldAccess;
-import com.mesut.j2cpp.cppast.expr.CThisExpression;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
-import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -18,9 +14,9 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class DeclarationVisitor {
 
+    public CHeader header;
     SourceVisitor sourceVisitor;
     TypeVisitor typeVisitor;
-    public CHeader header;
 
     public DeclarationVisitor(SourceVisitor sourceVisitor) {
         this.sourceVisitor = sourceVisitor;
@@ -107,31 +103,7 @@ public class DeclarationVisitor {
 
         //handle inner's parent reference
         if (clazz != null && !Modifier.isStatic(node.getModifiers())) {
-            CName this_parent = CName.from(Config.parentName);
-            //make constructor for parent reference
-            CField field = new CField();
-            field.setType(clazz.getType());
-            field.setName(this_parent);
-            cc.addField(field);
-            //make or get constructor for init field
-            CMethod cons = cc.getMethod(true, null, clazz.getType());
-            if (cons == null) {
-                cons = new CMethod();
-                cons.isCons = true;
-                cons.name = CName.from(cc.name);
-                cons.body = new CBlockStatement();
-                cc.addMethod(cons);
-            }
-            CParameter parameter = new CParameter();
-            parameter.setType(clazz.getType());
-            parameter.setName(this_parent);
-            cons.addParam(parameter);
-            CFieldAccess access = new CFieldAccess();
-            access.isArrow = true;
-            access.scope = new CThisExpression();
-            access.name = this_parent;
-            cons.body.addStatement(new CExpressionStatement(new CAssignment(access, this_parent, "=")));
-            //replace references with scoped references
+            InnerHelper.handleRef(cc,clazz);
         }
         return cc;
     }
@@ -173,7 +145,7 @@ public class DeclarationVisitor {
             field.setPublic(true);
             field.setStatic(true);
             field.setType(new CType(cc.name));
-            field.setName(constant.getName().getIdentifier());
+            field.setName(CName.from(constant.getName().getIdentifier()));
 
             CClassInstanceCreation rhs = new CClassInstanceCreation();
             field.expression = rhs;
@@ -212,7 +184,7 @@ public class DeclarationVisitor {
                 field.setType(type);
             }
 
-            field.setName(frag.getName().getIdentifier());
+            field.setName(CName.from(frag.getName().getIdentifier()));
             field.setPublic(Modifier.isPublic(n.getModifiers()));
             field.setStatic(Modifier.isStatic(n.getModifiers()));
             field.setProtected(Modifier.isProtected(n.getModifiers()));
@@ -270,7 +242,7 @@ public class DeclarationVisitor {
                 }
             }
 
-            cp.setName(param.getName().getIdentifier());
+            cp.setName(CName.from(param.getName().getIdentifier()));
             method.addParam(cp);
         }
 

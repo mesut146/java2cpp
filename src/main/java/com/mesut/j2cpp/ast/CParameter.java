@@ -9,8 +9,12 @@ public class CParameter extends CNode {
     public CName name;
     public boolean isVarArg = false;
 
-    public void setName(String name) {
-        this.name = new CName(name);
+    public CParameter(CType type, CName name) {
+        this.type = type;
+        this.name = name;
+    }
+
+    public CParameter() {
     }
 
     public void setName(CName name) {
@@ -18,11 +22,12 @@ public class CParameter extends CNode {
     }
 
     public void setType(CType type) {
-        this.type = type.copy();
-        this.type.setPointer(Config.ptr_parameter);
+        this.type = type;
     }
 
     public String toString() {
+        this.type = type.copy();
+        this.type.setPointer(Config.ptr_parameter);
         getScope(type, name);
         StringBuilder sb = new StringBuilder();
         sb.append(type);
@@ -30,7 +35,9 @@ public class CParameter extends CNode {
         if (isVarArg) {
             sb.append("...");
         }
-        sb.append(name);
+        if (Config.printParamNames || scope instanceof CSource) {
+            sb.append(name);
+        }
         return sb.toString();
     }
 

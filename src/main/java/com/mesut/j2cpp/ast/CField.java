@@ -10,21 +10,28 @@ public class CField extends ModifierNode/*statement*/ {
     public CClass parent;
     public CExpression expression;
 
-    public void setName(String name) {
-        this.name = CName.from(name);
+    public CField() {
     }
 
-    public void setName(CName name) {
+    public CField(CType type, CName name) {
+        this.type = type;
         this.name = name;
     }
 
-    public void setType(CType type) {
-        this.type = type.copy();
-        this.type.setPointer(Config.ptr_field);
+    public CField setName(CName name) {
+        this.name = name;
+        return this;
+    }
+
+    public CField setType(CType type) {
+        this.type = type;
+        return this;
     }
 
     @Override
     public String toString() {
+        type = type.copy();
+        this.type.setPointer(Config.ptr_field);
         if (scope instanceof CHeader) {
             return forHeader();
         }
@@ -48,14 +55,15 @@ public class CField extends ModifierNode/*statement*/ {
         return sb.toString();
     }
 
-
     public String forSource() {
         getScope(type, name, expression);
         StringBuilder sb = new StringBuilder();
         sb.append(type);
         sb.append(" ");
-        sb.append(parent.name);
-        sb.append("::");
+        if (!parent.isAnonymous) {
+            sb.append(parent.name);
+            sb.append("::");
+        }
         sb.append(name);
         if (expression != null) {//static
             sb.append(" = ");

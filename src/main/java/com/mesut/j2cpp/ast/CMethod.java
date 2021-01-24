@@ -27,20 +27,16 @@ public class CMethod extends ModifierNode {
     }
 
     public void setType(CType type) {
-        this.type = type.copy();
-        this.type.setPointer(Config.ptr_method);
+        this.type = type;
     }
 
     public CHeader getHeader() {
         return parent.header;
     }
 
-    @Override
-    public void print() {
-
-    }
-
     public String toString() {
+        type = type.copy();
+        this.type.setPointer(Config.ptr_method);
         getScope(template, type, body, thisCall, superCall);
         getScope(params);
         boolean source = scope instanceof CSource;

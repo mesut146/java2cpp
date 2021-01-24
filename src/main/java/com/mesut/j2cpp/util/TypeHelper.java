@@ -53,6 +53,10 @@ public class TypeHelper {
         return new CType("java::lang::Enum");
     }
 
+    public static CType getVoidType() {
+        return new CType("void");
+    }
+
     public static CType getAutoType() {
         return new CType("auto");
     }

@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CLineCommentStatement;
@@ -362,17 +363,32 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(ClassInstanceCreation node, CNode arg) {
+        CClassInstanceCreation creation;
         if (node.getAnonymousClassDeclaration() == null) {
-            CClassInstanceCreation classInstanceCreation = new CClassInstanceCreation();
-            classInstanceCreation.setType(typeVisitor.visitType(node.getType(), clazz));
+            creation = new CClassInstanceCreation();
+            creation.setType(typeVisitor.visitType(node.getType(), clazz));
             for (Expression expression : (List<Expression>) node.arguments()) {
-                classInstanceCreation.args.add((CExpression) visitExpr(expression, arg));
+                creation.args.add((CExpression) visitExpr(expression, arg));
             }
-            return classInstanceCreation;
         }
         else {
-            return AnonyHandler.handle(node.getAnonymousClassDeclaration(), typeVisitor.visitType(node.getType(), clazz), clazz, this);
+            creation = AnonyHandler.handle(node.getAnonymousClassDeclaration(), typeVisitor.visitType(node.getType(), clazz), clazz, this);
         }
+        ITypeBinding binding = node.getType().resolveBinding();
+        if (Config.outer_ref_cons_arg) {
+            //append arg
+            creation.args.add(new CThisExpression());
+        }
+        else if (binding != null && !Modifier.isStatic(binding.getModifiers())) {
+            //append setRef
+            CMethodInvocation invocation = new CMethodInvocation();
+            invocation.isArrow = true;
+            invocation.name = CName.from(Config.refSetterName);
+            invocation.arguments.add(new CThisExpression());
+            invocation.scope = creation;
+            return invocation;
+        }
+        return creation;
     }
 
     @Override
@@ -519,69 +535,50 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @SuppressWarnings("unchecked")
     @Override
     public CNode visit(MethodInvocation node, CNode arg) {
-        CMethodInvocation methodInvocation = new CMethodInvocation();
+        CMethodInvocation invocation = new CMethodInvocation();
+        invocation.name = (CName) visit(node.getName(), null);
+        args(node.arguments(), invocation);
         Expression scope = node.getExpression();
+        CExpression scopeExpr = scope == null ? null : (CExpression) visitExpr(scope, arg);
         IMethodBinding binding = node.resolveMethodBinding();
 
+        if (binding == null) {
+            Logger.log(clazz, node.toString() + " has null binding ,conversion may have problems");
+        }
+
+        boolean isStatic = binding != null && Modifier.isStatic(binding.getModifiers());
+        //scoped static
+        //non scoped static
+        //outer
+        invocation.scope = scopeExpr;
         if (scope != null) {
-            methodInvocation.scope = (CExpression) visitExpr(scope, arg);
+            invocation.isArrow = !isStatic;
+        }
 
-            if (scope instanceof Name) {
-                //field or class or variable
-                String scopeName = ((Name) scope).getFullyQualifiedName();
-                if (scopeName.equals("this")) {//trim this
-                    methodInvocation.isArrow = true;
-                    methodInvocation.name = (CName) visit(node.getName(), null);
-                    methodInvocation.scope = null;
-                    args((List<Expression>) node.arguments(), methodInvocation);
-                    return methodInvocation;
-                }
-                else {
-                    if (binding == null) {
-                        methodInvocation.isArrow = false;
-                    }
-                    else {
-                        ITypeBinding typeBinding = binding.getDeclaringClass();
-                        if (Modifier.isStatic(binding.getModifiers())) {
-                            methodInvocation.isArrow = false;
-                            methodInvocation.scope = new CType(typeBinding.getQualifiedName());
-                        }
-                        else {
-                            methodInvocation.isArrow = true;
-                        }
-                    }
-                }
-
+        if (scope == null && binding != null) {
+            CType type = typeVisitor.fromBinding(binding.getDeclaringClass());
+            //static outer method
+            if (Modifier.isStatic(binding.getModifiers())) {
+                invocation.scope = type;
+                invocation.isArrow = false;
+                return invocation;
             }
-            else {
-                //another method call or field access
-                methodInvocation.isArrow = true;
+            //outer method
+            if (!type.equals(clazz.getType())) {
+                //parent method called, set parent as scope
+                invocation.scope = ref(clazz, type);
+                invocation.isArrow = true;
+                return invocation;
+            }
+            //parent/super method
+            if (type.equals(clazz.getSuper())) {
+                //qualify super method,not needed but more precise
+                invocation.scope = clazz.getSuper();
+                invocation.isArrow = false;
+                return invocation;
             }
         }
-        else {
-            if (binding != null) {
-                CType type = typeVisitor.fromBinding(binding.getDeclaringClass());
-                //todo super.meth
-                if (type.equals(clazz.getSuper())) {
-                    methodInvocation.name = (CName) visit(node.getName(), null);
-                    methodInvocation.scope = clazz.getSuper();
-                    methodInvocation.isArrow = false;
-                    args(node.arguments(), methodInvocation);
-                    return methodInvocation;
-                }
-                if (!type.equals(clazz.getType())) {
-                    //parent method called, set parent as scope
-                    methodInvocation.name = (CName) visit(node.getName(), null);
-                    methodInvocation.scope = new CName(Config.parentName);
-                    methodInvocation.isArrow = true;
-                    args(node.arguments(), methodInvocation);
-                    return methodInvocation;
-                }
-            }
-        }
-        methodInvocation.name = new CName(node.getName().getIdentifier());
-        args(node.arguments(), methodInvocation);
-        return methodInvocation;
+        return invocation;
     }
 
     private void args(List<Expression> arguments, CMethodInvocation methodInvocation) {
@@ -592,52 +589,45 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     CNode resolvedName(SimpleName node) {
         IBinding binding = node.resolveBinding();
+        CName name = new CName(node.getIdentifier());
         if (binding != null) {
+            boolean isStatic = Modifier.isStatic(binding.getModifiers());
             if (binding.getKind() == IBinding.VARIABLE) {
                 IVariableBinding variableBinding = (IVariableBinding) binding;
                 if (variableBinding.isField()) {
                     CType type = typeVisitor.fromBinding(variableBinding.getDeclaringClass());
-                    //check if we are non static inner or anonymous class
-                    if (!type.equals(clazz.getType())) {
-                        //outer field
-                        CExpression rr = ref(clazz, type, node.getIdentifier());
-                        return rr;
-                    }
-                    if (Modifier.isStatic(binding.getModifiers())) {
+                    //static field,qualify
+                    if (isStatic) {
                         CFieldAccess fieldAccess = new CFieldAccess();
-                        fieldAccess.name = new CName(node.getIdentifier());
+                        fieldAccess.name = name;
                         fieldAccess.isArrow = false;
                         fieldAccess.scope = type;
                         return fieldAccess;
                     }
-                }
-            }
-            else if (binding.getKind() == IBinding.METHOD) {
-                IMethodBinding methodBinding = (IMethodBinding) binding;
-                if (methodBinding.isRawMethod()) {
-
+                    else if (!type.equals(clazz.getType())) {
+                        //check if we are non static inner or anonymous class
+                        CExpression rr = ref(clazz, type);
+                        CFieldAccess fieldAccess = new CFieldAccess();
+                        fieldAccess.name = name;
+                        fieldAccess.isArrow = true;
+                        fieldAccess.scope = rr;
+                        return fieldAccess;
+                    }
                 }
             }
         }
-        return new CName(node.getIdentifier());
+        return name;
     }
 
-    CExpression ref(CClass from, CType target, String name) {
-        if (from.getType().equals(target)) {
+    CExpression ref(CClass from, CType target) {
+        if (from.parent.getType().equals(target)) {
             return new CName(Config.parentName);
         }
-        else {
-            CFieldAccess fieldAccess = new CFieldAccess();
-            fieldAccess.scope = ref(from.parent, target, null);
-            if (name == null) {
-                fieldAccess.name = new CName(Config.parentName);
-            }
-            else {
-                fieldAccess.name = new CName(name);
-            }
-            fieldAccess.isArrow = true;
-            return fieldAccess;
-        }
+        CFieldAccess fieldAccess = new CFieldAccess();
+        fieldAccess.scope = ref(from.parent, target);
+        fieldAccess.name = new CName(Config.parentName);
+        fieldAccess.isArrow = true;
+        return fieldAccess;
     }
 
     @Override
