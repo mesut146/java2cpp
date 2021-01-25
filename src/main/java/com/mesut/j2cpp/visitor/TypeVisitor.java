@@ -2,6 +2,7 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.util.BindingMap;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -49,6 +50,7 @@ public class TypeVisitor {
         if (type.ns == null) {
             type.ns = new Namespace();
         }
+        BindingMap.add(type, binding);
         return type;
     }
 

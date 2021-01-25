@@ -22,13 +22,13 @@ public class BaseForward {
         Set<CType> set = new HashSet<>();
         for (CClass cc : header.classes) {
             set.add(cc.getType());
-            set.addAll(cc.base);
+            //set.addAll(cc.base);
         }
         List<CType> list = new ArrayList<>(set);
         header.getScope(list);
         sort(list);
 
-        System.out.println(list);
+        //System.out.println(list);
         isValid(list);
         //then place classes to header in sorted order
         List<CClass> classes = new ArrayList<>(header.classes);

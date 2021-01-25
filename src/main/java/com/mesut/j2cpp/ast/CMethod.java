@@ -35,9 +35,7 @@ public class CMethod extends ModifierNode {
     }
 
     public String toString() {
-        type = type.copy();
-        this.type.setPointer(Config.ptr_method);
-        getScope(template, type, body, thisCall, superCall);
+        getScope(template, body, thisCall, superCall);
         getScope(params);
         boolean source = scope instanceof CSource;
         StringBuilder sb = new StringBuilder();
@@ -46,6 +44,9 @@ public class CMethod extends ModifierNode {
             sb.append(template.toString());
         }
         if (!isCons) {
+            type = type.copy();
+            type.setPointer(Config.ptr_method);
+            getScope(type);
             if (isStatic() && !source) {
                 sb.append("static ");
             }

@@ -10,6 +10,7 @@ import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
+import java.net.Socket;
 import java.util.List;
 
 public class AnonyHandler {
@@ -24,7 +25,11 @@ public class AnonyHandler {
         anony.ns = clazz.ns;
         anony.base.add(type);
 
-        DeclarationVisitor declarationVisitor = new DeclarationVisitor(visitor);
+        SourceVisitor newVisitor = new SourceVisitor(visitor.source);
+        visitor.typeVisitor.fromBinding(declaration.resolveBinding());
+        //newVisitor.binding = declaration.resolveBinding();
+
+        DeclarationVisitor declarationVisitor = new DeclarationVisitor(newVisitor);
         for (BodyDeclaration body : (List<BodyDeclaration>) declaration.bodyDeclarations()) {
             if (body instanceof FieldDeclaration) {
                 declarationVisitor.visit((FieldDeclaration) body, anony);

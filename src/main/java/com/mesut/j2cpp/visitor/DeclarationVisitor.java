@@ -81,6 +81,7 @@ public class DeclarationVisitor {
 
         cc.name = node.getName().getFullyQualifiedName();
         cc.isInterface = node.isInterface();
+        cc.isStatic = Modifier.isStatic(node.getModifiers());
         cc.getType().forward(header);
 
         node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true)));
@@ -99,11 +100,14 @@ public class DeclarationVisitor {
             cc.base.add(ifType);
         });
 
+        //make sure it is present in type map
+        typeVisitor.fromBinding(node.getName().resolveTypeBinding());
+
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
 
         //handle inner's parent reference
         if (clazz != null && !Modifier.isStatic(node.getModifiers())) {
-            InnerHelper.handleRef(cc,clazz);
+            InnerHelper.handleRef(cc, clazz);
         }
         return cc;
     }

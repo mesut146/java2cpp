@@ -7,11 +7,13 @@ import com.mesut.j2cpp.cppast.*;
 import com.mesut.j2cpp.cppast.expr.*;
 import com.mesut.j2cpp.cppast.literal.*;
 import com.mesut.j2cpp.cppast.stmt.*;
+import com.mesut.j2cpp.util.BindingMap;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 @SuppressWarnings("unchecked")
 public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
@@ -21,6 +23,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     CClass clazz;
     CMethod method;
     Catcher catcher;
+    ITypeBinding binding;
 
     public SourceVisitor(CSource source) {
         this.source = source;
@@ -610,22 +613,42 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 invocation.isArrow = false;
                 return invocation;
             }
-            //outer method
-            if (!type.equals(clazz.getType())) {
-                //parent method called, set parent as scope
-                invocation.scope = ref(clazz, type);
-                invocation.isArrow = true;
-                return invocation;
-            }
             //parent/super method
-            if (type.equals(clazz.getSuper())) {
+            if (isSuper(BindingMap.get(clazz.getType()), BindingMap.get(type))) {
                 //qualify super method,not needed but more precise
                 invocation.scope = clazz.getSuper();
                 invocation.isArrow = false;
                 return invocation;
             }
+            //outer method
+            if (!clazz.isStatic && !type.equals(clazz.getType())) {
+                //parent method called, set parent as scope
+                invocation.scope = ref(clazz, type);
+                invocation.isArrow = true;
+                return invocation;
+            }
         }
         return invocation;
+    }
+
+    //is base is super of type
+    boolean isSuper(ITypeBinding from, ITypeBinding to) {
+        if (from == null || from.getSuperclass() == null) {
+            return false;
+        }
+        if (from.getSuperclass().equals(to)) {
+            return true;
+        }
+        for (ITypeBinding binding : from.getInterfaces()) {
+            if (binding.equals(to)) {
+                //todo more depth
+                return true;
+            }
+        }
+        if (isSuper(from.getSuperclass(), to)) {
+            return true;
+        }
+        return false;
     }
 
     private void args(List<Expression> arguments, CMethodInvocation methodInvocation) {
@@ -657,7 +680,10 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                         fieldAccess.scope = type;
                         return fieldAccess;
                     }
-                    else if (!type.equals(clazz.getType())) {
+                    if (isSuper(BindingMap.get(clazz.getType()), ((IVariableBinding) binding).getDeclaringClass())) {
+                        return name;
+                    }
+                    if (!type.equals(clazz.getType())) {
                         //check if we are non static inner or anonymous class
                         CExpression rr = ref(clazz, type);
                         CFieldAccess fieldAccess = new CFieldAccess();

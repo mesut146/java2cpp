@@ -12,6 +12,8 @@ public class CClass extends CStatement {
 
     public String name;
     public boolean isInterface = false;
+    public boolean isStatic = false;
+    public boolean isAnonymous = false;
     public Namespace ns = null;
     public List<CType> base = new ArrayList<>();
     public Template template = new Template();
@@ -21,7 +23,6 @@ public class CClass extends CStatement {
     public CClass parent;//outer
     public CHeader header;
     public Node staticBlock = null;
-    public boolean isAnonymous = false;
     CType type;
     Set<CType> types = new HashSet<>();
 
