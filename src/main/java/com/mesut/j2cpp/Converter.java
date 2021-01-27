@@ -8,15 +8,14 @@ import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
 import com.mesut.j2cpp.visitor.SourceVisitor;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.*;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +28,7 @@ public class Converter {
     public boolean debug_source = false;
     public boolean debug_fields = false;
     public boolean debug_methods = false;
+    public boolean stopOnError = false;
     String srcDir;//source folder
     String destDir;//destination folder for c++ files
     File headerDir;
@@ -61,6 +61,7 @@ public class Converter {
 
     @SuppressWarnings("rawtypes,unchecked")
     public void initParser() {
+        if (parser == null) ;
         parser = ASTParser.newParser(AST.JLS13);
         List<String> cpDirs = new ArrayList<>();
         List<String> cpJars = new ArrayList<>();
@@ -74,6 +75,7 @@ public class Converter {
             }
         }
         cpDirs.add(srcDir);
+
         parser.setEnvironment(cpJars.toArray(new String[0]), cpDirs.toArray(new String[0]), null, true);
 
         parser.setResolveBindings(true);
@@ -87,6 +89,7 @@ public class Converter {
         options.put(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, ver);
         //options.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES,"true");
         parser.setCompilerOptions(options);
+        parser.setKind(ASTParser.K_COMPILATION_UNIT);
     }
 
     public void setDebugAll(boolean val) {
@@ -113,10 +116,9 @@ public class Converter {
             else {
                 headerDir = new File(destDir);
             }
-            initParser();
-            convertDir(new File(srcDir));
+            convertDir();
             writeCmake();
-            if(Logger.hasErrors){
+            if (Logger.hasErrors) {
                 System.err.println("conversion has errors check logs");
             }
         } catch (IOException e) {
@@ -125,34 +127,47 @@ public class Converter {
         System.out.println("conversion done for " + count + " files");
     }
 
-    void convertDir(File dir) throws IOException {
+    private void convertDir() throws IOException {
+        List<String> list = new ArrayList<>();
+        collect(new File(srcDir), list);
+        initParser();
+        String[] b = new String[list.size()];
+        Arrays.fill(b, "");
+        parser.createASTs(list.toArray(new String[0]), null, b, new FileASTRequestor() {
+            @Override
+            public void acceptAST(String sourceFilePath, CompilationUnit ast) {
+                convertSingle(sourceFilePath, ast);
+            }
+        }, null);
+    }
+
+    void collect(File dir, List<String> list) {
         if (dir.isDirectory()) {
             for (File file : dir.listFiles()) {
                 if (file.isDirectory()) {
-                    convertDir(file);
+                    collect(file, list);
                 }
                 else if (file.getName().endsWith(".java")) {
-                    convertSingle(file.getAbsolutePath().substring(srcDir.length() + 1));
+                    if (filter.checkPath(file)) {
+                        list.add(file.getAbsolutePath());
+                    }
                 }
             }
         }
-
     }
 
     public void convertSingle(String cls) throws IOException {
         File file = new File(srcDir, cls);
-        if (filter.checkPath(file)) {
-            CompilationUnit unit = parse(file);
-            convertSingle(cls, unit);
-            count++;
-        }
+        CompilationUnit unit = parse(file);
+        convertSingle(cls, unit);
     }
 
     public void convertSingle(String path, CompilationUnit cu) {
         try {
-            System.out.println("converting " + path);
-
-            CHeader header = new CHeader(Util.trimSuffix(path, "java") + "h");
+            String relPath = Util.trimPrefix(path, srcDir);
+            relPath = Util.trimPrefix(relPath, "/");
+            System.out.println("converting " + relPath);
+            CHeader header = new CHeader(Util.trimSuffix(relPath, "java") + "h");
             CSource cpp = new CSource(header);
 
             SourceVisitor sourceVisitor = new SourceVisitor(cpp);
@@ -161,10 +176,10 @@ public class Converter {
             headerVisitor.convert(cu);
             sourceVisitor.convert();
 
-            new BaseForward(header).sort();
+            //new BaseForward(header).sort();
 
-            File header_file = new File(headerDir, path.replace(".java", ".h"));
-            File source_file = new File(destDir, path.replace(".java", ".cpp"));
+            File header_file = new File(headerDir, relPath.replace(".java", ".h"));
+            File source_file = new File(destDir, relPath.replace(".java", ".cpp"));
             header_file.getParentFile().mkdirs();
             source_file.getParentFile().mkdirs();
             Files.write(header_file.toPath(), header.toString().getBytes());
@@ -173,6 +188,7 @@ public class Converter {
             target.addInclude(destDir);
             target.addInclude(headerDir.getAbsolutePath());
             target.sourceFiles.add(source_file.getAbsolutePath());
+            count++;
         } catch (Exception e) {
             System.err.println("cant convert " + path);
             e.printStackTrace();
@@ -184,7 +200,6 @@ public class Converter {
         initParser();
         parser.setSource(Util.read(file).toCharArray());
         parser.setUnitName(file.getPath());
-        parser.setKind(ASTParser.K_COMPILATION_UNIT);
         return (CompilationUnit) parser.createAST(null);
     }
 

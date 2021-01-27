@@ -387,6 +387,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(ClassInstanceCreation node, CNode arg) {
+        ITypeBinding binding = node.getType().resolveBinding();
         CClassInstanceCreation creation;
         if (node.getAnonymousClassDeclaration() == null) {
             creation = new CClassInstanceCreation();
@@ -398,7 +399,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         else {
             creation = AnonyHandler.handle(node.getAnonymousClassDeclaration(), typeVisitor.visitType(node.getType(), clazz), clazz, this);
         }
-        ITypeBinding binding = node.getType().resolveBinding();
         if (Config.outer_ref_cons_arg) {
             //append arg
             creation.args.add(new CThisExpression());
@@ -597,6 +597,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
 
         boolean isStatic = binding != null && Modifier.isStatic(binding.getModifiers());
+        boolean isAbstract = binding != null && Modifier.isAbstract(binding.getModifiers());
         //scoped static
         //non scoped static
         //outer
@@ -621,7 +622,8 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 return invocation;
             }
             //outer method
-            if (!clazz.isStatic && !type.equals(clazz.getType())) {
+            if (!clazz.isStatic && !isAbstract && !type.equals(clazz.getType()) && !isSame(this.binding, binding.getDeclaringClass()))
+            {
                 //parent method called, set parent as scope
                 invocation.scope = ref(clazz, type);
                 invocation.isArrow = true;
@@ -629,6 +631,14 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             }
         }
         return invocation;
+    }
+
+    boolean isSame(ITypeBinding from, ITypeBinding to) {
+        if (!from.getBinaryName().isEmpty()) {
+            return from.getBinaryName().equals(to.getBinaryName());
+        }
+        //todo
+        return from.isSubTypeCompatible(to);
     }
 
     //is base is super of type

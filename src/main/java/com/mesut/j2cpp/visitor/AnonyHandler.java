@@ -27,7 +27,7 @@ public class AnonyHandler {
 
         SourceVisitor newVisitor = new SourceVisitor(visitor.source);
         visitor.typeVisitor.fromBinding(declaration.resolveBinding());
-        //newVisitor.binding = declaration.resolveBinding();
+        newVisitor.binding = declaration.resolveBinding();
 
         DeclarationVisitor declarationVisitor = new DeclarationVisitor(newVisitor);
         for (BodyDeclaration body : (List<BodyDeclaration>) declaration.bodyDeclarations()) {

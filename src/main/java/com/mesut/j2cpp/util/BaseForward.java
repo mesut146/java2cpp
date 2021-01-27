@@ -4,10 +4,7 @@ import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class BaseForward {
     CHeader header;
@@ -19,61 +16,35 @@ public class BaseForward {
 
 
     public void sort() throws Exception {
-        Set<CType> set = new HashSet<>();
-        for (CClass cc : header.classes) {
-            set.add(cc.getType());
-            //set.addAll(cc.base);
-        }
-        List<CType> list = new ArrayList<>(set);
+        Set<CClass> set = new HashSet<>(header.classes);
+        List<CClass> list = new ArrayList<>(set);
         header.getScope(list);
         sort(list);
 
-        //System.out.println(list);
         isValid(list);
         //then place classes to header in sorted order
-        List<CClass> classes = new ArrayList<>(header.classes);
-        header.classes.clear();
-        for (CType type : list) {
-            //is type is local cls
-            for (CClass cc : classes) {
-                if (cc.getType().equals(type)) {
-                    header.addClass(cc);
-                    break;
-                }
-            }
-        }
+        header.classes = list;
     }
-
-
-    void sort(List<CType> list) {
-        list.sort((o1, o2) -> {
-            for (CClass cc : header.classes) {
-                //if o1 =this and o2=super
-                if (cc.getType().equals(o1) && cc.base.contains(o2)) {
-                    return 1;
-                }
-                else if (cc.getType().equals(o2) && cc.base.contains(o1)) {
-                    //if o2 =this and o1=super
-                    return -1;
-                }
-
+    
+    void sort(List<CClass> list) {
+        list.sort((cur, base) -> {
+            if (cur.base.contains(base.getType())) {
+                return 1;//base must come before me
             }
-            return 0;
+            else if (base.base.contains(cur.getType())) {
+                return -1;//we must come after base
+            }
+            return 0;//unrelated
         });
     }
 
-    void isValid(List<CType> list) throws Exception {
+    void isValid(List<CClass> list) throws Exception {
         for (int i = 0; i < list.size(); i++) {
+            CClass base = list.get(i);
             for (int j = i + 1; j < list.size(); j++) {
-                CType o1 = list.get(i);
-                CType o2 = list.get(j);
-                for (CClass cc : header.classes) {
-                    //if o1 =this and o2=super
-                    if (cc.getType().equals(o1) && cc.base.contains(o2)) {
-                        //if o2 =this and o1=super
-                        throw new Exception("cyclic inheritance between: " + o1 + ", " + o2);
-                    }
-
+                CClass cur = list.get(j);
+                if (base.base.contains(cur)) {
+                    throw new Exception("cyclic inheritance between: " + base + ", " + cur);
                 }
             }
         }

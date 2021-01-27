@@ -48,4 +48,11 @@ public class Util<T> {
         }
         return str;
     }
+
+    public static String trimPrefix(String str, String prefix) {
+        if (str.startsWith(prefix)) {
+            return str.substring(prefix.length());
+        }
+        return str;
+    }
 }

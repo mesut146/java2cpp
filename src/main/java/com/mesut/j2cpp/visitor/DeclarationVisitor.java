@@ -50,10 +50,10 @@ public class DeclarationVisitor {
         header.source.usings.add(header.ns);
     }
 
-    public CClass visit(AnnotationTypeDeclaration node, CClass clazz) {
+    public CClass visit(AnnotationTypeDeclaration node, CClass outer) {
         CClass cc = new CClass();
-        if (clazz != null) {
-            clazz.addInner(cc);
+        if (outer != null) {
+            outer.addInner(cc);
         }
         else {
             header.addClass(cc);
@@ -66,16 +66,16 @@ public class DeclarationVisitor {
         return cc;
     }
 
-    public CClass visit(TypeDeclaration node, CClass clazz) {
+    public CClass visit(TypeDeclaration node, CClass outer) {
         CClass cc = new CClass();
 
-        if (!Config.move_inners && clazz != null) {
-            clazz.addInner(cc);
+        if (!Config.move_inners && outer != null) {
+            outer.addInner(cc);
         }
         else {
             header.addClass(cc);
-            if (clazz != null) {
-                cc.parent = clazz;
+            if (outer != null) {
+                cc.parent = outer;
             }
         }
 
@@ -101,13 +101,14 @@ public class DeclarationVisitor {
         });
 
         //make sure it is present in type map
-        typeVisitor.fromBinding(node.getName().resolveTypeBinding());
+        typeVisitor.fromBinding(node.resolveBinding());
+        sourceVisitor.binding = node.resolveBinding();
 
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
 
         //handle inner's parent reference
-        if (clazz != null && !Modifier.isStatic(node.getModifiers())) {
-            InnerHelper.handleRef(cc, clazz);
+        if (outer != null && !Modifier.isStatic(node.getModifiers())) {
+            InnerHelper.handleRef(cc, outer);
         }
         return cc;
     }

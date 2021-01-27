@@ -26,9 +26,9 @@ public class Conv {
         Converter converter = new Converter(dir, out);
         //converter.addClasspath(dir);
         //converter.getFilter().addIncludeDir("java.lang");
-        converter.getFilter().addIncludeClass("com/android/dx/ssa/SsaMethod.java");
-        //converter.getFilter().addIncludeClass("com/android/dx/command/findusages/FindUsages.java");
-        //converter.setDebugMembers(true);
+        //converter.getFilter().addIncludeClass("com/android/dx/dex/code/RopTranslator.java");
+        //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
+        converter.getFilter().addIncludeClass("com/android/dx/merge/DexMerger.java");
         converter.convert();
     }
 
