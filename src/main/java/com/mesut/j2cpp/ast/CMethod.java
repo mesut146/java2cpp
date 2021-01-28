@@ -41,7 +41,7 @@ public class CMethod extends ModifierNode {
         StringBuilder sb = new StringBuilder();
         if (!template.isEmpty()) {
             getScope(template);
-            sb.append(template.toString());
+            sb.append(template.toString()).append("\n");
         }
         if (!isCons) {
             type = type.copy();

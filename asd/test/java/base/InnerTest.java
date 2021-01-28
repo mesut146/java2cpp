@@ -19,7 +19,10 @@ public class InnerTest {
        new InnerTest(){
          void print(){
            int val = x;//ref.x or super.x , both works?
+           anonyMethod();
+           InnerTest.print_static();
          }
+         void anonyMethod(){}
        };
     }
     
@@ -27,6 +30,8 @@ public class InnerTest {
        new MyType(){
          void anony(){
            int val = x;//ref.x
+           print();
+           InnerTest.print_static();
          }
        };
     

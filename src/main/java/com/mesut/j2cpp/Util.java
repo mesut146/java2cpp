@@ -5,7 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class Util<T> {
+public class Util {
     public static void save(String data, String file) {
         try {
             FileOutputStream fos = new FileOutputStream(file);
@@ -27,6 +27,7 @@ public class Util<T> {
         }
         return sb.toString();
     }
+
 
     public static String relative(String file, String root) {
         if (file.equals(root)) {

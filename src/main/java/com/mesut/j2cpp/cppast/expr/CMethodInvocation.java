@@ -15,10 +15,11 @@ public class CMethodInvocation extends CExpression {
 
     @Override
     public String toString() {
-        getScope(scope, name);
+        getScope(name);
         getScope(arguments);
         StringBuilder sb = new StringBuilder();
         if (scope != null) {
+            scope.scope = super.scope;
             sb.append(scope);
             if (isArrow) {
                 sb.append("->");

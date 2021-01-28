@@ -44,4 +44,17 @@ public class PrintHelper {
         return sb.toString();
     }
 
+    public static String body(String body, String indent, boolean first) {
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (String line : body.split("\n")) {
+            if (i > 0 || !first) {
+                sb.append(indent);
+            }
+            sb.append(line).append("\n");
+            i++;
+        }
+        return sb.toString();
+    }
+
 }

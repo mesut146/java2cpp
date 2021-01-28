@@ -20,6 +20,7 @@ public class CType extends CExpression {
     }
 
     public CType(String type) {
+        type = trim(type);
         type = type.replace(".", "::");
         String[] arr = type.split("::");
         this.type = arr[arr.length - 1];
@@ -31,6 +32,13 @@ public class CType extends CExpression {
     public CType(String type, boolean isTemplate) {
         this(type);
         this.isTemplate = isTemplate;
+    }
+
+    String trim(String str) {
+        if (str.contains("<")) {
+            return str.substring(0, str.indexOf("<"));
+        }
+        return str;
     }
 
     public String getName() {

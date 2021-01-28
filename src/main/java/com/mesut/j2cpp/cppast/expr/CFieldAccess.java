@@ -10,7 +10,8 @@ public class CFieldAccess extends CExpression {
 
     @Override
     public String toString() {
-        getScope(scope, name);
+        getScope(name);
+        scope.scope = super.scope;
         if (isArrow) {
             return scope + "->" + name;
         }

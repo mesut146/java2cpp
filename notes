@@ -1,24 +1,8 @@
-todo list
+jdeps -verbose:class -filter:archive '/home/mesut/Desktop/AndroidStudioProjects/ide/subprojects/dx-tool/dx-tool-r8-v4.jar' | awk '{print $3}' | sort -u
+
 
 main entry point
 
-#pointers
-  field type
-  method return type
-  method param type
-  local var type
-  template arg
-  array type
-  cast type
-
-#non-pointers
-  new statement
-  template type(sender already makes it pointer)
-  base classes
-  primitive
-
-
-#forward class dec
 
 #array.length
 array to pointer
@@ -37,21 +21,3 @@ convert normally with name map
 
 update all references to members
 
-
-#try finally
-try{
-int var;
-if(exp){
-goto finally;
-return var;
-}else{
-goto finally;
-throw exception;
-}
-}
-finally:{
-stmt;
-}
-if return,run finally first then return
-if throw exception,run finally again
-be sure both try&finally cant have return or throw

@@ -34,8 +34,8 @@ public class CClassImpl extends CExpression {
         printFields(sb);
         printMethods(sb);
 
-        sb.append("};\n");
-        sb.append("//").append(clazz.name);
+        sb.append("};");
+        sb.append("//").append(clazz.name).append("\n");
         return sb.toString();
     }
 

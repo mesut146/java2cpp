@@ -622,11 +622,14 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 return invocation;
             }
             //outer method
-            if (!clazz.isStatic && !isAbstract && !type.equals(clazz.getType()) && !isSame(this.binding, binding.getDeclaringClass()))
-            {
+            if (!clazz.isStatic && !isAbstract && !type.equals(clazz.getType()) && !isSame(this.binding, binding.getDeclaringClass())) {
                 //parent method called, set parent as scope
-                invocation.scope = ref(clazz, type);
                 invocation.isArrow = true;
+                CExpression ref = ref(clazz, type);
+                if (ref == null) {
+                    return invocation;
+                }
+                invocation.scope = ref;
                 return invocation;
             }
         }
@@ -690,12 +693,16 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                         fieldAccess.scope = type;
                         return fieldAccess;
                     }
-                    if (isSuper(BindingMap.get(clazz.getType()), ((IVariableBinding) binding).getDeclaringClass())) {
+                    if (isSuper(this.binding, variableBinding.getDeclaringClass())) {
                         return name;
                     }
-                    if (!type.equals(clazz.getType())) {
+                    if (!type.equals(clazz.getType()) && !isSame(this.binding, variableBinding.getDeclaringClass())) {
                         //check if we are non static inner or anonymous class
                         CExpression rr = ref(clazz, type);
+                        if (rr == null) {
+                            Logger.log(clazz, "can't find name ref " + name);
+                            return name;
+                        }
                         CFieldAccess fieldAccess = new CFieldAccess();
                         fieldAccess.name = name;
                         fieldAccess.isArrow = true;
@@ -709,11 +716,18 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     }
 
     CExpression ref(CClass from, CType target) {
+        if (from.parent == null) {
+            return null;
+        }
         if (from.parent.getType().equals(target)) {
             return new CName(Config.parentName);
         }
+        CExpression ref = ref(from.parent, target);
+        if (ref == null) {
+            return null;
+        }
         CFieldAccess fieldAccess = new CFieldAccess();
-        fieldAccess.scope = ref(from.parent, target);
+        fieldAccess.scope = ref;
         fieldAccess.name = new CName(Config.parentName);
         fieldAccess.isArrow = true;
         return fieldAccess;

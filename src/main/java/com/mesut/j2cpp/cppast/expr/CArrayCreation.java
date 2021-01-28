@@ -20,10 +20,13 @@ public class CArrayCreation extends CExpression {
 
     @Override
     public String toString() {
+        getScope(dimensions);
+        getScope(type);
+        type.isPointer = false;
+
         if (Config.use_vector) {
             return "new " + ArrayHelper.printRight(dimensions, type, 0);
         }
-        type.isPointer = false;
         return "new " + type + "()";
     }
 }

@@ -121,7 +121,7 @@ public class CClass extends CStatement {
             sb.append("/*interface*/\n");
         }
         if (!template.isEmpty()) {
-            sb.append("\n").append(template);
+            sb.append("\n").append(template).append("\n");
         }
         //class decl
         sb.append("class ").append(name);

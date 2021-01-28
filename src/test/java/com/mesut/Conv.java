@@ -1,18 +1,35 @@
 package com.mesut;
 
 import com.mesut.j2cpp.Converter;
+import com.mesut.j2cpp.Util;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Conv {
     public static String rtJar = "/home/mesut/Desktop/j2cpp-dev/rt7.jar";
 
+    @Test
+    public void testList() throws URISyntaxException, IOException {
+        String dir = "/home/mesut/Desktop/j2cpp-dev/src7";
+        String out = "/home/mesut/Desktop/j2cpp-dev/src7-cpp";
+        Converter converter = new Converter(dir, out);
+        for (String line : Files.readAllLines(Paths.get(getClass().getResource("/list").toURI()))) {
+            converter.getFilter().addIncludeClass(line);
+        }
+        //converter.getFilter().addIncludeClass("java/util/Collections.java");
+        converter.convert();
+    }
 
     @Test
     public void testRt() {
         String dir = "/home/mesut/Desktop/j2cpp-dev/src7";
         String out = "/home/mesut/Desktop/j2cpp-dev/src7-cpp";
         Converter converter = new Converter(dir, out);
-        //converter.addClasspath(dir);
         //converter.getFilter().addIncludeDir("java.lang");
         //converter.getFilter().addIncludeClass("java.lang.CharacterData01.java");
         //converter.setDebugMembers(true);
@@ -28,7 +45,7 @@ public class Conv {
         //converter.getFilter().addIncludeDir("java.lang");
         //converter.getFilter().addIncludeClass("com/android/dx/dex/code/RopTranslator.java");
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
-        converter.getFilter().addIncludeClass("com/android/dx/merge/DexMerger.java");
+        //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
         converter.convert();
     }
 
@@ -58,9 +75,9 @@ public class Conv {
         Converter converter = new Converter(dir, out);
         converter.addClasspath(rtJar);
         //converter.getFilter().addIncludeClass("base.InnerTest");
-        //converter.getFilter().addIncludeClass("base.SuperTest");
+        converter.getFilter().addIncludeClass("base.SuperTest");
         //converter.getFilter().addIncludeClass("base.iface");
-        converter.getFilter().addIncludeClass("base.ArrayTest");
+        //converter.getFilter().addIncludeClass("base.ArrayTest");
         converter.setDebugMembers(true);
         converter.convert();
     }
