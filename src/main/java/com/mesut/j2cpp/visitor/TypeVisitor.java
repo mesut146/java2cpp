@@ -103,6 +103,7 @@ public class TypeVisitor {
             if (Config.ptr_typeArg) {
                 arg.setPointer(true);
             }
+            arg.typeNames.clear();//c++ doesnt allow nested type args?
             type.typeNames.add(arg);
         }
         return type;

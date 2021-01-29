@@ -1,0 +1,31 @@
+{
+  "name": "java.util.Set",
+  "target": "std::unordered_set",
+  "include": "<unordered_set>",
+  "methods:": [
+    {
+      "name": "add(<T>)",
+      "target": "insert($1)"
+    },
+    {
+      "name": "remove(java.lang.Object)",
+      "target": "erase($1)"
+    },
+    {
+      "name": "size()",
+      "target": "size()"
+    },
+    {
+      "name": "clear()",
+      "target": "clear()"
+    },
+    {
+      "name": "isEmpty()",
+      "target": "empty()"
+    },
+    {
+      "name": "contains(java.lang.Object)",
+      "target": "(find($1) != ${varName}.end())"
+    }
+  ]
+}

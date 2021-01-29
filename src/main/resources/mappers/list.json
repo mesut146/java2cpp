@@ -1,0 +1,47 @@
+{
+  "name": "java.util.List,java.util.ArrayList",
+  "target": "std::vector",
+  "include": "CppHelper.h,<vector>",
+  "methods": [
+    {
+      "name": "add(<T>)",
+      "target": "push_back($1)"
+    },
+    {
+      "name": "add(int,<T>)",
+      "target": "insert($1, $2)"
+    },
+    {
+      "name": "addAll(java.util.Collection)",
+      "target": "insert($1)"
+    },
+    {
+      "name": "get(int)",
+      "target": "at($1)"
+    },
+    {
+      "name": "remove(int)",
+      "target": "erase($1)"
+    },
+    {
+      "name": "remove(<T>)",
+      "target": "erase(CppHelper::indexOf(${varName}, $1))"
+    },
+    {
+      "name": "indexOf(<T>)",
+      "target": "CppHelper::indexOf(${varName}, $1)"
+    },
+    {
+      "name": "size()",
+      "target": "size()"
+    },
+    {
+      "name": "isEmpty()",
+      "target": "empty()"
+    },
+    {
+      "name": "clear()",
+      "target": "clear()"
+    }
+  ]
+}

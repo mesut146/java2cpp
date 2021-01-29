@@ -2,6 +2,7 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Logger;
+import com.mesut.j2cpp.Mapper;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.*;
 import com.mesut.j2cpp.cppast.expr.*;
@@ -24,6 +25,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     CMethod method;
     Catcher catcher;
     ITypeBinding binding;
+    Mapper mapper;
 
     public SourceVisitor(CSource source) {
         this.source = source;

@@ -1,0 +1,31 @@
+{
+  "name": "java.util.Stack",
+  "target": "std::stack",
+  "include": "<stack>",
+  "methods": [
+    {
+      "name": "push(<T>)",
+      "target": "push($1)"
+    },
+    {
+      "name": "add(<T>)",
+      "target": "push($1)"
+    },
+    {
+      "name": "peek()",
+      "target": "top()"
+    },
+    {
+      "name": "pop()",
+      "target": "pop()"
+    },
+    {
+      "name": "isEmpty()",
+      "target": "empty()"
+    },
+    {
+      "name": "size()",
+      "target": "size()"
+    }
+  ]
+}

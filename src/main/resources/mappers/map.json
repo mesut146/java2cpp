@@ -1,0 +1,27 @@
+{
+  "name": "java.util.Map",
+  "target": "std::unordered_map",
+  "include": "<unordered_map>",
+  "methods": [
+    {
+      "name": "put()",
+      "target": "insert_or_assign($1)"
+    },
+    {
+      "name": "get()",
+      "target": "at($1)"
+    },
+    {
+      "name": "clear()",
+      "target": "clear()"
+    },
+    {
+      "name": "isEmpty()",
+      "target": "empty()"
+    },
+    {
+      "name": "size()",
+      "target": "size()"
+    }
+  ]
+}

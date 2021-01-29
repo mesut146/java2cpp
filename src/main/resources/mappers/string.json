@@ -1,0 +1,75 @@
+{
+  "name": "java.lang.String",
+  "target": "std::string",
+  "include": "<string>,StringHelper.h",
+  "methods:": [
+    {
+      "name": "length()",
+      "target": "size()"
+    },
+    {
+      "name": "substring(int)",
+      "target": "substr($1)"
+    },
+    {
+      "name": "substring(int,int)",
+      "target": "substr($1, $2 - $1)"
+    },
+    {
+      "name": "indexOf(java.lang.String)",
+      "target": "find($1)"
+    },
+    {
+      "name": "indexOf(java.lang.String,int)",
+      "target": "find($1, $2)"
+    },
+    {
+      "name": "indexOf(int)",
+      "target": "find($1)"
+    },
+    {
+      "name": "indexOf(int,int)",
+      "target": "find($1, $2)"
+    },
+    {
+      "name": "toCharArray()",
+      "target": "data()"
+    },
+    {
+      "name": "compareTo(java.lang.String)",
+      "target": "compare(*$1)"
+    },
+    {
+      "name": "charAt(int)",
+      "target": "at($1)"
+    },
+    {
+      "name": "contains(java.lang.String)",
+      "target": "(find($1) != std::string::npos)"
+    },
+    {
+      "name": "endsWith(java.lang.String)",
+      "target": "compare(${varName}.size() - $1.size(), $1.size(), $1)"
+    },
+    {
+      "name": "equals(java.lang.Object)",
+      "target": "compare((std::string*)$1) == 0"
+    },
+    {
+      "name": "format(java.lang.String,java.lang.Object...)",
+      "target": "StringHelper.format($1, $2)"
+    },
+    {
+      "name": "getBytes()",
+      "target": "data()"
+    },
+    {
+      "name": "lastIndexOf(java.lang.String)",
+      "target": "rfind($1)"
+    },
+    {
+      "name": "replace(java.lang.String,java.lang.String)",
+      "target": "StringHelper::replace(${varName}, $1, $2)"
+    }
+  ]
+}

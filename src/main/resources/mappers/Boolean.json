@@ -1,0 +1,26 @@
+{
+  "name": "java.lang.Boolean",
+  "target": "bool",
+  "methods": [
+    {
+      "name": "Boolean(java.lang.String)",
+      "targetExpr": true,
+      "target": "($1 == \"true\")"
+    },
+    {
+      "name": "Boolean(boolean)",
+      "targetExpr": true,
+      "target": "$1"
+    },
+    {
+      "name": "parseBoolean(java.lang.String)",
+      "targetExpr": true,
+      "target": "($1 == \"true\")"
+    },
+    {
+      "name": "valueOf(java.lang.String)",
+      "targetExpr": true,
+      "target": "($1 == \"true\")"
+    }
+  ]
+}
