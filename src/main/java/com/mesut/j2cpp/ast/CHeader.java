@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.cppast.CNode;
 import com.mesut.j2cpp.util.LocalForwardDeclarator;
 import com.mesut.j2cpp.util.PrintHelper;
@@ -79,6 +80,7 @@ public class CHeader extends CNode {
         StringBuilder sb = new StringBuilder();
         sb.append("#pragma once\n\n");
         for (String imp : includes) {
+            imp = Util.trimSuffix(imp, ".h");
             sb.append(String.format("#include \"%s.h\"", imp));
             sb.append("\n");
         }

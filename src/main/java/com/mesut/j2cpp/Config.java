@@ -11,6 +11,10 @@ public class Config {
     public static boolean common_forwards = true;
     public static boolean include_common_forwards = true;
 
+    //make all in one header
+    public static boolean common_headers = true;
+    public static boolean include_common_headers = true;
+
     //write headers for classpath classes
     public static boolean writeLibHeader = true;
 

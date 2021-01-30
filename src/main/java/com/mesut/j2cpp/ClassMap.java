@@ -1,8 +1,6 @@
 package com.mesut.j2cpp;
 
-import com.mesut.j2cpp.ast.CClass;
-import com.mesut.j2cpp.ast.CType;
-import com.mesut.j2cpp.ast.Template;
+import com.mesut.j2cpp.ast.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +10,7 @@ import java.util.Map;
 //hold all classes and inheritance relation
 public class ClassMap {
 
-    Map<String, ClassDecl> map = new HashMap<>();
+    public Map<String, ClassDecl> map = new HashMap<>();
 
     public void add(CClass cc) {
         ClassDecl decl = get(cc.getType());
@@ -40,6 +38,8 @@ public class ClassMap {
     //single class decl
     public static class ClassDecl {
         public Template template;
+        public List<CMethod> methods = new ArrayList<>();
+        public List<CField> fields = new ArrayList<>();
         CType type;
         List<ClassDecl> base = new ArrayList<>();
 

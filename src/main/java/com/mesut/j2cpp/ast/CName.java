@@ -26,7 +26,6 @@ public class CName extends CExpression {
         return new CName(name);
     }
 
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

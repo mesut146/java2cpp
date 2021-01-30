@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.LibImplHandler;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.Mapper;
 import com.mesut.j2cpp.ast.*;
@@ -343,6 +344,12 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(FieldAccess node, CNode arg) {
+        IVariableBinding variableBinding = node.resolveFieldBinding();
+        if (variableBinding != null && Config.writeLibHeader && variableBinding.isField()) {
+            LibImplHandler.instance.addField(variableBinding);
+        }
+
+
         CFieldAccess fieldAccess = new CFieldAccess();
         Expression scope = node.getExpression();
         CExpression scopeExpr = (CExpression) visitExpr(scope, arg);
@@ -607,6 +614,11 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             invocation.isArrow = !isStatic;
         }
 
+        if (binding != null && !binding.getDeclaringClass().isFromSource() && Config.writeLibHeader) {
+            //Logger.log(clazz, node.getName().getIdentifier());
+            LibImplHandler.instance.addMethod(binding);
+        }
+
         if (scope == null && binding != null) {
             CType type = typeVisitor.fromBinding(binding.getDeclaringClass());
             //static outer method
@@ -743,6 +755,11 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(QualifiedName node, CNode arg) {
         IBinding binding = node.resolveBinding();
+
+        if ((binding instanceof IVariableBinding) && Config.writeLibHeader) {
+            LibImplHandler.instance.addField((IVariableBinding) binding);
+        }
+        
         if (binding == null) {
             Logger.logBinding(clazz, node.toString());
             //normal qualified name access

@@ -36,6 +36,7 @@ public class Converter {
     int count = 0;
     ClassMap classMap;
     CHeader forwardHeader;
+    CHeader commonHeader;
 
     public Converter(String srcDir, String destDir) {
         this.srcDir = srcDir;
@@ -45,6 +46,7 @@ public class Converter {
         cMakeWriter.sourceDir = destDir;
         target = cMakeWriter.addTarget("mylib", false);
         classMap = new ClassMap();
+        commonHeader = new CHeader("all.h");
         forwardHeader = new CHeader("common.h");
         forwardHeader.forwardDeclarator = new LocalForwardDeclarator(classMap);
         try {
@@ -126,6 +128,14 @@ public class Converter {
             File file = new File(headerDir, forwardHeader.rpath);
             Files.write(file.toPath(), forwardHeader.toString().getBytes());
         }
+        if (Config.common_headers) {
+            File file = new File(headerDir, commonHeader.rpath);
+            Files.write(file.toPath(), commonHeader.toString().getBytes());
+        }
+
+        if (Config.writeLibHeader) {
+            LibImplHandler.instance.writeAll(new File(headerDir, "lib"));
+        }
     }
 
     private void convertDir() throws IOException {
@@ -167,7 +177,7 @@ public class Converter {
         try {
             String relPath = Util.trimPrefix(path, srcDir);
             relPath = Util.trimPrefix(relPath, "/");
-            System.out.println("converting " + relPath);
+            //System.out.println("converting " + relPath);
             CHeader header = new CHeader(Util.trimSuffix(relPath, "java") + "h");
             CSource source = new CSource(header);
 
@@ -176,6 +186,10 @@ public class Converter {
 
             headerVisitor.convert(cu);
             sourceVisitor.convert();
+
+            if (Config.common_headers && Config.include_common_headers) {
+                source.includes.add(0, commonHeader.getInclude());
+            }
 
             if (Config.move_inners_out) {
                 for (int i = 0; i < header.classes.size(); i++) {
@@ -193,17 +207,16 @@ public class Converter {
                     source.addInclude(hh.getInclude());
                     writeHeader(hh);
                     if (i > 0) {
-                        System.out.println("inner " + hh.getInclude());
+                        //System.out.println("inner " + hh.getInclude());
                     }
 
                 }
             }
             else {
                 writeHeader(header);
-
             }
+            classMap.addAll(header.classes);
             if (Config.common_forwards) {
-                classMap.addAll(header.classes);
                 forwardHeader.forwardDeclarator.addAll(header.classes);
                 if (Config.include_common_forwards) {
                     source.includes.add(0, forwardHeader.rpath);
@@ -229,6 +242,10 @@ public class Converter {
         File header_file = new File(headerDir, header.getInclude().replace(".java", ".h"));
         header_file.getParentFile().mkdirs();
         Files.write(header_file.toPath(), header.toString().getBytes());
+
+        if (Config.common_headers) {
+            commonHeader.addInclude(header.getInclude());
+        }
     }
 
     CompilationUnit parse(File file) throws IOException {

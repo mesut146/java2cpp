@@ -87,10 +87,6 @@ public class TypeVisitor {
     public CType visit(ArrayType n) {
         CType elemtype = visit(n.getElementType());
         return ArrayHelper.makeArrayType(elemtype, n.getDimensions());
-        /*int size = n.getDimensions();
-        CType vect = TypeHelper.getVectorType();
-
-        return new CArrayType(elemtype, n.getDimensions());*/
     }
 
     public CType visit(WildcardType n) {
