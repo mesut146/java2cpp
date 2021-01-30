@@ -2,6 +2,7 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.util.BindingMap;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
@@ -43,7 +44,8 @@ public class TypeVisitor {
             }*/
             if (!binding.isGenericType() && !binding.isNested()) {
                 if (!binding.isFromSource()) {
-                    header.addInclude(name.replace(".", "/"));//inner classes too?
+                    header.source.addInclude(name.replace('.', '/'));
+                    //header.addInclude(name.replace(".", "/"));//inner classes too?
                 }
             }
         }
@@ -83,9 +85,12 @@ public class TypeVisitor {
     }
 
     public CType visit(ArrayType n) {
-        CType type = visit(n.getElementType());
-        type.setPointer(true);//?
-        return new CArrayType(type, n.getDimensions());
+        CType elemtype = visit(n.getElementType());
+        return ArrayHelper.makeArrayType(elemtype, n.getDimensions());
+        /*int size = n.getDimensions();
+        CType vect = TypeHelper.getVectorType();
+
+        return new CArrayType(elemtype, n.getDimensions());*/
     }
 
     public CType visit(WildcardType n) {

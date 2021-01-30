@@ -24,6 +24,19 @@ public class CSource extends CNode {
         scope = this;
     }
 
+    public void addInclude(String include) {
+        //prevent same header includes itself and other duplications
+        if (!include.equals(header.getPathNoExt()) && !includes.contains(include)) {
+            includes.add(include);
+        }
+    }
+
+    public void useNamespace(Namespace ns) {
+        if (!usings.contains(ns)) {
+            usings.add(ns);
+        }
+    }
+
     //trim type's namespace by usings
     //java::lang::String   using java::lang -> String
     public CType normalizeType(CType type) {
@@ -33,6 +46,9 @@ public class CSource extends CNode {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        for (String inc : includes) {
+            sb.append(PrintHelper.include(inc)).append("\n");
+        }
         sb.append(PrintHelper.include(header.getInclude()));
         sb.append("\n\n");
         if (!usings.isEmpty()) {

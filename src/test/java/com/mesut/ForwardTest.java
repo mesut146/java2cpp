@@ -2,7 +2,7 @@ package com.mesut;
 
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
-import com.mesut.j2cpp.util.BaseForward;
+import com.mesut.j2cpp.util.BaseClassSorter;
 import org.junit.Test;
 
 import java.util.Stack;
@@ -34,7 +34,7 @@ public class ForwardTest {
 
         header.getScope(header.classes);
 
-        BaseForward forward = new BaseForward(header);
+        BaseClassSorter forward = new BaseClassSorter(header);
         forward.sort();
         System.out.println(header);
     }

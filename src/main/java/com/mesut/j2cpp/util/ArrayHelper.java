@@ -2,10 +2,39 @@ package com.mesut.j2cpp.util;
 
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.cppast.expr.CObjectCreation;
 
 import java.util.List;
 
 public class ArrayHelper {
+
+    public static CType makeArrayType(CType elemType, int size) {
+        elemType.setPointer(true);
+        CType vect = TypeHelper.getVectorType();
+        CType last = vect;
+        for (int i = 0; i < size - 1; i++) {
+            CType tmp = TypeHelper.getVectorType();
+            tmp.setPointer(true);
+            last.typeNames.add(tmp);
+            last = tmp;
+        }
+        last.typeNames.add(elemType);
+        return vect;
+    }
+
+    public static CExpression makeRight(CType elemType, List<CExpression> dims) {
+        return makeRightAlloc(elemType, dims.size(), dims);
+    }
+
+    public static CExpression makeRightAlloc(CType elemType, int size, List<CExpression> dims) {
+        CObjectCreation cur = new CObjectCreation();
+        cur.type = makeArrayType(elemType, size);
+        cur.args.add(dims.get(0));
+        if (size > 1) {//todo zero
+            cur.args.add(makeRightAlloc(elemType, size - 1, dims.subList(1, dims.size())));//allocator
+        }
+        return cur;
+    }
 
     public static String print(int level, CType type) {
         if (level == 0) {
@@ -17,36 +46,4 @@ public class ArrayHelper {
         return "array_multi<" + print(level - 1, type) + ">";
     }
 
-
-    //std::vector<std::vector<std::vector<type*>*>*>*
-    public static String printLeft(int dim, CType type) {
-        if (dim == 0) {
-            return type.normal(type.scope);
-        }
-        StringBuilder sb = new StringBuilder();
-        CType vect = TypeHelper.getVectorType();
-        sb.append(vect.normal(type.scope));
-        sb.append("<");
-        sb.append(printLeft(dim - 1, type));
-        sb.append(">*");//pointer
-        return sb.toString();
-    }
-
-    public static String printRight(List<CExpression> dims, CType type, int i) {
-        StringBuilder sb = new StringBuilder();
-        CType vect = TypeHelper.getVectorType();
-
-        sb.append(vect.normal(type.scope));
-        sb.append("<");
-        sb.append(printLeft(dims.size() - i - 1, type));
-        sb.append(">");
-        sb.append("(");
-        sb.append(dims.get(i));
-        if (i < dims.size() - 1) {
-            sb.append(", new ");
-            sb.append(printRight(dims, type, i + 1));
-        }
-        sb.append(")");
-        return sb.toString();
-    }
 }

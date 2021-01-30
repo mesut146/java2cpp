@@ -8,6 +8,7 @@ import com.mesut.j2cpp.cppast.*;
 import com.mesut.j2cpp.cppast.expr.*;
 import com.mesut.j2cpp.cppast.literal.*;
 import com.mesut.j2cpp.cppast.stmt.*;
+import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.util.BindingMap;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
@@ -542,8 +543,8 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(ArrayCreation node, CNode arg) {
-        CType type = typeVisitor.visitType(node.getType(), clazz).copy();
         if (node.getInitializer() != null) {
+            CType type = typeVisitor.visitType(node.getType(), clazz).copy();
             //initializer doesn't need dimensions
             //todo nope
             CClassInstanceCreation creation = new CClassInstanceCreation();
@@ -553,15 +554,13 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             return creation;
         }
         else {
-            CArrayCreation arrayCreation2 = new CArrayCreation(type);
-            int dims = node.getType().getDimensions();
             List<CExpression> list = list(node.dimensions());
-            arrayCreation2.dimensions.addAll(list);
-            //fill non specified size
-            for (int i = node.dimensions().size(); i < dims; i++) {
-                arrayCreation2.dimensions.add(new CNumberLiteral("0"));
+            //set missing dims to zero
+            for (int i = node.dimensions().size(); i < node.getType().getDimensions(); i++) {
+                list.add(new CNumberLiteral("0"));
             }
-            return arrayCreation2;
+            CType elemType = typeVisitor.visitType(node.getType().getElementType(), clazz);
+            return ArrayHelper.makeRight(elemType, list);
         }
     }
 

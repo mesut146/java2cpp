@@ -20,12 +20,17 @@ public class Mapper {
         String name = cls.getString("name");
         String target = cls.getString("target");
         String include = cls.getString("include");
-        JSONArray methods = cls.getJSONArray("methods");
+        JSONArray methods = getObjects(cls);
         for (int i = 0; i < methods.length(); i++) {
             JSONObject method = methods.getJSONObject(i);
             String methodName = cls.getString("name");
             String methodTarget = cls.getString("target");
         }
+    }
+
+    private JSONArray getObjects(JSONObject cls) {
+        JSONArray methods = cls.getJSONArray("methods");
+        return methods;
     }
 
     CExpression mapMethod() {

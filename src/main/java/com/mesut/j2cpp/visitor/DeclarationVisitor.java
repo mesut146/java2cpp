@@ -6,6 +6,7 @@ import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CNode;
 import com.mesut.j2cpp.cppast.expr.CClassInstanceCreation;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
+import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -45,9 +46,7 @@ public class DeclarationVisitor {
         if (n != null) {
             ns = new Namespace(n.getName().getFullyQualifiedName());
         }
-        header.ns = ns;
-        header.using.add(header.ns);
-        header.source.usings.add(header.ns);
+        header.setNs(ns);
     }
 
     public CClass visit(AnnotationTypeDeclaration node, CClass outer) {
@@ -182,8 +181,7 @@ public class DeclarationVisitor {
             clazz.addField(field);
             if (frag.getExtraDimensions() > 0) {
                 //c style array
-                CArrayType arrayType = new CArrayType(type.copy(), frag.getExtraDimensions());
-                field.setType(arrayType);
+                field.setType(ArrayHelper.makeArrayType(type, frag.getExtraDimensions()));
             }
             else {
                 field.setType(type);
@@ -214,8 +212,7 @@ public class DeclarationVisitor {
             method.isCons = true;
         }
         else {
-            Type type = node.getReturnType2();
-            method.setType(typeVisitor.visitType(type, clazz));
+            method.setType(typeVisitor.visitType(node.getReturnType2(), clazz));
         }
 
         method.name = new CName(node.getName().getIdentifier());
@@ -233,14 +230,12 @@ public class DeclarationVisitor {
             CParameter cp = new CParameter();
             CType ptype = typeVisitor.visitType(param.getType(), clazz);
 
-
             if (param.isVarargs()) {//todo not just array, maybe as vararg
-                cp.setType(new CArrayType(ptype, 1));
+                cp.setType(ArrayHelper.makeArrayType(ptype, 1));
             }
             else {
                 if (param.getExtraDimensions() > 0) {
-                    CArrayType arrayType = new CArrayType(ptype, param.getExtraDimensions());
-                    cp.setType(arrayType);
+                    cp.setType(ArrayHelper.makeArrayType(ptype, param.getExtraDimensions()));
                 }
                 else {
                     cp.setType(ptype);

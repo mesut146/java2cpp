@@ -116,7 +116,7 @@ public class CType extends CExpression {
     }
 
     public void forward(CHeader header) {
-        if (!(this instanceof CUnionType) && !isPrim() && !isVoid() && !isTemplate && !(this instanceof CArrayType)) {//has to be class type
+        if (!(this instanceof CUnionType) && !isPrim() && !isVoid() && !isTemplate) {//has to be class type
             header.forward(this);
         }
     }

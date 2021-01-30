@@ -1,9 +1,10 @@
 package com.mesut.j2cpp;
 
 
+import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
-import com.mesut.j2cpp.util.BaseForward;
+import com.mesut.j2cpp.util.LocalForwardDeclarator;
 import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
 import com.mesut.j2cpp.visitor.SourceVisitor;
@@ -24,8 +25,6 @@ public class Converter {
     public List<String> classpath = new ArrayList<>();
     public CMakeWriter cMakeWriter;
     public CMakeWriter.Target target;
-    public boolean debug_header = false;
-    public boolean debug_source = false;
     public boolean debug_fields = false;
     public boolean debug_methods = false;
     public boolean stopOnError = false;
@@ -35,6 +34,8 @@ public class Converter {
     Filter filter;
     ASTParser parser;
     int count = 0;
+    ClassMap classMap;
+    CHeader forwardHeader;
 
     public Converter(String srcDir, String destDir) {
         this.srcDir = srcDir;
@@ -43,6 +44,9 @@ public class Converter {
         cMakeWriter = new CMakeWriter("myproject");
         cMakeWriter.sourceDir = destDir;
         target = cMakeWriter.addTarget("mylib", false);
+        classMap = new ClassMap();
+        forwardHeader = new CHeader("common.h");
+        forwardHeader.forwardDeclarator = new LocalForwardDeclarator(classMap);
         try {
             Logger.init(new File(destDir, "log.txt"));
         } catch (IOException e) {
@@ -61,7 +65,6 @@ public class Converter {
 
     @SuppressWarnings("rawtypes,unchecked")
     public void initParser() {
-        if (parser == null) ;
         parser = ASTParser.newParser(AST.JLS13);
         List<String> cpDirs = new ArrayList<>();
         List<String> cpJars = new ArrayList<>();
@@ -92,19 +95,9 @@ public class Converter {
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
     }
 
-    public void setDebugAll(boolean val) {
-        setDebugSource(val);
-        setDebugMembers(val);
-    }
-
     public void setDebugMembers(boolean val) {
         debug_fields = val;
         debug_methods = val;
-    }
-
-    public void setDebugSource(boolean val) {
-        debug_header = val;
-        debug_source = val;
     }
 
     public void convert() {
@@ -118,6 +111,7 @@ public class Converter {
             }
             convertDir();
             writeCmake();
+            writeForwards();
             if (Logger.hasErrors) {
                 System.err.println("conversion has errors check logs");
             }
@@ -125,6 +119,13 @@ public class Converter {
             e.printStackTrace();
         }
         System.out.println("conversion done for " + count + " files");
+    }
+
+    void writeForwards() throws IOException {
+        if (Config.common_forwards) {
+            File file = new File(headerDir, forwardHeader.rpath);
+            Files.write(file.toPath(), forwardHeader.toString().getBytes());
+        }
     }
 
     private void convertDir() throws IOException {
@@ -168,32 +169,66 @@ public class Converter {
             relPath = Util.trimPrefix(relPath, "/");
             System.out.println("converting " + relPath);
             CHeader header = new CHeader(Util.trimSuffix(relPath, "java") + "h");
-            CSource cpp = new CSource(header);
+            CSource source = new CSource(header);
 
-            SourceVisitor sourceVisitor = new SourceVisitor(cpp);
+            SourceVisitor sourceVisitor = new SourceVisitor(source);
             DeclarationVisitor headerVisitor = new DeclarationVisitor(sourceVisitor);
 
             headerVisitor.convert(cu);
             sourceVisitor.convert();
 
+            if (Config.move_inners_out) {
+                for (int i = 0; i < header.classes.size(); i++) {
+                    CClass cc = header.classes.get(i);
+                    String inner_path;
+                    if (i == 0) {
+                        inner_path = header.getInclude();
+                    }
+                    else {
+                        inner_path = Util.trimSuffix(relPath, ".java") + "_" + cc.name + ".h";
+                    }
+                    CHeader hh = new CHeader(inner_path);
+                    hh.setNs(header.ns);
+                    hh.addClass(cc);
+                    source.addInclude(hh.getInclude());
+                    writeHeader(hh);
+                    if (i > 0) {
+                        System.out.println("inner " + hh.getInclude());
+                    }
+
+                }
+            }
+            else {
+                writeHeader(header);
+
+            }
+            if (Config.common_forwards) {
+                classMap.addAll(header.classes);
+                forwardHeader.forwardDeclarator.addAll(header.classes);
+                if (Config.include_common_forwards) {
+                    source.includes.add(0, forwardHeader.rpath);
+                }
+            }
             //new BaseForward(header).sort();
 
-            File header_file = new File(headerDir, relPath.replace(".java", ".h"));
             File source_file = new File(destDir, relPath.replace(".java", ".cpp"));
-            header_file.getParentFile().mkdirs();
             source_file.getParentFile().mkdirs();
-            Files.write(header_file.toPath(), header.toString().getBytes());
-            Files.write(source_file.toPath(), cpp.toString().getBytes());
+            Files.write(source_file.toPath(), source.toString().getBytes());
 
             target.addInclude(destDir);
-            target.addInclude(headerDir.getAbsolutePath());
+            target.addInclude(headerDir.getAbsolutePath());//todo once
             target.sourceFiles.add(source_file.getAbsolutePath());
             count++;
         } catch (Exception e) {
             System.err.println("cant convert " + path);
             e.printStackTrace();
         }
+    }
 
+    void writeHeader(CHeader header) throws IOException {
+        File header_file = new File(headerDir, header.getInclude().replace(".java", ".h"));
+        header_file.getParentFile().mkdirs();
+        Files.write(header_file.toPath(), header.toString().getBytes());
     }
 
     CompilationUnit parse(File file) throws IOException {

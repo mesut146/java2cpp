@@ -75,9 +75,9 @@ public class Conv {
         Converter converter = new Converter(dir, out);
         converter.addClasspath(rtJar);
         //converter.getFilter().addIncludeClass("base.InnerTest");
-        converter.getFilter().addIncludeClass("base.SuperTest");
+        //converter.getFilter().addIncludeClass("base.SuperTest");
         //converter.getFilter().addIncludeClass("base.iface");
-        //converter.getFilter().addIncludeClass("base.ArrayTest");
+        converter.getFilter().addIncludeClass("base.ArrayTest");
         converter.setDebugMembers(true);
         converter.convert();
     }

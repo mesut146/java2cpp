@@ -6,14 +6,12 @@ import com.mesut.j2cpp.ast.CType;
 
 import java.util.*;
 
-public class BaseForward {
+public class BaseClassSorter {
     CHeader header;
 
-
-    public BaseForward(CHeader header) {
+    public BaseClassSorter(CHeader header) {
         this.header = header;
     }
-
 
     public void sort() throws Exception {
         Set<CClass> set = new HashSet<>(header.classes);
