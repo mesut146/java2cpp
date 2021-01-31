@@ -1,6 +1,7 @@
 package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.util.LocalForwardDeclarator;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
@@ -9,6 +10,7 @@ import org.eclipse.jdt.core.dom.Modifier;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class LibImplHandler {
     public static LibImplHandler instance = new LibImplHandler();
@@ -27,7 +29,7 @@ public class LibImplHandler {
                 return;
             }
         }
-        System.out.println(binding.getDeclaringClass().getQualifiedName() + "." + binding.getName() + "()");
+        //System.out.println(binding.getDeclaringClass().getQualifiedName() + "." + binding.getName() + "()");
         CMethod method = new CMethod();
         method.name = CName.from(binding.getName());
         method.type = makeType(binding.getReturnType());
@@ -66,7 +68,9 @@ public class LibImplHandler {
 
     }
 
-    public void writeAll(File dir) {
+    public void writeAll(File dir, CHeader forwardHeader, CHeader allHeader) {
+        allHeader.addInclude(forwardHeader.getInclude());
+        forwardHeader.forwardDeclarator = new LocalForwardDeclarator(classMap);
         for (ClassMap.ClassDecl decl : classMap.map.values()) {
             CHeader header = new CHeader(decl.type.basicForm().replace("::", "/") + ".h");
             header.ns = decl.type.ns;
@@ -87,6 +91,14 @@ public class LibImplHandler {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            allHeader.addInclude(cc.getType());
+            forwardHeader.forwardDeclarator.add(cc);
+        }
+        try {
+            Files.write(Paths.get(dir.getAbsolutePath(), forwardHeader.rpath), forwardHeader.toString().getBytes());
+            Files.write(Paths.get(dir.getAbsolutePath(), allHeader.rpath), allHeader.toString().getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

@@ -37,6 +37,8 @@ public class Converter {
     ClassMap classMap;
     CHeader forwardHeader;
     CHeader commonHeader;
+    CHeader commonLibForwardHeader;
+    CHeader commonLibHeader;
 
     public Converter(String srcDir, String destDir) {
         this.srcDir = srcDir;
@@ -49,6 +51,9 @@ public class Converter {
         commonHeader = new CHeader("all.h");
         forwardHeader = new CHeader("common.h");
         forwardHeader.forwardDeclarator = new LocalForwardDeclarator(classMap);
+
+        commonLibForwardHeader = new CHeader("lib_common.h");
+        commonLibHeader = new CHeader("lib_all.h");
         try {
             Logger.init(new File(destDir, "log.txt"));
         } catch (IOException e) {
@@ -134,7 +139,7 @@ public class Converter {
         }
 
         if (Config.writeLibHeader) {
-            LibImplHandler.instance.writeAll(new File(headerDir, "lib"));
+            LibImplHandler.instance.writeAll(new File(headerDir, "lib"), commonLibForwardHeader, commonLibHeader);
         }
     }
 
@@ -206,10 +211,6 @@ public class Converter {
                     hh.addClass(cc);
                     source.addInclude(hh.getInclude());
                     writeHeader(hh);
-                    if (i > 0) {
-                        //System.out.println("inner " + hh.getInclude());
-                    }
-
                 }
             }
             else {

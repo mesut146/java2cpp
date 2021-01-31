@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 //collect all referenced classes in a header file
-public class LocalForwardDeclarator extends Node {
+public class LocalForwardDeclarator {
     public List<ClassMap.ClassDecl> types = new ArrayList<>();
     List<NamespaceDecl> baseList = new ArrayList<>();
     ClassMap classMap;

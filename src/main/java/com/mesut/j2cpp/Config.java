@@ -18,6 +18,8 @@ public class Config {
     //write headers for classpath classes
     public static boolean writeLibHeader = true;
 
+    public static boolean common_lib_forwards = true;
+
     //force all types inherit from java::lang::Object
     public static boolean baseClassObject = false;
     public static boolean printDestructor = false;

@@ -59,6 +59,10 @@ public class CHeader extends CNode {
         }
     }
 
+    public void addInclude(CType include) {
+        addInclude(include.basicForm().replace("::", "/"));
+    }
+
     public void useNamespace(Namespace ns) {
         if (!usings.contains(ns)) {
             usings.add(ns);
