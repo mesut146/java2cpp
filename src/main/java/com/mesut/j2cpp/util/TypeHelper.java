@@ -34,7 +34,6 @@ public class TypeHelper {
         return ty;
     }
 
-
     public static CType getStringType() {
         return new CType("java::lang::String");
     }

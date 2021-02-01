@@ -22,9 +22,17 @@ public class TypeVisitor {
         return new CType(TypeHelper.toCType(n.toString()));
     }
 
-    CType fromBinding(ITypeBinding binding) {
-        CType type;
+    public CType fromBinding(ITypeBinding binding) {
 
+        if (binding.isArray()) {
+            return ArrayHelper.makeArrayType(fromBinding(binding.getElementType()), binding.getDimensions());
+        }
+
+        if (binding.isPrimitive()) {
+            return new CType(TypeHelper.toCType(binding.getName()));
+        }
+
+        CType type;
         if (binding.isTypeVariable()) {//<T>
             type = new CType(binding.getName());
             type.isTemplate = true;
@@ -32,7 +40,7 @@ public class TypeVisitor {
         }
         else {
             String name = getBinaryName(binding);
-            if (binding.isNested() && Config.move_inners) {//trim parent class ns
+            if (binding.isNested() && Config.move_inners && !header.ns.getAll().isEmpty()) {//trim parent class ns
                 type = new CType(header.ns.getAll() + "::" + binding.getName());
             }
             else {
@@ -43,8 +51,11 @@ public class TypeVisitor {
                 type.typeNames.add(fromBinding(tp));
             }*/
             if (!binding.isGenericType() && !binding.isNested()) {
-                if (!binding.isFromSource()) {
-                    header.source.addInclude(name.replace('.', '/'));
+                if (!binding.isFromSource() && header != null) {
+                    if (header.source != null) {
+                        header.source.addInclude(type);
+                    }
+                    //header.source.addInclude(name.replace('.', '/'));
                     //header.addInclude(name.replace(".", "/"));//inner classes too?
                 }
             }

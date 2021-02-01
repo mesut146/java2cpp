@@ -202,7 +202,6 @@ public class CClass extends CStatement {
             return ns;
         }
         if (parent != null) {
-            //return parent.getNs();
             throw new RuntimeException("getNs deprecated code");
         }
         return null;

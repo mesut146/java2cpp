@@ -1,11 +1,23 @@
 package com.mesut.j2cpp;
 
+import com.mesut.j2cpp.ast.CHeader;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Util {
+    public static void writeHeader(CHeader header, File dir) throws IOException {
+        File path = new File(dir, header.rpath);
+        path.getParentFile().mkdirs();
+        Files.write(path.toPath(), header.toString().getBytes());
+    }
+
+
     public static void save(String data, String file) {
         try {
             FileOutputStream fos = new FileOutputStream(file);

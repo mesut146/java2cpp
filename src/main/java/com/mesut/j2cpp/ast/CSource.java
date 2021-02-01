@@ -31,6 +31,10 @@ public class CSource extends CNode {
         }
     }
 
+    public void addInclude(CType include) {
+        addInclude(include.basicForm().replace("::", "/"));
+    }
+
     public void useNamespace(Namespace ns) {
         if (!usings.contains(ns)) {
             usings.add(ns);
@@ -49,7 +53,7 @@ public class CSource extends CNode {
         for (String inc : includes) {
             sb.append(PrintHelper.include(inc)).append("\n");
         }
-        sb.append(PrintHelper.include(header.getInclude()));
+        //sb.append(PrintHelper.include(header.getInclude()));
         sb.append("\n\n");
         if (!usings.isEmpty()) {
             for (Namespace use : usings) {

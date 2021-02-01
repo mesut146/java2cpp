@@ -224,7 +224,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             forEachStatement.right = new DeferenceExpr(forEachStatement.right);
         }
         else {
-            //todo
+            //todo java.iterator() or c++ type iterator
         }
         return forEachStatement;
     }
@@ -312,7 +312,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         method.superCall = superCall;
         return new CEmptyStatement();
     }
-
 
     @Override
     public CNode visit(SynchronizedStatement node, CNode arg) {
@@ -759,7 +758,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         if ((binding instanceof IVariableBinding) && Config.writeLibHeader) {
             LibImplHandler.instance.addField((IVariableBinding) binding);
         }
-        
+
         if (binding == null) {
             Logger.logBinding(clazz, node.toString());
             //normal qualified name access

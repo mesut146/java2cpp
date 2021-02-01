@@ -26,6 +26,7 @@ public class CHeader extends CNode {
     public CHeader(String path) {
         rpath = path;
         scope = this;
+        ns = new Namespace();
     }
 
     public void setNs(Namespace ns) {

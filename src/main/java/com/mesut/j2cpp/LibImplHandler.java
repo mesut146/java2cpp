@@ -2,6 +2,7 @@ package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.util.LocalForwardDeclarator;
+import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
@@ -10,15 +11,24 @@ import org.eclipse.jdt.core.dom.Modifier;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class LibImplHandler {
     public static LibImplHandler instance = new LibImplHandler();
 
     ClassMap classMap = new ClassMap();
+    TypeVisitor typeVisitor;
+    CHeader commonLibForwardHeader;
+    CHeader commonLibHeader;
+
+    public LibImplHandler() {
+        commonLibForwardHeader = new CHeader("lib_common.h");
+        commonLibHeader = new CHeader("lib_all.h");
+        typeVisitor = new TypeVisitor(commonLibHeader);
+    }
 
     CType makeType(ITypeBinding binding) {
-        return new CType(binding.getQualifiedName());
+        return typeVisitor.fromBinding(binding);
+        //return new CType(binding.getQualifiedName());
     }
 
     public void addMethod(IMethodBinding binding) {
@@ -63,14 +73,13 @@ public class LibImplHandler {
         decl.fields.add(field);
     }
 
-
     public void addType(CType type) {
 
     }
 
-    public void writeAll(File dir, CHeader forwardHeader, CHeader allHeader) {
-        allHeader.addInclude(forwardHeader.getInclude());
-        forwardHeader.forwardDeclarator = new LocalForwardDeclarator(classMap);
+    public void writeAll(File dir) {
+        commonLibHeader.addInclude(commonLibForwardHeader.getInclude());
+        commonLibForwardHeader.forwardDeclarator = new LocalForwardDeclarator(classMap);
         for (ClassMap.ClassDecl decl : classMap.map.values()) {
             CHeader header = new CHeader(decl.type.basicForm().replace("::", "/") + ".h");
             header.ns = decl.type.ns;
@@ -91,12 +100,12 @@ public class LibImplHandler {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            allHeader.addInclude(cc.getType());
-            forwardHeader.forwardDeclarator.add(cc);
+            commonLibHeader.addInclude(cc.getType());
+            commonLibForwardHeader.forwardDeclarator.add(cc);
         }
         try {
-            Files.write(Paths.get(dir.getAbsolutePath(), forwardHeader.rpath), forwardHeader.toString().getBytes());
-            Files.write(Paths.get(dir.getAbsolutePath(), allHeader.rpath), allHeader.toString().getBytes());
+            Util.writeHeader(commonLibForwardHeader, dir);
+            Util.writeHeader(commonLibHeader, dir);
         } catch (IOException e) {
             e.printStackTrace();
         }

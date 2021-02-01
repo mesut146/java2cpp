@@ -125,6 +125,12 @@ public class DeclarationVisitor {
         else if (body instanceof TypeDeclaration) {//inner class
             visit((TypeDeclaration) body, cc);
         }
+        else if (body instanceof Initializer) {
+            visit((Initializer) body, cc);
+        }
+        else {
+            System.out.println("body type: " + body.getClass());
+        }
     }
 
     public CClass visit(EnumDeclaration n, CClass clazz) {
@@ -222,7 +228,7 @@ public class DeclarationVisitor {
 
         if (clazz.isInterface || Modifier.isAbstract(node.getModifiers())) {
             method.setPublic(true);
-            method.setVirtual(true);
+            method.setVirtual(true);//todo check implemented by sub classes
             method.isPureVirtual = true;
         }
 
@@ -250,5 +256,17 @@ public class DeclarationVisitor {
         sourceVisitor.method = method;
         method.body = (CBlockStatement) sourceVisitor.visitExpr(node.getBody(), null);
         return method;
+    }
+
+    public void visit(Initializer node, CClass cc) {
+        System.out.println("si " + cc.getType().basicForm());
+        CMethod method = new CMethod();
+        cc.addMethod(method);
+        method.name = CName.from("si");
+        method.type = TypeHelper.getVoidType();
+        method.setStatic(true);
+        sourceVisitor.method = method;
+        sourceVisitor.clazz = cc;
+        method.body = (CBlockStatement) sourceVisitor.visitExpr(node.getBody(), null);
     }
 }

@@ -4,21 +4,29 @@ public class Config {
     public static boolean ns_type_nested = true;
     public static boolean ns_indent = false;
     public static boolean ns_nested_indent = false;
-    public static boolean include_auto = false;
     //create folder named 'include' in destination and put all headers in it
     public static boolean separateInclude = false;
 
+    //create a header that forwards all class declarations
     public static boolean common_forwards = true;
+    //make all .cpp include that header
     public static boolean include_common_forwards = true;
 
     //make all in one header
     public static boolean common_headers = true;
+    //make all .cpp include that header
     public static boolean include_common_headers = true;
 
-    //write headers for classpath classes
+    //only include required headers
+    public static boolean include_needed = true;
+
+    //make headers for classpath classes
     public static boolean writeLibHeader = true;
 
     public static boolean common_lib_forwards = true;
+
+    //move field initializers into constructors
+    public static boolean fields_in_constructors = false;
 
     //force all types inherit from java::lang::Object
     public static boolean baseClassObject = false;
@@ -43,9 +51,6 @@ public class Config {
 
     public static boolean use_vector = true;
     public static boolean array_access_bracket = false;
-
-    //put use namespace stmt if class has types that are longer than limit
-    public static int shrinkNsLimit = 3;
 
     //shrink types based on namespaces
     public static boolean normalizeTypes = true;
