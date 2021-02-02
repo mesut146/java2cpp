@@ -11,7 +11,6 @@ import java.util.List;
 
 //visit types and ensures type is included
 public class TypeVisitor {
-
     CHeader header;
 
     public TypeVisitor(CHeader header) {
@@ -23,11 +22,9 @@ public class TypeVisitor {
     }
 
     public CType fromBinding(ITypeBinding binding) {
-
         if (binding.isArray()) {
             return ArrayHelper.makeArrayType(fromBinding(binding.getElementType()), binding.getDimensions());
         }
-
         if (binding.isPrimitive()) {
             return new CType(TypeHelper.toCType(binding.getName()));
         }
@@ -51,7 +48,7 @@ public class TypeVisitor {
                 type.typeNames.add(fromBinding(tp));
             }*/
             if (!binding.isGenericType() && !binding.isNested()) {
-                if (!binding.isFromSource() && header != null) {
+                if (header != null) {
                     if (header.source != null) {
                         header.source.addInclude(type);
                     }

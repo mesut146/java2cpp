@@ -32,7 +32,7 @@ public class CSource extends CNode {
     }
 
     public void addInclude(CType include) {
-        addInclude(include.basicForm().replace("::", "/"));
+        addInclude(include.basicForm().replace("::", "/") + ".h");
     }
 
     public void useNamespace(Namespace ns) {
@@ -101,8 +101,6 @@ public class CSource extends CNode {
             }
             sb.append("\n");
         }
-
     }
-
 
 }

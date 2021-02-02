@@ -17,7 +17,7 @@ public class CHeader extends CNode {
     public List<CClass> classes = new ArrayList<>();
     public Namespace ns;
     public List<Namespace> usings = new ArrayList<>();
-    public String rpath;//header path:java/lang/String.h
+    public String rpath;//header path e.g java/lang/String.h
     public CSource source;
     public LocalForwardDeclarator forwardDeclarator;
     boolean hasRuntime = false;

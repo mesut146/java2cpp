@@ -15,10 +15,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Converter {
 
@@ -128,6 +125,7 @@ public class Converter {
             Util.writeHeader(forwardHeader, headerDir);
         }
         if (Config.common_headers) {
+            Collections.sort(commonHeader.includes);
             Util.writeHeader(commonHeader, headerDir);
         }
         if (Config.writeLibHeader) {
@@ -162,12 +160,6 @@ public class Converter {
                 }
             }
         }
-    }
-
-    public void convertSingle(String cls) throws IOException {
-        File file = new File(srcDir, cls);
-        CompilationUnit unit = parse(file);
-        convertSingle(cls, unit);
     }
 
     public void convertSingle(String path, CompilationUnit cu) {
@@ -227,16 +219,13 @@ public class Converter {
             count++;
         } catch (Exception e) {
             System.err.println("cant convert " + path);
+            Logger.log(path + ":" + e.getMessage());
             e.printStackTrace();
         }
     }
 
     void writeHeader(CHeader header) throws IOException {
         Util.writeHeader(header, headerDir);
-        /*File header_file = new File(headerDir, header.getInclude().replace(".java", ".h"));
-        header_file.getParentFile().mkdirs();
-        Files.write(header_file.toPath(), header.toString().getBytes());*/
-
         if (Config.common_headers) {
             commonHeader.addInclude(header.getInclude());
         }

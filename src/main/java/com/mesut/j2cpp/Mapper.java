@@ -37,8 +37,8 @@ public class Mapper {
         return null;
     }
 
-    CType mapType() {
-        return null;
+    CType mapType(CType type) {
+        return type;
     }
 
     static class ClassInfo {

@@ -42,6 +42,7 @@ public class ClassMap {
         public List<CField> fields = new ArrayList<>();
         CType type;
         List<ClassDecl> base = new ArrayList<>();
+        public List deps = new ArrayList<>();
 
         public ClassDecl(CType type) {
             this.type = type;

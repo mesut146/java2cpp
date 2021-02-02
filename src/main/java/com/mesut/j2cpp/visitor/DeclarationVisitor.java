@@ -259,10 +259,11 @@ public class DeclarationVisitor {
     }
 
     public void visit(Initializer node, CClass cc) {
-        System.out.println("si " + cc.getType().basicForm());
+        //System.out.println("si " + cc.getType().basicForm());
         CMethod method = new CMethod();
         cc.addMethod(method);
         method.name = CName.from("si");
+        //todo main entry should call this
         method.type = TypeHelper.getVoidType();
         method.setStatic(true);
         sourceVisitor.method = method;

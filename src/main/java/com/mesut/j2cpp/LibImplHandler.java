@@ -11,6 +11,7 @@ import org.eclipse.jdt.core.dom.Modifier;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Collections;
 
 public class LibImplHandler {
     public static LibImplHandler instance = new LibImplHandler();
@@ -105,6 +106,7 @@ public class LibImplHandler {
         }
         try {
             Util.writeHeader(commonLibForwardHeader, dir);
+            Collections.sort(commonLibHeader.includes);
             Util.writeHeader(commonLibHeader, dir);
         } catch (IOException e) {
             e.printStackTrace();
