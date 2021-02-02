@@ -1,0 +1,6 @@
+inc=/home/mesut/Desktop/rttr-master/src
+inc2=/home/mesut/Desktop/rttr-master/build/src
+lib=/home/mesut/Desktop/rttr-master/build/lib
+#lib=/home/mesut/Desktop/rttr-master/build/lib/librttr_core.so
+g++ -I$inc -I$inc2 -L$lib -lrttr_core  func-ptr.cpp
+

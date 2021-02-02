@@ -15,6 +15,7 @@ public class CType extends CExpression {
     public List<CType> typeNames = new ArrayList<>();//generics
     public boolean isTemplate = false;//<T>,dynamic type
     public boolean isPointer = false;
+    public boolean isInner = false;
 
     public CType() {
     }

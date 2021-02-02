@@ -79,7 +79,6 @@ public class LibImplHandler {
     }
 
     public void writeAll(File dir) {
-        commonLibHeader.addInclude(commonLibForwardHeader.getInclude());
         commonLibForwardHeader.forwardDeclarator = new LocalForwardDeclarator(classMap);
         for (ClassMap.ClassDecl decl : classMap.map.values()) {
             CHeader header = new CHeader(decl.type.basicForm().replace("::", "/") + ".h");
@@ -104,6 +103,7 @@ public class LibImplHandler {
             commonLibHeader.addInclude(cc.getType());
             commonLibForwardHeader.forwardDeclarator.add(cc);
         }
+        commonLibHeader.includes.add(0, commonLibForwardHeader.getInclude());
         try {
             Util.writeHeader(commonLibForwardHeader, dir);
             Collections.sort(commonLibHeader.includes);

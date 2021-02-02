@@ -17,16 +17,6 @@ public class Util {
         Files.write(path.toPath(), header.toString().getBytes());
     }
 
-
-    public static void save(String data, String file) {
-        try {
-            FileOutputStream fos = new FileOutputStream(file);
-            fos.write(data.getBytes());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public static String read(File file) throws IOException {
         FileInputStream fis = new FileInputStream(file);
         StringBuilder sb = new StringBuilder();

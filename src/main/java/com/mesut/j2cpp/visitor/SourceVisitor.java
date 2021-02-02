@@ -412,7 +412,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             //append arg
             creation.args.add(new CThisExpression());
         }
-        else if (binding != null && !Modifier.isStatic(binding.getModifiers())) {
+        else if (binding != null && !Modifier.isStatic(binding.getModifiers()) && (binding.isAnonymous() || binding.isNested())) {
             //append setRef
             CMethodInvocation invocation = new CMethodInvocation();
             invocation.isArrow = true;

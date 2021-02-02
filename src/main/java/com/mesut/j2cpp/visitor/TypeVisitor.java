@@ -44,9 +44,9 @@ public class TypeVisitor {
                 type = new CType(name);
             }
 
-            /*for (ITypeBinding tp : binding.getTypeArguments()) {
+            for (ITypeBinding tp : binding.getTypeArguments()) {
                 type.typeNames.add(fromBinding(tp));
-            }*/
+            }
             if (!binding.isGenericType() && !binding.isNested()) {
                 if (header != null) {
                     if (header.source != null) {
@@ -57,6 +57,7 @@ public class TypeVisitor {
                 }
             }
         }
+        type.isInner = binding.isNested();
         if (type.ns == null) {
             type.ns = new Namespace();
         }

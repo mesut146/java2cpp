@@ -231,12 +231,6 @@ public class Converter {
         }
     }
 
-    CompilationUnit parse(File file) throws IOException {
-        initParser();
-        parser.setSource(Util.read(file).toCharArray());
-        parser.setUnitName(file.getPath());
-        return (CompilationUnit) parser.createAST(null);
-    }
 
     public void writeCmake() throws IOException {
         String src = cMakeWriter.generate();
