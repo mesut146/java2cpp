@@ -51,9 +51,23 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     private void convertClass(CClass clazz) {
         this.clazz = clazz;
         for (CField field : clazz.fields) {
-            if (field.isStatic() && field.expression != null) {
-                //normal static field or enum constant
-                source.fieldDefs.add(field);
+            if (field.expression != null) {
+                if (field.isStatic()) {
+                    //normal static field or enum constant
+                    source.fieldDefs.add(field);
+                }
+                else if (Config.fields_in_constructors) {
+                    //add to all cons
+                    //make statement
+                    CAssignment assignment = new CAssignment();
+                    CFieldAccess access = new CFieldAccess();
+                    access.scope = new CThisExpression();
+                    access.name = field.name;
+                    access.isArrow = true;
+                    assignment.left = access;
+                    assignment.right = field.expression;
+                    //todo lateinit
+                }
             }
         }
         for (CMethod methodDecl : clazz.methods) {

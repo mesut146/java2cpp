@@ -263,7 +263,7 @@ public class DeclarationVisitor {
         //System.out.println("si " + cc.getType().basicForm());
         CMethod method = new CMethod();
         cc.addMethod(method);
-        method.name = CName.from("si");
+        method.name = CName.from(Config.static_init_name);
         //todo main entry should call this
         method.type = TypeHelper.getVoidType();
         method.setStatic(true);

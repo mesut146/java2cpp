@@ -85,7 +85,7 @@ public class CSource extends CNode {
     }
 
     private void printFields(StringBuilder sb) {
-        //todo separate by class
+        //todo group by class(or they already ordered)
         if (!fieldDefs.isEmpty()) {
             getScope(fieldDefs);
             sb.append("//static fields\n");

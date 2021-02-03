@@ -26,7 +26,9 @@ public class Config {
     public static boolean common_lib_forwards = true;
 
     //move field initializers into constructors
-    public static boolean fields_in_constructors = false;
+    public static boolean fields_in_constructors = true;
+
+    public static String static_init_name = "si";
 
     //force all types inherit from java::lang::Object
     public static boolean baseClassObject = false;
