@@ -1,20 +1,18 @@
 package base;
 
-import java.util.*;
+class type<P>{
+  <X> void add(P elem,X other){}
+  
+  //public class mm{}
+}
 
-public class Generic<T, V> extends ArrayList<T> {
 
-    public void meth(T param) {
-        T obj = null;
-        List<T> arr = new ArrayList<>();
-        arr.add(obj);
-        add(arr.get(0));
-    }
+public class Generic<T, V> extends type<T> {
 
-    List<String> add() {
-        T obj = (T) new Object();
-        add(obj);
-        super.add(obj);
-        return null;
+//<class T,class V,class X>
+    public <X> void meth(T param,X other) {
+        type<T> obj = new type<>();//auto type substition
+        obj.add(param,other);
+        add(param,other);
     }
 }

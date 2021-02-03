@@ -184,7 +184,7 @@ public class Converter {
                 for (int i = 0; i < header.classes.size(); i++) {
                     CClass cc = header.classes.get(i);
                     String inner_path;
-                    if (i == 0) {
+                    if (!cc.isInner && cc.isPublic) {//don't move outermost class
                         inner_path = header.getInclude();
                     }
                     else {

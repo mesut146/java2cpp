@@ -81,13 +81,14 @@ public class DeclarationVisitor {
         cc.name = node.getName().getFullyQualifiedName();
         cc.isInterface = node.isInterface();
         cc.isStatic = Modifier.isStatic(node.getModifiers());
+        cc.isPublic = Modifier.isPublic(node.getModifiers());
+        cc.isInner = outer != null;
         cc.getType().forward(header);
 
         node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true)));
 
         if (node.getSuperclassType() != null) {
             CType baseType = typeVisitor.visitType(node.getSuperclassType(), cc);
-            baseType.isTemplate = false;
             baseType.isPointer = false;
             cc.base.add(baseType);
         }

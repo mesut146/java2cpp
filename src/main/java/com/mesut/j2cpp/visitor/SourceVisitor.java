@@ -401,18 +401,16 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         if (node.getAnonymousClassDeclaration() == null) {
             creation = new CClassInstanceCreation();
             creation.setType(typeVisitor.visitType(node.getType(), clazz));
-            for (Expression expression : (List<Expression>) node.arguments()) {
-                creation.args.add((CExpression) visitExpr(expression, arg));
-            }
+            creation.args = list(node.arguments());
         }
         else {
             creation = AnonyHandler.handle(node.getAnonymousClassDeclaration(), typeVisitor.visitType(node.getType(), clazz), clazz, this);
         }
-        if (Config.outer_ref_cons_arg) {
-            //append arg
-            creation.args.add(new CThisExpression());
-        }
-        else if (binding != null && !Modifier.isStatic(binding.getModifiers()) && (binding.isAnonymous() || binding.isNested())) {
+        if (binding != null && !Modifier.isStatic(binding.getModifiers()) && (binding.isAnonymous() || binding.isNested())) {
+            if (Config.outer_ref_cons_arg) {
+                //append arg
+                creation.args.add(new CThisExpression());
+            }
             //append setRef
             CMethodInvocation invocation = new CMethodInvocation();
             invocation.isArrow = true;

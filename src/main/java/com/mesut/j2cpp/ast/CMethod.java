@@ -39,6 +39,9 @@ public class CMethod extends ModifierNode {
         getScope(params);
         boolean source = scope instanceof CSource;
         StringBuilder sb = new StringBuilder();
+        if (!parent.template.isEmpty() && source) {
+            sb.append(parent.template).append("\n");
+        }
         if (!template.isEmpty()) {
             getScope(template);
             sb.append(template.toString()).append("\n");
@@ -57,7 +60,13 @@ public class CMethod extends ModifierNode {
             sb.append(" ");
         }
         if (!parent.isAnonymous && source) {
-            sb.append(parent.name).append("::");
+            sb.append(parent.name);
+            if (!parent.template.isEmpty()) {
+                sb.append("<");
+                sb.append(PrintHelper.joinStr(parent.template.getList(), ", "));
+                sb.append(">");
+            }
+            sb.append("::");
         }
         sb.append(name.name);
 

@@ -52,8 +52,6 @@ public class TypeVisitor {
                     if (header.source != null) {
                         header.source.addInclude(type);
                     }
-                    //header.source.addInclude(name.replace('.', '/'));
-                    //header.addInclude(name.replace(".", "/"));//inner classes too?
                 }
             }
         }
@@ -108,13 +106,19 @@ public class TypeVisitor {
 
     public CType visit(ParameterizedType n) {
         CType type = visit(n.getType());
-        for (Type param : (List<Type>) n.typeArguments()) {
-            CType arg = visit(param);
-            if (Config.ptr_typeArg) {
-                arg.setPointer(true);
+        if (n.typeArguments().isEmpty()) {
+
+        }
+        else {
+            type.typeNames.clear();//override type names
+            for (Type param : (List<Type>) n.typeArguments()) {
+                CType arg = visit(param);
+                if (Config.ptr_typeArg) {
+                    arg.setPointer(true);
+                }
+                arg.typeNames.clear();//c++ doesn't allow nested type args?
+                type.typeNames.add(arg);
             }
-            arg.typeNames.clear();//c++ doesnt allow nested type args?
-            type.typeNames.add(arg);
         }
         return type;
     }

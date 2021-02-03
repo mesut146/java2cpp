@@ -32,6 +32,12 @@ public class CSource extends CNode {
     }
 
     public void addInclude(CType include) {
+        //can be local class,those already included by converter so ignore
+        for (CClass cc : header.classes) {
+            if (cc.getType().equals(include)) {
+                return;
+            }
+        }
         addInclude(include.basicForm().replace("::", "/") + ".h");
     }
 

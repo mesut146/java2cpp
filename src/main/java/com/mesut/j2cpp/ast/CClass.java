@@ -13,7 +13,9 @@ public class CClass extends CStatement {
     public String name;
     public boolean isInterface = false;
     public boolean isStatic = false;
+    public boolean isPublic = false;
     public boolean isAnonymous = false;
+    public boolean isInner = false;
     public Namespace ns = null;
     public List<CType> base = new ArrayList<>();
     public Template template = new Template();
