@@ -25,6 +25,7 @@ public class CClass extends CStatement {
     public CClass parent;//outer
     public CHeader header;
     public Node staticBlock = null;
+    public List<CStatement> consStatements = new ArrayList<>();
     CType type;
     Set<CType> types = new HashSet<>();
 

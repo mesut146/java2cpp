@@ -9,7 +9,6 @@ public class CAssignment extends CExpression {
     public String operator;
     //op is one of = < > <= >= <<= >>=
 
-
     public CAssignment() {
     }
 

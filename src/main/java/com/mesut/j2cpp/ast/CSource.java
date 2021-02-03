@@ -68,6 +68,16 @@ public class CSource extends CNode {
         }
         sb.append("\n");
         printAnony(sb);
+
+        for (CClass cc : header.classes) {
+            if (!cc.consStatements.isEmpty()) {
+                //append all cons
+                for (CMethod method : cc.methods) {
+                    
+                }
+            }
+        }
+
         printFields(sb);
         printMethods(sb);
         return sb.toString();

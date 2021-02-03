@@ -27,6 +27,7 @@ public class Config {
 
     //move field initializers into constructors
     public static boolean fields_in_constructors = true;
+    public static boolean fields_in_init_method = false;//exclusive to cons
 
     public static String static_init_name = "si";
 

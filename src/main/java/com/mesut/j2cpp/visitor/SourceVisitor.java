@@ -66,7 +66,11 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                     access.isArrow = true;
                     assignment.left = access;
                     assignment.right = field.expression;
+                    clazz.consStatements.add(new CExpressionStatement(assignment));
                     //todo lateinit
+                }
+                else {
+                    //header has it
                 }
             }
         }
