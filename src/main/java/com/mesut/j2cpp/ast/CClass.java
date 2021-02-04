@@ -84,24 +84,6 @@ public class CClass extends CStatement {
         return base.get(0);
     }
 
-    public CMethod getMethod(boolean cons, String name, CType... params) {
-        for (CMethod method : methods) {
-            if (method.isCons == cons && (cons || method.name.name.equals(name)) && method.params.size() == params.length) {
-                boolean found = true;
-                for (int i = 0; i < params.length; i++) {
-                    if (!method.params.get(i).type.equals(params[i])) {
-                        found = false;
-                        break;
-                    }
-                }
-                if (found) {
-                    return method;
-                }
-            }
-        }
-        return null;
-    }
-
     public String forwardStr() {
         StringBuilder sb = new StringBuilder();
         if (template != null && !template.isEmpty()) {
@@ -221,25 +203,15 @@ public class CClass extends CStatement {
         append("virtual ~").append(name).append("(){}");
     }
 
-    Namespace getNs() {
-        if (ns != null) {
-            return ns;
-        }
-        if (parent != null) {
-            throw new RuntimeException("getNs deprecated code");
-        }
-        return null;
-    }
-
     public CType getType() {
         if (type == null) {
-            if (getNs() == null) {
+            if (ns == null) {
                 type = new CType(name);
             }
             else {
-                type = new CType(getNs().all + "::" + name);
+                type = new CType(ns.all + "::" + name);
             }
-            type.scope = header;
+            type.scope = header;//?
         }
         return type;
     }

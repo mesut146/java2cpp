@@ -28,6 +28,9 @@ public class ClassMap {
             return map.get(type);
         }
         CClass decl = new CClass(type);
+        for (CType arg : type.typeNames) {
+            decl.template.add(arg);
+        }
         map.put(type, decl);
         return decl;
     }

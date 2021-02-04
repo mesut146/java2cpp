@@ -34,7 +34,7 @@ public class Converter {
     int count = 0;
     ClassMap classMap;
     CHeader forwardHeader;
-    CHeader commonHeader;
+    CHeader allHeader;
 
     public Converter(String srcDir, String destDir) {
         this.srcDir = srcDir;
@@ -44,7 +44,7 @@ public class Converter {
         cMakeWriter.sourceDir = destDir;
         target = cMakeWriter.addTarget("mylib", false);
         classMap = new ClassMap();
-        commonHeader = new CHeader("all.h");
+        allHeader = new CHeader("all.h");
         forwardHeader = new CHeader("common.h");
         forwardHeader.forwardDeclarator = new ForwardDeclarator(classMap);
         try {
@@ -126,8 +126,8 @@ public class Converter {
             Util.writeHeader(forwardHeader, headerDir);
         }
         if (Config.common_headers) {
-            Collections.sort(commonHeader.includes);
-            Util.writeHeader(commonHeader, headerDir);
+            Collections.sort(allHeader.includes);
+            Util.writeHeader(allHeader, headerDir);
         }
         if (Config.writeLibHeader) {
             LibImplHandler.instance.writeAll(new File(headerDir, "lib"));
@@ -178,7 +178,7 @@ public class Converter {
             sourceVisitor.convert();
 
             if (Config.common_headers && Config.include_common_headers) {
-                source.includes.add(0, commonHeader.getInclude());
+                source.includes.add(0, allHeader.getInclude());
             }
             
             classMap.addAll(header.classes);//todo inners?
@@ -230,7 +230,7 @@ public class Converter {
     void writeHeader(CHeader header) throws IOException {
         Util.writeHeader(header, headerDir);
         if (Config.common_headers) {
-            commonHeader.addInclude(header.getInclude());
+            allHeader.addInclude(header.getInclude());
         }
     }
 

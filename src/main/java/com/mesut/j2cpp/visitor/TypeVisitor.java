@@ -41,16 +41,24 @@ public class TypeVisitor {
         }
         else {
             String name = getBinaryName(binding);
-            if (binding.isNested() && Config.move_inners && !header.ns.getAll().isEmpty()) {//trim parent class ns
-                type = new CType(header.ns.getAll() + "::" + binding.getName());
+            if (binding.isNested() && Config.move_inners) {//trim parent class ns
+                type = new CType(binding.getPackage().getName().replace(".", "::") + "::" + binding.getName());
             }
             else {
                 type = new CType(name);
             }
 
-            for (ITypeBinding tp : binding.getTypeArguments()) {
-                type.typeNames.add(fromBinding(tp, cc));
+            if (binding.isGenericType()) {
+                for (ITypeBinding prm : binding.getTypeParameters()) {
+                    type.typeNames.add(fromBinding(prm));
+                }
             }
+            else if (binding.isParameterizedType()) {
+                for (ITypeBinding tp : binding.getTypeArguments()) {
+                    type.typeNames.add(fromBinding(tp, cc));
+                }
+            }
+
             if (!binding.isGenericType() && !binding.isNested()) {
                 if (header != null) {
                     if (header.source != null) {
