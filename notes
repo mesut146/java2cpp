@@ -1,5 +1,6 @@
 jdeps -verbose:class -filter:archive '/home/mesut/Desktop/AndroidStudioProjects/ide/subprojects/dx-tool/dx-tool-r8-v4.jar' | awk '{print $3}' | sort -u
 
+//param name can't be type or keyword(delete,virtual,const)
 
 main entry point
 

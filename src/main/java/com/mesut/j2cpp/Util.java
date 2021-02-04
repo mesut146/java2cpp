@@ -9,8 +9,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 public class Util {
+
+    static List<String> c_keywords = Arrays.asList("delete", "virtual", "const");
+
+    public static boolean isKeyword(String str) {
+        return c_keywords.contains(str);
+    }
+
     public static void writeHeader(CHeader header, File dir) throws IOException {
         File path = new File(dir, header.rpath);
         path.getParentFile().mkdirs();

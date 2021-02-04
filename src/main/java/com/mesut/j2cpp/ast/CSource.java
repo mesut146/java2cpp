@@ -2,6 +2,9 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CClassImpl;
 import com.mesut.j2cpp.cppast.CNode;
+import com.mesut.j2cpp.cppast.CStatement;
+import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
+import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 
@@ -14,7 +17,6 @@ public class CSource extends CNode {
     public List<String> includes = new ArrayList<>();
     public List<Namespace> usings = new ArrayList<>();
     public List<CField> fieldDefs = new ArrayList<>();
-    public List<CMethod> methods = new ArrayList<>();
     public boolean hasRuntime = false;
     public List<CClassImpl> anony = new ArrayList<>();
 
@@ -69,15 +71,6 @@ public class CSource extends CNode {
         sb.append("\n");
         printAnony(sb);
 
-        for (CClass cc : header.classes) {
-            if (!cc.consStatements.isEmpty()) {
-                //append all cons
-                for (CMethod method : cc.methods) {
-                    
-                }
-            }
-        }
-
         printFields(sb);
         printMethods(sb);
         return sb.toString();
@@ -109,11 +102,22 @@ public class CSource extends CNode {
     }
 
     private void printMethods(StringBuilder sb) {
+        for (CClass cc : header.classes) {
+            printMethods(sb, cc);
+        }
+    }
+
+    void printMethods(StringBuilder sb, CClass cc) {
+        List<CMethod> methods = cc.methods;
         if (!methods.isEmpty()) {
-            sb.append("//methods\n");
+            sb.append("//methods for ").append(cc.name).append("\n");
             getScope(methods);
             for (CMethod method : methods) {
+                if (method.body == null) continue;
                 sb.append(PrintHelper.body(method.toString(), "")).append("\n");
+            }
+            for (CClass inner : cc.classes) {
+                printMethods(sb, inner);
             }
             sb.append("\n");
         }

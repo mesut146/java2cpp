@@ -1,10 +1,8 @@
 package com.mesut.j2cpp.util;
 
-import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.ast.Namespace;
 
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 

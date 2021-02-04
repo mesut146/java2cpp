@@ -3,6 +3,7 @@ package com.mesut.j2cpp.ast;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.cppast.CNode;
+import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.util.LocalForwardDeclarator;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
@@ -22,6 +23,7 @@ public class CHeader extends CNode {
     public LocalForwardDeclarator forwardDeclarator;
     boolean hasRuntime = false;
     int anonyCount = 0;
+    boolean handledFieldInits = false;
 
     public CHeader(String path) {
         rpath = path;
@@ -80,8 +82,41 @@ public class CHeader extends CNode {
         return "anony" + anonyCount++;
     }
 
+
+    private void handleFieldInits() {
+        if (handledFieldInits) return;
+        //handle field initializers
+        for (CClass cc : classes) {
+            if (!cc.consStatements.isEmpty()) {
+                List<CMethod> consList = new ArrayList<>();
+                //append all cons
+                for (CMethod method : cc.methods) {
+                    //filter
+                    if (method.isCons && method.thisCall == null) {
+                        consList.add(method);
+                    }
+                }
+                if (consList.isEmpty()) {
+                    //make default constructor
+                    CMethod cons = new CMethod();
+                    cons.isCons = true;
+                    cons.name = CName.from(cc.name);
+                    cons.setPublic(true);
+                    cons.body = new CBlockStatement();
+                    consList.add(cons);
+                    cc.addMethod(cons);
+                }
+                for (CMethod cons : consList) {
+                    cons.body.statements.addAll(0, cc.consStatements);
+                }
+            }
+        }
+        handledFieldInits = true;
+    }
+
     @Override
     public String toString() {
+        handleFieldInits();
         StringBuilder sb = new StringBuilder();
         sb.append("#pragma once\n\n");
         for (String imp : includes) {
