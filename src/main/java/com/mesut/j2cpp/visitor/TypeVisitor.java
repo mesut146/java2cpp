@@ -3,7 +3,7 @@ package com.mesut.j2cpp.visitor;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.util.ArrayHelper;
-import com.mesut.j2cpp.util.BindingMap;
+import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -22,8 +22,12 @@ public class TypeVisitor {
     }
 
     public CType fromBinding(ITypeBinding binding) {
+        return fromBinding(binding, null);
+    }
+
+    public CType fromBinding(ITypeBinding binding, CClass cc) {
         if (binding.isArray()) {
-            return ArrayHelper.makeArrayType(fromBinding(binding.getElementType()), binding.getDimensions());
+            return ArrayHelper.makeArrayType(fromBinding(binding.getElementType(), cc), binding.getDimensions());
         }
         if (binding.isPrimitive()) {
             return new CType(TypeHelper.toCType(binding.getName()));
@@ -45,7 +49,7 @@ public class TypeVisitor {
             }
 
             for (ITypeBinding tp : binding.getTypeArguments()) {
-                type.typeNames.add(fromBinding(tp));
+                type.typeNames.add(fromBinding(tp, cc));
             }
             if (!binding.isGenericType() && !binding.isNested()) {
                 if (header != null) {
@@ -59,6 +63,7 @@ public class TypeVisitor {
         if (type.ns == null) {
             type.ns = new Namespace();
         }
+        if (cc != null) cc.addType(type);
         BindingMap.add(type, binding);
         return type;
     }
@@ -156,7 +161,6 @@ public class TypeVisitor {
 
     public CType visitType(Type type, CClass clazz) {
         CType cType = visit(type);
-        cType.forward(header);
         //add to ref
         clazz.addType(cType);
         return cType;

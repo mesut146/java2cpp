@@ -5,6 +5,7 @@ import java.util.List;
 
 public class CMakeWriter {
 
+    static String version = "2.8.11";
     public String projectName;
     public List<Target> targets = new ArrayList<>();
     public String sourceDir;
@@ -23,8 +24,8 @@ public class CMakeWriter {
 
     public String generate() {
         StringBuilder sb = new StringBuilder();
-        sb.append("cmake_minimum_required(VERSION 2.8.11)\n\n");
-        sb.append("project(").append(projectName).append(")\n\n");
+        sb.append(String.format("cmake_minimum_required(VERSION %s)\n\n", version));
+        sb.append(String.format("project(%s)\n\n", projectName));
 
         for (Target target : targets) {
             sb.append("add_library(").append(target.name);
@@ -37,8 +38,7 @@ public class CMakeWriter {
                 sb.append("\n");
             }
             sb.append(")\n");
-            sb.append("target_include_directories(");
-            sb.append(target.name);
+            sb.append("include_directories(");
             if (!target.includeDirs.isEmpty()) {
                 sb.append("\n");
             }

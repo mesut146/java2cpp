@@ -38,6 +38,7 @@ public class AnonyHandler {
                 declarationVisitor.visit((MethodDeclaration) body, anony);
             }
             else {
+                //inner of anony?
                 throw new RuntimeException("ClassInstanceCreation anony");
             }
         }

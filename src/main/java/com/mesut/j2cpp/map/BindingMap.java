@@ -1,4 +1,4 @@
-package com.mesut.j2cpp.util;
+package com.mesut.j2cpp.map;
 
 import com.mesut.j2cpp.ast.CType;
 import org.eclipse.jdt.core.dom.ITypeBinding;

@@ -27,7 +27,6 @@ public class Config {
 
     //move field initializers into constructors
     public static boolean fields_in_constructors = true;
-    public static boolean fields_in_init_method = false;//exclusive to cons
 
     public static String static_init_name = "si";
 
@@ -63,4 +62,13 @@ public class Config {
 
     public static String parentName = "_parent_ref";
     public static String refSetterName = "setRef";
+
+    public static String type_int = "int";
+    public static String type_long = "long";
+    public static String type_byte = "char";
+    public static String type_char = "wchar_t";
+    public static String type_float = "float";
+    public static String type_double = "double";
+    public static String type_short = "char16_t";
+    public static String type_boolean = "bool";
 }

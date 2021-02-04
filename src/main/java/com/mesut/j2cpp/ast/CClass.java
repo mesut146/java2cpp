@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
@@ -33,6 +34,13 @@ public class CClass extends CStatement {
         if (Config.baseClassObject) {
             base.add(TypeHelper.getObjectType());
         }
+    }
+
+    public CClass(CType type) {
+        this();
+        this.type = type;
+        name = type.getName();
+        ns = type.ns;
     }
 
     public void addBase(CType... type) {
@@ -94,9 +102,22 @@ public class CClass extends CStatement {
         return null;
     }
 
+    public String forwardStr() {
+        StringBuilder sb = new StringBuilder();
+        if (template != null && !template.isEmpty()) {
+            sb.append(template).append("\n");
+        }
+        sb.append("class ");
+        sb.append(type.getName());
+        sb.append(";");
+        return sb.toString();
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        getScope(new ArrayList<>(types));
+        sb.append("//types ").append(PrintHelper.joinStr(new ArrayList<>(types), ",")).append("\n");
         printDecl(sb);
         sb.append("{\n");
         up();

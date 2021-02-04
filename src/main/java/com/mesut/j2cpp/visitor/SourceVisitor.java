@@ -3,20 +3,19 @@ package com.mesut.j2cpp.visitor;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.LibImplHandler;
 import com.mesut.j2cpp.Logger;
-import com.mesut.j2cpp.Mapper;
+import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.*;
 import com.mesut.j2cpp.cppast.expr.*;
 import com.mesut.j2cpp.cppast.literal.*;
 import com.mesut.j2cpp.cppast.stmt.*;
 import com.mesut.j2cpp.util.ArrayHelper;
-import com.mesut.j2cpp.util.BindingMap;
+import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 @SuppressWarnings("unchecked")
 public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
@@ -631,7 +630,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
 
         if (scope == null && binding != null) {
-            CType type = typeVisitor.fromBinding(binding.getDeclaringClass());
+            CType type = typeVisitor.fromBinding(binding.getDeclaringClass(), clazz);
             //static outer method
             if (Modifier.isStatic(binding.getModifiers())) {
                 invocation.scope = type;
@@ -708,7 +707,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             if (binding.getKind() == IBinding.VARIABLE) {
                 IVariableBinding variableBinding = (IVariableBinding) binding;
                 if (variableBinding.isField()) {
-                    CType type = typeVisitor.fromBinding(variableBinding.getDeclaringClass());
+                    CType type = typeVisitor.fromBinding(variableBinding.getDeclaringClass(),clazz);
                     //static field,qualify
                     if (isStatic) {
                         CFieldAccess fieldAccess = new CFieldAccess();
@@ -785,7 +784,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             }
 
             boolean isStatic = Modifier.isStatic(binding.getModifiers());
-            CType type = typeVisitor.fromBinding(typeBinding);
+            CType type = typeVisitor.fromBinding(typeBinding,clazz);
             type.isPointer = false;
             CExpression scope = (CExpression) visitExpr(node.getQualifier(), arg);
 

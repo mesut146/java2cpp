@@ -1,5 +1,7 @@
-package com.mesut.j2cpp;
+package com.mesut.j2cpp.map;
 
+import com.mesut.j2cpp.Util;
+import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
 import org.json.JSONArray;
@@ -39,6 +41,14 @@ public class Mapper {
 
     CType mapType(CType type) {
         return type;
+    }
+
+    String mapParamName(String name, CMethod method) {
+        if (Util.isKeyword(name)) {
+            name = name + "_renamed";
+        }
+        //todo add to map
+        return name;
     }
 
     static class ClassInfo {

@@ -83,9 +83,10 @@ public class DeclarationVisitor {
         cc.isStatic = Modifier.isStatic(node.getModifiers());
         cc.isPublic = Modifier.isPublic(node.getModifiers());
         cc.isInner = outer != null;
-        cc.getType().forward(header);
 
-        node.typeParameters().forEach(type -> cc.template.add(new CType(type.toString(), true)));
+        for (TypeParameter tp : (List<TypeParameter>) node.typeParameters()) {
+            cc.template.add(new CType(tp.getName().getIdentifier(), true));
+        }
 
         if (node.getSuperclassType() != null) {
             CType baseType = typeVisitor.visitType(node.getSuperclassType(), cc);
@@ -101,7 +102,7 @@ public class DeclarationVisitor {
         });
 
         //make sure it is present in type map
-        typeVisitor.fromBinding(node.resolveBinding());
+        //typeVisitor.fromBinding(node.resolveBinding());
         sourceVisitor.binding = node.resolveBinding();
 
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
@@ -145,7 +146,6 @@ public class DeclarationVisitor {
 
         cc.name = n.getName().getFullyQualifiedName();
         cc.base.add(TypeHelper.getEnumType());
-        cc.getType().forward(header);
         header.addInclude("java/lang/Enum");
 
         n.superInterfaceTypes().forEach(iface -> cc.base.add(typeVisitor.visitType((Type) iface, cc)));
@@ -213,7 +213,9 @@ public class DeclarationVisitor {
         CMethod method = new CMethod();
         clazz.addMethod(method);
 
-        node.typeParameters().forEach(temp -> method.template.add(new CType(temp.toString(), true)));
+        for (TypeParameter tp : (List<TypeParameter>) node.typeParameters()) {
+            method.template.add(new CType(tp.getName().getIdentifier(), true));
+        }
 
         if (node.isConstructor()) {
             method.isCons = true;

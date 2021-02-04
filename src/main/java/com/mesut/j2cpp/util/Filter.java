@@ -1,6 +1,5 @@
 package com.mesut.j2cpp.util;
 
-import com.mesut.j2cpp.PackageName;
 import com.mesut.j2cpp.Util;
 
 import java.io.File;

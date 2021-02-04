@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.util;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.ast.Namespace;
 
@@ -11,14 +12,14 @@ public class TypeHelper {
     static HashMap<String, String> prims = new HashMap<>();
 
     static {
-        prims.put("byte", "char");
-        prims.put("char", "wchar_t");
-        prims.put("short", "char16_t");
-        prims.put("float", "float");
-        prims.put("int", "int");
-        prims.put("double", "double");
-        prims.put("long", "long");
-        prims.put("boolean", "bool");
+        prims.put("byte", Config.type_byte);
+        prims.put("char", Config.type_char);
+        prims.put("short", Config.type_short);
+        prims.put("float", Config.type_float);
+        prims.put("int", Config.type_int);
+        prims.put("double", Config.type_double);
+        prims.put("long", Config.type_long);
+        prims.put("boolean", Config.type_boolean);
     }
 
     public static boolean isPrim(String ty) {

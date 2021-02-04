@@ -1,29 +1,23 @@
 package com.mesut.j2cpp.util;
 
-import com.mesut.j2cpp.ClassMap;
+import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.Namespace;
 import com.mesut.j2cpp.ast.Node;
-import com.mesut.j2cpp.ast.Template;
-import com.mesut.j2cpp.cppast.CNode;
-import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-//collect all referenced classes in a header file
-public class LocalForwardDeclarator {
-    public List<ClassMap.ClassDecl> types = new ArrayList<>();
-    List<NamespaceDecl> baseList = new ArrayList<>();
+public class ForwardDeclarator {
+    public List<CClass> types = new ArrayList<>();
+    List<NamespaceDecl> nsList = new ArrayList<>();
     ClassMap classMap;
 
-    public LocalForwardDeclarator(ClassMap classMap) {
+    public ForwardDeclarator(ClassMap classMap) {
         this.classMap = classMap;
     }
 
-    public void add(ClassMap.ClassDecl type, Namespace namespace) {
+    public void add(CClass type, Namespace namespace) {
         if (!types.contains(type)) {
             NamespaceDecl ns = getNsDecl(namespace);
             types.add(type);
@@ -43,7 +37,7 @@ public class LocalForwardDeclarator {
 
     //create or get ns block
     NamespaceDecl getNsDecl(Namespace namespace) {
-        NamespaceDecl cur = getNsDecl(namespace.parts.get(0), baseList);
+        NamespaceDecl cur = getNsDecl(namespace.parts.get(0), nsList);
         for (int i = 1; i < namespace.parts.size(); i++) {
             cur = getNsDecl(namespace.parts.get(i), cur.nsList);
         }
@@ -66,7 +60,7 @@ public class LocalForwardDeclarator {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("//forward declarations\n");
-        for (NamespaceDecl dec : baseList) {
+        for (NamespaceDecl dec : nsList) {
             sb.append(dec);
         }
         return sb.toString();
@@ -74,7 +68,7 @@ public class LocalForwardDeclarator {
 
     //single ns decl,can hold classses and other ns decl
     static class NamespaceDecl extends Node {
-        public List<ClassMap.ClassDecl> classList = new ArrayList<>();
+        public List<CClass> classList = new ArrayList<>();
         public List<NamespaceDecl> nsList = new ArrayList<>();
         String ns;
 
@@ -89,8 +83,8 @@ public class LocalForwardDeclarator {
             sb.append(ns);
             sb.append("{\n");
 
-            for (ClassMap.ClassDecl dec : classList) {
-                sb.append(PrintHelper.body(dec.toString(), "    "));
+            for (CClass dec : classList) {
+                sb.append(PrintHelper.body(dec.forwardStr(), "    "));
             }
             if (!classList.isEmpty()) {
                 sb.append("\n");

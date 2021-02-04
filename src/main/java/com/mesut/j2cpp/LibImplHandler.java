@@ -1,7 +1,9 @@
 package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.*;
-import com.mesut.j2cpp.util.LocalForwardDeclarator;
+import com.mesut.j2cpp.map.ClassMap;
+import com.mesut.j2cpp.util.ForwardDeclarator;
+import com.mesut.j2cpp.util.TypeHelper;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -10,7 +12,6 @@ import org.eclipse.jdt.core.dom.Modifier;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Collections;
 
 public class LibImplHandler {
@@ -29,12 +30,29 @@ public class LibImplHandler {
 
     CType makeType(ITypeBinding binding) {
         return typeVisitor.fromBinding(binding);
-        //return new CType(binding.getQualifiedName());
+    }
+
+    CClass getClazz(ITypeBinding binding) {
+        CType type = typeVisitor.fromBinding(binding);
+        CClass decl = classMap.get(type);
+        if (decl.base.isEmpty()) {
+            if (binding.getSuperclass() != null) {
+                CType superCls = makeType(binding.getSuperclass());
+                if (Config.baseClassObject || !superCls.equals(TypeHelper.getObjectType())) {
+                    decl.base.add(superCls);
+                }
+            }
+
+            for (ITypeBinding iface : binding.getInterfaces()) {
+                decl.base.add(makeType(iface));
+            }
+
+        }
+        return decl;
     }
 
     public void addMethod(IMethodBinding binding) {
-        CType clazz = makeType(binding.getDeclaringClass());
-        ClassMap.ClassDecl decl = classMap.get(clazz);
+        CClass decl = getClazz(binding.getDeclaringClass().getErasure());
         for (CMethod method : decl.methods) {
             if (method.name.name.equals(binding.getName())) {
                 return;
@@ -47,9 +65,9 @@ public class LibImplHandler {
         method.isCons = binding.isConstructor();
         method.isPureVirtual = Modifier.isAbstract(binding.getModifiers());
         for (ITypeBinding p : binding.getParameterTypes()) {
-            method.params.add(new CParameter(makeType(p), CName.from("p")));
+            method.params.add(new CParameter(makeType(p.getErasure()), CName.from("p")));
         }
-        decl.methods.add(method);
+        decl.addMethod(method);
     }
 
     public void addField(IVariableBinding binding) {
@@ -59,8 +77,7 @@ public class LibImplHandler {
         if (!binding.isField() || !binding.isEnumConstant() || binding.getDeclaringClass().isFromSource()) {
             return;
         }
-        CType clazz = makeType(binding.getDeclaringClass());
-        ClassMap.ClassDecl decl = classMap.get(clazz);
+        CClass decl = getClazz(binding.getDeclaringClass().getErasure());
         for (CField field : decl.fields) {
             if (field.name.name.equals(binding.getName())) {
                 return;
@@ -71,7 +88,7 @@ public class LibImplHandler {
         field.setName(CName.from(binding.getName()));
         field.setType(makeType(binding.getType()));
 
-        decl.fields.add(field);
+        decl.addField(field);
     }
 
     public void addType(CType type) {
@@ -79,24 +96,14 @@ public class LibImplHandler {
     }
 
     public void writeAll(File dir) {
-        commonLibForwardHeader.forwardDeclarator = new LocalForwardDeclarator(classMap);
-        for (ClassMap.ClassDecl decl : classMap.map.values()) {
-            CHeader header = new CHeader(decl.type.basicForm().replace("::", "/") + ".h");
-            header.ns = decl.type.ns;
-            CClass cc = new CClass();
-            cc.ns = header.ns;
-            cc.name = decl.type.getName();
-            for (CMethod method : decl.methods) {
-                cc.addMethod(method);
-            }
-            for (CField field : decl.fields) {
-                cc.addField(field);
-            }
+        commonLibForwardHeader.forwardDeclarator = new ForwardDeclarator(classMap);
+        for (CClass cc : classMap.map.values()) {
+            CHeader header = new CHeader(cc.getType().basicForm().replace("::", "/") + ".h");
+            header.ns = cc.getType().ns;
             header.addClass(cc);
-            File path = new File(dir, header.rpath);
-            path.getParentFile().mkdirs();
+
             try {
-                Files.write(path.toPath(), header.toString().getBytes());
+                Util.writeHeader(header, dir);
             } catch (IOException e) {
                 e.printStackTrace();
             }

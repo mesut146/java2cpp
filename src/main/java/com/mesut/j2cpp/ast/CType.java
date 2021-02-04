@@ -116,12 +116,6 @@ public class CType extends CExpression {
         return sb.toString();
     }
 
-    public void forward(CHeader header) {
-        if (!(this instanceof CUnionType) && !isPrim() && !isVoid() && !isTemplate) {//has to be class type
-            header.forward(this);
-        }
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -4,7 +4,8 @@ package com.mesut.j2cpp;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
-import com.mesut.j2cpp.util.LocalForwardDeclarator;
+import com.mesut.j2cpp.map.ClassMap;
+import com.mesut.j2cpp.util.ForwardDeclarator;
 import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
 import com.mesut.j2cpp.visitor.SourceVisitor;
@@ -45,7 +46,7 @@ public class Converter {
         classMap = new ClassMap();
         commonHeader = new CHeader("all.h");
         forwardHeader = new CHeader("common.h");
-        forwardHeader.forwardDeclarator = new LocalForwardDeclarator(classMap);
+        forwardHeader.forwardDeclarator = new ForwardDeclarator(classMap);
         try {
             Logger.init(new File(destDir, "log.txt"));
         } catch (IOException e) {
@@ -166,7 +167,7 @@ public class Converter {
         try {
             String relPath = Util.trimPrefix(path, srcDir);
             relPath = Util.trimPrefix(relPath, "/");
-            //System.out.println("converting " + relPath);
+            System.out.println("converting " + relPath);
             CHeader header = new CHeader(Util.trimSuffix(relPath, "java") + "h");
             CSource source = new CSource(header);
 
@@ -179,6 +180,8 @@ public class Converter {
             if (Config.common_headers && Config.include_common_headers) {
                 source.includes.add(0, commonHeader.getInclude());
             }
+            
+            classMap.addAll(header.classes);//todo inners?
 
             if (Config.move_inners_out) {
                 for (int i = 0; i < header.classes.size(); i++) {
@@ -200,7 +203,7 @@ public class Converter {
             else {
                 writeHeader(header);
             }
-            classMap.addAll(header.classes);
+
             if (Config.common_forwards) {
                 forwardHeader.forwardDeclarator.addAll(header.classes);
                 if (Config.include_common_forwards) {
@@ -230,7 +233,6 @@ public class Converter {
             commonHeader.addInclude(header.getInclude());
         }
     }
-
 
     public void writeCmake() throws IOException {
         String src = cMakeWriter.generate();

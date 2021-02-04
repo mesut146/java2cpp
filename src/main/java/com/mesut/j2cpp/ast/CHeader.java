@@ -4,7 +4,7 @@ import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.cppast.CNode;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
-import com.mesut.j2cpp.util.LocalForwardDeclarator;
+import com.mesut.j2cpp.util.ForwardDeclarator;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 
@@ -20,7 +20,7 @@ public class CHeader extends CNode {
     public List<Namespace> usings = new ArrayList<>();
     public String rpath;//header path e.g java/lang/String.h
     public CSource source;
-    public LocalForwardDeclarator forwardDeclarator;
+    public ForwardDeclarator forwardDeclarator;
     boolean hasRuntime = false;
     int anonyCount = 0;
     boolean handledFieldInits = false;
@@ -176,10 +176,5 @@ public class CHeader extends CNode {
             }
         }
         return sb.toString();
-    }
-
-
-    public void forward(CType type) {
-        //forwardDeclarator.add(type);
     }
 }

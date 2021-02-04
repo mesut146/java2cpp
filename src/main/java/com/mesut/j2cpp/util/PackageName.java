@@ -1,4 +1,4 @@
-package com.mesut.j2cpp;
+package com.mesut.j2cpp.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
