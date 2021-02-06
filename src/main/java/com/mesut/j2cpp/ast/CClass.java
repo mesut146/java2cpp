@@ -28,7 +28,7 @@ public class CClass extends CStatement {
     public Node staticBlock = null;
     public List<CStatement> consStatements = new ArrayList<>();
     CType type;
-    Set<CType> types = new HashSet<>();
+    public Set<CType> types = new HashSet<>();
 
     public CClass() {
         if (Config.baseClassObject) {

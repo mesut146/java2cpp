@@ -11,6 +11,10 @@ public class CDoStatement extends CStatement {
     @Override
     public String toString() {
         getScope(expression, body);
-        return String.format("do\n%s\nwhile(%s);", PrintHelper.body(body.toString(), "    "), expression);
+        StringBuilder sb = new StringBuilder();
+        sb.append("do\n");
+        sb.append(PrintHelper.body(body.toString(), "    "));
+        sb.append("    ").append("while(").append(expression).append(");");
+        return sb.toString();
     }
 }

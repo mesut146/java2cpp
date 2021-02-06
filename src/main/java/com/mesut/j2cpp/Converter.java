@@ -78,7 +78,6 @@ public class Converter {
             }
         }
         cpDirs.add(srcDir);
-
         parser.setEnvironment(cpJars.toArray(new String[0]), cpDirs.toArray(new String[0]), null, true);
 
         parser.setResolveBindings(true);
@@ -178,10 +177,10 @@ public class Converter {
             sourceVisitor.convert();
 
             if (Config.common_headers && Config.include_common_headers) {
-                source.includes.add(0, allHeader.getInclude());
+                source.includes.add(0, IncludeStmt.src(allHeader.getInclude()));
             }
-            
-            classMap.addAll(header.classes);//todo inners?
+
+            classMap.addAll(header.classes);//todo inner of inners?
 
             if (Config.move_inners_out) {
                 for (int i = 0; i < header.classes.size(); i++) {
@@ -196,7 +195,7 @@ public class Converter {
                     CHeader innerHeader = new CHeader(inner_path);
                     innerHeader.setNs(header.ns);
                     innerHeader.addClass(cc);
-                    source.addInclude(innerHeader.getInclude());
+                    source.addInclude(IncludeStmt.src(innerHeader.getInclude()));
                     writeHeader(innerHeader);
                 }
             }
@@ -207,9 +206,10 @@ public class Converter {
             if (Config.common_forwards) {
                 forwardHeader.forwardDeclarator.addAll(header.classes);
                 if (Config.include_common_forwards) {
-                    source.includes.add(0, forwardHeader.rpath);
+                    source.includes.add(0, IncludeStmt.src(forwardHeader.getInclude()));
                 }
             }
+            IncludeHelper.handle(source);
             //new BaseForward(header).sort();
 
             File source_file = new File(destDir, relPath.replace(".java", ".cpp"));

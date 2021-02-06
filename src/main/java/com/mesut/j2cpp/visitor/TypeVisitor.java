@@ -6,6 +6,7 @@ import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.internal.core.util.BindingKeyResolver;
 
 import java.util.List;
 
@@ -58,6 +59,8 @@ public class TypeVisitor {
                     type.typeNames.add(fromBinding(tp, cc));
                 }
             }
+
+            type.fromSource = binding.isFromSource();
 
             if (!binding.isGenericType() && !binding.isNested()) {
                 if (header != null) {

@@ -5,10 +5,7 @@ import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.ForwardDeclarator;
 import com.mesut.j2cpp.util.TypeHelper;
 import com.mesut.j2cpp.visitor.TypeVisitor;
-import org.eclipse.jdt.core.dom.IMethodBinding;
-import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.IVariableBinding;
-import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +16,7 @@ public class LibImplHandler {
 
     ClassMap classMap = new ClassMap();
     TypeVisitor typeVisitor;
+    AST ast;
     CHeader forwardHeader;
     CHeader allHeader;
 
@@ -33,6 +31,7 @@ public class LibImplHandler {
     }
 
     CClass getClazz(ITypeBinding binding) {
+
         CType type = typeVisitor.fromBinding(binding);
         CClass decl = classMap.get(type);
         if (decl.base.isEmpty()) {

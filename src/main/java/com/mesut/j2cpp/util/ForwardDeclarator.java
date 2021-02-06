@@ -11,6 +11,7 @@ import java.util.List;
 public class ForwardDeclarator {
     public List<CClass> types = new ArrayList<>();
     List<NamespaceDecl> nsList = new ArrayList<>();
+    NamespaceDecl nons = new NamespaceDecl("");
     ClassMap classMap;
 
     public ForwardDeclarator(ClassMap classMap) {
@@ -37,6 +38,7 @@ public class ForwardDeclarator {
 
     //create or get ns block
     NamespaceDecl getNsDecl(Namespace namespace) {
+        if (namespace.parts.isEmpty()) return nons;
         NamespaceDecl cur = getNsDecl(namespace.parts.get(0), nsList);
         for (int i = 1; i < namespace.parts.size(); i++) {
             cur = getNsDecl(namespace.parts.get(i), cur.nsList);
@@ -79,12 +81,16 @@ public class ForwardDeclarator {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("namespace ");
-            sb.append(ns);
-            sb.append("{\n");
+            String indent = "";
+            if (!ns.isEmpty()) {
+                sb.append("namespace ");
+                sb.append(ns);
+                sb.append("{\n");
+                indent = "    ";
+            }
 
             for (CClass dec : classList) {
-                sb.append(PrintHelper.body(dec.forwardStr(), "    "));
+                sb.append(PrintHelper.body(dec.forwardStr(), indent));
             }
             if (!classList.isEmpty()) {
                 sb.append("\n");
@@ -92,8 +98,9 @@ public class ForwardDeclarator {
             for (NamespaceDecl node : nsList) {
                 sb.append(PrintHelper.body(node.toString(), "    ")).append("\n");
             }
-
-            sb.append("}").append("//namespace ").append(ns);
+            if (!ns.isEmpty()) {
+                sb.append("}").append("//namespace ").append(ns);
+            }
             return sb.toString();
         }
     }

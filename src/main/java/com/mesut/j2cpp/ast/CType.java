@@ -16,6 +16,7 @@ public class CType extends CExpression {
     public boolean isTemplate = false;//<T>,dynamic type
     public boolean isPointer = false;
     public boolean isInner = false;
+    public boolean fromSource = false;
 
     public CType() {
     }

@@ -82,7 +82,8 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.ArrayTest");
         //converter.getFilter().addIncludeClass("base.Inner2Test");
         //converter.getFilter().addIncludeClass("base.Generic");
-        converter.getFilter().addIncludeClass("base.Fields");
+        //converter.getFilter().addIncludeClass("base.Fields");
+        converter.getFilter().addIncludeClass("base.TryTest");
         converter.setDebugMembers(true);
         converter.convert();
     }

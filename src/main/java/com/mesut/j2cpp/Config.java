@@ -15,7 +15,7 @@ public class Config {
     //make all in one header
     public static boolean common_headers = true;
     //make all .cpp include that header
-    public static boolean include_common_headers = true;
+    public static boolean include_common_headers = false;
 
     //only include required headers
     public static boolean include_needed = true;

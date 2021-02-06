@@ -1,20 +1,18 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.cppast.CClassImpl;
 import com.mesut.j2cpp.cppast.CNode;
-import com.mesut.j2cpp.cppast.CStatement;
-import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
-import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CSource extends CNode {
+public class CSource extends Node {
 
     public CHeader header;
-    public List<String> includes = new ArrayList<>();
+    public List<IncludeStmt> includes = new ArrayList<>();
     public List<Namespace> usings = new ArrayList<>();
     public List<CField> fieldDefs = new ArrayList<>();
     public boolean hasRuntime = false;
@@ -26,21 +24,32 @@ public class CSource extends CNode {
         scope = this;
     }
 
-    public void addInclude(String include) {
-        //prevent same header includes itself and other duplications
-        if (!include.equals(header.getPathNoExt()) && !includes.contains(include)) {
-            includes.add(include);
+    public void addInclude(IncludeStmt stmt) {
+        if (!includes.contains(stmt)) {
+            includes.add(stmt);
         }
     }
 
-    public void addInclude(CType include) {
+    public void addInclude(CType type) {
+        if (type.isPrim() || type.isVoid()) return;
+        if (type.isTemplate) return;
+        if (type.equals(TypeHelper.getVectorType())) {
+            addInclude(IncludeStmt.sys("vector"));
+            return;
+        }
+
         //can be local class,those already included by converter so ignore
         for (CClass cc : header.classes) {
-            if (cc.getType().equals(include)) {
+            if (cc.getType().equals(type)) {
                 return;
             }
         }
-        addInclude(include.basicForm().replace("::", "/") + ".h");
+        if (type.fromSource) {
+            addInclude(IncludeStmt.src(type.basicForm().replace("::", "/")));
+        }
+        else {
+            addInclude(IncludeStmt.lib(type.basicForm().replace("::", "/")));
+        }
     }
 
     public void useNamespace(Namespace ns) {
@@ -58,13 +67,16 @@ public class CSource extends CNode {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (String inc : includes) {
-            sb.append(PrintHelper.include(inc)).append("\n");
+        //sys first,lib second, then src
+        IncludeStmt.sort(includes);
+        for (IncludeStmt inc : includes) {
+            sb.append(inc).append("\n");
         }
         //sb.append(PrintHelper.include(header.getInclude()));
         sb.append("\n\n");
         if (!usings.isEmpty()) {
             for (Namespace use : usings) {
+                if (use.parts.isEmpty())continue;
                 sb.append(PrintHelper.using(use)).append("\n");
             }
         }

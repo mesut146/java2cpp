@@ -57,7 +57,7 @@ public class CHeader extends CNode {
 
     public void addInclude(String include) {
         //prevent same header includes itself and other duplications
-        if (!include.equals(getPathNoExt()) && !includes.contains(include)) {
+        if (!include.equals(Util.trimSuffix(getInclude(), ".h")) && !includes.contains(include)) {
             includes.add(include);
         }
     }
