@@ -54,15 +54,13 @@ public class Config {
     public static boolean use_vector = true;
     public static boolean array_access_bracket = false;
 
+    public static tryModes tryMode = tryModes.AS_IS;
     //shrink types based on namespaces
     public static boolean normalizeTypes = true;
-
     //print parameter names in header
     public static boolean printParamNames = false;
-
     public static String parentName = "_parent_ref";
     public static String refSetterName = "setRef";
-
     public static String type_int = "int";
     public static String type_long = "long";
     public static String type_byte = "char";
@@ -71,4 +69,8 @@ public class Config {
     public static String type_double = "double";
     public static String type_short = "char16_t";
     public static String type_boolean = "bool";
+
+    public enum tryModes {
+        AS_IS, TRANSFORM, LAMBDA;
+    }
 }

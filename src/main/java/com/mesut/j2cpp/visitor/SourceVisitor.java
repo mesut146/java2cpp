@@ -193,12 +193,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(TryStatement node, CNode arg) {
         TryHelper helper = new TryHelper(this);
-        if (node.getFinally() == null) {
-            return helper.no_finally(node);
-        }
-        else {
-            return helper.with_finally(node);
-        }
+        return helper.handle(node);
     }
 
     @Override

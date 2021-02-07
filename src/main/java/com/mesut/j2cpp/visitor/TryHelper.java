@@ -1,13 +1,9 @@
 package com.mesut.j2cpp.visitor;
 
-import com.mesut.j2cpp.ast.CMethod;
-import com.mesut.j2cpp.ast.CName;
-import com.mesut.j2cpp.ast.CType;
-import com.mesut.j2cpp.ast.CUnionType;
-import com.mesut.j2cpp.cppast.CCatchClause;
-import com.mesut.j2cpp.cppast.CExpression;
-import com.mesut.j2cpp.cppast.CLambdaExpression;
-import com.mesut.j2cpp.cppast.CLineCommentStatement;
+import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.Logger;
+import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.cppast.*;
 import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
@@ -65,10 +61,7 @@ public class TryHelper {
         blockStatement.addStatement(new CLineCommentStatement("finally"));
         blockStatement.addStatement(getFinally(node));
         //call finally
-
-
     }
-
 
     CBlockStatement getFinally(TryStatement node) {
         return (CBlockStatement) visitor.visit(node.getFinally(), null);
@@ -78,6 +71,10 @@ public class TryHelper {
         CTryStatement tryStatement = new CTryStatement();
         printCatches(node.catchClauses(), tryStatement);
         tryStatement.body = (CBlockStatement) visitor.visit(node.getBody(), null);
+        if (Config.tryMode == Config.tryModes.AS_IS && node.getFinally() != null) {
+            Logger.log("not handled finally at pos:" + node.getStartPosition() + " in " + visitor.clazz.getType().basicForm());
+            tryStatement.finallyBlock = (CBlockStatement) visitor.visit(node.getFinally(), null);
+        }
         int len = node.resources().size();
         if (len > 0) {
             for (int i = 0; i < len; i++) {
@@ -91,7 +88,6 @@ public class TryHelper {
                 }
             }
         }
-
         return tryStatement;
     }
 
@@ -128,7 +124,6 @@ public class TryHelper {
     }
 
     void addCatch(CTryStatement tryStatement) {
-
         CCatchClause catchClause = new CCatchClause();
         catchClause.body = new CBlockStatement();
         catchClause.catchAll = true;
@@ -136,5 +131,12 @@ public class TryHelper {
 
     }
 
-
+    public CNode handle(TryStatement node) {
+        if (node.getFinally() == null || Config.tryMode == Config.tryModes.AS_IS) {
+            return no_finally(node);
+        }
+        else {
+            return with_finally(node);
+        }
+    }
 }

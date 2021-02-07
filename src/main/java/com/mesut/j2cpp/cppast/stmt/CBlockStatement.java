@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.cppast.stmt;
 
 import com.mesut.j2cpp.cppast.CStatement;
+import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ public class CBlockStatement extends CStatement {
         up();
         for (CStatement statement : statements) {
             if (!(statement instanceof CEmptyStatement)) {
-                sb.append(getIndent()).append(statement).append("\n");
+                sb.append(PrintHelper.body(statement.toString(), getIndent()));
             }
         }
         sb.append("}");

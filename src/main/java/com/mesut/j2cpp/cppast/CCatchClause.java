@@ -21,7 +21,7 @@ public class CCatchClause extends CNode {
         else {
             sb.append(expr);
         }
-        sb.append(")");
+        sb.append(")\n");
         sb.append(PrintHelper.strBody(body));
         return sb.toString();
     }

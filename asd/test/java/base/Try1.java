@@ -1,17 +1,22 @@
 //package base;
 
-public class TryTest {
+public class Try1 {
 
-    String normal() {
+    void withCatch() {
         try {
             if (1 == 1) {
-                return "in try";
+                throw new RuntimeException("err");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "in catch";
+            int inTry;
         }
-        return "default";
+        catch (RuntimeException e) {
+            e.printStackTrace();
+            int c2;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            int c1;
+        }
     }
 
     String with_finally() {
@@ -28,10 +33,12 @@ public class TryTest {
     }
 
     void no_catch() {
-        try {
+        try
+        {
+            int x;
             return;
         } finally {
-
+            int y;
         }
     }
 }
