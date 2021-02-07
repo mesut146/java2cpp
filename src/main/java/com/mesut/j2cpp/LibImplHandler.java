@@ -34,7 +34,7 @@ public class LibImplHandler {
     CClass getClazz(ITypeBinding binding) {
         CType type = makeType(binding);
         CClass cc = classMap.get(type);
-        /*if (cc.base.isEmpty()) {
+        if (cc.base.isEmpty()) {
             if (binding.getSuperclass() != null) {
                 CType superCls = makeType(binding.getSuperclass());
                 classMap.get(superCls);
@@ -47,7 +47,7 @@ public class LibImplHandler {
                 classMap.get(it);
                 cc.base.add(it);
             }
-        }*/
+        }
         return cc;
     }
 
@@ -57,7 +57,7 @@ public class LibImplHandler {
 
         //get real method
         for (IMethodBinding methodBinding : real.getDeclaredMethods()) {
-            if (!methodBinding.getName().equals(binding.getName())) break;
+            if (!methodBinding.getName().equals(binding.getName())) continue;
             if (binding.isSubsignature(methodBinding)) {
                 binding = methodBinding;
                 break;

@@ -281,7 +281,8 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             //if else with ordinals
             helper.isEnum = true;
         }
-        return helper.makeIfElse(node);
+        List<CStatement> list = helper.makeIfElse(node);
+        return new CMultiStatement(list);
     }
 
     @Override

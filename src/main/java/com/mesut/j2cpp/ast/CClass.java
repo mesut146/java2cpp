@@ -99,7 +99,6 @@ public class CClass extends CStatement {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         getScope(new ArrayList<>(types));
-        sb.append("//types ").append(PrintHelper.joinStr(new ArrayList<>(types), ",")).append("\n");
         printDecl(sb);
         sb.append("{\n");
         up();

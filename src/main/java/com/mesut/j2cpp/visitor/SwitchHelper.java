@@ -5,6 +5,9 @@ import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.cppast.expr.CInfixExpression;
+import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
+import com.mesut.j2cpp.cppast.literal.CCharacterLiteral;
+import com.mesut.j2cpp.cppast.literal.CNumberLiteral;
 import com.mesut.j2cpp.cppast.stmt.*;
 import org.eclipse.jdt.core.dom.*;
 
@@ -23,33 +26,40 @@ public class SwitchHelper {
     }
 
     CExpression ordinal(CExpression expression) {
-        return expression;
-        /*if (expression instanceof CNumberLiteral || expression instanceof CCharacterLiteral) {
+        if (expression instanceof CNumberLiteral || expression instanceof CCharacterLiteral) {
             return expression;
         }
         CMethodInvocation methodInvocation = new CMethodInvocation();
         methodInvocation.isArrow = true;
         methodInvocation.scope = expression;
         methodInvocation.name = new CName("ordinal");
-        return methodInvocation;*/
+        return methodInvocation;
     }
 
-    public CStatement makeIfElse(SwitchStatement node) {
+    public List<CStatement> makeIfElse(SwitchStatement node) {
+        List<CStatement> result = new ArrayList<>();
         CExpression expression = (CExpression) visitor.visitExpr(node.getExpression(), null);
-        CName ordinalName;
         //for enums ve call ordinal method store result in a var and make regular if else's
+
+        CType type;
+        CExpression left;
+
         if (isEnum) {
-            CStatementList statementList = new CStatementList();
-            CVariableDeclarationStatement ord = new CVariableDeclarationStatement();
-            CVariableDeclarationFragment frag = new CVariableDeclarationFragment();
-            ord.type = new CType("int");
-            ordinalName = new CName("ordinal");
-            expression = ordinalName;
-            frag.name = ordinalName;
-            frag.initializer = ordinal(expression);
-            ord.fragments.add(frag);
-            statementList.statements.add(ord);
+            type = new CType("int");
+            left = ordinal(expression);
         }
+        else {
+            type = visitor.typeVisitor.fromBinding(node.getExpression().resolveTypeBinding(), visitor.clazz);
+        }
+        CVariableDeclarationStatement ord = new CVariableDeclarationStatement();
+        CVariableDeclarationFragment frag = new CVariableDeclarationFragment();
+        expression = new CName("_val");
+        ord.type = type;
+        frag.name = new CName("_val");
+        frag.initializer = left;
+        ord.fragments.add(frag);
+        result.add(ord);
+
 
         statements = node.statements();
 
@@ -92,7 +102,8 @@ public class SwitchHelper {
             }
         }
         lastIf.elseStatement = defaultStmt;
-        return firstIf;
+        result.add(firstIf);
+        return result;
     }
 
     //scan merged cases and collect expressions
