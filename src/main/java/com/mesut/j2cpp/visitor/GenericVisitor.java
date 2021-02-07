@@ -32,12 +32,14 @@ public abstract class GenericVisitor<R, A> implements Visitor<R, A> {
         else if (n instanceof ForStatement) {
             return visit((ForStatement) n, arg);
         }
-
         else if (n instanceof IfStatement) {
             return visit((IfStatement) n, arg);
         }
         else if (n instanceof LabeledStatement) {
             return visit((LabeledStatement) n, arg);
+        }
+        else if (n instanceof EmptyStatement) {
+            return visit((EmptyStatement) n, arg);
         }
         else if (n instanceof ReturnStatement) {
             return visit((ReturnStatement) n, arg);

@@ -62,6 +62,8 @@ public interface Visitor<R, A> {
 
     R visit(LabeledStatement node, A arg);
 
+    R visit(EmptyStatement node,A arg);
+
     R visit(ConstructorInvocation node, A arg);
 
     R visit(ExpressionStatement node, A arg);

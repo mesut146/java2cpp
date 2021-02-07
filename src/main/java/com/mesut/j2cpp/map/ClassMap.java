@@ -27,12 +27,12 @@ public class ClassMap {
         if (map.containsKey(type)) {
             return map.get(type);
         }
-        CClass decl = new CClass(type);
+        CClass cc = new CClass(type);
         for (CType arg : type.typeNames) {
-            decl.template.add(arg);
+            cc.template.add(arg);
         }
-        map.put(type, decl);
-        return decl;
+        map.put(type, cc);
+        return cc;
     }
 
 }

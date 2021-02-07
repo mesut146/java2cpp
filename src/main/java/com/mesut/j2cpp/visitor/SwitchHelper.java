@@ -13,9 +13,9 @@ import java.util.List;
 
 public class SwitchHelper {
 
+    public boolean isEnum = false;
     SourceVisitor visitor;
     List<Statement> statements;
-    public boolean isEnum = false;
     int i;//statement index
 
     public SwitchHelper(SourceVisitor visitor) {
@@ -35,19 +35,18 @@ public class SwitchHelper {
     }
 
     public CStatement makeIfElse(SwitchStatement node) {
-        Expression expression = node.getExpression();
-        CExpression left = (CExpression) visitor.visitExpr(expression, null);
+        CExpression expression = (CExpression) visitor.visitExpr(node.getExpression(), null);
         CName ordinalName;
-        //for enums ve call ordinal method store result in a var and make regular if elses
+        //for enums ve call ordinal method store result in a var and make regular if else's
         if (isEnum) {
             CStatementList statementList = new CStatementList();
             CVariableDeclarationStatement ord = new CVariableDeclarationStatement();
             CVariableDeclarationFragment frag = new CVariableDeclarationFragment();
             ord.type = new CType("int");
             ordinalName = new CName("ordinal");
-            left = ordinalName;
+            expression = ordinalName;
             frag.name = ordinalName;
-            frag.initializer = ordinal(left);
+            frag.initializer = ordinal(expression);
             ord.fragments.add(frag);
             statementList.statements.add(ord);
         }
@@ -74,7 +73,7 @@ public class SwitchHelper {
                     List<CExpression> cases = collectCases();
                     CIfStatement ifStatement = new CIfStatement();
 
-                    ifStatement.condition = makeCondition(cases, left);
+                    ifStatement.condition = makeCondition(cases, expression);
                     ifStatement.thenStatement = collectStatements();
 
                     if (firstIf == null) {
@@ -128,6 +127,9 @@ public class SwitchHelper {
             else if (!(statement instanceof BreakStatement)) {//skip breaks since we use if's
                 blockStatement.addStatement((CStatement) visitor.visitExpr(statement, null));
             }
+        }
+        if (blockStatement.statements.size() == 1 && blockStatement.statements.get(0) instanceof CBlockStatement) {
+            return (CBlockStatement) blockStatement.statements.get(0);
         }
         return blockStatement;
     }

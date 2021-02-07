@@ -16,14 +16,13 @@ public class CIfStatement extends CStatement {
         sb.append("if(").append(condition).append(")\n");
         sb.append(PrintHelper.strBody(thenStatement));
         if (elseStatement != null) {
-            sb.append("else ");
-            sb.append(PrintHelper.strBody(elseStatement));
-            /*if (elseStatement instanceof CIfStatement) {
-                sb.append(PrintHelper.strBody(elseStatement));
+            sb.append("\nelse ");
+            if (elseStatement instanceof CIfStatement) {
+                sb.append(elseStatement);
             }
             else {
                 sb.append(PrintHelper.strBody(elseStatement));
-            }*/
+            }
         }
         return sb.toString();
     }

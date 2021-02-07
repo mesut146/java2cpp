@@ -26,6 +26,10 @@ public class CName extends CExpression {
         return new CName(name);
     }
 
+    public boolean is(String s) {
+        return name.equals(s);
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

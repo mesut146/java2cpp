@@ -9,14 +9,15 @@ import org.eclipse.jdt.core.dom.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class LibImplHandler {
     public static LibImplHandler instance = new LibImplHandler();
 
     ClassMap classMap = new ClassMap();
     TypeVisitor typeVisitor;
-    AST ast;
     CHeader forwardHeader;
     CHeader allHeader;
 
@@ -31,43 +32,73 @@ public class LibImplHandler {
     }
 
     CClass getClazz(ITypeBinding binding) {
-
-        CType type = typeVisitor.fromBinding(binding);
-        CClass decl = classMap.get(type);
-        if (decl.base.isEmpty()) {
+        CType type = makeType(binding);
+        CClass cc = classMap.get(type);
+        /*if (cc.base.isEmpty()) {
             if (binding.getSuperclass() != null) {
                 CType superCls = makeType(binding.getSuperclass());
                 classMap.get(superCls);
                 if (Config.baseClassObject || !superCls.equals(TypeHelper.getObjectType())) {
-                    decl.base.add(superCls);
+                    cc.base.add(superCls);
                 }
             }
             for (ITypeBinding iface : binding.getInterfaces()) {
                 CType it = makeType(iface);
                 classMap.get(it);
-                decl.base.add(it);
+                cc.base.add(it);
             }
-        }
-        return decl;
+        }*/
+        return cc;
     }
 
     public void addMethod(IMethodBinding binding) {
-        CClass decl = getClazz(binding.getDeclaringClass().getErasure());
-        for (CMethod method : decl.methods) {
-            if (method.name.name.equals(binding.getName())) {
-                return;
+        ITypeBinding real = binding.getDeclaringClass().getErasure();//for generic types
+        CClass clazz = getClazz(real);
+
+        //get real method
+        for (IMethodBinding methodBinding : real.getDeclaredMethods()) {
+            if (!methodBinding.getName().equals(binding.getName())) break;
+            if (binding.isSubsignature(methodBinding)) {
+                binding = methodBinding;
+                break;
             }
         }
-        //System.out.println(binding.getDeclaringClass().getQualifiedName() + "." + binding.getName() + "()");
-        CMethod method = new CMethod();
+        List<CType> params = new ArrayList<>();
+        for (ITypeBinding p : binding.getParameterTypes()) {
+            params.add(makeType(p));
+        }
+        CMethod method;
+        //method = null;
+        method = findMethod(clazz, binding.getName(), params);
+        if (method != null) return;
+
+        method = new CMethod();
         method.name = CName.from(binding.getName());
         method.type = makeType(binding.getReturnType());
         method.isCons = binding.isConstructor();
         method.isPureVirtual = Modifier.isAbstract(binding.getModifiers());
-        for (ITypeBinding p : binding.getParameterTypes()) {
-            method.params.add(new CParameter(makeType(p.getErasure()), CName.from("p")));
+        for (CType ptype : params) {
+            method.params.add(new CParameter(ptype, CName.from("p")));
         }
-        decl.addMethod(method);
+        clazz.addMethod(method);
+    }
+
+    CMethod findMethod(CClass cc, String name, List<CType> params) {
+        for (CMethod method : cc.methods) {
+            if (!method.name.is(name) || method.params.size() != params.size()) {
+                continue;
+            }
+            boolean found = true;
+            for (int i = 0; i < method.params.size(); i++) {
+                CParameter cp = method.params.get(i);
+                if (!cp.type.equals(params.get(i))) {
+                    found = false;
+                    break;
+                }
+            }
+            if (found) return method;
+        }
+        return null;
     }
 
     public void addField(IVariableBinding binding) {

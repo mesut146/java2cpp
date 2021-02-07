@@ -175,6 +175,11 @@ public class DefaultVisitor<R, A> extends GenericVisitor<R, A> {
     }
 
     @Override
+    public R visit(EmptyStatement node, A arg) {
+        return null;
+    }
+
+    @Override
     public R visit(TypeDeclarationStatement node, A arg) {
         return null;
     }

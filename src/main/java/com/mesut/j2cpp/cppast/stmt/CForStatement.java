@@ -36,7 +36,7 @@ public class CForStatement extends CStatement {
             sb.append(";");
         }
         else {
-            sb.append("\n").append(PrintHelper.body(body.toString(), "    "));
+            sb.append("\n").append(body);
         }
         return sb.toString();
     }

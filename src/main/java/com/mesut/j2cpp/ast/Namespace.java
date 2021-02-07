@@ -20,7 +20,7 @@ public class Namespace extends Node {
     }
 
     public Namespace() {
-        all = "";
+        this("");
     }
 
     public String getAll() {

@@ -147,6 +147,12 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         return methodInvocation;
     }
 
+
+    @Override
+    public CNode visit(EmptyStatement node, CNode arg) {
+        return new CEmptyStatement();
+    }
+
     @Override
     public CNode visit(Assignment node, CNode arg) {
         CAssignment assignment = new CAssignment();
@@ -270,20 +276,12 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(SwitchStatement node, CNode arg) {
         Expression expression = node.getExpression();
         ITypeBinding binding = expression.resolveTypeBinding();
-        if (binding.isPrimitive()) {
-            return new SwitchHelper(this).makeIfElse(node);
-        }
-        else if (binding.isEnum()) {
+        SwitchHelper helper = new SwitchHelper(this);
+        if (binding.isEnum()) {
             //if else with ordinals
-            SwitchHelper helper = new SwitchHelper(this);
             helper.isEnum = true;
-            return helper.makeIfElse(node);
         }
-        else {
-            //multiple if elses
-            SwitchHelper helper = new SwitchHelper(this);
-            return helper.makeIfElse(node);
-        }
+        return helper.makeIfElse(node);
     }
 
     @Override
@@ -702,7 +700,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             if (binding.getKind() == IBinding.VARIABLE) {
                 IVariableBinding variableBinding = (IVariableBinding) binding;
                 if (variableBinding.isField()) {
-                    CType type = typeVisitor.fromBinding(variableBinding.getDeclaringClass(),clazz);
+                    CType type = typeVisitor.fromBinding(variableBinding.getDeclaringClass(), clazz);
                     //static field,qualify
                     if (isStatic) {
                         CFieldAccess fieldAccess = new CFieldAccess();
@@ -779,7 +777,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             }
 
             boolean isStatic = Modifier.isStatic(binding.getModifiers());
-            CType type = typeVisitor.fromBinding(typeBinding,clazz);
+            CType type = typeVisitor.fromBinding(typeBinding, clazz);
             type.isPointer = false;
             CExpression scope = (CExpression) visitExpr(node.getQualifier(), arg);
 

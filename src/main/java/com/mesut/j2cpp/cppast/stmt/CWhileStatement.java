@@ -18,6 +18,6 @@ public class CWhileStatement extends CStatement {
         if (statement == null) {
             return String.format("while(%s);", expression);
         }
-        return String.format("while(%s)\n%s", expression, PrintHelper.body(statement.toString(),"    "));
+        return String.format("while(%s)%s", expression, PrintHelper.strBody(statement));
     }
 }

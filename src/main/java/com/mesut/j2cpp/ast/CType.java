@@ -109,7 +109,7 @@ public class CType extends CExpression {
     //binary name
     public String basicForm() {
         StringBuilder sb = new StringBuilder();
-        if (ns != null && !ns.list.isEmpty()) {
+        if (ns != null && !ns.parts.isEmpty()) {
             sb.append(ns.getAll());
             sb.append("::");
         }
