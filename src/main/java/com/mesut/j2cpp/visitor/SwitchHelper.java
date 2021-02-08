@@ -1,9 +1,11 @@
 package com.mesut.j2cpp.visitor;
 
+import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.CName;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CStatement;
+import com.mesut.j2cpp.cppast.expr.CFieldAccess;
 import com.mesut.j2cpp.cppast.expr.CInfixExpression;
 import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.cppast.literal.CCharacterLiteral;
@@ -19,6 +21,7 @@ public class SwitchHelper {
     public boolean isEnum = false;
     SourceVisitor visitor;
     List<Statement> statements;
+    CExpression left;
     int i;//statement index
 
     public SwitchHelper(SourceVisitor visitor) {
@@ -41,25 +44,27 @@ public class SwitchHelper {
         CExpression expression = (CExpression) visitor.visitExpr(node.getExpression(), null);
         //for enums ve call ordinal method store result in a var and make regular if else's
 
-        CType type;
-        CExpression left;
+        if (!(expression instanceof CFieldAccess) && !(expression instanceof CName) || isEnum) {
+            CType type;
+            if (isEnum) {
+                type = new CType("int");
+                expression = ordinal(expression);
+            }
+            else {
+                type = visitor.typeVisitor.fromBinding(node.getExpression().resolveTypeBinding(), visitor.clazz);
+            }
 
-        if (isEnum) {
-            type = new CType("int");
-            left = ordinal(expression);
+            CVariableDeclarationStatement ord = new CVariableDeclarationStatement();
+            CVariableDeclarationFragment frag = new CVariableDeclarationFragment();
+            ord.type = type;
+            left = frag.name = new CName("_val");
+            frag.initializer = expression;
+            ord.fragments.add(frag);
+            result.add(ord);
         }
         else {
-            type = visitor.typeVisitor.fromBinding(node.getExpression().resolveTypeBinding(), visitor.clazz);
+            left = expression;
         }
-        CVariableDeclarationStatement ord = new CVariableDeclarationStatement();
-        CVariableDeclarationFragment frag = new CVariableDeclarationFragment();
-        expression = new CName("_val");
-        ord.type = type;
-        frag.name = new CName("_val");
-        frag.initializer = left;
-        ord.fragments.add(frag);
-        result.add(ord);
-
 
         statements = node.statements();
 
@@ -74,16 +79,12 @@ public class SwitchHelper {
                 if (switchCase.isDefault()) {
                     i++;//skip default
                     defaultStmt = collectStatements();
-                    /*Statement next = statements.get(i + 1);
-                    if (next instanceof SwitchCase || lastIf != null) {
-                        //i++;
-                    }*/
                 }
                 else {
                     List<CExpression> cases = collectCases();
                     CIfStatement ifStatement = new CIfStatement();
 
-                    ifStatement.condition = makeCondition(cases, expression);
+                    ifStatement.condition = makeCondition(cases);
                     ifStatement.thenStatement = collectStatements();
 
                     if (firstIf == null) {
@@ -94,14 +95,18 @@ public class SwitchHelper {
                         lastIf.elseStatement = ifStatement;
                         lastIf = ifStatement;
                     }
-
                 }
             }
             else {
                 throw new RuntimeException("invalid switch statement");
             }
         }
-        lastIf.elseStatement = defaultStmt;
+        if (lastIf == null) {
+            Logger.log("invalid switch in " + visitor.clazz.getType().basicForm());
+        }
+        else {
+            lastIf.elseStatement = defaultStmt;
+        }
         result.add(firstIf);
         return result;
     }
@@ -147,7 +152,7 @@ public class SwitchHelper {
 
     //given a , b , c
     //make left==a || left==b || ...
-    CExpression makeCondition(List<CExpression> list, CExpression left) {
+    CExpression makeCondition(List<CExpression> list) {
         if (list.size() == 1) {
             return makeInfix(left, list.get(0), "==");
         }
@@ -169,7 +174,6 @@ public class SwitchHelper {
                     }
                     //lastOr.right = infixExpression;
                 }
-
                 if (j < list.size() - 2) {
                     lastOr.right = makeInfix(null, null, "||");
                     lastOr = (CInfixExpression) lastOr.right;
@@ -177,7 +181,6 @@ public class SwitchHelper {
             }
             return firstOr;
         }
-
     }
 
     CInfixExpression makeInfix(CExpression left, CExpression right, String op) {

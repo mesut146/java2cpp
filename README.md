@@ -1,18 +1,26 @@
 # java2cpp
 
-convert java code to c++ code(.h and .cpp files)
+yet another converter for java to c++ 
 
-currently, it only converts syntax
+it takes a source directory containing java files and outputs corresponding c++ headers and sources by transforming declarations, statements and expressions
 
-java runtime must be included separately
+The resulting c++ code should be good enough to compile with the least work
+## Features
 
-### todo
+### forward class declarations
+creates single header that contains all class declarations for source and libraries 
 
-- [x] type solving(scope based)
-- [x] instance of
-- [x] try finally
-- [x] forward class declarations
-- [x] anonymous classes
-- [ ] arrays(std::vector, pointer, or special container)
-- [ ] cast(reinterpret,dynamic,static,direct) 
-- [ ] virtual methods(all virtual for now)
+### write headers for library usages
+creates headers with classes and methods for library usages
+### anonymous & inner classes
+Anonymous classes handled by simply creating a class with a dummy name
+
+It can move inner & anonymous classes to upper levels or separate headers to avoid namespace conflict. 
+
+### mapper
+Instead of creating library headers you can command to use mappers to convert java runtime to equivalent c++ types and functions (java.util.List to std::vector,java.lang.String to std::string etc.)
+
+
+## command line usage
+````
+java -jar java2cpp.jar -src javaDir -out cppDir -cp rt.jar -cp lib2.jar ...

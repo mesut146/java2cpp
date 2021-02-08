@@ -8,7 +8,6 @@ public class CVariableDeclarationFragment extends CNode {
     public CName name;
     public CExpression initializer;
 
-
     @Override
     public String toString() {
         if (initializer == null) {

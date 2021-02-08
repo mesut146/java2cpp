@@ -2,10 +2,13 @@ package base;
 
 public class SwitchTest{
 
+  int f=5;
+
   int val(){return 5;}
 
   void test(){
-    switch(val()){
+    int p = val();
+    switch(this.f){
       case 1:
         return;
       case 2:{
