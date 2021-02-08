@@ -4,18 +4,21 @@ import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 public class Mapper {
 
-    Map<String, String> classMap;
+    Map<CType, String> classMap;
+
+    public Mapper(Map<CType, String> classMap) {
+        classMap = new HashMap<>();
+    }
 
     public void addMapper(String jsonPath) throws IOException {
         JSONObject cls = new JSONObject(Util.read(new File(jsonPath)));
@@ -35,11 +38,11 @@ public class Mapper {
         return methods;
     }
 
-    CExpression mapMethod() {
+    public CExpression mapMethod(MethodInvocation node) {
         return null;
     }
 
-    CType mapType(CType type) {
+    public CType mapType(CType type) {
         return type;
     }
 

@@ -1,0 +1,18 @@
+{
+  "name": "java.lang.System",
+  "methods": [
+    {
+      "name": "arraycopy(java.lang.Object,int,java.lang.Object,int,int)"
+    },
+    {
+      "expr": "System.out.println(java.lang.String)",
+      "target": "std::cout << $1 << \"\n\"",
+      "include": "<iostream>"
+    },
+    {
+      "expr": "System.out.printf(java.lang.String,java.lang.Object...)",
+      "target": "printf($1,$2)",
+      "include": "stdio.h"
+    }
+  ]
+}

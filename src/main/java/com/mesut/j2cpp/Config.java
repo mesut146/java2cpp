@@ -51,6 +51,8 @@ public class Config {
     //make all methods public
     public static boolean methods_public = true;
 
+    public static String mainClass = null;
+
     public static boolean use_vector = true;
     public static boolean array_access_bracket = false;
 

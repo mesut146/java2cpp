@@ -90,5 +90,17 @@ public class Conv {
         converter.convert();
     }
 
+    @Test
+    public void testMapper() {
+        String dir = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/java";
+        String out = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/cpp";
+        Converter converter = new Converter(dir, out);
+        converter.addClasspath(rtJar);
+        //Config.common_forwards = false;
+        //converter.getFilter().addIncludeClass("base.InnerTest");
+        converter.getFilter().addIncludeClass("mapper.ListTest");
+        converter.convert();
+    }
+
 
 }
