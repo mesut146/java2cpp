@@ -13,16 +13,13 @@ import java.util.List;
 
 //represents c++ header (.hpp)
 public class CHeader extends CNode {
-    public String name;
-    public List<String> includes = new ArrayList<>();
-    public List<CClass> classes = new ArrayList<>();
-    public Namespace ns;
-    public List<Namespace> usings = new ArrayList<>();
     public String rpath;//header path e.g java/lang/String.h
+    public List<Namespace> usings = new ArrayList<>();
+    public Namespace ns;
+    public List<String> includes = new ArrayList<>();
+    public CClass cc;
     public CSource source;
     public ForwardDeclarator forwardDeclarator;
-    boolean hasRuntime = false;
-    int anonyCount = 0;
     boolean handledFieldInits = false;
 
     public CHeader(String path) {
@@ -43,16 +40,10 @@ public class CHeader extends CNode {
         return rpath;
     }
 
-    String getPathNoExt() {
-        return rpath.substring(0, rpath.length() - 2);
-    }
-
-    public void addClass(CClass... arr) {
-        for (CClass cc : arr) {
-            cc.ns = ns;
-            cc.header = this;
-            classes.add(cc);
-        }
+    public void setClass(CClass cc) {
+        cc.ns = ns;
+        cc.header = this;
+        this.cc = cc;
     }
 
     public void addInclude(String include) {
@@ -78,37 +69,34 @@ public class CHeader extends CNode {
         return TypeHelper.normalizeType(type, usings);
     }
 
-    public String getAnonyName() {
-        return "anony" + anonyCount++;
-    }
-
 
     private void handleFieldInits() {
-        if (handledFieldInits) return;
+        if (handledFieldInits || cc == null) return;
         //handle field initializers
-        for (CClass cc : classes) {
-            if (!cc.consStatements.isEmpty()) {
-                List<CMethod> consList = new ArrayList<>();
-                //append all cons
-                for (CMethod method : cc.methods) {
-                    //filter
-                    if (method.isCons && method.thisCall == null) {
-                        consList.add(method);
-                    }
+
+        if (!cc.consStatements.isEmpty()) {
+            List<CMethod> consList = new ArrayList<>();
+            //append all cons
+            for (CMethod method : cc.methods) {
+                //filter
+                if (method.isCons && method.thisCall == null) {
+                    consList.add(method);
                 }
-                if (consList.isEmpty()) {
-                    //make default constructor
-                    CMethod cons = new CMethod();
-                    cons.isCons = true;
-                    cons.name = CName.from(cc.name);
-                    cons.setPublic(true);
-                    cons.body = new CBlockStatement();
-                    consList.add(cons);
-                    cc.addMethod(cons);
-                }
-                for (CMethod cons : consList) {
-                    cons.body.statements.addAll(0, cc.consStatements);
-                }
+            }
+            if (consList.isEmpty()) {
+                //make default constructor
+                CMethod cons = new CMethod();
+                cons.isCons = true;
+                cons.name = CName.from(cc.name);
+                cons.setPublic(true);
+                cons.body = new CBlockStatement();
+                consList.add(cons);
+                cc.addMethod(cons);
+            }
+            for (CMethod cons : consList) {
+                //eclipse creates default ctor so initialize
+                if (cons.body == null) cons.body = new CBlockStatement();
+                cons.body.statements.addAll(0, cc.consStatements);
             }
         }
         handledFieldInits = true;
@@ -122,10 +110,6 @@ public class CHeader extends CNode {
         for (String imp : includes) {
             imp = Util.trimSuffix(imp, ".h");
             sb.append(String.format("#include \"%s.h\"", imp));
-            sb.append("\n");
-        }
-        if (hasRuntime) {
-            sb.append(String.format("#include \"%s.h\"", "Helper"));
             sb.append("\n");
         }
         sb.append("\n");
@@ -157,11 +141,13 @@ public class CHeader extends CNode {
                 sb.append("\n");
             }
         }
-        getScope(classes);
-        for (CClass cc : classes) {
+        if (cc!=null){
+            getScope(cc);
             sb.append(PrintHelper.body(cc.toString(), getIndent()));
-            sb.append("\n");
         }
+
+        sb.append("\n");
+
         if (ns != null && !ns.getAll().equals("")) {
             if (Config.ns_type_nested) {
                 for (String cur : ns.parts) {

@@ -10,9 +10,13 @@ public class IncludeStmt {
 
     public IncludeStmt(String str) {
         this.str = Util.trimSuffix(str, ".h");
+        if (str.startsWith("<")) {
+            isSys = true;
+            this.str = str.substring(1, str.length() - 1);
+        }
     }
 
-    public static void sort(List<IncludeStmt> list){
+    public static void sort(List<IncludeStmt> list) {
         list.sort((i1, i2) -> {
             if (i1.isSys) return -1;
             if (i1.isLib) {

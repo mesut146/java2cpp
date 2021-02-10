@@ -1,32 +1,36 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CNode;
 import com.mesut.j2cpp.cppast.expr.CClassInstanceCreation;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
+import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
 public class DeclarationVisitor {
 
-    public CHeader header;
+    public boolean visitSource = true;
+    public List<CClass> classes = new ArrayList<>();
+    public Namespace ns;
     SourceVisitor sourceVisitor;
     TypeVisitor typeVisitor;
 
     public DeclarationVisitor(SourceVisitor sourceVisitor) {
         this.sourceVisitor = sourceVisitor;
         this.typeVisitor = sourceVisitor.getTypeVisitor();
-        this.header = sourceVisitor.getHeader();
     }
 
     public void convert(CompilationUnit cu) {
-        visit(cu.getPackage());
+        ns = visit(cu.getPackage());
 
         for (AbstractTypeDeclaration decl : (List<AbstractTypeDeclaration>) cu.types()) {
             if (decl instanceof EnumDeclaration) {
@@ -41,76 +45,28 @@ public class DeclarationVisitor {
         }
     }
 
-    public void visit(PackageDeclaration n) {
+    public Namespace visit(PackageDeclaration n) {
         Namespace ns = new Namespace();
         if (n != null) {
             ns = new Namespace(n.getName().getFullyQualifiedName());
         }
-        header.setNs(ns);
+        return ns;
     }
 
     public CClass visit(AnnotationTypeDeclaration node, CClass outer) {
         CClass cc = new CClass();
-        if (outer != null) {
-            outer.addInner(cc);
-        }
-        else {
-            header.addClass(cc);
-        }
+        classes.add(cc);
         cc.isInterface = true;
-        cc.base.add(new CType("java::lang::Annotation"));
+        cc.addBase(TypeHelper.getAnnotationType());
         cc.name = node.getName().getIdentifier();
-
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
         return cc;
     }
 
     public CClass visit(TypeDeclaration node, CClass outer) {
-        CClass cc = new CClass();
-
-        if (!Config.move_inners && outer != null) {
-            outer.addInner(cc);
-        }
-        else {
-            header.addClass(cc);
-            if (outer != null) {
-                cc.parent = outer;
-            }
-        }
-
-        cc.name = node.getName().getFullyQualifiedName();
-        cc.isInterface = node.isInterface();
-        cc.isStatic = Modifier.isStatic(node.getModifiers());
-        cc.isPublic = Modifier.isPublic(node.getModifiers());
-        cc.isInner = outer != null;
-
-        for (TypeParameter tp : (List<TypeParameter>) node.typeParameters()) {
-            cc.template.add(new CType(tp.getName().getIdentifier(), true));
-        }
-
-        if (node.getSuperclassType() != null) {
-            CType baseType = typeVisitor.visitType(node.getSuperclassType(), cc);
-            baseType.isPointer = false;
-            cc.base.add(baseType);
-        }
-
-        node.superInterfaceTypes().forEach(iface -> {
-            CType ifType = typeVisitor.visitType((Type) iface, cc);
-            ifType.isTemplate = false;
-            ifType.isPointer = false;
-            cc.base.add(ifType);
-        });
-
-        //make sure it is present in type map
-        //typeVisitor.fromBinding(node.resolveBinding());
-        sourceVisitor.binding = node.resolveBinding();
-
+        CClass cc = ClassMap.sourceMap.get(TypeVisitor.fromBinding(node.resolveBinding()));
+        classes.add(cc);
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
-
-        //handle inner's parent reference
-        if (outer != null && !Modifier.isStatic(node.getModifiers())) {
-            InnerHelper.handleRef(cc, outer);
-        }
         return cc;
     }
 
@@ -137,18 +93,11 @@ public class DeclarationVisitor {
 
     public CClass visit(EnumDeclaration n, CClass clazz) {
         CClass cc = new CClass();
-        if (!Config.move_inners && clazz != null) {
-            clazz.addInner(cc);
-        }
-        else {
-            header.addClass(cc);
-        }
-
+        classes.add(cc);
         cc.name = n.getName().getFullyQualifiedName();
-        cc.base.add(TypeHelper.getEnumType());
-        header.addInclude("java/lang/Enum");
+        cc.setSuper(TypeHelper.getEnumType());
 
-        n.superInterfaceTypes().forEach(iface -> cc.base.add(typeVisitor.visitType((Type) iface, cc)));
+        n.superInterfaceTypes().forEach(iface -> cc.addBase(typeVisitor.visitType((Type) iface, cc)));
 
         for (EnumConstantDeclaration constant : (List<EnumConstantDeclaration>) n.enumConstants()) {
             CField field = new CField();
@@ -184,8 +133,7 @@ public class DeclarationVisitor {
         CType type = typeVisitor.visitType(n.getType(), clazz);
 
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
-            CField field = new CField();
-            clazz.addField(field);
+            CField field = PreVisitor.visitField(frag.resolveBinding(), clazz);
             if (frag.getExtraDimensions() > 0) {
                 //c style array
                 field.setType(ArrayHelper.makeArrayType(type, frag.getExtraDimensions()));
@@ -194,15 +142,9 @@ public class DeclarationVisitor {
                 field.setType(type);
             }
 
-            field.setName(CName.from(frag.getName().getIdentifier()));
-            field.setPublic(Modifier.isPublic(n.getModifiers()));
-            field.setStatic(Modifier.isStatic(n.getModifiers()));
-            field.setProtected(Modifier.isProtected(n.getModifiers()));
-            if (clazz.isInterface) {
-                field.setPublic(true);
-            }
             if (frag.getInitializer() != null) {
                 sourceVisitor.clazz = clazz;
+                sourceVisitor.binding = frag.resolveBinding().getDeclaringClass();
                 field.expression = (CExpression) sourceVisitor.visitExpr(frag.getInitializer(), null);
                 sourceVisitor.clazz = null;
             }
@@ -210,54 +152,20 @@ public class DeclarationVisitor {
     }
 
     public CNode visit(MethodDeclaration node, CClass clazz) {
-        CMethod method = new CMethod();
-        clazz.addMethod(method);
-
-        for (TypeParameter tp : (List<TypeParameter>) node.typeParameters()) {
-            method.template.add(new CType(tp.getName().getIdentifier(), true));
-        }
-
-        if (node.isConstructor()) {
-            method.isCons = true;
-        }
-        else {
-            method.setType(typeVisitor.visitType(node.getReturnType2(), clazz));
-        }
-
-        method.name = new CName(node.getName().getIdentifier());
-        method.setStatic(Modifier.isStatic(node.getModifiers()));
-        method.setPublic(Modifier.isPublic(node.getModifiers()));
-        method.setNative(Modifier.isNative(node.getModifiers()));
-
-        if (clazz.isInterface || Modifier.isAbstract(node.getModifiers())) {
-            method.setPublic(true);
-            method.setVirtual(true);//todo check implemented by sub classes
-            method.isPureVirtual = true;
-        }
-
-        for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) node.parameters()) {
-            CParameter cp = new CParameter();
-            CType ptype = typeVisitor.visitType(param.getType(), clazz);
-
-            if (param.isVarargs()) {//todo not just array, maybe as vararg
-                cp.setType(ArrayHelper.makeArrayType(ptype, 1));
-            }
-            else {
-                if (param.getExtraDimensions() > 0) {
-                    cp.setType(ArrayHelper.makeArrayType(ptype, param.getExtraDimensions()));
-                }
-                else {
-                    cp.setType(ptype);
-                }
-            }
-
+        CMethod method = PreVisitor.visitMethod(node.resolveBinding(), clazz);
+        //replace real names
+        for (int i = 0; i < node.parameters().size(); i++) {
+            SingleVariableDeclaration param = (SingleVariableDeclaration) node.parameters().get(i);
+            CParameter cp = method.params.get(i);
+            //todo check name
             cp.setName(CName.from(param.getName().getIdentifier()));
-            method.addParam(cp);
         }
-
-        sourceVisitor.clazz = clazz;
-        sourceVisitor.method = method;
-        method.body = (CBlockStatement) sourceVisitor.visitExpr(node.getBody(), null);
+        if (visitSource) {
+            sourceVisitor.clazz = clazz;
+            sourceVisitor.method = method;
+            sourceVisitor.binding = node.resolveBinding().getDeclaringClass();
+            method.body = (CBlockStatement) sourceVisitor.visitExpr(node.getBody(), null);
+        }
         return method;
     }
 
@@ -267,6 +175,7 @@ public class DeclarationVisitor {
         cc.addMethod(method);
         method.name = CName.from(Config.static_init_name);
         //todo main entry should call this
+        Logger.log("static init in " + cc.getType().basicForm());
         method.type = TypeHelper.getVoidType();
         method.setStatic(true);
         sourceVisitor.method = method;

@@ -4,17 +4,18 @@ yet another converter for java to c++
 
 it takes a source directory containing java files and outputs corresponding c++ headers and sources by transforming declarations, statements and expressions
 
-The resulting c++ code should be good enough to compile with the least work
+The resulting c++ code should be good enough to compile with the least amount of work
 ## Features
 
 ### forward class declarations
 creates single header that contains all class declarations for source and libraries 
 
 ### write headers for library usages
-creates headers with classes and methods for library usages
+creates headers for referenced libraries so that you can implement missing parts
+
 ### anonymous & inner classes
 Anonymous classes handled by simply creating a class with a dummy name
-
+Inner classes have a reference to enclosing class object and all references replaced with suitable scopes
 It can move inner & anonymous classes to upper levels or separate headers to avoid namespace conflict. 
 ### static block
 static block is transformed into a static method called ``si``, it is your responsibility call this from your main entry point

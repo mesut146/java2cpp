@@ -1,35 +1,32 @@
 package com.mesut.j2cpp.util;
 
 import com.mesut.j2cpp.ast.CClass;
-import com.mesut.j2cpp.ast.CHeader;
-import com.mesut.j2cpp.ast.CType;
 
 import java.util.*;
 
 public class BaseClassSorter {
-    CHeader header;
+    List<CClass> classes;
 
-    public BaseClassSorter(CHeader header) {
-        this.header = header;
+    public BaseClassSorter(List<CClass> classes) {
+        this.classes = classes;
     }
 
     public void sort() throws Exception {
-        Set<CClass> set = new HashSet<>(header.classes);
+        Set<CClass> set = new HashSet<>(classes);
         List<CClass> list = new ArrayList<>(set);
-        header.getScope(list);
         sort(list);
 
         isValid(list);
         //then place classes to header in sorted order
-        header.classes = list;
+        classes = list;
     }
     
     void sort(List<CClass> list) {
         list.sort((cur, base) -> {
-            if (cur.base.contains(base.getType())) {
+            if (cur.ifaces.contains(base.getType())) {
                 return 1;//base must come before me
             }
-            else if (base.base.contains(cur.getType())) {
+            else if (base.ifaces.contains(cur.getType())) {
                 return -1;//we must come after base
             }
             return 0;//unrelated
@@ -41,7 +38,7 @@ public class BaseClassSorter {
             CClass base = list.get(i);
             for (int j = i + 1; j < list.size(); j++) {
                 CClass cur = list.get(j);
-                if (base.base.contains(cur)) {
+                if (base.ifaces.contains(cur)) {
                     throw new Exception("cyclic inheritance between: " + base + ", " + cur);
                 }
             }

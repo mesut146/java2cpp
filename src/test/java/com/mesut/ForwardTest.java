@@ -26,15 +26,16 @@ public class ForwardTest {
         CClass b = makeClass("b");
         CClass c = makeClass("c");
         CClass d = makeClass("d");
-        header.addClass(a, b, c, d);
+        //header.addClass(a, b, c, d);
 
-        a.addBase(b.getType(), c.getType());
+        a.addBase(b.getType());
+        a.addBase(c.getType());
         b.addBase(d.getType());
         c.addBase(d.getType());
 
-        header.getScope(header.classes);
+        header.getScope(header.cc);
 
-        BaseClassSorter forward = new BaseClassSorter(header);
+        BaseClassSorter forward = new BaseClassSorter(header.source.classes);
         forward.sort();
         System.out.println(header);
     }

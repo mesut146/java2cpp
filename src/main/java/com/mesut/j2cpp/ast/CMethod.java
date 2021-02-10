@@ -3,7 +3,6 @@ package com.mesut.j2cpp.ast;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.util.PrintHelper;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +61,7 @@ public class CMethod extends ModifierNode {
             sb.append(parent.name);
             if (!parent.template.isEmpty()) {
                 sb.append("<");
-                sb.append(PrintHelper.joinStr(parent.template.getList(), ", "));
+                sb.append(PrintHelper.joinStr(parent.template.getNames(), ", "));
                 sb.append(">");
             }
             sb.append("::");

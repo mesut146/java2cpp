@@ -66,7 +66,6 @@ public class Conv {
         //converter.getFilter().addIncludeClass("com/sun/tools/classfile/ClassWriter");
         //converter.getFilter().addIncludeClass("com/sun/tools/classfile/ConstantPool");
         //converter.getFilter().addIncludeDir("com/sun/tools/classfile");
-        converter.setDebugMembers(true);
         converter.convert();
     }
 
@@ -86,7 +85,8 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Fields");
         //converter.getFilter().addIncludeClass("base.Try1");
         //converter.getFilter().addIncludeClass("base.Try2");
-        converter.getFilter().addIncludeClass("base.SwitchTest");
+        //converter.getFilter().addIncludeClass("base.SwitchTest");
+        converter.getFilter().addIncludeClass("base.a");
         converter.convert();
     }
 

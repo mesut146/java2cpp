@@ -1,6 +1,7 @@
 package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.CHeader;
+import com.mesut.j2cpp.ast.CSource;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,6 +25,12 @@ public class Util {
         File path = new File(dir, header.rpath);
         path.getParentFile().mkdirs();
         Files.write(path.toPath(), header.toString().getBytes());
+    }
+
+    public static void writeSource(CSource source, File dir) throws IOException {
+        File path = new File(dir, source.name);
+        path.getParentFile().mkdirs();
+        Files.write(path.toPath(), source.toString().getBytes());
     }
 
     public static String read(File file) throws IOException {

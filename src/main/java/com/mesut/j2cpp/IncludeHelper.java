@@ -12,7 +12,7 @@ import java.util.List;
 public class IncludeHelper {
 
     public static void handle(CSource source) {
-        for (CClass cc : source.header.classes) {
+        for (CClass cc : source.classes) {
             for (CType type : cc.types) {
                 source.addInclude(type);
             }

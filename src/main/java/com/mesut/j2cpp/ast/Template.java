@@ -9,26 +9,26 @@ import java.util.List;
 //template <class A,class B,...>
 public class Template extends CNode {
     public static boolean useTypeName = true;//or class
-    public List<CType> list = new ArrayList<>();
+    public List<CType> names = new ArrayList<>();
 
     public void add(CType typeName) {
-        list.add(typeName);
+        names.add(typeName);
     }
 
     public boolean isEmpty() {
-        return list.isEmpty();
+        return names.isEmpty();
     }
 
-    public List<CType> getList() {
-        return list;
+    public List<CType> getNames() {
+        return names;
     }
 
     @Override
     public String toString() {
-        getScope(list);
+        getScope(names);
         StringBuilder sb = new StringBuilder();
         sb.append("template <");
-        for (Iterator<CType> iterator = list.iterator(); iterator.hasNext(); ) {
+        for (Iterator<CType> iterator = names.iterator(); iterator.hasNext(); ) {
             if (useTypeName) {
                 sb.append("typename ");
             }

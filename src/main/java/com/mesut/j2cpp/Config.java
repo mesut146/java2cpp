@@ -40,10 +40,6 @@ public class Config {
     public static boolean ptr_typeArg = true;
     public static boolean ptr_varDecl = true;
     public static boolean ptr_cast = true;
-    //move inner classes to uppermost parent level(still in same file)
-    public static boolean move_inners = true;
-    //move inner classes to separate file(implementation still in same file,per class by header)
-    public static boolean move_inners_out = true;
     //take outer ref as constructor arg otherwise create setter
     public static boolean outer_ref_cons_arg = false;
     //make all fields public

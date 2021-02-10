@@ -20,14 +20,8 @@ public class CClassImpl extends CExpression {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("class ");
-        sb. append(clazz.name);
-
-        if (!clazz.base.isEmpty()) {
-            sb.append(" : public ");
-            getScope(clazz.base);
-            sb.append(clazz.base.stream().map(CType::toString).collect(Collectors.joining(", ")));
-        }
+        getScope(clazz);
+        clazz.printDecl(sb);
         sb.append("{\n");
         up();
 

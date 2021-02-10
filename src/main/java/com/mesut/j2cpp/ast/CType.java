@@ -12,6 +12,7 @@ import java.util.Objects;
 public class CType extends CExpression {
     public Namespace ns;
     public String type;
+    public String realName;
     public List<CType> typeNames = new ArrayList<>();//generics
     public boolean isTemplate = false;//<T>,dynamic type
     public boolean isPointer = false;
@@ -22,6 +23,7 @@ public class CType extends CExpression {
     }
 
     public CType(String type) {
+        realName = type;
         type = trim(type);
         type = type.replace(".", "::");
         String[] arr = type.split("::");
@@ -52,6 +54,7 @@ public class CType extends CExpression {
         copied.isPointer = isPointer;
         copied.ns = ns;
         copied.typeNames = typeNames;
+        copied.realName = realName;
         return copied;
     }
 
@@ -76,13 +79,10 @@ public class CType extends CExpression {
 
     @Override
     public String toString() {
-        if (isPrim() || type.equals("auto")) {
+        if (isPrim() || type.equals("auto") || isTemplate) {
             return type;
         }
-        if (isTemplate) {
-            return type;
-        }
-        if (Config.normalizeTypes) {
+        if (Config.normalizeTypes && scope != null) {
             if (scope instanceof CHeader) {
                 return ((CHeader) scope).normalizeType(this).normal(scope);
             }
@@ -123,16 +123,11 @@ public class CType extends CExpression {
         if (o == null || getClass() != o.getClass()) return false;
 
         CType other = (CType) o;
-        if (!Objects.equals(ns, other.ns)) {
-            return false;
-        }
-        return Objects.equals(type, other.type);
+        return realName.equals(other.realName);
     }
 
     @Override
     public int hashCode() {
-        int result = ns != null ? ns.hashCode() : 0;
-        result = 31 * result + (type != null ? type.hashCode() : 0);
-        return result;
+        return realName.hashCode();
     }
 }

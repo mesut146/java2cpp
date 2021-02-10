@@ -1,7 +1,6 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
-import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
@@ -17,22 +16,23 @@ public class CClass extends CStatement {
     public boolean isPublic = false;
     public boolean isAnonymous = false;
     public boolean isInner = false;
-    public Namespace ns = null;
-    public List<CType> base = new ArrayList<>();
+    public Namespace ns;
+    public CType superClass;
+    public List<CType> ifaces = new ArrayList<>();
     public Template template = new Template();
     public List<CField> fields = new ArrayList<>();
     public List<CMethod> methods = new ArrayList<>();
-    public List<CClass> classes = new ArrayList<>();
     public CClass parent;//outer
     public CHeader header;
     public Node staticBlock = null;
     public List<CStatement> consStatements = new ArrayList<>();
-    CType type;
     public Set<CType> types = new HashSet<>();
+    CType type;
+    int anonyCount = 0;
 
     public CClass() {
         if (Config.baseClassObject) {
-            base.add(TypeHelper.getObjectType());
+            superClass = TypeHelper.getObjectType();
         }
     }
 
@@ -43,15 +43,8 @@ public class CClass extends CStatement {
         ns = type.ns;
     }
 
-    public void addBase(CType... type) {
-        Collections.addAll(base, type);
-    }
-
-    public void addInner(CClass cc) {
-        cc.parent = this;
-        cc.header = header;
-        cc.ns = ns;
-        classes.add(cc);
+    public void addBase(CType type) {
+        ifaces.add(type);
     }
 
     public void addMethod(CMethod cm) {
@@ -62,6 +55,10 @@ public class CClass extends CStatement {
     public void addField(CField cf) {
         cf.parent = this;
         fields.add(cf);
+    }
+
+    public String getAnonyName() {
+        return name + "_" + anonyCount++;
     }
 
     //add reference type that this class use
@@ -78,10 +75,18 @@ public class CClass extends CStatement {
     }
 
     public CType getSuper() {
-        if (base.isEmpty()) {
-            return null;
+        return superClass;
+    }
+
+    public void setSuper(CType type) {
+        if (type.equals(TypeHelper.getObjectType())) {
+            if (Config.baseClassObject) {
+                superClass = type;
+            }
         }
-        return base.get(0);
+        else {
+            superClass = type;
+        }
     }
 
     public String forwardStr() {
@@ -110,18 +115,13 @@ public class CClass extends CStatement {
         }
         printFields(sb);
         printMethods(sb);
-
-        //inner classes
-        for (CClass cc : classes) {
-            sb.append(PrintHelper.body(cc.toString(), getIndent()));
-        }
         sb.append("};//class ").append(name);
         return sb.toString();
     }
 
-    private void printDecl(StringBuilder sb) {
+    public void printDecl(StringBuilder sb) {
         getScope(template);
-        getScope(base);
+        getScope(ifaces);
         if (isInterface) {
             sb.append("/*interface*/\n");
         }
@@ -130,10 +130,15 @@ public class CClass extends CStatement {
         }
         //class decl
         sb.append("class ").append(name);
-        if (base.size() > 0) {
-            getScope(base);
+        List<CType> all = new ArrayList<>();
+        if (superClass != null) {
+            all.add(superClass);
+        }
+        all.addAll(ifaces);
+        if (all.size() > 0) {
+            getScope(all);
             sb.append(": public ");
-            sb.append(PrintHelper.joinStr(base, ", "));
+            sb.append(PrintHelper.joinStr(all, ", "));
         }
         else {
             sb.append("\n");

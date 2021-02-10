@@ -4,10 +4,12 @@ package com.mesut.j2cpp;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
+import com.mesut.j2cpp.ast.Namespace;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.ForwardDeclarator;
 import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
+import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.SourceVisitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
@@ -15,7 +17,6 @@ import org.eclipse.jdt.core.dom.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.*;
 
 public class Converter {
@@ -23,16 +24,13 @@ public class Converter {
     public List<String> classpath = new ArrayList<>();
     public CMakeWriter cMakeWriter;
     public CMakeWriter.Target target;
-    public boolean debug_fields = false;
-    public boolean debug_methods = false;
-    public boolean stopOnError = false;
     String srcDir;//source folder
     String destDir;//destination folder for c++ files
     File headerDir;
     Filter filter;
     ASTParser parser;
+    List<String> sourceList;
     int count = 0;
-    ClassMap classMap;
     CHeader forwardHeader;
     CHeader allHeader;
 
@@ -43,10 +41,11 @@ public class Converter {
         cMakeWriter = new CMakeWriter("myproject");
         cMakeWriter.sourceDir = destDir;
         target = cMakeWriter.addTarget("mylib", false);
-        classMap = new ClassMap();
+        ClassMap.sourceMap = new ClassMap();
+        //ClassMap.libMap = new ClassMap();
         allHeader = new CHeader("all.h");
         forwardHeader = new CHeader("common.h");
-        forwardHeader.forwardDeclarator = new ForwardDeclarator(classMap);
+        forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
         try {
             Logger.init(new File(destDir, "log.txt"));
         } catch (IOException e) {
@@ -94,10 +93,6 @@ public class Converter {
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
     }
 
-    public void setDebugMembers(boolean val) {
-        debug_fields = val;
-        debug_methods = val;
-    }
 
     public void convert() {
         try {
@@ -108,6 +103,8 @@ public class Converter {
             else {
                 headerDir = new File(destDir);
             }
+            preVisitDir();
+            System.out.println("pre visit done " + sourceList.size() + " files");
             convertDir();
             writeCmake();
             writeForwards();
@@ -134,12 +131,10 @@ public class Converter {
     }
 
     private void convertDir() throws IOException {
-        List<String> list = new ArrayList<>();
-        collect(new File(srcDir), list);
         initParser();
-        String[] b = new String[list.size()];
+        String[] b = new String[sourceList.size()];
         Arrays.fill(b, "");
-        parser.createASTs(list.toArray(new String[0]), null, b, new FileASTRequestor() {
+        parser.createASTs(sourceList.toArray(new String[0]), null, b, new FileASTRequestor() {
             @Override
             public void acceptAST(String sourceFilePath, CompilationUnit ast) {
                 convertSingle(sourceFilePath, ast);
@@ -147,19 +142,38 @@ public class Converter {
         }, null);
     }
 
-    void collect(File dir, List<String> list) {
+    private void preVisitDir() throws IOException {
+        sourceList = new ArrayList<>();
+        collect(new File(srcDir));
+        initParser();
+        String[] b = new String[sourceList.size()];
+        Arrays.fill(b, "");
+        parser.createASTs(sourceList.toArray(new String[0]), null, b, new FileASTRequestor() {
+            @Override
+            public void acceptAST(String sourceFilePath, CompilationUnit ast) {
+                preVisit(ast);
+            }
+        }, null);
+    }
+
+    void collect(File dir) {
         if (dir.isDirectory()) {
             for (File file : dir.listFiles()) {
                 if (file.isDirectory()) {
-                    collect(file, list);
+                    collect(file);
                 }
                 else if (file.getName().endsWith(".java")) {
                     if (filter.checkPath(file)) {
-                        list.add(file.getAbsolutePath());
+                        sourceList.add(file.getAbsolutePath());
                     }
                 }
             }
         }
+    }
+
+    void preVisit(CompilationUnit cu) {
+        PreVisitor visitor = new PreVisitor();
+        visitor.handle(cu);
     }
 
     public void convertSingle(String path, CompilationUnit cu) {
@@ -167,44 +181,40 @@ public class Converter {
             String relPath = Util.trimPrefix(path, srcDir);
             relPath = Util.trimPrefix(relPath, "/");
             System.out.println("converting " + relPath);
-            CHeader header = new CHeader(Util.trimSuffix(relPath, "java") + "h");
-            CSource source = new CSource(header);
+            CSource source = new CSource();
+            source.name = Util.trimSuffix(relPath, ".java") + ".cpp";
 
             SourceVisitor sourceVisitor = new SourceVisitor(source);
             DeclarationVisitor headerVisitor = new DeclarationVisitor(sourceVisitor);
 
+            List<CClass> classes = headerVisitor.classes;
             headerVisitor.convert(cu);
-            sourceVisitor.convert();
+            sourceVisitor.convert(classes);
+            source.classes.addAll(classes);
+            Namespace ns = headerVisitor.ns;
 
             if (Config.common_headers && Config.include_common_headers) {
                 source.includes.add(0, IncludeStmt.src(allHeader.getInclude()));
             }
 
-            classMap.addAll(header.classes);//todo inner of inners?
-
-            if (Config.move_inners_out) {
-                for (int i = 0; i < header.classes.size(); i++) {
-                    CClass cc = header.classes.get(i);
-                    String inner_path;
-                    if (!cc.isInner && cc.isPublic) {//don't move outermost class
-                        inner_path = header.getInclude();
-                    }
-                    else {
-                        inner_path = Util.trimSuffix(relPath, ".java") + "_" + cc.name + ".h";
-                    }
-                    CHeader innerHeader = new CHeader(inner_path);
-                    innerHeader.setNs(header.ns);
-                    innerHeader.addClass(cc);
-                    source.addInclude(IncludeStmt.src(innerHeader.getInclude()));
-                    writeHeader(innerHeader);
+            for (int i = 0; i < classes.size(); i++) {
+                CClass cc = classes.get(i);
+                String headerPath;
+                if (!cc.isInner && cc.isPublic) {//don't move outermost class
+                    headerPath = Util.trimSuffix(relPath, ".java") + ".h";
                 }
-            }
-            else {
+                else {
+                    headerPath = Util.trimSuffix(relPath, ".java") + "_" + cc.name + ".h";
+                }
+                CHeader header = new CHeader(headerPath);
+                header.setNs(ns);
+                header.setClass(cc);
+                source.addInclude(IncludeStmt.src(header.getInclude()));
                 writeHeader(header);
             }
 
             if (Config.common_forwards) {
-                forwardHeader.forwardDeclarator.addAll(header.classes);
+                forwardHeader.forwardDeclarator.addAll(classes);
                 if (Config.include_common_forwards) {
                     source.includes.add(0, IncludeStmt.src(forwardHeader.getInclude()));
                 }
@@ -212,13 +222,11 @@ public class Converter {
             IncludeHelper.handle(source);
             //new BaseForward(header).sort();
 
-            File source_file = new File(destDir, relPath.replace(".java", ".cpp"));
-            source_file.getParentFile().mkdirs();
-            Files.write(source_file.toPath(), source.toString().getBytes());
+            Util.writeSource(source, new File(destDir));
 
             target.addInclude(destDir);
             target.addInclude(headerDir.getAbsolutePath());//todo once
-            target.sourceFiles.add(source_file.getAbsolutePath());
+            target.sourceFiles.add(source.name);
             count++;
         } catch (Exception e) {
             System.err.println("cant convert " + path);

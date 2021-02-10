@@ -21,12 +21,12 @@ public class AnonyHandler {
         anony.header = clazz.header;
         anony.parent = clazz;
         anony.isAnonymous = true;
-        anony.name = clazz.header.getAnonyName();
+        anony.name = clazz.getAnonyName();
         anony.ns = clazz.ns;
-        anony.base.add(type);
+        anony.setSuper(type);
 
         SourceVisitor newVisitor = new SourceVisitor(visitor.source);
-        visitor.typeVisitor.fromBinding(declaration.resolveBinding());
+        TypeVisitor.fromBinding(declaration.resolveBinding());
         newVisitor.binding = declaration.resolveBinding();
 
         DeclarationVisitor declarationVisitor = new DeclarationVisitor(newVisitor);
@@ -46,7 +46,7 @@ public class AnonyHandler {
 
         CClassInstanceCreation creation = new CClassInstanceCreation();
         creation.setType(new CType(anony.name));
-        clazz.header.source.anony.add(new CClassImpl(anony));
+        visitor.source.anony.add(new CClassImpl(anony));
         return creation;
     }
 }

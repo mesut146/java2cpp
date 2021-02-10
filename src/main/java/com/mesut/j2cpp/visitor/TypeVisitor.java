@@ -12,21 +12,21 @@ import java.util.List;
 
 //visit types and ensures type is included
 public class TypeVisitor {
-    CHeader header;
+    Listener listener;
 
-    public TypeVisitor(CHeader header) {
-        this.header = header;
+    public TypeVisitor() {
+
     }
 
-    public CType visit(PrimitiveType n) {
-        return new CType(TypeHelper.toCType(n.toString()));
+    public static Listener getListener(CSource source) {
+        return source::addInclude;
     }
 
-    public CType fromBinding(ITypeBinding binding) {
+    public static CType fromBinding(ITypeBinding binding) {
         return fromBinding(binding, null);
     }
 
-    public CType fromBinding(ITypeBinding binding, CClass cc) {
+    public static CType fromBinding(ITypeBinding binding, CClass cc) {
         if (binding.isArray()) {
             return ArrayHelper.makeArrayType(fromBinding(binding.getElementType(), cc), binding.getDimensions());
         }
@@ -42,13 +42,13 @@ public class TypeVisitor {
         }
         else {
             String name = getBinaryName(binding);
-            if (binding.isNested() && Config.move_inners) {//trim parent class ns
+            if (binding.isNested()) {//trim parent class ns
                 type = new CType(binding.getPackage().getName().replace(".", "::") + "::" + binding.getName());
             }
             else {
                 type = new CType(name);
             }
-
+            type.realName = name;
             if (binding.isGenericType()) {
                 for (ITypeBinding prm : binding.getTypeParameters()) {
                     type.typeNames.add(fromBinding(prm));
@@ -63,9 +63,9 @@ public class TypeVisitor {
             type.fromSource = binding.isFromSource();
 
             if (!binding.isGenericType() && !binding.isNested()) {
-                if (header != null) {
-                    if (header.source != null) {
-                        header.source.addInclude(type);
+                if (cc != null && cc.header != null) {
+                    if (cc.header.source != null) {
+                        cc.header.source.addInclude(type);
                     }
                 }
             }
@@ -79,7 +79,7 @@ public class TypeVisitor {
         return type;
     }
 
-    private String getBinaryName(ITypeBinding binding) {
+    private static String getBinaryName(ITypeBinding binding) {
         String binaryName = binding.getBinaryName();
         String name;
         if (binaryName == null) {
@@ -95,6 +95,10 @@ public class TypeVisitor {
             }
         }
         return name;
+    }
+
+    public CType visit(PrimitiveType n) {
+        return new CType(TypeHelper.toCType(n.toString()));
     }
 
     public CType visit(SimpleType node) {
@@ -175,5 +179,9 @@ public class TypeVisitor {
         //add to ref
         clazz.addType(cType);
         return cType;
+    }
+
+    public interface Listener {
+        void foundType(CType type);
     }
 }

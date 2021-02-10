@@ -11,16 +11,15 @@ import java.util.List;
 
 public class CSource extends Node {
 
-    public CHeader header;
+    public List<CClass> classes=new ArrayList<>();
+    public String name;
     public List<IncludeStmt> includes = new ArrayList<>();
     public List<Namespace> usings = new ArrayList<>();
     public List<CField> fieldDefs = new ArrayList<>();
     public boolean hasRuntime = false;
     public List<CClassImpl> anony = new ArrayList<>();
 
-    public CSource(CHeader header) {
-        this.header = header;
-        header.source = this;
+    public CSource() {
         scope = this;
     }
 
@@ -39,11 +38,7 @@ public class CSource extends Node {
         }
 
         //can be local class,those already included by converter so ignore
-        for (CClass cc : header.classes) {
-            if (cc.getType().equals(type)) {
-                return;
-            }
-        }
+
         if (type.fromSource) {
             addInclude(IncludeStmt.src(type.basicForm().replace("::", "/")));
         }
@@ -64,6 +59,11 @@ public class CSource extends Node {
         return TypeHelper.normalizeType(type, usings);
     }
 
+    int anonyCount=0;
+    public String getAnonyName() {
+        return "anony" + anonyCount++;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -76,7 +76,7 @@ public class CSource extends Node {
         sb.append("\n\n");
         if (!usings.isEmpty()) {
             for (Namespace use : usings) {
-                if (use.parts.isEmpty())continue;
+                if (use.parts.isEmpty()) continue;
                 sb.append(PrintHelper.using(use)).append("\n");
             }
         }
@@ -114,7 +114,7 @@ public class CSource extends Node {
     }
 
     private void printMethods(StringBuilder sb) {
-        for (CClass cc : header.classes) {
+        for (CClass cc : classes) {
             printMethods(sb, cc);
         }
     }
@@ -127,9 +127,6 @@ public class CSource extends Node {
             for (CMethod method : methods) {
                 if (method.body == null) continue;
                 sb.append(PrintHelper.body(method.toString(), "")).append("\n");
-            }
-            for (CClass inner : cc.classes) {
-                printMethods(sb, inner);
             }
             sb.append("\n");
         }

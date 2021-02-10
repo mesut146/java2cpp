@@ -34,15 +34,15 @@ public class TypeHelper {
     }
 
     public static CType getStringType() {
-        return new CType("java::lang::String");
+        return new CType("java.lang.String");
     }
 
     public static CType getObjectType() {
-        return new CType("java::lang::Object");
+        return new CType("java.lang.Object");
     }
 
     public static CType getClassType() {
-        return new CType("java::lang::Class");
+        return new CType("java.lang.Class");
     }
 
     public static CType getVectorType() {
@@ -50,7 +50,11 @@ public class TypeHelper {
     }
 
     public static CType getEnumType() {
-        return new CType("java::lang::Enum");
+        return new CType("java.lang.Enum");
+    }
+
+    public static CType getAnnotationType() {
+        return new CType("java.lang.Annotation");
     }
 
     public static CType getVoidType() {

@@ -30,19 +30,16 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     public SourceVisitor(CSource source) {
         this.source = source;
-        this.typeVisitor = new TypeVisitor(source.header);
+        this.typeVisitor = new TypeVisitor();
+        typeVisitor.listener = TypeVisitor.getListener(source);
     }
 
     public TypeVisitor getTypeVisitor() {
         return typeVisitor;
     }
 
-    public CHeader getHeader() {
-        return source.header;
-    }
-
-    public void convert() {
-        for (CClass clazz : source.header.classes) {
+    public void convert(List<CClass> classes) {
+        for (CClass clazz : classes) {
             convertClass(clazz);
         }
     }
@@ -72,10 +69,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                     //header has it
                 }
             }
-        }
-
-        for (CClass inner : clazz.classes) {
-            convertClass(inner);
         }
     }
 
@@ -136,8 +129,8 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         //Class::forName(type)
         CType type = typeVisitor.visitType(node.getType(), clazz);
         CType classType = TypeHelper.getClassType();
-        type.scope = getHeader().source;
-        classType.scope = getHeader().source;
+        type.scope = source;
+        classType.scope = source;
 
         CMethodInvocation methodInvocation = new CMethodInvocation();
         methodInvocation.scope = new CName(classType.basicForm());
@@ -315,7 +308,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         for (Expression ar : (List<Expression>) node.arguments()) {
             superCall.args.add((CExpression) visitExpr(ar, arg));
         }
-        superCall.type = clazz.base.get(0);
+        superCall.type = clazz.superClass;
         method.superCall = superCall;
         return new CEmptyStatement();
     }
@@ -624,7 +617,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
 
         if (scope == null && binding != null) {
-            CType type = typeVisitor.fromBinding(binding.getDeclaringClass(), clazz);
+            CType type = TypeVisitor.fromBinding(binding.getDeclaringClass(), clazz);
             //static outer method
             if (Modifier.isStatic(binding.getModifiers())) {
                 invocation.scope = type;

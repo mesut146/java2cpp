@@ -1,7 +1,9 @@
 package com.mesut.j2cpp.map;
 
+import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.ast.CMethod;
+import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -14,17 +16,25 @@ import java.util.*;
 
 public class Mapper {
 
-    Map<CType, String> classMap;
+    Map<CType, ClassInfo> classMap;
 
-    public Mapper(Map<CType, String> classMap) {
+    public Mapper() {
         classMap = new HashMap<>();
     }
 
     public void addMapper(String jsonPath) throws IOException {
         JSONObject cls = new JSONObject(Util.read(new File(jsonPath)));
-        String name = cls.getString("name");
+        List<CType> fromTypes = new ArrayList<>();
+        String names = cls.getString("name");
         String target = cls.getString("target");
         String include = cls.getString("include");
+
+        ClassInfo info = new ClassInfo();
+        info.target = new CType(target);
+        for (String name : names.split(",")) {
+            classMap.put(new CType(name), info);
+        }
+
         JSONArray methods = getObjects(cls);
         for (int i = 0; i < methods.length(); i++) {
             JSONObject method = methods.getJSONObject(i);
@@ -42,9 +52,19 @@ public class Mapper {
         return null;
     }
 
-    public CType mapType(CType type) {
+    public CType mapType(CType type, CSource source) {
+        if (classMap.containsKey(type)) {
+            ClassInfo info = classMap.get(type);
+            if (info.includes != null) {
+                for (String inc : info.includes) {
+                    source.addInclude(new IncludeStmt(inc));
+                }
+            }
+            return info.target;
+        }
         return type;
     }
+
 
     String mapParamName(String name, CMethod method) {
         if (Util.isKeyword(name)) {
@@ -55,7 +75,8 @@ public class Mapper {
     }
 
     static class ClassInfo {
-        String name;
+        CType target;
+        List<String> includes;
         Map methods;
     }
 
