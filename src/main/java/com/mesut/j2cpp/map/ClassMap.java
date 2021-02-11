@@ -75,8 +75,4 @@ public class ClassMap {
         return PreVisitor.visitMethod(binding, cc);
     }
 
-    public static class TypeInfo {
-        CType originalType;
-        CType mappedType;
-    }
 }

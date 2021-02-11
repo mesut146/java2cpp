@@ -145,6 +145,7 @@ public class Converter {
     private void preVisitDir() throws IOException {
         sourceList = new ArrayList<>();
         collect(new File(srcDir));
+        System.out.println("total of " + sourceList.size() + " files");
         initParser();
         String[] b = new String[sourceList.size()];
         Arrays.fill(b, "");
@@ -197,10 +198,11 @@ public class Converter {
                 source.includes.add(0, IncludeStmt.src(allHeader.getInclude()));
             }
 
-            for (int i = 0; i < classes.size(); i++) {
-                CClass cc = classes.get(i);
+            source.useNamespace(ns);
+
+            for (CClass cc : classes) {
                 String headerPath;
-                if (!cc.isInner && cc.isPublic) {//don't move outermost class
+                if (!cc.isInner && cc.isPublic || classes.size() == 1) {//don't move outermost class
                     headerPath = Util.trimSuffix(relPath, ".java") + ".h";
                 }
                 else {
@@ -243,6 +245,7 @@ public class Converter {
     }
 
     public void writeCmake() throws IOException {
+        target.addInclude("lib");
         String src = cMakeWriter.generate();
         File file = new File(destDir, "CMakeLists.txt");
         FileWriter writer = new FileWriter(file);

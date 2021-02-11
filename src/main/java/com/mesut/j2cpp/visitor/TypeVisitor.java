@@ -12,11 +12,6 @@ import java.util.List;
 
 //visit types and ensures type is included
 public class TypeVisitor {
-    Listener listener;
-
-    public TypeVisitor() {
-
-    }
 
     public static Listener getListener(CSource source) {
         return source::addInclude;
@@ -27,8 +22,16 @@ public class TypeVisitor {
     }
 
     public static CType fromBinding(ITypeBinding binding, CClass cc) {
+        Listener listener = null;
+        if (cc != null) {
+            listener = cc::addType;
+        }
+        return fromBinding0(binding, listener);
+    }
+
+    public static CType fromBinding0(ITypeBinding binding, Listener listener) {
         if (binding.isArray()) {
-            return ArrayHelper.makeArrayType(fromBinding(binding.getElementType(), cc), binding.getDimensions());
+            return ArrayHelper.makeArrayType(fromBinding0(binding.getElementType(), listener), binding.getDimensions());
         }
         if (binding.isPrimitive()) {
             return new CType(TypeHelper.toCType(binding.getName()));
@@ -56,25 +59,18 @@ public class TypeVisitor {
             }
             else if (binding.isParameterizedType()) {
                 for (ITypeBinding tp : binding.getTypeArguments()) {
-                    type.typeNames.add(fromBinding(tp, cc));
+                    type.typeNames.add(fromBinding0(tp, listener));
                 }
             }
-
             type.fromSource = binding.isFromSource();
-
-            if (!binding.isGenericType() && !binding.isNested()) {
-                if (cc != null && cc.header != null) {
-                    if (cc.header.source != null) {
-                        cc.header.source.addInclude(type);
-                    }
-                }
-            }
         }
         type.isInner = binding.isNested();
         if (type.ns == null) {
             type.ns = new Namespace();
         }
-        if (cc != null) cc.addType(type);
+        if (listener != null) {
+            listener.foundType(type);
+        }
         BindingMap.add(type, binding);
         return type;
     }
@@ -102,26 +98,23 @@ public class TypeVisitor {
     }
 
     public CType visit(SimpleType node) {
-        //resolve
         ITypeBinding binding = node.resolveBinding();
         if (binding == null) {
-            String str = node.getName().getFullyQualifiedName();
-            return new CType(str);
+            return new CType(node.getName().getFullyQualifiedName());
         }
         return fromBinding(binding);
     }
 
     public CType visit(ArrayType n) {
-        CType elemtype = visit(n.getElementType());
-        return ArrayHelper.makeArrayType(elemtype, n.getDimensions());
+        return ArrayHelper.makeArrayType(visit(n.getElementType()), n.getDimensions());
     }
 
+    //<?>
     public CType visit(WildcardType n) {
-        //<?>
         if (n.getBound() != null) {
-            return visit(n.getBound());
+            return visit(n.getBound());//migrate?
         }
-        return new CType("java::lang::Object");
+        return TypeHelper.getObjectType();
     }
 
     public CType visit(ParameterizedType n) {

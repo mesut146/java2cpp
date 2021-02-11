@@ -34,7 +34,7 @@ public class LibImplHandler {
         CClass cc = classMap.get(type);
         if (cc.superClass == null) {
             if (binding.getSuperclass() != null) {
-                CType superCls = makeType(binding.getSuperclass());
+                CType superCls = TypeVisitor.fromBinding(binding.getSuperclass(), cc);
                 classMap.get(superCls);
                 if (Config.baseClassObject || !superCls.equals(TypeHelper.getObjectType())) {
                     cc.setSuper(superCls);
@@ -43,7 +43,7 @@ public class LibImplHandler {
         }
         if (cc.ifaces.isEmpty()) {
             for (ITypeBinding iface : binding.getInterfaces()) {
-                CType it = makeType(iface);
+                CType it = TypeVisitor.fromBinding(iface, cc);
                 classMap.get(it);
                 cc.addBase(it);
             }
@@ -72,27 +72,25 @@ public class LibImplHandler {
         if (!binding.isField() || !binding.isEnumConstant() || binding.getDeclaringClass().isFromSource()) {
             return;
         }
-        CClass decl = getClazz(binding.getDeclaringClass().getErasure());
-        for (CField field : decl.fields) {
+        CClass cc = getClazz(binding.getDeclaringClass().getErasure());
+        for (CField field : cc.fields) {
             if (field.name.name.equals(binding.getName())) {
                 return;
             }
         }
-
         CField field = new CField();
         field.setName(CName.from(binding.getName()));
-        field.setType(makeType(binding.getType()));
+        field.setType(TypeVisitor.fromBinding(binding.getType(), cc));
 
-        decl.addField(field);
+        cc.addField(field);
     }
 
     public void writeAll(File dir) {
         forwardHeader.forwardDeclarator = new ForwardDeclarator(classMap);
         for (CClass cc : classMap.map.values()) {
             CHeader header = new CHeader(cc.getType().basicForm().replace("::", "/") + ".h");
-            header.ns = cc.getType().ns;
+            header.setNs(cc.getType().ns);
             header.setClass(cc);
-
             try {
                 Util.writeHeader(header, dir);
             } catch (IOException e) {

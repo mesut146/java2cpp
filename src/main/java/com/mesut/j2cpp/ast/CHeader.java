@@ -14,11 +14,10 @@ import java.util.List;
 //represents c++ header (.hpp)
 public class CHeader extends CNode {
     public String rpath;//header path e.g java/lang/String.h
-    public List<Namespace> usings = new ArrayList<>();
     public Namespace ns;
-    public List<String> includes = new ArrayList<>();
     public CClass cc;
-    public CSource source;
+    public List<Namespace> usings = new ArrayList<>();
+    public List<String> includes = new ArrayList<>();
     public ForwardDeclarator forwardDeclarator;
     boolean handledFieldInits = false;
 
@@ -31,9 +30,6 @@ public class CHeader extends CNode {
     public void setNs(Namespace ns) {
         this.ns = ns;
         useNamespace(ns);
-        if (source != null) {
-            source.useNamespace(ns);
-        }
     }
 
     public String getInclude() {
@@ -141,7 +137,7 @@ public class CHeader extends CNode {
                 sb.append("\n");
             }
         }
-        if (cc!=null){
+        if (cc != null) {
             getScope(cc);
             sb.append(PrintHelper.body(cc.toString(), getIndent()));
         }

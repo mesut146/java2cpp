@@ -44,7 +44,7 @@ public class Conv {
         Converter converter = new Converter(dir, out);
         //converter.addClasspath(dir);
         //converter.getFilter().addIncludeDir("java.lang");
-        //converter.getFilter().addIncludeClass("com/android/dx/dex/code/RopTranslator.java");
+        //converter.getFilter().addIncludeClass("com/android/dex/Dex");
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
         //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
         //converter.getFilter().addIncludeClass("com/android/dx/dex/code/PositionList.java");

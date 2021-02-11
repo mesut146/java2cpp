@@ -11,7 +11,7 @@ import java.util.List;
 
 public class CSource extends Node {
 
-    public List<CClass> classes=new ArrayList<>();
+    public List<CClass> classes = new ArrayList<>();
     public String name;
     public List<IncludeStmt> includes = new ArrayList<>();
     public List<Namespace> usings = new ArrayList<>();
@@ -36,9 +36,7 @@ public class CSource extends Node {
             addInclude(IncludeStmt.sys("vector"));
             return;
         }
-
         //can be local class,those already included by converter so ignore
-
         if (type.fromSource) {
             addInclude(IncludeStmt.src(type.basicForm().replace("::", "/")));
         }
@@ -59,11 +57,6 @@ public class CSource extends Node {
         return TypeHelper.normalizeType(type, usings);
     }
 
-    int anonyCount=0;
-    public String getAnonyName() {
-        return "anony" + anonyCount++;
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -74,11 +67,9 @@ public class CSource extends Node {
         }
         //sb.append(PrintHelper.include(header.getInclude()));
         sb.append("\n\n");
-        if (!usings.isEmpty()) {
-            for (Namespace use : usings) {
-                if (use.parts.isEmpty()) continue;
-                sb.append(PrintHelper.using(use)).append("\n");
-            }
+        for (Namespace use : usings) {
+            if (use.parts.isEmpty()) continue;
+            sb.append(PrintHelper.using(use)).append("\n");
         }
         sb.append("\n");
         printAnony(sb);

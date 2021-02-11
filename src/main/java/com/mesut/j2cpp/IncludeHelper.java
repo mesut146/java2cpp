@@ -3,18 +3,32 @@ package com.mesut.j2cpp;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class IncludeHelper {
 
+    //include all referenced headers
     public static void handle(CSource source) {
+        Set<CType> list = new HashSet<>();
         for (CClass cc : source.classes) {
-            for (CType type : cc.types) {
-                source.addInclude(type);
+            handle(cc, list);
+        }
+        for (CType type : list) {
+            source.addInclude(type);
+        }
+    }
+
+    static void handle(CClass cc, Set<CType> list) {
+        for (CType type : cc.types) {
+            if (list.add(type)) {
+                handle(ClassMap.sourceMap.get(type), list);//recurse
             }
         }
     }

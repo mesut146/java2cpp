@@ -46,7 +46,7 @@ public class PreVisitor {
     public static CMethod visitMethod(IMethodBinding binding, CClass cc) {
         List<CType> params = new ArrayList<>();
         for (ITypeBinding prm : binding.getParameterTypes()) {
-            params.add(TypeVisitor.fromBinding(prm));
+            params.add(TypeVisitor.fromBinding(prm,cc));
         }
         CType type = TypeVisitor.fromBinding(binding.getReturnType());
         CMethod method = ClassMap.getAddedMethod(cc, binding, params, type);
