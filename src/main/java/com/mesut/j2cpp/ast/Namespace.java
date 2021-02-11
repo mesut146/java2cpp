@@ -32,6 +32,10 @@ public class Namespace extends Node {
         return getAll();
     }
 
+    public boolean isEmpty(){
+        return parts.isEmpty();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

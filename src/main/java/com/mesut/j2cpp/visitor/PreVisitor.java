@@ -1,18 +1,18 @@
 package com.mesut.j2cpp.visitor;
 
-import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.map.ClassMap;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 //parses all sources and generates classMap
 public class PreVisitor {
 
     public static CClass visitType(ITypeBinding binding, CClass outer) {
+        BindingMap.add(binding);
         CClass cc = ClassMap.sourceMap.get(TypeVisitor.fromBinding(binding));
         if (binding.getSuperclass() != null) {
             cc.setSuper(TypeVisitor.fromBinding(binding.getSuperclass()));
@@ -46,7 +46,7 @@ public class PreVisitor {
     public static CMethod visitMethod(IMethodBinding binding, CClass cc) {
         List<CType> params = new ArrayList<>();
         for (ITypeBinding prm : binding.getParameterTypes()) {
-            params.add(TypeVisitor.fromBinding(prm,cc));
+            params.add(TypeVisitor.fromBinding(prm, cc));
         }
         CType type = TypeVisitor.fromBinding(binding.getReturnType());
         CMethod method = ClassMap.getAddedMethod(cc, binding, params, type);
@@ -130,10 +130,7 @@ public class PreVisitor {
     }
 
     public Namespace visit(PackageDeclaration n) {
-        Namespace ns = new Namespace();
-        if (n != null) {
-            ns = new Namespace(n.getName().getFullyQualifiedName());
-        }
-        return ns;
+        if (n == null) return new Namespace();
+        return new Namespace(n.getName().getFullyQualifiedName());
     }
 }

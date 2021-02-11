@@ -202,12 +202,16 @@ public class Converter {
 
             for (CClass cc : classes) {
                 String headerPath;
-                if (!cc.isInner && cc.isPublic || classes.size() == 1) {//don't move outermost class
+                if (!cc.isInner && cc.isPublic || classes.size() == 1) {
+                    //don't move outermost class
                     headerPath = Util.trimSuffix(relPath, ".java") + ".h";
+                    headerPath = ns.all.replace("::", "/") + ".h";
                 }
                 else {
                     headerPath = Util.trimSuffix(relPath, ".java") + "_" + cc.name + ".h";
+                    headerPath = (ns.all + "::" + cc.name).replace("::", "/") + ".h";
                 }
+                headerPath = cc.getHeaderPath();
                 CHeader header = new CHeader(headerPath);
                 header.setNs(ns);
                 header.setClass(cc);

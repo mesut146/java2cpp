@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.map;
 
 import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.HashMap;
@@ -11,6 +12,10 @@ public class BindingMap {
 
     public static void add(CType cType, ITypeBinding binding) {
         map.put(cType, binding);
+    }
+
+    public static void add(ITypeBinding binding) {
+        map.put(TypeVisitor.fromBinding(binding), binding);
     }
 
     public static ITypeBinding get(CType type) {

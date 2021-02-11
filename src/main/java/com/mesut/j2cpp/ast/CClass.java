@@ -2,8 +2,10 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.CStatement;
+import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,7 +18,7 @@ public class CClass extends CStatement {
     public boolean isPublic = false;
     public boolean isAnonymous = false;
     public boolean isInner = false;
-    public Namespace ns;
+    public Namespace ns = new Namespace();
     public CType superClass;
     public List<CType> ifaces = new ArrayList<>();
     public Template template = new Template();
@@ -41,6 +43,17 @@ public class CClass extends CStatement {
         this.type = type;
         name = type.getName();
         ns = type.ns;
+    }
+
+    public String getHeaderPath() {
+        ITypeBinding binding = BindingMap.get(getType());
+        StringBuilder sb = new StringBuilder();
+        String q = binding.getQualifiedName();
+        q = q.replace("$", "_");
+        q = q.replace(".", "/");
+        sb.append(q);
+        sb.append(".h");
+        return sb.toString();
     }
 
     public void addBase(CType type) {
@@ -209,7 +222,7 @@ public class CClass extends CStatement {
 
     public CType getType() {
         if (type == null) {
-            if (ns == null) {
+            if (ns.isEmpty()) {
                 type = new CType(name);
             }
             else {
