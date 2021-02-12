@@ -12,7 +12,6 @@ import java.util.List;
 public class PreVisitor {
 
     public static CClass visitType(ITypeBinding binding, CClass outer) {
-        BindingMap.add(binding);
         CClass cc = ClassMap.sourceMap.get(TypeVisitor.fromBinding(binding));
         if (binding.getSuperclass() != null) {
             cc.setSuper(TypeVisitor.fromBinding(binding.getSuperclass()));
@@ -118,6 +117,7 @@ public class PreVisitor {
         Namespace ns = visit(unit.getPackage());
         for (AbstractTypeDeclaration decl : (List<AbstractTypeDeclaration>) unit.types()) {
             if (decl instanceof EnumDeclaration) {
+                visitType(decl.resolveBinding(), null);
                 //visit((EnumDeclaration) decl, null);
             }
             else if (decl instanceof AnnotationTypeDeclaration) {

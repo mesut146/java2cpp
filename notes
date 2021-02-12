@@ -1,24 +1,13 @@
 jdeps -verbose:class -filter:archive '/home/mesut/Desktop/AndroidStudioProjects/ide/subprojects/dx-tool/dx-tool-r8-v4.jar' | awk '{print $3}' | sort -u
 
-//param name can't be type or keyword(delete,virtual,const)
+param name can't be type or keyword(delete,virtual,const)
 
 main entry point
-
-
-#array.length
+array.length
 array to pointer
-
-#cast
-
-#make base class method virtual
+cast
 
 
-#1st pass
-parse all sources
-scan method and field names
+binding map,header path
 
-#2nd pass
-convert normally with name map
-
-update all references to members
 

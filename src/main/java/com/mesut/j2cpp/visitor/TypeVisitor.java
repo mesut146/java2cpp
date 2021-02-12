@@ -71,7 +71,9 @@ public class TypeVisitor {
         if (listener != null) {
             listener.foundType(type);
         }
-        BindingMap.add(type, binding);
+        if (!binding.isTypeVariable()){
+            BindingMap.add(type, binding);
+        }
         return type;
     }
 

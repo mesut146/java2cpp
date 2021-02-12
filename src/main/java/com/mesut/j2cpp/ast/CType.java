@@ -23,7 +23,7 @@ public class CType extends CExpression {
     }
 
     public CType(String type) {
-        realName = type;
+        realName = type.replace("::", ".");//java name
         type = trim(type);
         type = type.replace(".", "::");
         String[] arr = type.split("::");

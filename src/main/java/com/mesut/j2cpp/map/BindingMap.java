@@ -10,12 +10,14 @@ import java.util.Map;
 public class BindingMap {
     public static Map<CType, ITypeBinding> map = new HashMap<>();
 
-    public static void add(CType cType, ITypeBinding binding) {
-        map.put(cType, binding);
+    public static void add(CType type, ITypeBinding binding) {
+        if (!map.containsKey(type)) {
+            map.put(type, binding);
+        }
     }
 
     public static void add(ITypeBinding binding) {
-        map.put(TypeVisitor.fromBinding(binding), binding);
+        add(TypeVisitor.fromBinding(binding), binding);
     }
 
     public static ITypeBinding get(CType type) {

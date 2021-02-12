@@ -22,10 +22,9 @@ public class CBlockStatement extends CStatement {
         getScope(statements);
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
-        up();
         for (CStatement statement : statements) {
             if (!(statement instanceof CEmptyStatement)) {
-                sb.append(PrintHelper.body(statement.toString(), getIndent()));
+                sb.append(PrintHelper.body(statement.toString(), "    "));
             }
         }
         sb.append("}");

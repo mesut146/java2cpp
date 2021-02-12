@@ -48,7 +48,7 @@ public class CClass extends CStatement {
     public String getHeaderPath() {
         ITypeBinding binding = BindingMap.get(getType());
         StringBuilder sb = new StringBuilder();
-        String q = binding.getQualifiedName();
+        String q = binding.getBinaryName();
         q = q.replace("$", "_");
         q = q.replace(".", "/");
         sb.append(q);
@@ -77,10 +77,6 @@ public class CClass extends CStatement {
     //add reference type that this class use
     public void addType(CType type) {
         types.add(type);
-    }
-
-    public boolean hasType(CClass type) {
-        return types.contains(type.getType());
     }
 
     public Template getTemplate() {

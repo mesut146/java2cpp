@@ -91,15 +91,11 @@ public class DeclarationVisitor {
         }
     }
 
-    public CClass visit(EnumDeclaration n, CClass clazz) {
-        CClass cc = new CClass();
+    public CClass visit(EnumDeclaration n, CClass outer) {
+        CClass cc = ClassMap.sourceMap.get(TypeVisitor.fromBinding(n.resolveBinding()));
         classes.add(cc);
-        cc.name = n.getName().getFullyQualifiedName();
-        cc.setSuper(TypeHelper.getEnumType());
 
-        n.superInterfaceTypes().forEach(iface -> cc.addBase(typeVisitor.visitType((Type) iface, cc)));
-
-        for (EnumConstantDeclaration constant : (List<EnumConstantDeclaration>) n.enumConstants()) {
+        /*for (EnumConstantDeclaration constant : (List<EnumConstantDeclaration>) n.enumConstants()) {
             CField field = new CField();
             cc.addField(field);
             field.setPublic(true);
@@ -116,12 +112,11 @@ public class DeclarationVisitor {
                     rhs.args.add((CExpression) sourceVisitor.visitExpr(val, null));
                 }
             }
-
             if (constant.getAnonymousClassDeclaration() != null) {
                 CClassInstanceCreation creation = AnonyHandler.handle(constant.getAnonymousClassDeclaration(), cc.getType(), cc, sourceVisitor);
                 rhs.setType(creation.type);
             }
-        }
+        }*/
         if (!n.bodyDeclarations().isEmpty()) {
             n.bodyDeclarations().forEach(p -> visitBody((BodyDeclaration) p, cc));
         }

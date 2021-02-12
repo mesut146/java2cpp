@@ -46,6 +46,7 @@ public class Conv {
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
         //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
         //converter.getFilter().addIncludeClass("com/android/dx/dex/code/PositionList.java");
+        //converter.getFilter().addIncludeClass("com/android/dex/MethodHandle.java");
         converter.convert();
     }
 

@@ -201,6 +201,7 @@ public class Converter {
             source.useNamespace(ns);
 
             for (CClass cc : classes) {
+                cc.ns = ns;
                 String headerPath;
                 if (!cc.isInner && cc.isPublic || classes.size() == 1) {
                     //don't move outermost class

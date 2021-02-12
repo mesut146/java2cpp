@@ -42,30 +42,11 @@ public class ClassMap {
         return null;
     }
 
-    public void add(CClass cc) {
-        CClass decl = get(cc.getType());
-        //decl.template = cc.template;
-        /*if (decl.base.isEmpty()) {
-            decl.base.addAll(cc.base);
-        }*/
-        //decl.setSuper(cc.getSuper());
-    }
-
-    public void addAll(List<CClass> list) {
-        for (CClass cc : list) {
-            add(cc);
-        }
-    }
-
     public CClass get(CType type) {
         if (map.containsKey(type)) {
-            //check same
             return map.get(type);
         }
         CClass cc = new CClass(type);
-        /*for (CType arg : type.typeNames) {
-            cc.template.add(arg);
-        }*/
         map.put(type, cc);
         return cc;
     }
