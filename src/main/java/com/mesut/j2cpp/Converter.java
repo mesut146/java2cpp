@@ -38,9 +38,6 @@ public class Converter {
         this.srcDir = srcDir;
         this.destDir = destDir;
         filter = new Filter(srcDir);
-        cMakeWriter = new CMakeWriter("myproject");
-        cMakeWriter.sourceDir = destDir;
-        target = cMakeWriter.addTarget("mylib", false);
         allHeader = new CHeader("all.h");
         forwardHeader = new CHeader("common.h");
         forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
@@ -49,10 +46,6 @@ public class Converter {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        target.addInclude(destDir);
-        target.addInclude(headerDir.getAbsolutePath());
-        target.addInclude("lib");
     }
 
     public Filter getFilter() {
@@ -95,18 +88,22 @@ public class Converter {
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
     }
 
+    void initCmake() {
+        cMakeWriter = new CMakeWriter("myproject");
+        cMakeWriter.sourceDir = destDir;
+        target = cMakeWriter.addTarget("mylib", false);
+        target.addInclude(destDir);
+        target.addInclude(headerDir.getAbsolutePath());
+        target.addInclude("lib");
+    }
 
     public void convert() {
         try {
-            if (Config.separateInclude) {
-                headerDir = new File(destDir, "include");
-                headerDir.mkdirs();
-            }
-            else {
-                headerDir = new File(destDir);
-            }
+            headerDir = Config.separateInclude ? new File(destDir, "include") : new File(destDir);
+            headerDir.mkdirs();
+            initCmake();
             preVisitDir();
-            System.out.println("pre visit done " + sourceList.size() + " files");
+            System.out.println("pre visit done");
             convertDir();
             writeCmake();
             writeForwards();
@@ -174,11 +171,13 @@ public class Converter {
         }
     }
 
+    //create class-member model
     void preVisit(CompilationUnit cu) {
         PreVisitor visitor = new PreVisitor();
         visitor.handle(cu);
     }
 
+    //convert bodies
     public void convertSingle(String path, CompilationUnit cu) {
         try {
             String relPath = Util.trimPrefix(path, srcDir);

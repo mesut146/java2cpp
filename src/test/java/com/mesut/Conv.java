@@ -2,6 +2,7 @@ package com.mesut;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Converter;
+import com.mesut.j2cpp.map.Mapper;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -90,13 +91,13 @@ public class Conv {
     }
 
     @Test
-    public void testMapper() {
+    public void testMapper() throws IOException {
         String dir = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/java";
         String out = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/cpp";
         Converter converter = new Converter(dir, out);
+        Mapper.instance.addMapper(getClass().getResource("/mappers/list.json").getPath());
         converter.addClasspath(rtJar);
         //Config.common_forwards = false;
-        //converter.getFilter().addIncludeClass("base.InnerTest");
         converter.getFilter().addIncludeClass("mapper.ListTest");
         converter.convert();
     }

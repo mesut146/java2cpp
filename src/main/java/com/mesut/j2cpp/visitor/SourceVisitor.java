@@ -342,7 +342,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             LibImplHandler.instance.addField(variableBinding);
         }
 
-
         CFieldAccess fieldAccess = new CFieldAccess();
         Expression scope = node.getExpression();
         CExpression scopeExpr = (CExpression) visitExpr(scope, arg);
@@ -584,14 +583,14 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @SuppressWarnings("unchecked")
     @Override
     public CNode visit(MethodInvocation node, CNode arg) {
+        CExpression scope = node.getExpression() == null ? null : (CExpression) visitExpr(node.getExpression(), arg);
         CMethodInvocation invocation = new CMethodInvocation();
         invocation.name = (CName) visit(node.getName(), null);
         invocation.arguments = list(node.arguments());
-        CExpression scope = node.getExpression() == null ? null : (CExpression) visitExpr(node.getExpression(), arg);
         IMethodBinding binding = node.resolveMethodBinding();
 
         if (binding == null) {
-            Logger.log(clazz, node.toString() + " has null binding ,conversion may have problems");
+            Logger.logBinding(clazz, node.getName().getIdentifier());
             invocation.scope = scope;
             return invocation;
         }
@@ -603,11 +602,12 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         //outer
         invocation.scope = scope;
         if (scope != null) {
+            CExpression target = Mapper.instance.mapMethod(binding, invocation.arguments);
+            if (target != null) return target;
             invocation.isArrow = !isStatic;
         }
 
         if (!binding.getDeclaringClass().isFromSource() && Config.writeLibHeader) {
-            //Logger.log(clazz, node.getName().getIdentifier());
             LibImplHandler.instance.addMethod(binding);
         }
 

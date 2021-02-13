@@ -3,6 +3,7 @@ package com.mesut.j2cpp.visitor;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.util.TypeHelper;
@@ -78,7 +79,7 @@ public class TypeVisitor {
         if (!binding.isTypeVariable()) {
             BindingMap.add(type, binding);
         }
-        return type;
+        return Mapper.instance.mapType(type,null);
     }
 
     private static String getBinaryName(ITypeBinding binding) {

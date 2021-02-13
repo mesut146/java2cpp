@@ -3,22 +3,32 @@ package com.mesut.j2cpp;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class Util {
+    static List<String> keywords = new ArrayList<>();
 
-    static List<String> c_keywords = Arrays.asList("delete", "virtual", "const");
+    static {
+        try {
+            InputStream is = Util.class.getResource("/keywords").openStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            String s;
+            while ((s = reader.readLine()) != null) {
+                keywords.add(s);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static boolean isKeyword(String str) {
-        return c_keywords.contains(str);
+        return keywords.contains(str);
     }
 
     public static void writeHeader(CHeader header, File dir) throws IOException {

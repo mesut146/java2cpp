@@ -72,7 +72,6 @@ public class PreVisitor {
             method.template.add(new CType(tp.getName(), true));
         }
 
-        //todo what if target method not created,and skipped by actual visitor
         handleVirtual(binding);
 
         cc.addMethod(method);
@@ -84,9 +83,9 @@ public class PreVisitor {
         ITypeBinding superBinding = binding.getDeclaringClass().getSuperclass();
         if (superBinding == null) return;
         //todo may be deeper
-        for (IMethodBinding methodBinding : superBinding.getDeclaredMethods()) {
-            if (binding.isSubsignature(methodBinding)) {
-                ClassMap.sourceMap.getMethod(methodBinding).setVirtual(true);
+        for (IMethodBinding superMethod : superBinding.getDeclaredMethods()) {
+            if (binding.isSubsignature(superMethod)) {
+                ClassMap.sourceMap.getMethod(superMethod).setVirtual(true);
                 //System.out.println("virtual parent " + superBinding.getQualifiedName() + " " + binding.getName());
                 break;
             }

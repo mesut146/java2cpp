@@ -25,11 +25,13 @@
     },
     {
       "name": "remove(<T>)",
-      "target": "erase(CppHelper::indexOf(${varName}, $1))"
+      "target": "erase(CppHelper::indexOf(${varName}, $1))",
+      "external": true
     },
     {
       "name": "indexOf(<T>)",
-      "target": "CppHelper::indexOf(${varName}, $1)"
+      "target": "CppHelper::indexOf(${varName}, $1)",
+      "external": true
     },
     {
       "name": "size()",
