@@ -22,11 +22,9 @@ public class DeclarationVisitor {
     public List<CClass> classes = new ArrayList<>();
     public Namespace ns;
     SourceVisitor sourceVisitor;
-    TypeVisitor typeVisitor;
 
     public DeclarationVisitor(SourceVisitor sourceVisitor) {
         this.sourceVisitor = sourceVisitor;
-        this.typeVisitor = sourceVisitor.getTypeVisitor();
     }
 
     public void convert(CompilationUnit cu) {
@@ -95,37 +93,29 @@ public class DeclarationVisitor {
         CClass cc = ClassMap.sourceMap.get(TypeVisitor.fromBinding(n.resolveBinding()));
         classes.add(cc);
 
-        /*for (EnumConstantDeclaration constant : (List<EnumConstantDeclaration>) n.enumConstants()) {
-            CField field = new CField();
-            cc.addField(field);
-            field.setPublic(true);
-            field.setStatic(true);
-            field.setType(new CType(cc.name));
-            field.setName(CName.from(constant.getName().getIdentifier()));
+        for (EnumConstantDeclaration constant : (List<EnumConstantDeclaration>) n.enumConstants()) {
+            CField field = PreVisitor.visitField(constant.resolveVariable(), cc);
 
             CClassInstanceCreation rhs = new CClassInstanceCreation();
             field.expression = rhs;
             rhs.setType(field.type);
 
             if (!constant.arguments().isEmpty()) {
-                for (Expression val : (List<Expression>) constant.arguments()) {
-                    rhs.args.add((CExpression) sourceVisitor.visitExpr(val, null));
-                }
+                rhs.args = sourceVisitor.list(constant.arguments());
             }
             if (constant.getAnonymousClassDeclaration() != null) {
                 CClassInstanceCreation creation = AnonyHandler.handle(constant.getAnonymousClassDeclaration(), cc.getType(), cc, sourceVisitor);
                 rhs.setType(creation.type);
             }
-        }*/
+        }
         if (!n.bodyDeclarations().isEmpty()) {
             n.bodyDeclarations().forEach(p -> visitBody((BodyDeclaration) p, cc));
         }
-        //todo put values and valueOf method
         return cc;
     }
 
     public void visit(FieldDeclaration n, CClass clazz) {
-        CType type = typeVisitor.visitType(n.getType(), clazz);
+        CType type = TypeVisitor.fromBinding(n.getType().resolveBinding(), clazz);
 
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
             CField field = PreVisitor.visitField(frag.resolveBinding(), clazz);
@@ -165,7 +155,6 @@ public class DeclarationVisitor {
     }
 
     public void visit(Initializer node, CClass cc) {
-        //System.out.println("si " + cc.getType().basicForm());
         CMethod method = new CMethod();
         cc.addMethod(method);
         method.name = CName.from(Config.static_init_name);

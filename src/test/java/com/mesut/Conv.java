@@ -85,7 +85,7 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Try1");
         //converter.getFilter().addIncludeClass("base.Try2");
         //converter.getFilter().addIncludeClass("base.SwitchTest");
-        converter.getFilter().addIncludeClass("base.a");
+        converter.getFilter().addIncludeClass("base.Enum1");
         converter.convert();
     }
 

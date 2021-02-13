@@ -41,8 +41,6 @@ public class Converter {
         cMakeWriter = new CMakeWriter("myproject");
         cMakeWriter.sourceDir = destDir;
         target = cMakeWriter.addTarget("mylib", false);
-        ClassMap.sourceMap = new ClassMap();
-        //ClassMap.libMap = new ClassMap();
         allHeader = new CHeader("all.h");
         forwardHeader = new CHeader("common.h");
         forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
@@ -51,6 +49,10 @@ public class Converter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        target.addInclude(destDir);
+        target.addInclude(headerDir.getAbsolutePath());
+        target.addInclude("lib");
     }
 
     public Filter getFilter() {
@@ -202,18 +204,7 @@ public class Converter {
 
             for (CClass cc : classes) {
                 cc.ns = ns;
-                String headerPath;
-                if (!cc.isInner && cc.isPublic || classes.size() == 1) {
-                    //don't move outermost class
-                    headerPath = Util.trimSuffix(relPath, ".java") + ".h";
-                    headerPath = ns.all.replace("::", "/") + ".h";
-                }
-                else {
-                    headerPath = Util.trimSuffix(relPath, ".java") + "_" + cc.name + ".h";
-                    headerPath = (ns.all + "::" + cc.name).replace("::", "/") + ".h";
-                }
-                headerPath = cc.getHeaderPath();
-                CHeader header = new CHeader(headerPath);
+                CHeader header = new CHeader(cc.getHeaderPath());
                 header.setNs(ns);
                 header.setClass(cc);
                 source.addInclude(IncludeStmt.src(header.getInclude()));
@@ -231,8 +222,6 @@ public class Converter {
 
             Util.writeSource(source, new File(destDir));
 
-            target.addInclude(destDir);
-            target.addInclude(headerDir.getAbsolutePath());//todo once
             target.sourceFiles.add(source.name);
             count++;
         } catch (Exception e) {

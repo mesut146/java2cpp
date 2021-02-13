@@ -51,7 +51,7 @@ public class SwitchHelper {
                 expression = ordinal(expression);
             }
             else {
-                type = visitor.typeVisitor.fromBinding(node.getExpression().resolveTypeBinding(), visitor.clazz);
+                type = TypeVisitor.fromBinding(node.getExpression().resolveTypeBinding(), visitor.clazz);
             }
 
             CVariableDeclarationStatement ord = new CVariableDeclarationStatement();

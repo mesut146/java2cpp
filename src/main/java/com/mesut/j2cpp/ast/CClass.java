@@ -47,13 +47,10 @@ public class CClass extends CStatement {
 
     public String getHeaderPath() {
         ITypeBinding binding = BindingMap.get(getType());
-        StringBuilder sb = new StringBuilder();
-        String q = binding.getBinaryName();
-        q = q.replace("$", "_");
-        q = q.replace(".", "/");
-        sb.append(q);
-        sb.append(".h");
-        return sb.toString();
+        return binding.getBinaryName()
+                .replace("$", "_")
+                .replace(".", "/") +
+                ".h";
     }
 
     public void addBase(CType type) {

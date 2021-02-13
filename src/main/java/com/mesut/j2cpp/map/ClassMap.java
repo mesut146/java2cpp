@@ -10,13 +10,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//hold all classes and inheritance relation
+//hold all classes
+//needed for inheritance relation
 public class ClassMap {
-    public static ClassMap sourceMap;
+    public static ClassMap sourceMap = new ClassMap();
     public Map<CType, CClass> map = new HashMap<>();
 
     public static CMethod getAddedMethod(CClass cc, IMethodBinding binding, List<CType> params, CType type) {
-        //is already added
         for (CMethod method : cc.methods) {
             if (!method.name.is(binding.getName()) || method.params.size() != params.size() || !type.equals(method.type)) {
                 continue;
@@ -34,9 +34,9 @@ public class ClassMap {
     }
 
     public static CField getAddedField(CClass cc, IVariableBinding binding, CType type) {
-        for (CField mem : cc.fields) {
-            if (mem.type.equals(type) && mem.name.is(binding.getName())) {
-                return mem;
+        for (CField field : cc.fields) {
+            if (field.type.equals(type) && field.name.is(binding.getName())) {
+                return field;
             }
         }
         return null;

@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.map.BindingMap;
@@ -32,6 +33,9 @@ public class TypeVisitor {
     public static CType fromBinding0(ITypeBinding binding, Listener listener) {
         if (binding.isArray()) {
             return ArrayHelper.makeArrayType(fromBinding0(binding.getElementType(), listener), binding.getDimensions());
+        }
+        if (binding.isWildcardType()) {
+            return TypeHelper.getObjectType();
         }
         if (binding.isPrimitive()) {
             return new CType(TypeHelper.toCType(binding.getName()));
@@ -71,7 +75,7 @@ public class TypeVisitor {
         if (listener != null) {
             listener.foundType(type);
         }
-        if (!binding.isTypeVariable()){
+        if (!binding.isTypeVariable()) {
             BindingMap.add(type, binding);
         }
         return type;
@@ -95,11 +99,11 @@ public class TypeVisitor {
         return name;
     }
 
-    public CType visit(PrimitiveType n) {
+    public static CType visit(PrimitiveType n) {
         return new CType(TypeHelper.toCType(n.toString()));
     }
 
-    public CType visit(SimpleType node) {
+    public static CType visit(SimpleType node) {
         ITypeBinding binding = node.resolveBinding();
         if (binding == null) {
             return new CType(node.getName().getFullyQualifiedName());
@@ -107,19 +111,19 @@ public class TypeVisitor {
         return fromBinding(binding);
     }
 
-    public CType visit(ArrayType n) {
+    public static CType visit(ArrayType n) {
         return ArrayHelper.makeArrayType(visit(n.getElementType()), n.getDimensions());
     }
 
     //<?>
-    public CType visit(WildcardType n) {
+    public static CType visit(WildcardType n) {
         if (n.getBound() != null) {
             return visit(n.getBound());//migrate?
         }
         return TypeHelper.getObjectType();
     }
 
-    public CType visit(ParameterizedType n) {
+    public static CType visit(ParameterizedType n) {
         CType type = visit(n.getType());
         if (n.typeArguments().isEmpty()) {
 
@@ -138,7 +142,7 @@ public class TypeVisitor {
         return type;
     }
 
-    public CType visit(UnionType n) {
+    public static CType visit(UnionType n) {
         CUnionType unionType = new CUnionType();
         for (Type type : (List<Type>) n.types()) {
             unionType.types.add(visit(type));
@@ -146,7 +150,7 @@ public class TypeVisitor {
         return unionType;
     }
 
-    public CType visit(Type type) {
+    public static CType visit(Type type) {
         CType cType = null;
         if (type.isArrayType()) {
             cType = visit((ArrayType) type);
@@ -169,11 +173,13 @@ public class TypeVisitor {
         return cType;
     }
 
-    public CType visitType(Type type, CClass clazz) {
-        CType cType = visit(type);
-        //add to ref
-        clazz.addType(cType);
-        return cType;
+    public static CType visitType(Type type, CClass cc) {
+        ITypeBinding binding = type.resolveBinding();
+        if (binding == null) {
+            Logger.logBinding(cc, type.toString());
+            return visit(type);
+        }
+        return fromBinding(binding, cc);
     }
 
     public interface Listener {

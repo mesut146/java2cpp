@@ -15,22 +15,16 @@ public class LibImplHandler {
     public static LibImplHandler instance = new LibImplHandler();
 
     ClassMap classMap = new ClassMap();
-    TypeVisitor typeVisitor;
     CHeader forwardHeader;
     CHeader allHeader;
 
     public LibImplHandler() {
         forwardHeader = new CHeader("lib_common.h");
         allHeader = new CHeader("lib_all.h");
-        typeVisitor = new TypeVisitor();
-    }
-
-    CType makeType(ITypeBinding binding) {
-        return TypeVisitor.fromBinding(binding);
     }
 
     CClass getClazz(ITypeBinding binding) {
-        CType type = makeType(binding);
+        CType type = TypeVisitor.fromBinding(binding);
         CClass cc = classMap.get(type);
         if (cc.superClass == null) {
             if (binding.getSuperclass() != null) {

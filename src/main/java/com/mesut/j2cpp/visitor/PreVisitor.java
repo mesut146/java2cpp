@@ -1,7 +1,6 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.ast.*;
-import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.map.ClassMap;
 import org.eclipse.jdt.core.dom.*;
 
@@ -73,6 +72,7 @@ public class PreVisitor {
             method.template.add(new CType(tp.getName(), true));
         }
 
+        //todo what if target method not created,and skipped by actual visitor
         handleVirtual(binding);
 
         cc.addMethod(method);
@@ -81,15 +81,14 @@ public class PreVisitor {
 
     private static void handleVirtual(IMethodBinding binding) {
         //find super method and set virtual
-        ITypeBinding superr = binding.getDeclaringClass().getSuperclass();
-        if (superr != null) {
-            //todo may be deeper
-            for (IMethodBinding methodBinding : superr.getDeclaredMethods()) {
-                if (binding.isSubsignature(methodBinding)) {
-                    ClassMap.sourceMap.getMethod(methodBinding).setVirtual(true);
-                    //System.out.println("virtual parent " + superr.getQualifiedName() + " " + binding.getName());
-                    break;
-                }
+        ITypeBinding superBinding = binding.getDeclaringClass().getSuperclass();
+        if (superBinding == null) return;
+        //todo may be deeper
+        for (IMethodBinding methodBinding : superBinding.getDeclaredMethods()) {
+            if (binding.isSubsignature(methodBinding)) {
+                ClassMap.sourceMap.getMethod(methodBinding).setVirtual(true);
+                //System.out.println("virtual parent " + superBinding.getQualifiedName() + " " + binding.getName());
+                break;
             }
         }
     }
@@ -118,10 +117,10 @@ public class PreVisitor {
         for (AbstractTypeDeclaration decl : (List<AbstractTypeDeclaration>) unit.types()) {
             if (decl instanceof EnumDeclaration) {
                 visitType(decl.resolveBinding(), null);
-                //visit((EnumDeclaration) decl, null);
             }
             else if (decl instanceof AnnotationTypeDeclaration) {
-                //visit((AnnotationTypeDeclaration) decl, null);
+                //todo
+                System.out.println("anno " + unit.getPackage().getName() + " " + decl.getName());
             }
             else {
                 visitType(decl.resolveBinding(), null);
