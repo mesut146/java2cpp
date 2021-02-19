@@ -78,6 +78,9 @@ public class Mapper {
     }
 
     public CExpression mapMethod(IMethodBinding binding, List<CExpression> args) {
+        if (true) {
+            return null;
+        }
         CType type = TypeVisitor.fromBinding(binding.getDeclaringClass());
         ClassInfo classInfo = classMap.get(type.realName);
         if (classInfo == null) return null;//no mapping for this type
