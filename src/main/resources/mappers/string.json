@@ -2,7 +2,7 @@
   "name": "java.lang.String",
   "target": "std::string",
   "include": "<string>,StringHelper.h",
-  "methods:": [
+  "methods": [
     {
       "name": "length()",
       "target": "size()"

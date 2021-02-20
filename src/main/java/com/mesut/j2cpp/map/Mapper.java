@@ -1,15 +1,19 @@
 package com.mesut.j2cpp.map;
 
 import com.mesut.j2cpp.IncludeStmt;
+import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.ast.CMethod;
+import com.mesut.j2cpp.ast.CName;
 import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -57,12 +61,15 @@ public class Mapper {
         JSONObject cls = new JSONObject(Util.read(new File(jsonPath)));
         List<CType> fromTypes = new ArrayList<>();
         String target = cls.getString("target");
-        String include = cls.getString("include");
+        String include = cls.optString("include");
 
         ClassInfo info = new ClassInfo();
         info.target = new CType(target);
         for (String name : cls.getString("name").split(",")) {
             classMap.put(name, info);
+        }
+        if (include != null) {
+            info.includes.addAll(Arrays.asList(include.split(",")));
         }
 
         JSONArray methods = cls.getJSONArray("methods");
@@ -77,48 +84,70 @@ public class Mapper {
         }
     }
 
-    public CExpression mapMethod(IMethodBinding binding, List<CExpression> args) {
+    public CExpression mapMethod(IMethodBinding binding, List<CExpression> args, CExpression scope) {
         if (true) {
-            return null;
+            //return null;
         }
         CType type = TypeVisitor.fromBinding(binding.getDeclaringClass());
         ClassInfo classInfo = classMap.get(type.realName);
         if (classInfo == null) return null;//no mapping for this type
-        List<CType> argTypes = new ArrayList<>();
-        for (ITypeBinding at : binding.getParameterTypes()) {
-            argTypes.add(TypeVisitor.fromBinding(at));
+        MethodInfo info = findMethod(classInfo, binding);
+        if (info == null) {
+            //no mapping
+            Logger.log("missing mapper for " + binding.toString());
+            return null;
         }
+        //replace
+        String e = info.targetExpr;
+        //args
+        for (int i = 0; i < args.size(); i++) {
+            e = e.replace("$" + (i + 1), args.get(i).toString());
+        }
+        e = e.replace("${varName}", scope.toString());//todo put in variable maybe?
+        //with scope
+        if (!info.external) {
+            e = scope.toString() + "->" + e;
+        }
+        CName name = new CName("");
+        name.name = e;
+        return name;
+    }
+
+
+    MethodInfo findMethod(ClassInfo classInfo, IMethodBinding binding) {
+        IMethodBinding real = binding.getMethodDeclaration();
+        Map<CType, Integer> order = new HashMap<>();
+
         for (MethodInfo info : classInfo.methods) {
             if (!info.name.equals(binding.getName())) continue;
+            if (info.args.size() != binding.getParameterTypes().length) continue;
             boolean found = true;
-            for (int i = 0; i < argTypes.size(); i++) {
-                CType t1 = argTypes.get(i);
-                CType t2 = info.args.get(i);
+            for (int i = 0; i < binding.getParameterTypes().length; i++) {
+                CType t1 = info.args.get(i);
+                ITypeBinding t2 = binding.getParameterTypes()[i];
+                ITypeBinding t3 = real.getParameterTypes()[i];
                 if (t1.isTemplate) {
-                    if (!t2.isTemplate) {
+                    if (t3.isTypeVariable()) {
+                        //save?
+                    }
+                    else {
                         found = false;
                         break;
                     }
                 }
                 else {
-                    if (!t1.equals(t2)) {
+                    if (!t1.realName.equals(t2.getQualifiedName())) {
                         found = false;
                         break;
                     }
                 }
             }
             if (found) {
-                //do mapping
-
-                break;
+                return info;
             }
         }
         return null;
     }
-
-    /*MethodInfo findMethod(ClassInfo classInfo,){
-
-    }*/
 
     public CType mapType(CType type, CSource source) {
         if (classMap.containsKey(type.realName)) {
@@ -131,6 +160,7 @@ public class Mapper {
             }
             CType target = info.target.copy();
             target.typeNames = type.typeNames;
+            target.realName = type.realName;
             return target;
         }
         return type;
@@ -146,7 +176,7 @@ public class Mapper {
 
     static class ClassInfo {
         CType target;
-        List<String> includes;
+        List<String> includes = new ArrayList<>();
         List<MethodInfo> methods = new ArrayList<>();
     }
 

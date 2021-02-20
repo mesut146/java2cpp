@@ -20,6 +20,10 @@
       "target": "at($1)"
     },
     {
+      "name": "set(int,<T>)",
+      "target": "at($1) = $2"
+    },
+    {
       "name": "remove(int)",
       "target": "erase($1)"
     },

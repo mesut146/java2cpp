@@ -7,7 +7,6 @@ array.length
 array to pointer
 cast
 
-
-binding map,header path
+if mapped method is rhs of decl then ensure rhs is ptr
 
 

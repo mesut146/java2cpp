@@ -94,7 +94,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(StringLiteral node, CNode arg) {
         CObjectCreation objectCreation = new CObjectCreation();
-        objectCreation.type = TypeHelper.getStringType();
+        objectCreation.type = Mapper.instance.mapType(TypeHelper.getStringType(), source);
         objectCreation.args.add(new CStringLiteral(node.getLiteralValue(), node.getEscapedValue()));
         return objectCreation;
     }
@@ -583,17 +583,19 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @SuppressWarnings("unchecked")
     @Override
     public CNode visit(MethodInvocation node, CNode arg) {
+        IMethodBinding binding = node.resolveMethodBinding();
+        if (binding == null) {
+            Logger.log(clazz, node.toString() + " has null binding ,conversion may have problems");
+            CMethodInvocation invocation = new CMethodInvocation();
+            invocation.arguments = list(node.arguments());
+            invocation.name = (CName) visit(node.getName(), null);
+            if (node.getExpression() != null) invocation.scope = (CExpression) visitExpr(node.getExpression(), arg);
+            return invocation;
+        }
         CExpression scope = node.getExpression() == null ? null : (CExpression) visitExpr(node.getExpression(), arg);
         CMethodInvocation invocation = new CMethodInvocation();
         invocation.name = (CName) visit(node.getName(), null);
         invocation.arguments = list(node.arguments());
-        IMethodBinding binding = node.resolveMethodBinding();
-
-        if (binding == null) {
-            Logger.logBinding(clazz, node.getName().getIdentifier());
-            invocation.scope = scope;
-            return invocation;
-        }
 
         boolean isStatic = Modifier.isStatic(binding.getModifiers());
         boolean isAbstract = Modifier.isAbstract(binding.getModifiers());
@@ -601,14 +603,16 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         //non scoped static
         //outer
         invocation.scope = scope;
-        if (scope != null) {
-            CExpression target = Mapper.instance.mapMethod(binding, invocation.arguments);
-            if (target != null) return target;
-            invocation.isArrow = !isStatic;
-        }
 
         if (!binding.getDeclaringClass().isFromSource() && Config.writeLibHeader) {
             LibImplHandler.instance.addMethod(binding);
+        }
+
+        if (scope != null) {
+            //mapper
+            CExpression target = Mapper.instance.mapMethod(binding, invocation.arguments, scope);
+            if (target != null) return target;
+            invocation.isArrow = !isStatic;
         }
 
         if (scope != null) {
@@ -623,7 +627,8 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             invocation.isArrow = false;
             return invocation;
         }
-        //parent/super method todo not necessary
+        //parent/super method
+        // todo not necessary
         if (isSuper(this.binding, onType)) {
             //qualify super method,not needed but more precise
             invocation.scope = clazz.getSuper();
@@ -650,7 +655,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         return from.isSubTypeCompatible(to);
     }
 
-    //is base is super of type
+    //is it one of my ancestors
     boolean isSuper(ITypeBinding from, ITypeBinding to) {
         if (from == null || from.getSuperclass() == null) {
             return false;

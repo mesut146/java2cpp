@@ -96,9 +96,10 @@ public class Conv {
         String out = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/cpp";
         Converter converter = new Converter(dir, out);
         Mapper.instance.addMapper(getClass().getResource("/mappers/list.json").getPath());
+        Mapper.instance.addMapper(getClass().getResource("/mappers/string.json").getPath());
         converter.addClasspath(rtJar);
-        //Config.common_forwards = false;
-        converter.getFilter().addIncludeClass("mapper.ListTest");
+        //converter.getFilter().addIncludeClass("mapper.ListTest");
+        converter.getFilter().addIncludeClass("mapper.StringTest");
         converter.convert();
     }
 
