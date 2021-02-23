@@ -4,6 +4,7 @@ import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.map.ClassMap;
+import com.mesut.j2cpp.util.BaseClassSorter;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 
@@ -16,37 +17,34 @@ public class IncludeHelper {
 
     //include all referenced headers
     public static void handle(CSource source) {
-        Set<CType> list = new HashSet<>();
+        Set<CClass> set = new HashSet<>();
         for (CClass cc : source.classes) {
-            handle(cc, list);
+            handle(cc, set);
+            set.add(cc);
         }
-        for (CType type : list) {
-            source.addInclude(type);
+        //remove from include list
+        for (CClass cc : set) {
+            source.includes.remove(new IncludeStmt(cc.getHeaderPath()));
         }
-        //todo sort
+        List<CClass> list = new ArrayList<>(set);
+        try {
+            BaseClassSorter.sort(list);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        for (CClass type : list) {
+            source.addInclude(type.getType());
+        }
     }
 
-    static void handle(CClass cc, Set<CType> list) {
+    //recursively collect types
+    static void handle(CClass cc, Set<CClass> list) {
         for (CType type : cc.types) {
-            if (list.add(type)) {
-                handle(ClassMap.sourceMap.get(type), list);//recurse
+            if (type.isSys() || type.mapped) continue;
+            CClass c = ClassMap.sourceMap.get(type);
+            if (list.add(c)) {
+                handle(c, list);//recurse
             }
         }
-    }
-
-    public static List<CType> collect(TypeVisitor visitor, ITypeBinding binding) {
-        List<CType> list = new ArrayList<>();
-        if (binding == null) {
-            return list;
-        }
-        if (binding.getSuperclass() != null) {
-            list.add(visitor.fromBinding(binding.getSuperclass()));
-            collect(visitor, binding.getSuperclass());
-        }
-        for (ITypeBinding iface : binding.getInterfaces()) {
-            list.add(visitor.fromBinding(iface));
-            collect(visitor, iface);
-        }
-        return list;
     }
 }

@@ -161,6 +161,7 @@ public class Mapper {
             CType target = info.target.copy();
             target.typeNames = type.typeNames;
             target.realName = type.realName;
+            target.mapped = true;
             return target;
         }
         return type;

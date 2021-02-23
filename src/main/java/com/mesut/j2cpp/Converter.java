@@ -6,6 +6,7 @@ import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.ast.Namespace;
 import com.mesut.j2cpp.map.ClassMap;
+import com.mesut.j2cpp.util.BaseClassSorter;
 import com.mesut.j2cpp.util.ForwardDeclarator;
 import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
@@ -118,13 +119,18 @@ public class Converter {
 
     void writeForwards() throws IOException {
         if (Config.common_forwards) {
+            if (Config.include_common_forwards) {
+                forwardHeader.addInclude("lib/lib_common.h");
+            }
+            System.out.println("wrote " + forwardHeader.getInclude());
             Util.writeHeader(forwardHeader, headerDir);
         }
         if (Config.all_headers) {
             Util.writeHeader(allHeader, headerDir);
+            System.out.println("wrote " + allHeader.getInclude());
         }
         if (Config.writeLibHeader) {
-            LibImplHandler.instance.writeAll(new File(headerDir, "lib"), forwardHeader);
+            LibImplHandler.instance.writeAll(new File(headerDir, "lib"));
         }
     }
 
@@ -216,8 +222,6 @@ public class Converter {
                 }
             }
             IncludeHelper.handle(source);
-            //new BaseForward(header).sort();
-
             Util.writeSource(source, new File(destDir));
 
             target.sourceFiles.add(source.name);

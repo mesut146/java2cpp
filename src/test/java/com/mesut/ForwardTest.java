@@ -2,6 +2,7 @@ package com.mesut;
 
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
+import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.util.BaseClassSorter;
 import org.junit.Test;
 
@@ -38,14 +39,11 @@ public class ForwardTest {
 
         header.getScope(header.cc);
 
-        BaseClassSorter forward = new BaseClassSorter(classes);
-        forward.sort();
         System.out.println(header);
     }
 
     CClass makeClass(String name) {
-        CClass cc = new CClass();
-        cc.name = name;
+        CClass cc = new CClass(new CType(name));
         return cc;
     }
 }

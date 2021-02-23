@@ -15,7 +15,8 @@ public class HeaderMap {
         if (map.containsKey(cc)) {
             return map.get(cc);
         }
-        return null;
+        CHeader header = new CHeader(cc.getHeaderPath());
+        return header;
     }
 
     public CHeader getHeader(CType cc) {

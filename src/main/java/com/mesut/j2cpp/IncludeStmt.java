@@ -16,6 +16,7 @@ public class IncludeStmt {
         }
     }
 
+    //sys first,lib second, then src
     public static void sort(List<IncludeStmt> list) {
         list.sort((i1, i2) -> {
             if (i1.isSys) return -1;

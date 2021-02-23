@@ -9,9 +9,9 @@ import org.eclipse.jdt.core.dom.*;
 //visit complete types and include them,others already forward declared
 public class DepVisitor extends ASTVisitor {
     CClass cc;
-    TypeDeclaration declaration;
+    AbstractTypeDeclaration declaration;
 
-    public DepVisitor(CClass cc, TypeDeclaration decl) {
+    public DepVisitor(CClass cc, AbstractTypeDeclaration decl) {
         this.cc = cc;
         this.declaration = decl;
     }

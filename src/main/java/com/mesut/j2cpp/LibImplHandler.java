@@ -3,19 +3,16 @@ package com.mesut.j2cpp;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.ForwardDeclarator;
-import com.mesut.j2cpp.util.TypeHelper;
+import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 
 public class LibImplHandler {
     public static LibImplHandler instance = new LibImplHandler();
-
-    ClassMap classMap = new ClassMap();
-    CHeader forwardHeader;
+    public CHeader forwardHeader;
     CHeader allHeader;
 
     public LibImplHandler() {
@@ -24,24 +21,10 @@ public class LibImplHandler {
     }
 
     CClass getClazz(ITypeBinding binding) {
-        CType type = TypeVisitor.fromBinding(binding);
-        CClass cc = classMap.get(type);
-        if (cc.superClass == null) {
-            if (binding.getSuperclass() != null) {
-                CType superCls = TypeVisitor.fromBinding(binding.getSuperclass(), cc);
-                classMap.get(superCls);
-                if (Config.baseClassObject || !superCls.equals(TypeHelper.getObjectType())) {
-                    cc.setSuper(superCls);
-                }
-            }
-        }
-        if (cc.ifaces.isEmpty()) {
-            for (ITypeBinding iface : binding.getInterfaces()) {
-                CType it = TypeVisitor.fromBinding(iface, cc);
-                classMap.get(it);
-                cc.addBase(it);
-            }
-        }
+        CClass cc = ClassMap.sourceMap.get(binding);
+        if (cc == null) return null;
+        cc.fromSource = binding.isFromSource();
+        PreVisitor.initType(binding, cc, null);
         return cc;
     }
 
@@ -56,7 +39,7 @@ public class LibImplHandler {
                 break;
             }
         }
-        classMap.getMethod(binding);
+        PreVisitor.visitMethod(binding, getClazz(real));
     }
 
     public void addField(IVariableBinding binding) {
@@ -79,12 +62,10 @@ public class LibImplHandler {
         cc.addField(field);
     }
 
-    public void writeAll(File dir, CHeader common) {
-        forwardHeader.forwardDeclarator = new ForwardDeclarator(classMap);
-        if (Config.include_common_forwards) {
-            forwardHeader.addInclude(common.getInclude());
-        }
-        for (CClass cc : classMap.map.values()) {
+    public void writeAll(File dir) {
+        forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
+        for (CClass cc : ClassMap.sourceMap.map.values()) {
+            if (cc.fromSource) continue;
             CHeader header = new CHeader(cc.getType().basicForm().replace("::", "/") + ".h");
             header.setNs(cc.getType().ns);
             header.setClass(cc);
@@ -100,6 +81,8 @@ public class LibImplHandler {
         try {
             Util.writeHeader(forwardHeader, dir);
             Util.writeHeader(allHeader, dir);
+            System.out.println("wrote " + forwardHeader.getInclude());
+            System.out.println("wrote " + allHeader.getInclude());
         } catch (IOException e) {
             e.printStackTrace();
         }

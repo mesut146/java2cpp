@@ -18,6 +18,7 @@ public class CType extends CExpression {
     public boolean isPointer = false;
     public boolean isInner = false;
     public boolean fromSource = false;
+    public boolean mapped = false;
 
     public CType() {
     }
@@ -36,6 +37,10 @@ public class CType extends CExpression {
     public CType(String type, boolean isTemplate) {
         this(type);
         this.isTemplate = isTemplate;
+    }
+
+    public boolean isSys() {
+        return equals(TypeHelper.getVectorType());
     }
 
     String trim(String str) {

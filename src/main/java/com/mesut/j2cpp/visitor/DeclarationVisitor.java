@@ -66,7 +66,7 @@ public class DeclarationVisitor {
         CClass cc = ClassMap.sourceMap.get(TypeVisitor.fromBinding(node.resolveBinding()));
         classes.add(cc);
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
-        new DepVisitor(cc, node).handle();
+        //new DepVisitor(cc, node).handle();
         return cc;
     }
 

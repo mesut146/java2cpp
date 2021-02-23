@@ -7,9 +7,11 @@ import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.util.TypeHelper;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.internal.core.util.BindingKeyResolver;
 
+import java.util.Arrays;
 import java.util.List;
 
 //visit types and ensures type is included
@@ -40,6 +42,14 @@ public class TypeVisitor {
         }
         if (binding.isPrimitive()) {
             return new CType(TypeHelper.toCType(binding.getName()));
+        }
+        if (binding.isCapture()) {
+            ITypeBinding[] arr = binding.getTypeBounds();
+            if (arr.length == 1) {
+                return fromBinding(arr[0]);
+            }
+            System.out.println("capture with " + binding);
+            return TypeHelper.getObjectType();
         }
 
         CType type;

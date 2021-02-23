@@ -4,6 +4,7 @@ import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 
 import java.util.HashMap;
@@ -43,12 +44,17 @@ public class ClassMap {
     }
 
     public CClass get(CType type) {
+        if (type.mapped) return null;
         if (map.containsKey(type)) {
             return map.get(type);
         }
         CClass cc = new CClass(type);
         map.put(type, cc);
         return cc;
+    }
+
+    public CClass get(ITypeBinding binding){
+        return get(TypeVisitor.fromBinding(binding));
     }
 
     public CMethod getMethod(IMethodBinding binding) {

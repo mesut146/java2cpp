@@ -60,9 +60,6 @@ public class CSource extends Node {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        //sys first,lib second, then src
-        IncludeStmt.sort(includes);
-        //todo sort one more by relation
         for (IncludeStmt inc : includes) {
             sb.append(inc).append("\n");
         }

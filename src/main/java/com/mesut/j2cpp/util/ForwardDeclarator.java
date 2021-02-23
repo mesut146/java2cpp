@@ -64,6 +64,7 @@ public class ForwardDeclarator {
         sb.append("//forward declarations\n");
         for (NamespaceDecl dec : nsList) {
             sb.append(dec);
+            sb.append("\n");
         }
         return sb.toString();
     }

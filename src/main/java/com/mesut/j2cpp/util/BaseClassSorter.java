@@ -1,39 +1,40 @@
 package com.mesut.j2cpp.util;
 
+import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.ast.CClass;
+import com.mesut.j2cpp.ast.CSource;
+import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.map.ClassMap;
 
+import javax.sound.midi.spi.SoundbankReader;
 import java.util.*;
 
 public class BaseClassSorter {
-    List<CClass> classes;
 
-    public BaseClassSorter(List<CClass> classes) {
-        this.classes = classes;
+    public static void sort(List<CClass> classes) throws Exception {
+        sort0(classes);
+        isValid(classes);
     }
 
-    public void sort() throws Exception {
-        Set<CClass> set = new HashSet<>(classes);
-        List<CClass> list = new ArrayList<>(set);
-        sort(list);
-
-        isValid(list);
-        //then place classes to header in sorted order
-        classes = list;
-    }
-    
-    void sort(List<CClass> list) {
-        list.sort((cur, base) -> {
-            if (cur.ifaces.contains(base.getType())) {
-                return 1;//base must come before me
+    static void sort0(List<CClass> list) {
+        list.sort((c1, c2) -> {
+            if (c1.superClass != null && c1.superClass.equals(c2.getType())) {
+                return 1;
             }
-            else if (base.ifaces.contains(cur.getType())) {
-                return -1;//we must come after base
+            if (c2.superClass != null && c2.superClass.equals(c1.getType())) {
+                return -1;
+            }
+            if (c1.ifaces.contains(c2.getType())) {
+                return 1;
+            }
+            else if (c2.ifaces.contains(c1.getType())) {
+                return -1;
             }
             return 0;//unrelated
         });
     }
 
-    void isValid(List<CClass> list) throws Exception {
+    static void isValid(List<CClass> list) throws Exception {
         for (int i = 0; i < list.size(); i++) {
             CClass base = list.get(i);
             for (int j = i + 1; j < list.size(); j++) {

@@ -11,11 +11,8 @@ import java.util.List;
 //parses all sources and generates classMap
 public class PreVisitor {
 
-    public static CClass visitType(ITypeBinding binding, CClass outer) {
-        CClass cc = ClassMap.sourceMap.get(TypeVisitor.fromBinding(binding));
-        if (binding.getSuperclass() != null) {
-            cc.setSuper(TypeVisitor.fromBinding(binding.getSuperclass()));
-        }
+    public static CClass initType(ITypeBinding binding, CClass cc, CClass outer) {
+        if (cc.initialized) return cc;
         cc.isInterface = binding.isInterface();
         cc.isStatic = Modifier.isStatic(binding.getModifiers());
         cc.isPublic = Modifier.isPublic(binding.getModifiers());
@@ -23,12 +20,21 @@ public class PreVisitor {
         for (ITypeBinding tp : binding.getTypeParameters()) {
             cc.template.add(new CType(tp.getName(), true));
         }
+        if (binding.getSuperclass() != null) {
+            cc.setSuper(TypeVisitor.fromBinding(binding.getSuperclass()));
+        }
         for (ITypeBinding tp : binding.getInterfaces()) {
             cc.addBase(TypeVisitor.fromBinding(tp));
         }
         if (outer != null && !Modifier.isStatic(binding.getModifiers()) && !cc.isInterface) {
             InnerHelper.handleRef(cc, outer);
         }
+        cc.initialized = true;
+        return cc;
+    }
+
+    public static CClass visitType(ITypeBinding binding, CClass outer) {
+        CClass cc = initType(binding, ClassMap.sourceMap.get(binding), outer);
         //members
         for (IMethodBinding methodBinding : binding.getDeclaredMethods()) {
             visitMethod(methodBinding, cc);
@@ -43,6 +49,7 @@ public class PreVisitor {
     }
 
     public static CMethod visitMethod(IMethodBinding binding, CClass cc) {
+        if (cc == null) return null;
         List<CType> params = new ArrayList<>();
         for (ITypeBinding prm : binding.getParameterTypes()) {
             params.add(TypeVisitor.fromBinding(prm, cc));
@@ -94,6 +101,7 @@ public class PreVisitor {
     }
 
     public static CField visitField(IVariableBinding binding, CClass cc) {
+        if (cc == null) return null;
         CType type = TypeVisitor.fromBinding(binding.getType(), cc);
         CField field = ClassMap.getAddedField(cc, binding, type);
         if (field != null) {
@@ -115,16 +123,8 @@ public class PreVisitor {
     public void handle(CompilationUnit unit) {
         Namespace ns = visit(unit.getPackage());
         for (AbstractTypeDeclaration decl : (List<AbstractTypeDeclaration>) unit.types()) {
-            if (decl instanceof EnumDeclaration) {
-                visitType(decl.resolveBinding(), null);
-            }
-            else if (decl instanceof AnnotationTypeDeclaration) {
-                //todo
-                System.out.println("anno " + unit.getPackage().getName() + " " + decl.getName());
-            }
-            else {
-                visitType(decl.resolveBinding(), null);
-            }
+            CClass cc = visitType(decl.resolveBinding(), null);
+            new DepVisitor(cc, decl).handle();
         }
     }
 

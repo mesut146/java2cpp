@@ -29,6 +29,8 @@ public class CClass extends CStatement {
     public Node staticBlock = null;
     public List<CStatement> consStatements = new ArrayList<>();
     public Set<CType> types = new HashSet<>();
+    public boolean initialized = false;
+    public boolean fromSource = true;
     CType type;
     int anonyCount = 0;
 
@@ -74,7 +76,7 @@ public class CClass extends CStatement {
     //add reference type that this class use
     public void addType(CType type) {
         if (type == null) return;
-        if (type.isTemplate || type.equals(getType())) return;
+        if (type.isTemplate || type.equals(getType()) || type.isPrim() || type.isVoid() || type.mapped) return;
         types.add(type);
     }
 
