@@ -120,12 +120,11 @@ public class Converter {
         if (Config.common_forwards) {
             Util.writeHeader(forwardHeader, headerDir);
         }
-        if (Config.common_headers) {
-            Collections.sort(allHeader.includes);
+        if (Config.all_headers) {
             Util.writeHeader(allHeader, headerDir);
         }
         if (Config.writeLibHeader) {
-            LibImplHandler.instance.writeAll(new File(headerDir, "lib"));
+            LibImplHandler.instance.writeAll(new File(headerDir, "lib"), forwardHeader);
         }
     }
 
@@ -195,7 +194,7 @@ public class Converter {
             source.classes.addAll(classes);
             Namespace ns = headerVisitor.ns;
 
-            if (Config.common_headers && Config.include_common_headers) {
+            if (Config.all_headers && Config.include_all_headers) {
                 source.includes.add(0, IncludeStmt.src(allHeader.getInclude()));
             }
 
@@ -232,7 +231,7 @@ public class Converter {
 
     void writeHeader(CHeader header) throws IOException {
         Util.writeHeader(header, headerDir);
-        if (Config.common_headers) {
+        if (Config.all_headers) {
             allHeader.addInclude(header.getInclude());
         }
     }

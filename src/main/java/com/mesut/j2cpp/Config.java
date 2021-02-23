@@ -13,17 +13,12 @@ public class Config {
     public static boolean include_common_forwards = true;
 
     //make all in one header
-    public static boolean common_headers = true;
+    public static boolean all_headers = true;
     //make all .cpp include that header
-    public static boolean include_common_headers = false;
-
-    //only include required headers
-    public static boolean include_needed = true;
+    public static boolean include_all_headers = false;
 
     //make headers for classpath classes
     public static boolean writeLibHeader = true;
-
-    public static boolean common_lib_forwards = true;
 
     //move field initializers into constructors
     public static boolean fields_in_constructors = true;

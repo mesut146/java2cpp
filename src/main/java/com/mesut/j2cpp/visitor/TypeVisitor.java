@@ -73,13 +73,14 @@ public class TypeVisitor {
         if (type.ns == null) {
             type.ns = new Namespace();
         }
-        if (listener != null) {
-            listener.foundType(type);
-        }
         if (!binding.isTypeVariable()) {
             BindingMap.add(type, binding);
         }
-        return Mapper.instance.mapType(type,null);
+        type = Mapper.instance.mapType(type, null);
+        if (listener != null) {
+            //listener.foundType(type);
+        }
+        return type;
     }
 
     private static String getBinaryName(ITypeBinding binding) {
@@ -151,27 +152,27 @@ public class TypeVisitor {
         return unionType;
     }
 
-    public static CType visit(Type type) {
-        CType cType = null;
-        if (type.isArrayType()) {
-            cType = visit((ArrayType) type);
+    public static CType visit(Type node) {
+        CType type = null;
+        if (node.isArrayType()) {
+            type = visit((ArrayType) node);
         }
-        else if (type.isSimpleType()) {
-            cType = visit((SimpleType) type);
+        else if (node.isSimpleType()) {
+            type = visit((SimpleType) node);
         }
-        else if (type.isParameterizedType()) {
-            cType = visit((ParameterizedType) type);
+        else if (node.isParameterizedType()) {
+            type = visit((ParameterizedType) node);
         }
-        else if (type.isWildcardType()) {
-            cType = visit((WildcardType) type);
+        else if (node.isWildcardType()) {
+            type = visit((WildcardType) node);
         }
-        else if (type.isPrimitiveType()) {
-            cType = visit((PrimitiveType) type);
+        else if (node.isPrimitiveType()) {
+            type = visit((PrimitiveType) node);
         }
-        else if (type.isUnionType()) {
-            cType = visit((UnionType) type);
+        else if (node.isUnionType()) {
+            type = visit((UnionType) node);
         }
-        return cType;
+        return type;
     }
 
     public static CType visitType(Type type, CClass cc) {

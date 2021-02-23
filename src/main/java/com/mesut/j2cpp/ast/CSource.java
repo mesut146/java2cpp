@@ -62,10 +62,10 @@ public class CSource extends Node {
         StringBuilder sb = new StringBuilder();
         //sys first,lib second, then src
         IncludeStmt.sort(includes);
+        //todo sort one more by relation
         for (IncludeStmt inc : includes) {
             sb.append(inc).append("\n");
         }
-        //sb.append(PrintHelper.include(header.getInclude()));
         sb.append("\n\n");
         for (Namespace use : usings) {
             if (use.parts.isEmpty()) continue;
@@ -122,5 +122,6 @@ public class CSource extends Node {
             sb.append("\n");
         }
     }
+
 
 }

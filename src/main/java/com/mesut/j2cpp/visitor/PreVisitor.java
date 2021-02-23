@@ -2,6 +2,7 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.map.ClassMap;
+import com.mesut.j2cpp.util.DepVisitor;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.ArrayList;

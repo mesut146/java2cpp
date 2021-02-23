@@ -19,10 +19,13 @@ public class IncludeStmt {
     public static void sort(List<IncludeStmt> list) {
         list.sort((i1, i2) -> {
             if (i1.isSys) return -1;
+            if (i2.isSys) return 1;
             if (i1.isLib) {
+                if (i2.isLib){
+                    return i1.str.compareTo(i2.str);
+                }
                 return -1;
             }
-            if (i2.isSys) return 1;
             if (i2.isLib) return 1;
             return 0;
         });

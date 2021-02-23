@@ -73,6 +73,8 @@ public class CClass extends CStatement {
 
     //add reference type that this class use
     public void addType(CType type) {
+        if (type == null) return;
+        if (type.isTemplate || type.equals(getType())) return;
         types.add(type);
     }
 

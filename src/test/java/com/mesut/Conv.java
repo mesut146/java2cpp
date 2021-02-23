@@ -37,17 +37,17 @@ public class Conv {
     }
 
     @Test
-    public void testDx() {
+    public void testDx() throws IOException {
         String dir = "/home/mesut/Desktop/j2cpp-dev/dx-org";
         String out = "/home/mesut/Desktop/j2cpp-dev/dx-cpp";
         Converter converter = new Converter(dir, out);
-        //converter.addClasspath(dir);
-        //converter.getFilter().addIncludeDir("java.lang");
+        Mapper.instance.addMapper(getClass().getResource("/mappers/list.json").getPath());
+        Mapper.instance.addMapper(getClass().getResource("/mappers/string.json").getPath());
         //converter.getFilter().addIncludeClass("com/android/dex/Dex");
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
         //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
         //converter.getFilter().addIncludeClass("com/android/dx/dex/code/PositionList.java");
-        //converter.getFilter().addIncludeClass("com/android/dex/MethodHandle.java");
+        //converter.getFilter().addIncludeClass("com/android/dex/ClassData");
         converter.convert();
     }
 

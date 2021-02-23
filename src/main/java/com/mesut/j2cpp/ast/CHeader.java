@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.cppast.CNode;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
@@ -17,7 +18,7 @@ public class CHeader extends CNode {
     public Namespace ns;
     public CClass cc;
     public List<Namespace> usings = new ArrayList<>();
-    public List<String> includes = new ArrayList<>();
+    public List<IncludeStmt> includes = new ArrayList<>();
     public ForwardDeclarator forwardDeclarator;
     boolean handledFieldInits = false;
 
@@ -43,9 +44,16 @@ public class CHeader extends CNode {
     }
 
     public void addInclude(String include) {
-        //prevent same header includes itself and other duplications
-        if (!include.equals(Util.trimSuffix(getInclude(), ".h")) && !includes.contains(include)) {
-            includes.add(include);
+        IncludeStmt includeStmt = new IncludeStmt(include);
+        if (!includes.contains(includeStmt) && !include.equals(getInclude())) {
+            includes.add(includeStmt);
+        }
+    }
+
+    public void addInclude(int i, String include) {
+        IncludeStmt includeStmt = new IncludeStmt(include);
+        if (!includes.contains(includeStmt) && !include.equals(getInclude())) {
+            includes.add(i, includeStmt);
         }
     }
 
@@ -103,9 +111,9 @@ public class CHeader extends CNode {
         handleFieldInits();
         StringBuilder sb = new StringBuilder();
         sb.append("#pragma once\n\n");
-        for (String imp : includes) {
-            imp = Util.trimSuffix(imp, ".h");
-            sb.append(String.format("#include \"%s.h\"", imp));
+        IncludeStmt.sort(includes);
+        for (IncludeStmt imp : includes) {
+            sb.append(imp);
             sb.append("\n");
         }
         sb.append("\n");

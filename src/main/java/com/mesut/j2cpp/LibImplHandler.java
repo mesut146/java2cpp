@@ -79,8 +79,11 @@ public class LibImplHandler {
         cc.addField(field);
     }
 
-    public void writeAll(File dir) {
+    public void writeAll(File dir, CHeader common) {
         forwardHeader.forwardDeclarator = new ForwardDeclarator(classMap);
+        if (Config.include_common_forwards) {
+            forwardHeader.addInclude(common.getInclude());
+        }
         for (CClass cc : classMap.map.values()) {
             CHeader header = new CHeader(cc.getType().basicForm().replace("::", "/") + ".h");
             header.setNs(cc.getType().ns);
@@ -93,10 +96,9 @@ public class LibImplHandler {
             allHeader.addInclude(cc.getType());
             forwardHeader.forwardDeclarator.add(cc);
         }
-        allHeader.includes.add(0, forwardHeader.getInclude());
+        allHeader.addInclude(0, forwardHeader.getInclude());
         try {
             Util.writeHeader(forwardHeader, dir);
-            Collections.sort(allHeader.includes);
             Util.writeHeader(allHeader, dir);
         } catch (IOException e) {
             e.printStackTrace();

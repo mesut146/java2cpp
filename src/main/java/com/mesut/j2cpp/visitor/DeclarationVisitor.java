@@ -9,6 +9,7 @@ import com.mesut.j2cpp.cppast.expr.CClassInstanceCreation;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.ArrayHelper;
+import com.mesut.j2cpp.util.DepVisitor;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -65,6 +66,7 @@ public class DeclarationVisitor {
         CClass cc = ClassMap.sourceMap.get(TypeVisitor.fromBinding(node.resolveBinding()));
         classes.add(cc);
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
+        new DepVisitor(cc, node).handle();
         return cc;
     }
 
@@ -119,6 +121,9 @@ public class DeclarationVisitor {
 
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) n.fragments()) {
             CField field = PreVisitor.visitField(frag.resolveBinding(), clazz);
+            if (clazz.isInterface) {
+                field.setStatic(true);
+            }
             if (frag.getExtraDimensions() > 0) {
                 //c style array
                 field.setType(ArrayHelper.makeArrayType(type, frag.getExtraDimensions()));
