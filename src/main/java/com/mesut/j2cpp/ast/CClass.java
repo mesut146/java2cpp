@@ -134,7 +134,6 @@ public class CClass extends CStatement {
 
     public void printDecl(StringBuilder sb) {
         getScope(template);
-        getScope(ifaces);
         if (isInterface) {
             sb.append("/*interface*/\n");
         }
@@ -148,7 +147,7 @@ public class CClass extends CStatement {
             all.add(superClass);
         }
         all.addAll(ifaces);
-        if (all.size() > 0) {
+        if (!all.isEmpty()) {
             getScope(all);
             sb.append(": public ");
             sb.append(PrintHelper.joinStr(all, ", "));

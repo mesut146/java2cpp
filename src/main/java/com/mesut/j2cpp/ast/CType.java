@@ -14,11 +14,12 @@ public class CType extends CExpression {
     public String type;
     public String realName;
     public List<CType> typeNames = new ArrayList<>();//generics
-    public boolean isTemplate = false;//<T>,dynamic type
-    public boolean isPointer = false;
-    public boolean isInner = false;
-    public boolean fromSource = false;
-    public boolean mapped = false;
+    public boolean isTemplate;//<T>,dynamic type
+    public boolean isTypeArg;
+    public boolean isPointer;
+    public boolean isInner;
+    public boolean fromSource;
+    public boolean mapped;
 
     public CType() {
     }
@@ -60,6 +61,7 @@ public class CType extends CExpression {
         copied.ns = ns;
         copied.typeNames = typeNames;
         copied.realName = realName;
+        copied.isTypeArg = isTypeArg;
         return copied;
     }
 
@@ -68,6 +70,9 @@ public class CType extends CExpression {
     }
 
     public boolean isPointer() {
+        if (isTypeArg) {
+            return true;
+        }
         return isPointer && !isVoid() && !isPrim() && !isTemplate;
     }
 
@@ -80,7 +85,6 @@ public class CType extends CExpression {
     public boolean isVoid() {
         return type.equals("void");
     }
-
 
     @Override
     public String toString() {

@@ -14,7 +14,7 @@ public class CName extends CExpression {
     public Namespace namespace;//for class names
     public String name;
     public List<CType> typeArgs = new ArrayList<>();//template method call
-    String orgName;
+    public String orgName;
 
     public CName(String name) {
         String[] arr = name.split("::");

@@ -113,7 +113,8 @@ public class PreVisitor {
             return field;
         }
         field = new CField();
-        field.name = CName.from(binding.getName());
+        cc.addField(field);
+        field.name = Mapper.instance.mapFieldName(binding.getName(), cc);
         field.type = type;
         field.setPublic(Modifier.isPublic(binding.getModifiers()));
         field.setStatic(Modifier.isStatic(binding.getModifiers()));
@@ -121,7 +122,6 @@ public class PreVisitor {
         if (cc.isInterface) {
             field.setPublic(true);
         }
-        cc.addField(field);
         return field;
     }
 

@@ -180,6 +180,23 @@ public class Mapper {
         return name;
     }
 
+    public CName mapFieldName(String name, CClass cc) {
+        String org = name;
+        if (Util.isKeyword(name)) {
+            name = name + "_renamed";
+            return new CName(name);
+        }
+        for (CMethod method : cc.methods) {
+            if (method.name.is(name)) {
+                name = name + "_renamed";
+                break;
+            }
+        }
+        CName res = new CName(name);
+        res.orgName = org;
+        return res;
+    }
+
     static class ClassInfo {
         CType target;
         List<String> includes = new ArrayList<>();

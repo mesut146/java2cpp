@@ -68,7 +68,9 @@ public class TypeVisitor {
             }
             else if (binding.isParameterizedType()) {
                 for (ITypeBinding tp : binding.getTypeArguments()) {
-                    type.typeNames.add(fromBinding0(tp, cc));
+                    CType tpp = fromBinding0(tp, cc);
+                    tpp.isTypeArg = true;
+                    type.typeNames.add(tpp);
                 }
             }
             type.fromSource = binding.isFromSource();

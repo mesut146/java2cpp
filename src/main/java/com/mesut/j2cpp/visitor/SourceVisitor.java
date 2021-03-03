@@ -382,7 +382,15 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         else {//another expr
             fieldAccess.isArrow = true;
         }
-        fieldAccess.name = new CName(node.getName().getIdentifier());
+        //fieldAccess.name = new CName(node.getName().getIdentifier());
+        Object o = visitExpr(node.getName(), arg);
+        if (o instanceof CFieldAccess) {
+            //todo Main.this.field
+            fieldAccess.name = new CName(o.toString());
+        }
+        else {
+            fieldAccess.name = (CName) o;
+        }
         return fieldAccess;
     }
 
@@ -693,32 +701,35 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     CNode resolvedName(SimpleName node) {
         IBinding binding = node.resolveBinding();
         CName name = new CName(node.getIdentifier());
-        if (binding != null) {
-            boolean isStatic = Modifier.isStatic(binding.getModifiers());
-            if (binding.getKind() == IBinding.VARIABLE) {
-                IVariableBinding variableBinding = (IVariableBinding) binding;
-                ITypeBinding onType = variableBinding.getDeclaringClass();
-                if (variableBinding.isField()) {
-                    CType type = TypeVisitor.fromBinding(onType, clazz);
-                    //static field,qualify
-                    if (isStatic) {
-                        CFieldAccess fieldAccess = new CFieldAccess();
-                        fieldAccess.name = name;
-                        fieldAccess.isArrow = false;
-                        fieldAccess.scope = type;
-                        return fieldAccess;
-                    }
-                    if (isSuper(this.binding, onType)) {
-                        return name;
-                    }
-                    CExpression ref = ref2(this.binding, onType);
-                    if (ref != null) {
-                        CFieldAccess fieldAccess = new CFieldAccess();
-                        fieldAccess.name = name;
-                        fieldAccess.isArrow = true;
-                        fieldAccess.scope = ref;
-                        return fieldAccess;
-                    }
+        if (binding == null) {
+            Logger.logBinding(clazz, node.toString());
+            return name;
+        }
+        boolean isStatic = Modifier.isStatic(binding.getModifiers());
+        if (binding.getKind() == IBinding.VARIABLE) {
+            IVariableBinding variableBinding = (IVariableBinding) binding;
+            ITypeBinding onType = variableBinding.getDeclaringClass();
+            if (variableBinding.isField()) {
+                name = Mapper.instance.mapFieldName(name.name, clazz);
+                CType type = TypeVisitor.fromBinding(onType, clazz);
+                //static field,qualify
+                if (isStatic) {
+                    CFieldAccess fieldAccess = new CFieldAccess();
+                    fieldAccess.name = name;
+                    fieldAccess.isArrow = false;
+                    fieldAccess.scope = type;
+                    return fieldAccess;
+                }
+                if (isSuper(this.binding, onType)) {
+                    return name;
+                }
+                CExpression ref = ref2(this.binding, onType);
+                if (ref != null) {
+                    CFieldAccess fieldAccess = new CFieldAccess();
+                    fieldAccess.name = name;
+                    fieldAccess.isArrow = true;
+                    fieldAccess.scope = ref;
+                    return fieldAccess;
                 }
             }
         }
