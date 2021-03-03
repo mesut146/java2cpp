@@ -3,6 +3,8 @@ package com.mesut.j2cpp.util;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.map.ClassMap;
+import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.*;
 
@@ -30,11 +32,12 @@ public class DepVisitor extends ASTVisitor {
             return;
         }
         cc.addType(TypeVisitor.fromBinding(binding));
+        ClassMap.sourceMap.init(binding);
     }
 
     @Override
     public boolean visit(ClassInstanceCreation node) {
-        add(node.resolveTypeBinding(), node);
+        add(node.getType().resolveBinding(), node);
         return super.visit(node);
     }
 

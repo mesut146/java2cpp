@@ -8,7 +8,7 @@ import java.util.List;
 
 public class PrintHelper {
 
-    public static <T extends Node> String joinStr(List<T> list, String del) {
+    public static <T> String joinStr(List<T> list, String del) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < list.size(); i++) {
             sb.append(list.get(i));

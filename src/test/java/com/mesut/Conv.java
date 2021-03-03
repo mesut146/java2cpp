@@ -2,6 +2,7 @@ package com.mesut;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Converter;
+import com.mesut.j2cpp.IncludeHelper;
 import com.mesut.j2cpp.map.Mapper;
 import org.junit.Test;
 
@@ -37,21 +38,6 @@ public class Conv {
     }
 
     @Test
-    public void testDx() throws IOException {
-        String dir = "/home/mesut/Desktop/j2cpp-dev/dx-org";
-        String out = "/home/mesut/Desktop/j2cpp-dev/dx-cpp";
-        Converter converter = new Converter(dir, out);
-        Mapper.instance.addMapper(getClass().getResource("/mappers/list.json").getPath());
-        Mapper.instance.addMapper(getClass().getResource("/mappers/string.json").getPath());
-        //converter.getFilter().addIncludeClass("com/android/dex/Dex");
-        //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
-        //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
-        //converter.getFilter().addIncludeClass("com/android/dx/dex/code/PositionList.java");
-        //converter.getFilter().addIncludeClass("com/android/dx/util/Output");
-        converter.convert();
-    }
-
-    @Test
     public void test() {
         String dir = "/home/mesut/Desktop/j2cpp-dev/jdeps/java";
         String out = "/home/mesut/Desktop/j2cpp-dev/jdeps/conv";
@@ -66,6 +52,21 @@ public class Conv {
         //converter.getFilter().addIncludeClass("com/sun/tools/classfile/ClassWriter");
         //converter.getFilter().addIncludeClass("com/sun/tools/classfile/ConstantPool");
         //converter.getFilter().addIncludeDir("com/sun/tools/classfile");
+        converter.convert();
+    }
+
+    @Test
+    public void testDx() throws IOException {
+        String dir = "/home/mesut/Desktop/j2cpp-dev/dx-org";
+        String out = "/home/mesut/Desktop/j2cpp-dev/dx-cpp";
+        Converter converter = new Converter(dir, out);
+        Mapper.instance.addMapper(getClass().getResource("/mappers/list.json").getPath());
+        Mapper.instance.addMapper(getClass().getResource("/mappers/string.json").getPath());
+        //converter.getFilter().addIncludeClass("com/android/dex/Dex");
+        //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
+        //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
+        //converter.getFilter().addIncludeClass("com/android/dx/dex/code/PositionList.java");
+        //converter.getFilter().addIncludeClass("com/android/dx/util/Output");
         converter.convert();
     }
 

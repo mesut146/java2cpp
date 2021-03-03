@@ -12,6 +12,6 @@ public class CForEachStatement extends CStatement {
     @Override
     public String toString() {
         getScope(left, right, body);
-        return String.format("for(%s : %s)\n%s", left, right, PrintHelper.body(body.toString(), "    "));
+        return String.format("for(%s : %s)\n%s", left, right, body);
     }
 }

@@ -3,10 +3,7 @@ package com.mesut.j2cpp.map;
 import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.Util;
-import com.mesut.j2cpp.ast.CMethod;
-import com.mesut.j2cpp.ast.CName;
-import com.mesut.j2cpp.ast.CSource;
-import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.visitor.TypeVisitor;
@@ -149,13 +146,13 @@ public class Mapper {
         return null;
     }
 
-    public CType mapType(CType type, CSource source) {
+    public CType mapType(CType type, CClass cc) {
         if (classMap.containsKey(type.realName)) {
             ClassInfo info = classMap.get(type.realName);
             if (info.includes != null) {
-                if (source != null)
+                if (cc != null)
                     for (String inc : info.includes) {
-                        source.addInclude(new IncludeStmt(inc));
+                        cc.includes.add(new IncludeStmt(inc));
                     }
             }
             CType target = info.target.copy();
@@ -168,6 +165,14 @@ public class Mapper {
     }
 
     String mapParamName(String name, CMethod method) {
+        if (Util.isKeyword(name)) {
+            name = name + "_renamed";
+        }
+        //todo add to map
+        return name;
+    }
+
+    public String mapName(String name) {
         if (Util.isKeyword(name)) {
             name = name + "_renamed";
         }

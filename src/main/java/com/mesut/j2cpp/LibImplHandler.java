@@ -20,12 +20,19 @@ public class LibImplHandler {
         allHeader = new CHeader("lib_all.h");
     }
 
-    CClass getClazz(ITypeBinding binding) {
+    public CClass getClazz(ITypeBinding binding) {
         CClass cc = ClassMap.sourceMap.get(binding);
         if (cc == null) return null;
-        cc.fromSource = binding.isFromSource();
         PreVisitor.initType(binding, cc, null);
         return cc;
+    }
+
+    public void addType(ITypeBinding binding) {
+        binding = binding.getErasure();
+        CClass cc = ClassMap.sourceMap.get(binding);
+        if (cc != null) {
+            PreVisitor.initType(binding, cc, null);
+        }
     }
 
     public void addMethod(IMethodBinding binding) {
@@ -66,6 +73,7 @@ public class LibImplHandler {
         forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
         for (CClass cc : ClassMap.sourceMap.map.values()) {
             if (cc.fromSource) continue;
+            //cc.getHeaderPath()
             CHeader header = new CHeader(cc.getType().basicForm().replace("::", "/") + ".h");
             header.setNs(cc.getType().ns);
             header.setClass(cc);
@@ -74,10 +82,10 @@ public class LibImplHandler {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            allHeader.addInclude(cc.getType());
+            allHeader.includes.add(cc.getType());
             forwardHeader.forwardDeclarator.add(cc);
         }
-        allHeader.addInclude(0, forwardHeader.getInclude());
+        allHeader.includes.add(forwardHeader.getInclude());
         try {
             Util.writeHeader(forwardHeader, dir);
             Util.writeHeader(allHeader, dir);

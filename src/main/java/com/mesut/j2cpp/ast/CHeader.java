@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.IncludeList;
 import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.cppast.CNode;
@@ -18,7 +19,7 @@ public class CHeader extends CNode {
     public Namespace ns;
     public CClass cc;
     public List<Namespace> usings = new ArrayList<>();
-    public List<IncludeStmt> includes = new ArrayList<>();
+    public IncludeList includes = new IncludeList();
     public ForwardDeclarator forwardDeclarator;
     boolean handledFieldInits = false;
 
@@ -43,24 +44,6 @@ public class CHeader extends CNode {
         this.cc = cc;
     }
 
-    public void addInclude(String include) {
-        IncludeStmt includeStmt = new IncludeStmt(include);
-        if (!includes.contains(includeStmt) && !include.equals(getInclude())) {
-            includes.add(includeStmt);
-        }
-    }
-
-    public void addInclude(int i, String include) {
-        IncludeStmt includeStmt = new IncludeStmt(include);
-        if (!includes.contains(includeStmt) && !include.equals(getInclude())) {
-            includes.add(i, includeStmt);
-        }
-    }
-
-    public void addInclude(CType include) {
-        addInclude(include.basicForm().replace("::", "/"));
-    }
-
     public void useNamespace(Namespace ns) {
         if (!usings.contains(ns)) {
             usings.add(ns);
@@ -72,7 +55,6 @@ public class CHeader extends CNode {
     public CType normalizeType(CType type) {
         return TypeHelper.normalizeType(type, usings);
     }
-
 
     private void handleFieldInits() {
         if (handledFieldInits || cc == null) return;
@@ -111,11 +93,7 @@ public class CHeader extends CNode {
         handleFieldInits();
         StringBuilder sb = new StringBuilder();
         sb.append("#pragma once\n\n");
-        IncludeStmt.sort(includes);
-        for (IncludeStmt imp : includes) {
-            sb.append(imp);
-            sb.append("\n");
-        }
+        sb.append(includes);
         sb.append("\n");
         if (forwardDeclarator != null) {
             sb.append(forwardDeclarator.toString());

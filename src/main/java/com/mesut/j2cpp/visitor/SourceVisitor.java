@@ -90,11 +90,10 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         return new CEmptyStatement();
     }
 
-
     @Override
     public CNode visit(StringLiteral node, CNode arg) {
         CObjectCreation objectCreation = new CObjectCreation();
-        objectCreation.type = Mapper.instance.mapType(TypeHelper.getStringType(), source);
+        objectCreation.type = Mapper.instance.mapType(TypeHelper.getStringType(), clazz);
         objectCreation.args.add(new CStringLiteral(node.getLiteralValue(), node.getEscapedValue()));
         return objectCreation;
     }
@@ -106,10 +105,10 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(CharacterLiteral node, CNode arg) {
-        CCharacterLiteral characterLiteral = new CCharacterLiteral();
-        characterLiteral.value = node.getEscapedValue();
-        characterLiteral.charValue = node.charValue();
-        return characterLiteral;
+        CCharacterLiteral literal = new CCharacterLiteral();
+        literal.value = node.getEscapedValue();
+        literal.charValue = node.charValue();
+        return literal;
     }
 
     @Override
@@ -399,7 +398,11 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         else {
             creation = AnonyHandler.handle(node.getAnonymousClassDeclaration(), TypeVisitor.visitType(node.getType(), clazz), clazz, this);
         }
-        if (binding != null && !Modifier.isStatic(binding.getModifiers()) && (binding.isAnonymous() || binding.isNested())) {
+        if (binding == null) {
+            Logger.logBinding(clazz, node.toString());
+            return creation;
+        }
+        if (!Modifier.isStatic(binding.getModifiers()) && (binding.isAnonymous() || binding.isNested())) {
             if (Config.outer_ref_cons_arg) {
                 //append arg
                 creation.args.add(new CThisExpression());

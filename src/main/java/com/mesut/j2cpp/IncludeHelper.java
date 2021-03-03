@@ -5,8 +5,6 @@ import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.BaseClassSorter;
-import com.mesut.j2cpp.visitor.TypeVisitor;
-import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -19,8 +17,7 @@ public class IncludeHelper {
     public static void handle(CSource source) {
         Set<CClass> set = new HashSet<>();
         for (CClass cc : source.classes) {
-            handle(cc, set);
-            set.add(cc);
+            collect(cc, set);
         }
         //remove from include list
         for (CClass cc : set) {
@@ -33,18 +30,25 @@ public class IncludeHelper {
             e.printStackTrace();
         }
         for (CClass type : list) {
-            source.addInclude(type.getType());
+            source.addInclude(new IncludeStmt(type.getHeaderPath()));
         }
     }
 
     //recursively collect types
-    static void handle(CClass cc, Set<CClass> list) {
+    static void collect(CClass cc, Set<CClass> list) {
+        if (cc == null || cc.isAnonymous) return;
+        if(!list.add(cc)){
+            return;
+        }
+        if (cc.superClass != null) {
+            collect(ClassMap.sourceMap.get(cc.superClass), list);
+        }
+        for (CType iface : cc.ifaces) {
+            collect(ClassMap.sourceMap.get(iface), list);
+        }
         for (CType type : cc.types) {
-            if (type.isSys() || type.mapped) continue;
             CClass c = ClassMap.sourceMap.get(type);
-            if (list.add(c)) {
-                handle(c, list);//recurse
-            }
+            collect(c, list);
         }
     }
 }

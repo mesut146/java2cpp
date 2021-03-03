@@ -1,7 +1,9 @@
 package com.mesut.j2cpp.visitor;
 
+import com.mesut.j2cpp.LibImplHandler;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.map.ClassMap;
+import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.DepVisitor;
 import org.eclipse.jdt.core.dom.*;
 
@@ -17,14 +19,17 @@ public class PreVisitor {
         cc.isStatic = Modifier.isStatic(binding.getModifiers());
         cc.isPublic = Modifier.isPublic(binding.getModifiers());
         cc.isInner = outer != null;
+        cc.fromSource = binding.isFromSource();
         for (ITypeBinding tp : binding.getTypeParameters()) {
             cc.template.add(new CType(tp.getName(), true));
         }
         if (binding.getSuperclass() != null) {
             cc.setSuper(TypeVisitor.fromBinding(binding.getSuperclass()));
+            LibImplHandler.instance.addType(binding.getSuperclass());
         }
-        for (ITypeBinding tp : binding.getInterfaces()) {
-            cc.addBase(TypeVisitor.fromBinding(tp));
+        for (ITypeBinding iface : binding.getInterfaces()) {
+            cc.ifaces.add(TypeVisitor.fromBinding(iface));
+            LibImplHandler.instance.addType(iface);
         }
         if (outer != null && !Modifier.isStatic(binding.getModifiers()) && !cc.isInterface) {
             InnerHelper.handleRef(cc, outer);
@@ -121,8 +126,8 @@ public class PreVisitor {
     }
 
     public void handle(CompilationUnit unit) {
-        Namespace ns = visit(unit.getPackage());
-        for (AbstractTypeDeclaration decl : (List<AbstractTypeDeclaration>) unit.types()) {
+        for (Object o : unit.types()) {
+            AbstractTypeDeclaration decl = (AbstractTypeDeclaration) o;
             CClass cc = visitType(decl.resolveBinding(), null);
             new DepVisitor(cc, decl).handle();
         }

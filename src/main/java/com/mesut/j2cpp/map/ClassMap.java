@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.map;
 
 import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.util.TypeHelper;
 import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.IMethodBinding;
@@ -44,7 +45,7 @@ public class ClassMap {
     }
 
     public CClass get(CType type) {
-        if (type.mapped) return null;
+        if (type.mapped || type.equals(TypeHelper.getVectorType()) || type.isPrim() || type.isVoid()) return null;
         if (map.containsKey(type)) {
             return map.get(type);
         }
@@ -53,8 +54,16 @@ public class ClassMap {
         return cc;
     }
 
-    public CClass get(ITypeBinding binding){
+    public CClass get(ITypeBinding binding) {
         return get(TypeVisitor.fromBinding(binding));
+    }
+
+    public CClass init(ITypeBinding binding) {
+        binding = binding.getErasure();
+        CClass cc = get(binding);
+        if (cc == null) return null;
+        PreVisitor.initType(binding, cc, null);
+        return cc;
     }
 
     public CMethod getMethod(IMethodBinding binding) {

@@ -3,6 +3,7 @@ package com.mesut.j2cpp.visitor;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.map.BindingMap;
@@ -17,25 +18,17 @@ import java.util.List;
 //visit types and ensures type is included
 public class TypeVisitor {
 
-    public static Listener getListener(CSource source) {
-        return source::addInclude;
-    }
-
     public static CType fromBinding(ITypeBinding binding) {
         return fromBinding(binding, null);
     }
 
     public static CType fromBinding(ITypeBinding binding, CClass cc) {
-        Listener listener = null;
-        if (cc != null) {
-            listener = cc::addType;
-        }
-        return fromBinding0(binding, listener);
+        return fromBinding0(binding, cc);
     }
 
-    public static CType fromBinding0(ITypeBinding binding, Listener listener) {
+    public static CType fromBinding0(ITypeBinding binding, CClass cc) {
         if (binding.isArray()) {
-            return ArrayHelper.makeArrayType(fromBinding0(binding.getElementType(), listener), binding.getDimensions());
+            return ArrayHelper.makeArrayType(fromBinding0(binding.getElementType(), cc), binding.getDimensions());
         }
         if (binding.isWildcardType()) {
             return TypeHelper.getObjectType();
@@ -57,6 +50,7 @@ public class TypeVisitor {
             type = new CType(binding.getName());
             type.isTemplate = true;
             type.isPointer = false;
+            return type;
         }
         else {
             String name = getBinaryName(binding);
@@ -74,7 +68,7 @@ public class TypeVisitor {
             }
             else if (binding.isParameterizedType()) {
                 for (ITypeBinding tp : binding.getTypeArguments()) {
-                    type.typeNames.add(fromBinding0(tp, listener));
+                    type.typeNames.add(fromBinding0(tp, cc));
                 }
             }
             type.fromSource = binding.isFromSource();
@@ -83,13 +77,8 @@ public class TypeVisitor {
         if (type.ns == null) {
             type.ns = new Namespace();
         }
-        if (!binding.isTypeVariable()) {
-            BindingMap.add(type, binding);
-        }
-        type = Mapper.instance.mapType(type, null);
-        if (listener != null) {
-            //listener.foundType(type);
-        }
+        BindingMap.add(type, binding);
+        type = Mapper.instance.mapType(type, cc);
         return type;
     }
 

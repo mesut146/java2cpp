@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
@@ -13,13 +14,15 @@ public class CName extends CExpression {
     public Namespace namespace;//for class names
     public String name;
     public List<CType> typeArgs = new ArrayList<>();//template method call
+    String orgName;
 
     public CName(String name) {
         String[] arr = name.split("::");
+        this.orgName = arr[arr.length - 1];
+        this.name = Mapper.instance.mapName(arr[arr.length - 1]);
         if (arr.length > 1) {
             namespace = new Namespace(Arrays.asList(arr));
         }
-        this.name = arr[arr.length - 1];
     }
 
     public static CName from(String name) {
@@ -27,6 +30,9 @@ public class CName extends CExpression {
     }
 
     public boolean is(String s) {
+        if (orgName != null) {
+            return orgName.equals(s);
+        }
         return name.equals(s);
     }
 

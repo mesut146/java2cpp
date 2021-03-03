@@ -36,7 +36,7 @@ public class DeclarationVisitor {
                 visit((EnumDeclaration) decl, null);
             }
             else if (decl instanceof AnnotationTypeDeclaration) {
-                visit((AnnotationTypeDeclaration) decl, null);
+                //visit((AnnotationTypeDeclaration) decl, null);
             }
             else {
                 visit((TypeDeclaration) decl, null);
@@ -52,21 +52,21 @@ public class DeclarationVisitor {
         return ns;
     }
 
-    public CClass visit(AnnotationTypeDeclaration node, CClass outer) {
+    /*public CClass visit(AnnotationTypeDeclaration node, CClass outer) {
         CClass cc = new CClass();
         classes.add(cc);
         cc.isInterface = true;
-        cc.addBase(TypeHelper.getAnnotationType());
+        cc.ifaces.add(TypeHelper.getAnnotationType());
         cc.name = node.getName().getIdentifier();
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
         return cc;
-    }
+    }*/
 
     public CClass visit(TypeDeclaration node, CClass outer) {
-        CClass cc = ClassMap.sourceMap.get(TypeVisitor.fromBinding(node.resolveBinding()));
+        CClass cc = ClassMap.sourceMap.get(node.resolveBinding());
         classes.add(cc);
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, cc));
-        //new DepVisitor(cc, node).handle();
+        new DepVisitor(cc, node).handle();
         return cc;
     }
 
@@ -92,7 +92,7 @@ public class DeclarationVisitor {
     }
 
     public CClass visit(EnumDeclaration n, CClass outer) {
-        CClass cc = ClassMap.sourceMap.get(TypeVisitor.fromBinding(n.resolveBinding()));
+        CClass cc = ClassMap.sourceMap.get(n.resolveBinding());
         classes.add(cc);
 
         for (EnumConstantDeclaration constant : (List<EnumConstantDeclaration>) n.enumConstants()) {

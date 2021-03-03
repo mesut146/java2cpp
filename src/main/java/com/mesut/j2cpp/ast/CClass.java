@@ -1,6 +1,8 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.IncludeList;
+import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.util.PrintHelper;
@@ -31,6 +33,7 @@ public class CClass extends CStatement {
     public Set<CType> types = new HashSet<>();
     public boolean initialized = false;
     public boolean fromSource = true;
+    public IncludeList includes = new IncludeList();
     CType type;
     int anonyCount = 0;
 
@@ -45,6 +48,7 @@ public class CClass extends CStatement {
         this.type = type;
         name = type.getName();
         ns = type.ns;
+        fromSource = type.fromSource;
     }
 
     public String getHeaderPath() {
@@ -53,10 +57,6 @@ public class CClass extends CStatement {
                 .replace("$", "_")
                 .replace(".", "/") +
                 ".h";
-    }
-
-    public void addBase(CType type) {
-        ifaces.add(type);
     }
 
     public void addMethod(CMethod cm) {
@@ -76,7 +76,11 @@ public class CClass extends CStatement {
     //add reference type that this class use
     public void addType(CType type) {
         if (type == null) return;
-        if (type.isTemplate || type.equals(getType()) || type.isPrim() || type.isVoid() || type.mapped) return;
+        if (type.isTemplate ||
+                type.equals(getType()) ||
+                type.isPrim() ||
+                type.isVoid() ||
+                type.mapped) return;
         types.add(type);
     }
 
@@ -113,7 +117,6 @@ public class CClass extends CStatement {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        getScope(new ArrayList<>(types));
         printDecl(sb);
         sb.append("{\n");
         up();
@@ -230,5 +233,17 @@ public class CClass extends CStatement {
         return type;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        CClass other = (CClass) o;
+        return getType().equals(other.getType());
+    }
+
+    @Override
+    public int hashCode() {
+        return getType().hashCode();
+    }
 }
