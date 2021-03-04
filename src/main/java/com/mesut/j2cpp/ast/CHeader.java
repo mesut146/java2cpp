@@ -50,12 +50,6 @@ public class CHeader extends CNode {
         }
     }
 
-    //trim type's namespace by usings
-    //java::lang::String   using java::lang -> String
-    public CType normalizeType(CType type) {
-        return TypeHelper.normalizeType(type, usings);
-    }
-
     private void handleFieldInits() {
         if (handledFieldInits || cc == null) return;
         //handle field initializers

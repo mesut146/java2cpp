@@ -10,12 +10,13 @@ import org.eclipse.jdt.core.dom.*;
 import java.io.File;
 import java.io.IOException;
 
-public class LibImplHandler {
-    public static LibImplHandler instance = new LibImplHandler();
+public class LibHandler {
+    public static LibHandler instance = new LibHandler();
+    public static boolean allMethods = true;
     public CHeader forwardHeader;
     CHeader allHeader;
 
-    public LibImplHandler() {
+    public LibHandler() {
         forwardHeader = new CHeader("lib_common.h");
         allHeader = new CHeader("lib_all.h");
     }
@@ -39,14 +40,15 @@ public class LibImplHandler {
         ITypeBinding real = binding.getDeclaringClass().getErasure();//for generic types
 
         //get real method
-        for (IMethodBinding methodBinding : real.getDeclaredMethods()) {
-            if (!methodBinding.getName().equals(binding.getName())) continue;
-            if (binding.isSubsignature(methodBinding)) {
-                binding = methodBinding;
-                break;
-            }
+        binding = binding.getMethodDeclaration();
+        CClass cc = getClazz(real);
+        if (cc == null) return;
+        if (allMethods) {
+            PreVisitor.visitType(real, cc);
         }
-        PreVisitor.visitMethod(binding, getClazz(real));
+        else {
+            PreVisitor.visitMethod(binding, cc);
+        }
     }
 
     public void addField(IVariableBinding binding) {
@@ -73,8 +75,8 @@ public class LibImplHandler {
         forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
         for (CClass cc : ClassMap.sourceMap.map.values()) {
             if (cc.fromSource) continue;
-            //cc.getHeaderPath()
-            CHeader header = new CHeader(cc.getType().basicForm().replace("::", "/") + ".h");
+            //CHeader header = new CHeader(cc.getType().basicForm().replace("::", "/") + ".h");
+            CHeader header = new CHeader(cc.getHeaderPath());
             header.setNs(cc.getType().ns);
             header.setClass(cc);
             try {

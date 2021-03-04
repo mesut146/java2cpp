@@ -19,8 +19,9 @@ public class ClassMap {
     public Map<CType, CClass> map = new HashMap<>();
 
     public static CMethod getAddedMethod(CClass cc, IMethodBinding binding, List<CType> params, CType type) {
+        String name = binding.getMethodDeclaration().getName();
         for (CMethod method : cc.methods) {
-            if (!method.name.is(binding.getName()) || method.params.size() != params.size() || !type.equals(method.type)) {
+            if (!method.name.is(name) || method.params.size() != params.size()) {
                 continue;
             }
             boolean found = true;

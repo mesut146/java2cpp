@@ -1,6 +1,6 @@
 package com.mesut.j2cpp.visitor;
 
-import com.mesut.j2cpp.LibImplHandler;
+import com.mesut.j2cpp.LibHandler;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.map.Mapper;
@@ -25,11 +25,11 @@ public class PreVisitor {
         }
         if (binding.getSuperclass() != null) {
             cc.setSuper(TypeVisitor.fromBinding(binding.getSuperclass()));
-            LibImplHandler.instance.addType(binding.getSuperclass());
+            LibHandler.instance.addType(binding.getSuperclass());
         }
         for (ITypeBinding iface : binding.getInterfaces()) {
             cc.ifaces.add(TypeVisitor.fromBinding(iface));
-            LibImplHandler.instance.addType(iface);
+            LibHandler.instance.addType(iface);
         }
         if (outer != null && !Modifier.isStatic(binding.getModifiers()) && !cc.isInterface) {
             InnerHelper.handleRef(cc, outer);
@@ -40,6 +40,7 @@ public class PreVisitor {
 
     public static CClass visitType(ITypeBinding binding, CClass outer) {
         CClass cc = initType(binding, ClassMap.sourceMap.get(binding), outer);
+        if (cc.initMembers) return cc;
         //members
         for (IMethodBinding methodBinding : binding.getDeclaredMethods()) {
             visitMethod(methodBinding, cc);
@@ -50,11 +51,15 @@ public class PreVisitor {
         for (IVariableBinding field : binding.getDeclaredFields()) {
             visitField(field, cc);
         }
+        cc.initMembers = true;
         return cc;
     }
 
     public static CMethod visitMethod(IMethodBinding binding, CClass cc) {
         if (cc == null) return null;
+        if (!cc.fromSource) {
+            binding = binding.getMethodDeclaration();
+        }
         List<CType> params = new ArrayList<>();
         for (ITypeBinding prm : binding.getParameterTypes()) {
             params.add(TypeVisitor.fromBinding(prm, cc));
@@ -65,6 +70,7 @@ public class PreVisitor {
             return method;
         }
         method = new CMethod();
+        //method.name = new CName(binding.getName());
         method.name = new CName(binding.getName());
         method.type = type;
         method.isCons = binding.isConstructor();
@@ -95,6 +101,9 @@ public class PreVisitor {
         //find super method and set virtual
         ITypeBinding superBinding = binding.getDeclaringClass().getSuperclass();
         if (superBinding == null) return;
+        /*if (superBinding.equals(binding.getDeclaringClass())){
+            return;
+        }*/
         //todo may be deeper
         for (IMethodBinding superMethod : superBinding.getDeclaredMethods()) {
             if (binding.isSubsignature(superMethod)) {

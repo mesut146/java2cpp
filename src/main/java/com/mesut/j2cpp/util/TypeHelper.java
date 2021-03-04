@@ -76,7 +76,14 @@ public class TypeHelper {
         Namespace typeNs = copied.ns;
         //trim matching using's ns
         for (Namespace ns : usings) {
-            if (ns.getAll().startsWith(typeNs.getAll())) {
+            if (ns.getAll().equals(typeNs.getAll())) {
+                copied.ns = null;
+                return copied;
+            }
+            else {
+                return copied;
+            }
+            /*if (ns.getAll().startsWith(typeNs.getAll())) {
                 String str = ns.getAll().substring(typeNs.getAll().length());
                 if (str.startsWith("::")) {
                     str = str.substring(2);
@@ -88,7 +95,7 @@ public class TypeHelper {
                     copied.ns = new Namespace(str);
                 }
                 return copied;
-            }
+            }*/
         }
         return copied;
     }

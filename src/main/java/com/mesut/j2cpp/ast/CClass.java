@@ -3,8 +3,10 @@ package com.mesut.j2cpp.ast;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.IncludeList;
 import com.mesut.j2cpp.IncludeStmt;
+import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.map.BindingMap;
+import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -32,6 +34,7 @@ public class CClass extends CStatement {
     public List<CStatement> consStatements = new ArrayList<>();
     public Set<CType> types = new HashSet<>();
     public boolean initialized = false;
+    public boolean initMembers = false;
     public boolean fromSource = true;
     public IncludeList includes = new IncludeList();
     CType type;
@@ -142,15 +145,29 @@ public class CClass extends CStatement {
         }
         //class decl
         sb.append("class ").append(name);
+        printBase(sb);
+    }
+
+    void printBase(StringBuilder sb) {
         List<CType> all = new ArrayList<>();
         if (superClass != null) {
             all.add(superClass);
         }
         all.addAll(ifaces);
+        int size = all.size();
+        all = all.stream().filter(t -> !t.mapped).collect(Collectors.toList());
+        if (all.size() != size) {
+            Logger.log(getType() + "these base types mapped and not printed -> " + all.stream().filter(t -> t.mapped).collect(Collectors.toList()));
+        }
         if (!all.isEmpty()) {
             getScope(all);
-            sb.append(": public ");
-            sb.append(PrintHelper.joinStr(all, ", "));
+            sb.append(": ");
+            for (int i = 0; i < all.size(); i++) {
+                sb.append("public ").append(all.get(i));
+                if (i < all.size() - 1) {
+                    sb.append(", ");
+                }
+            }
         }
         else {
             sb.append("\n");
@@ -206,6 +223,24 @@ public class CClass extends CStatement {
             sb.append(modifier).append("\n");
             for (CField cf : list) {
                 sb.append(getIndent()).append(cf).append("\n");
+            }
+        }
+    }
+
+    public void handleBaseVirtuals() {
+        //create missing pure virtuals inherited from base
+        List<CType> all = new ArrayList<>(ifaces);
+        if (superClass != null) all.add(superClass);
+
+        all = all.stream().filter(type1 -> !type1.mapped).collect(Collectors.toList());
+        for (CType t : all) {
+            CClass cc = ClassMap.sourceMap.get(t);
+            if (cc.isInterface) {
+                for (CMethod method : cc.methods) {
+                    if (!method.isStatic()) {
+                        addMethod(method);
+                    }
+                }
             }
         }
     }

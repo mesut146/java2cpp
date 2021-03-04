@@ -54,6 +54,10 @@ public class Mapper {
         return "";
     }
 
+    public static String map(String name) {
+        return name + "_renamed";
+    }
+
     public void addMapper(String jsonPath) throws IOException {
         JSONObject cls = new JSONObject(Util.read(new File(jsonPath)));
         List<CType> fromTypes = new ArrayList<>();
@@ -109,7 +113,6 @@ public class Mapper {
         name.name = e;
         return name;
     }
-
 
     MethodInfo findMethod(ClassInfo classInfo, IMethodBinding binding) {
         IMethodBinding real = binding.getMethodDeclaration();
@@ -174,7 +177,7 @@ public class Mapper {
 
     public String mapName(String name) {
         if (Util.isKeyword(name)) {
-            name = name + "_renamed";
+            name = map(name);
         }
         //todo add to map
         return name;
@@ -182,17 +185,20 @@ public class Mapper {
 
     public CName mapFieldName(String name, CClass cc) {
         String org = name;
+        CName res;
         if (Util.isKeyword(name)) {
-            name = name + "_renamed";
-            return new CName(name);
+            name = map(name);
         }
-        for (CMethod method : cc.methods) {
-            if (method.name.is(name)) {
-                name = name + "_renamed";
-                break;
+        else {
+            for (CMethod method : cc.methods) {
+                if (method.name.is(name)) {
+                    name = map(name);
+                    break;
+                }
             }
         }
-        CName res = new CName(name);
+
+        res = new CName(name);
         res.orgName = org;
         return res;
     }

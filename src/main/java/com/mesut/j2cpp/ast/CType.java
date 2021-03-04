@@ -62,6 +62,8 @@ public class CType extends CExpression {
         copied.typeNames = typeNames;
         copied.realName = realName;
         copied.isTypeArg = isTypeArg;
+        copied.fromSource = fromSource;
+        copied.isInner = isInner;
         return copied;
     }
 
@@ -92,10 +94,14 @@ public class CType extends CExpression {
             return type;
         }
         if (Config.normalizeTypes && scope != null) {
+            List<Namespace> usings;
             if (scope instanceof CHeader) {
-                return ((CHeader) scope).normalizeType(this).normal(scope);
+                usings = ((CHeader) scope).usings;
             }
-            return ((CSource) scope).normalizeType(this).normal(scope);
+            else {
+                usings = ((CSource) scope).usings;
+            }
+            return TypeHelper.normalizeType(this, usings).normal(scope);
         }
         return normal(scope);
     }

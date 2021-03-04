@@ -6,7 +6,6 @@ import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CSource;
 import com.mesut.j2cpp.ast.Namespace;
 import com.mesut.j2cpp.map.ClassMap;
-import com.mesut.j2cpp.util.DepVisitor;
 import com.mesut.j2cpp.util.ForwardDeclarator;
 import com.mesut.j2cpp.util.Filter;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
@@ -130,7 +129,7 @@ public class Converter {
             System.out.println("wrote " + allHeader.getInclude());
         }
         if (Config.writeLibHeader) {
-            LibImplHandler.instance.writeAll(new File(headerDir, "lib"));
+            LibHandler.instance.writeAll(new File(headerDir, "lib"));
         }
     }
 

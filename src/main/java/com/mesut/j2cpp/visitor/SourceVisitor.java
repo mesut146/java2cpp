@@ -1,7 +1,7 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
-import com.mesut.j2cpp.LibImplHandler;
+import com.mesut.j2cpp.LibHandler;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.ast.*;
@@ -10,7 +10,6 @@ import com.mesut.j2cpp.cppast.expr.*;
 import com.mesut.j2cpp.cppast.literal.*;
 import com.mesut.j2cpp.cppast.stmt.*;
 import com.mesut.j2cpp.util.ArrayHelper;
-import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
@@ -338,7 +337,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(FieldAccess node, CNode arg) {
         IVariableBinding variableBinding = node.resolveFieldBinding();
         if (variableBinding != null && Config.writeLibHeader && variableBinding.isField()) {
-            LibImplHandler.instance.addField(variableBinding);
+            LibHandler.instance.addField(variableBinding);
         }
 
         CFieldAccess fieldAccess = new CFieldAccess();
@@ -616,7 +615,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         invocation.scope = scope;
 
         if (!binding.getDeclaringClass().isFromSource() && Config.writeLibHeader) {
-            LibImplHandler.instance.addMethod(binding);
+            LibHandler.instance.addMethod(binding);
         }
 
         if (scope != null) {
@@ -787,7 +786,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         IBinding binding = node.resolveBinding();
 
         if ((binding instanceof IVariableBinding) && Config.writeLibHeader) {
-            LibImplHandler.instance.addField((IVariableBinding) binding);
+            LibHandler.instance.addField((IVariableBinding) binding);
         }
 
         if (binding == null) {
