@@ -34,12 +34,12 @@ public class Mapper {
         int parR = sig.lastIndexOf(")");
         String name = sig.substring(0, parL);
         String argStr = sig.substring(parL + 1, parR);
-
-        String[] args = argStr.split(",");
-        for (String type : args) {
-            methodInfo.args.add(parseType(type));
+        if (!argStr.isEmpty()){
+            String[] args = argStr.split(",");
+            for (String type : args) {
+                methodInfo.args.add(parseType(type));
+            }
         }
-
         methodInfo.name = name;
     }
 

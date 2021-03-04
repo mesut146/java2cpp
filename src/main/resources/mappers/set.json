@@ -1,8 +1,8 @@
 {
-  "name": "java.util.Set",
+  "name": "java.util.Set,java.util.HashSet",
   "target": "std::unordered_set",
   "include": "<unordered_set>",
-  "methods:": [
+  "methods": [
     {
       "name": "add(<T>)",
       "target": "insert($1)"
@@ -25,7 +25,8 @@
     },
     {
       "name": "contains(java.lang.Object)",
-      "target": "(find($1) != ${varName}.end())"
+      "target": "({varName}->find($1) != ${varName}->end())",
+      "external": true
     }
   ]
 }

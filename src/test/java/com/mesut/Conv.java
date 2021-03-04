@@ -62,6 +62,7 @@ public class Conv {
         Converter converter = new Converter(dir, out);
         Mapper.instance.addMapper(getClass().getResource("/mappers/list.json").getPath());
         Mapper.instance.addMapper(getClass().getResource("/mappers/string.json").getPath());
+        Mapper.instance.addMapper(getClass().getResource("/mappers/set.json").getPath());
         //converter.getFilter().addIncludeClass("com/android/dex/Dex");
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
         //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
@@ -98,9 +99,11 @@ public class Conv {
         Converter converter = new Converter(dir, out);
         Mapper.instance.addMapper(getClass().getResource("/mappers/list.json").getPath());
         Mapper.instance.addMapper(getClass().getResource("/mappers/string.json").getPath());
+        Mapper.instance.addMapper(getClass().getResource("/mappers/set.json").getPath());
         converter.addClasspath(rtJar);
         //converter.getFilter().addIncludeClass("mapper.ListTest");
-        converter.getFilter().addIncludeClass("mapper.StringTest");
+        //converter.getFilter().addIncludeClass("mapper.StringTest");
+        converter.getFilter().addIncludeClass("mapper.SetTest");
         converter.convert();
     }
 

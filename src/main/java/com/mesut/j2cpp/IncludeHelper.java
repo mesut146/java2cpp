@@ -22,6 +22,9 @@ public class IncludeHelper {
         //remove from include list
         for (CClass cc : set) {
             source.includes.remove(new IncludeStmt(cc.getHeaderPath()));
+            for (IncludeStmt includeStmt : cc.includes.list) {
+                source.addInclude(includeStmt);
+            }
         }
         List<CClass> list = new ArrayList<>(set);
         try {
@@ -32,12 +35,13 @@ public class IncludeHelper {
         for (CClass type : list) {
             source.addInclude(new IncludeStmt(type.getHeaderPath()));
         }
+
     }
 
     //recursively collect types
     static void collect(CClass cc, Set<CClass> list) {
         if (cc == null || cc.isAnonymous) return;
-        if(!list.add(cc)){
+        if (!list.add(cc)) {
             return;
         }
         if (cc.superClass != null) {
