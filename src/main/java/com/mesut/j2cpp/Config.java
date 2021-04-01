@@ -1,6 +1,12 @@
 package com.mesut.j2cpp;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Config {
+
+    public static List<String> ignored=new ArrayList<>();
+
     public static boolean ns_type_nested = true;
     public static boolean ns_indent = false;
     public static boolean ns_nested_indent = false;
@@ -65,5 +71,9 @@ public class Config {
 
     public enum tryModes {
         AS_IS, TRANSFORM, LAMBDA;
+    }
+
+    static {
+        ignored.add("java.lang.Throwable");
     }
 }

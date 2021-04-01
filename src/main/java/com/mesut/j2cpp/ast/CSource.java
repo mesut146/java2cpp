@@ -1,8 +1,8 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.IncludeList;
 import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.cppast.CClassImpl;
-import com.mesut.j2cpp.cppast.CNode;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 
@@ -13,7 +13,7 @@ public class CSource extends Node {
 
     public List<CClass> classes = new ArrayList<>();
     public String name;
-    public List<IncludeStmt> includes = new ArrayList<>();
+    public IncludeList includes = new IncludeList();
     public List<Namespace> usings = new ArrayList<>();
     public List<CField> fieldDefs = new ArrayList<>();
     public boolean hasRuntime = false;
@@ -24,9 +24,7 @@ public class CSource extends Node {
     }
 
     public void addInclude(IncludeStmt stmt) {
-        if (!includes.contains(stmt)) {
-            includes.add(stmt);
-        }
+        includes.add(stmt);
     }
 
     public void addInclude(CType type) {
@@ -60,9 +58,7 @@ public class CSource extends Node {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (IncludeStmt inc : includes) {
-            sb.append(inc).append("\n");
-        }
+        sb.append(includes);
         sb.append("\n\n");
         for (Namespace use : usings) {
             if (use.parts.isEmpty()) continue;

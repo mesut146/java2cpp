@@ -4,7 +4,6 @@ import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.map.ClassMap;
-import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.*;
 
@@ -53,6 +52,12 @@ public class DepVisitor extends ASTVisitor {
     @Override
     public boolean visit(FieldAccess node) {
         add(node.resolveTypeBinding(), node);
+        return super.visit(node);
+    }
+
+    @Override
+    public boolean visit(QualifiedName node) {
+        add(node.getQualifier().resolveTypeBinding(), node);
         return super.visit(node);
     }
 }

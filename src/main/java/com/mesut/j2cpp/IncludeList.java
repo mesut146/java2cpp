@@ -4,15 +4,15 @@ import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class IncludeList {
-    Set<IncludeStmt> list = new HashSet<>();
+    List<IncludeStmt> list = new ArrayList<>();
 
     public void add(IncludeStmt stmt) {
-        list.add(stmt);
+        if (!list.contains(stmt)) {
+            list.add(stmt);
+        }
     }
 
     public void add(String stmt) {
@@ -28,5 +28,13 @@ public class IncludeList {
         List<IncludeStmt> ll = new ArrayList<>(list);
         IncludeStmt.sort(ll);
         return PrintHelper.joinStr(ll, "\n");
+    }
+
+    public void remove(IncludeStmt stmt) {
+        list.remove(stmt);
+    }
+
+    public void add(int i, IncludeStmt src) {
+        list.add(i, src);
     }
 }

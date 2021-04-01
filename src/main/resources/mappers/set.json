@@ -25,7 +25,7 @@
     },
     {
       "name": "contains(java.lang.Object)",
-      "target": "({varName}->find($1) != ${varName}->end())",
+      "target": "(${varName}->find($1) != ${varName}->end())",
       "external": true
     }
   ]
