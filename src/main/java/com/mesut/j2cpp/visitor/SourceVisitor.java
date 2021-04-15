@@ -3,12 +3,12 @@ package com.mesut.j2cpp.visitor;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.LibHandler;
 import com.mesut.j2cpp.Logger;
-import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.*;
 import com.mesut.j2cpp.cppast.expr.*;
 import com.mesut.j2cpp.cppast.literal.*;
 import com.mesut.j2cpp.cppast.stmt.*;
+import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
@@ -24,7 +24,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     CMethod method;
     Catcher catcher;
     ITypeBinding binding;
-    Mapper mapper;
 
     public SourceVisitor(CSource source) {
         this.source = source;
@@ -40,27 +39,26 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     private void convertClass(CClass clazz) {
         this.clazz = clazz;
         for (CField field : clazz.fields) {
-            if (field.expression != null) {
-                if (field.isStatic()) {
-                    //normal static field or enum constant
-                    source.fieldDefs.add(field);
-                }
-                else if (Config.fields_in_constructors) {
-                    //add to all cons
-                    //make statement
-                    CAssignment assignment = new CAssignment();
-                    CFieldAccess access = new CFieldAccess();
-                    access.scope = new CThisExpression();
-                    access.name = field.name;
-                    access.isArrow = true;
-                    assignment.left = access;
-                    assignment.right = field.expression;
-                    assignment.operator = "=";
-                    clazz.consStatements.add(new CExpressionStatement(assignment));
-                }
-                else {
-                    //header has it
-                }
+            if (field.expression == null) continue;
+            if (field.isStatic()) {
+                //normal static field or enum constant
+                source.fieldDefs.add(field);
+            }
+            else if (Config.fields_in_constructors) {
+                //add to all cons
+                //make statement
+                CAssignment assignment = new CAssignment();
+                CFieldAccess access = new CFieldAccess();
+                access.scope = new CThisExpression();
+                access.name = field.name;
+                access.isArrow = true;
+                assignment.left = access;
+                assignment.right = field.expression;
+                assignment.operator = "=";
+                clazz.consStatements.add(new CExpressionStatement(assignment));
+            }
+            else {
+                //header has it
             }
         }
     }
@@ -68,10 +66,10 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(Block n, CNode arg) {
         CBlockStatement res = new CBlockStatement();
-        for (Statement statement : (List<Statement>) n.statements()) {
-            CStatement cStatement = (CStatement) visitExpr(statement, arg);
-            if (!(cStatement instanceof CEmptyStatement)) {
-                res.addStatement(cStatement);
+        for (Statement s : (List<Statement>) n.statements()) {
+            CStatement statement = (CStatement) visitExpr(s, arg);
+            if (!(statement instanceof CEmptyStatement)) {
+                res.addStatement(statement);
             }
         }
         return res;
@@ -79,9 +77,9 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(TypeDeclarationStatement node, CNode arg) {
-        TypeDeclaration typeDeclaration = (TypeDeclaration) node.getDeclaration();
+        TypeDeclaration declaration = (TypeDeclaration) node.getDeclaration();
         DeclarationVisitor visitor = new DeclarationVisitor(this);
-        return visitor.visit(typeDeclaration, null);
+        return visitor.visit(declaration, null);
     }
 
     @Override
@@ -91,9 +89,13 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(StringLiteral node, CNode arg) {
+        return stringCreation(new CStringLiteral(node.getLiteralValue(), node.getEscapedValue()));
+    }
+
+    CExpression stringCreation(CExpression node) {
         CObjectCreation objectCreation = new CObjectCreation();
         objectCreation.type = Mapper.instance.mapType(TypeHelper.getStringType(), clazz);
-        objectCreation.args.add(new CStringLiteral(node.getLiteralValue(), node.getEscapedValue()));
+        objectCreation.args.add(node);
         return objectCreation;
     }
 
@@ -419,7 +421,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             invocation.isArrow = true;
             invocation.name = CName.from(Config.refSetterName);
             invocation.arguments.add(new CThisExpression());
-            invocation.scope = creation;
+            invocation.scope = new CParenthesizedExpression(creation);
             return invocation;
         }
         return creation;
@@ -477,7 +479,11 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(InfixExpression node, CNode arg) {
-        //todo if string concatenation make string type non pointer so that '+' operator work
+        if (node.getOperator().toString().equals("+")) {
+            if (node.getLeftOperand().resolveTypeBinding().getQualifiedName().equals("java.lang.String") || node.getRightOperand().resolveTypeBinding().getQualifiedName().equals("java.lang.String")) {
+                return infixString(node);
+            }
+        }
         CInfixExpression infixExpression = new CInfixExpression();
         infixExpression.operator = node.getOperator().toString();
         infixExpression.left = (CExpression) visitExpr(node.getLeftOperand(), arg);
@@ -489,6 +495,53 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             }
         }
         return infixExpression;
+    }
+
+    CExpression infixString(InfixExpression node) {
+        CClassInstanceCreation creation = new CClassInstanceCreation();
+        CInfixExpression res = new CInfixExpression();
+        res.operator = "+";
+        Expression left = node.getLeftOperand();
+        Expression right = node.getRightOperand();
+        res.left = makeStrIfNot(left);
+        res.right = makeStrIfNot(right);
+        if (node.hasExtendedOperands()) {
+            for (Expression expression : (List<Expression>) node.extendedOperands()) {
+                res.other.add(makeStrIfNot(expression));
+            }
+        }
+        creation.args.add(res);
+        creation.type = Mapper.instance.mapType(TypeHelper.getStringType(), clazz);
+        return creation;
+    }
+
+    CExpression makeStrIfNot(Expression node) {
+        if (node instanceof StringLiteral) {
+            return str((StringLiteral) node);
+        }
+        else {
+            ITypeBinding binding = node.resolveTypeBinding();
+            if (binding.isPrimitive()) {
+                CMethodInvocation invocation = new CMethodInvocation();
+                invocation.name = new CName("std::to_string");
+                invocation.arguments.add((CExpression) visitExpr(node, null));
+                return invocation;
+            }
+            else {
+                //unknown type
+                if (node instanceof Name && binding.getName().equals("java.lang.String")) {
+                    //dereference
+                    return new DeferenceExpr((CExpression) visitExpr(node, null));
+                }
+                else {
+                    return (CExpression) visitExpr(node, null);
+                }
+            }
+        }
+    }
+
+    CStringLiteral str(StringLiteral lit) {
+        return new CStringLiteral(lit.getLiteralValue(), lit.getEscapedValue());
     }
 
     @Override

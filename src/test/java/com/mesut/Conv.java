@@ -72,11 +72,12 @@ public class Conv {
     }
 
     @Test
-    public void testMy() {
+    public void testMy() throws IOException {
         String dir = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/java";
         String out = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/cpp";
         Converter converter = new Converter(dir, out);
         converter.addClasspath(rtJar);
+        Mapper.instance.addMapper(getClass().getResource("/mappers/string.json").getPath());
         //Config.common_forwards = false;
         //converter.getFilter().addIncludeClass("base.InnerTest");
         //converter.getFilter().addIncludeClass("base.SuperTest");
@@ -88,7 +89,8 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Try1");
         //converter.getFilter().addIncludeClass("base.Try2");
         //converter.getFilter().addIncludeClass("base.SwitchTest");
-        converter.getFilter().addIncludeClass("base.Enum1");
+        //converter.getFilter().addIncludeClass("base.Enum1");
+        converter.getFilter().addIncludeClass("base.StringTest");
         converter.convert();
     }
 
