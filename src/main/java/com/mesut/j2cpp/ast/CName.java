@@ -25,6 +25,12 @@ public class CName extends CExpression {
         }
     }
 
+    public static CName simple(String s) {
+        CName res = new CName("");
+        res.name = s;
+        return res;
+    }
+
     public static CName from(String name) {
         return new CName(name);
     }

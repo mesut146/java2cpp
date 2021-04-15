@@ -523,7 +523,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             ITypeBinding binding = node.resolveTypeBinding();
             if (binding.isPrimitive()) {
                 CMethodInvocation invocation = new CMethodInvocation();
-                invocation.name = new CName("std::to_string");
+                invocation.name =  CName.simple("std::to_string");
                 invocation.arguments.add((CExpression) visitExpr(node, null));
                 return invocation;
             }
