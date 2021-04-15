@@ -3,20 +3,20 @@ package com.mesut.j2cpp.map;
 import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.Util;
-import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.ast.CClass;
+import com.mesut.j2cpp.ast.CMethod;
+import com.mesut.j2cpp.ast.CName;
+import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
-import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.io.InputStream;
 import java.util.*;
 
 public class Mapper {
@@ -34,7 +34,7 @@ public class Mapper {
         int parR = sig.lastIndexOf(")");
         String name = sig.substring(0, parL);
         String argStr = sig.substring(parL + 1, parR);
-        if (!argStr.isEmpty()){
+        if (!argStr.isEmpty()) {
             String[] args = argStr.split(",");
             for (String type : args) {
                 methodInfo.args.add(parseType(type));
@@ -59,16 +59,20 @@ public class Mapper {
     }
 
     public void addMapper(String jsonPath) throws IOException {
-        JSONObject cls = new JSONObject(Util.read(new File(jsonPath)));
+        addMapper(new FileInputStream(jsonPath));
+    }
+
+    public void addMapper(InputStream is) throws IOException {
+        JSONObject cls = new JSONObject(Util.read(is));
         List<CType> fromTypes = new ArrayList<>();
         String target = cls.getString("target");
-        String include = cls.optString("include");
 
         ClassInfo info = new ClassInfo();
         info.target = new CType(target);
         for (String name : cls.getString("name").split(",")) {
             classMap.put(name, info);
         }
+        String include = cls.optString("include", null);
         if (include != null) {
             info.includes.addAll(Arrays.asList(include.split(",")));
         }
@@ -79,13 +83,18 @@ public class Mapper {
             MethodInfo methodInfo = new MethodInfo();
             methodInfo.str = method.getString("name");
             methodInfo.targetExpr = method.getString("target");
+            methodInfo.expr = method.optString("expr", null);
             methodInfo.external = method.optBoolean("external", false);
+            String inc = method.optString("include", null);
+            if (inc != null) {
+                info.includes.addAll(Arrays.asList(inc.split(",")));
+            }
             info.methods.add(methodInfo);
             parseSignature(methodInfo);
         }
     }
 
-    public CExpression mapMethod(IMethodBinding binding, List<CExpression> args, CExpression scope) {
+    public Mapped mapMethod(IMethodBinding binding, List<CExpression> args, CExpression scope) {
         if (true) {
             //return null;
         }
@@ -105,13 +114,20 @@ public class Mapper {
             e = e.replace("$" + (i + 1), args.get(i).toString());
         }
         e = e.replace("${varName}", scope.toString());//todo put in variable maybe?
-        //with scope
-        if (!info.external) {
-            e = scope.toString() + "->" + e;
+        Mapped mapped = new Mapped();
+        if (info.expr != null) {
+            //multi statement
+            mapped.expr = CName.simple(info.expr);
+            mapped.list = e;
         }
-        CName name = new CName("");
-        name.name = e;
-        return name;
+        else {
+            //with scope
+            if (!info.external) {
+                e = scope.toString() + "->" + e;
+            }
+            mapped.expr = CName.simple(e);
+        }
+        return mapped;
     }
 
     MethodInfo findMethod(ClassInfo classInfo, IMethodBinding binding) {
@@ -203,6 +219,11 @@ public class Mapper {
         return res;
     }
 
+    public static class Mapped {
+        public String list;
+        public CExpression expr;
+    }
+
     static class ClassInfo {
         CType target;
         List<String> includes = new ArrayList<>();
@@ -214,6 +235,9 @@ public class Mapper {
         String str;
         String targetExpr;
         boolean external = false;
+        boolean multi = false;
+        String expr;
         List<CType> args = new ArrayList<>();
+        List<String> includes = new ArrayList<>();
     }
 }

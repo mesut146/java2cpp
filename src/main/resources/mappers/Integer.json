@@ -1,0 +1,78 @@
+{
+  "name": "java.lang.Integer",
+  "target": "int",
+  "methods": [
+    {
+      "name": "Integer(java.lang.String)",
+      "external": true,
+      "target": "($1 == \"true\")"
+    },
+    {
+      "name": "Boolean(int)",
+      "external": true,
+      "target": "$1"
+    },
+    {
+      "name": "parseInt(java.lang.String)",
+      "external": true,
+      "target": "std::stoi($1)"
+    },
+    {
+      "name": "parseInt(java.lang.String,int)",
+      "external": true,
+      "target": "std::stoi($1,nullptr,$2)"
+    },
+    {
+      "name": "valueOf(java.lang.String)",
+      "external": true,
+      "target": "std::stoi($1)"
+    },
+    {
+      "name": "toString(int)",
+      "external": true,
+      "target": "std::to_string($1)"
+    },
+    {
+      "name": "compare(int,int)",
+      "external": true,
+      "target": "($1 < $2) ? -1 : (($1 == $2) ? 0 : 1)"
+    },
+    {
+      "name": "toHexString(int)",
+      "include": "<sstream>",
+      "target": "std::stringstream ss;\nss << std::hex << $1;\n",
+      "expr": "ss.str()"
+    },
+    {
+      "name": "toBinaryString(int)",
+      "include": "<bitset>",
+      "target": "std::string binary = std::bitset<32>($1).to_string();\nbinary.erase(0, std::min(binary.find_first_not_of('0'), binary.size() - 1));",
+      "expr": "binary"
+    },
+    {
+      "name": "max(int,int)",
+      "external": true,
+      "target": "std::max($1, $2)"
+    },
+    {
+      "name": "min(int,int)",
+      "external": true,
+      "target": "std::min($1, $2)"
+    },
+    {
+      "name": "rotateLeft(int,int)",
+      "external": true,
+      "target": "(($1 << $2) | ($1 >>> -$2))"
+    },
+    {
+      "name": "rotateRight(int,int)",
+      "external": true,
+      "target": "(($1 >>> $2) | ($1 << -$2))"
+    },
+    {
+      "name": "signum(int)",
+      "external": true,
+      "target": "(($1 >> 31) | (-$1 >>> 31))"
+    }
+  ]
+}

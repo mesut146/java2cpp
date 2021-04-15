@@ -24,6 +24,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     CMethod method;
     Catcher catcher;
     ITypeBinding binding;
+    CBlockStatement block;
 
     public SourceVisitor(CSource source) {
         this.source = source;
@@ -66,6 +67,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(Block n, CNode arg) {
         CBlockStatement res = new CBlockStatement();
+        block = res;
         for (Statement s : (List<Statement>) n.statements()) {
             CStatement statement = (CStatement) visitExpr(s, arg);
             if (!(statement instanceof CEmptyStatement)) {
@@ -523,7 +525,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             ITypeBinding binding = node.resolveTypeBinding();
             if (binding.isPrimitive()) {
                 CMethodInvocation invocation = new CMethodInvocation();
-                invocation.name =  CName.simple("std::to_string");
+                invocation.name = CName.simple("std::to_string");
                 invocation.arguments.add((CExpression) visitExpr(node, null));
                 return invocation;
             }
@@ -673,8 +675,17 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
         if (scope != null) {
             //mapper
-            CExpression target = Mapper.instance.mapMethod(binding, invocation.arguments, scope);
-            if (target != null) return target;
+            Mapper.Mapped target = Mapper.instance.mapMethod(binding, invocation.arguments, scope);
+            if (target != null) {
+                if (target.list==null) {
+                    //single expr
+                    return target.expr;
+                }
+                for (String line : target.list.split("\n")) {
+                    block.addStatement(new RawStatement(line));
+                }
+                return target.expr;
+            }
             invocation.isArrow = !isStatic;
         }
 

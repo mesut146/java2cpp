@@ -1,5 +1,8 @@
 package com.mesut.j2cpp;
 
+import com.mesut.j2cpp.map.Mapper;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +16,7 @@ public class Cmd {
         String srcDir = null;
         String destDir = null;
         List<String> cp = new ArrayList<>();
+        boolean useMapper = false;
 
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -33,6 +37,22 @@ public class Cmd {
                 case "-classpath":
                     cp.add(args[++i]);
                     break;
+                case "-map":
+                    useMapper = true;
+                    break;
+                case "-mapper":
+                    String path = args[++i];
+                    if (!new File(path).exists()) {
+                        File file = new File(srcDir, path);
+                        if (file.exists()) {
+                            path = file.getAbsolutePath();
+                        }
+                        else {
+                            throw new RuntimeException("mapper not found: " + path);
+                        }
+                    }
+                    Mapper.instance.addMapper(path);
+                    break;
             }
             if (srcDir == null) {
                 System.out.println("enter source path");
@@ -46,6 +66,12 @@ public class Cmd {
             }
             else {
                 converter.classpath.addAll(cp);
+            }
+            if (useMapper) {
+                String[] all = {"list.json", "map.json", "set.json", "string.json", "Boolean.json", "Integer.json"};
+                for (String mapper : all) {
+                    Mapper.instance.addMapper(Cmd.class.getResourceAsStream("/mappers/" + mapper));
+                }
             }
             converter.convert();
         }

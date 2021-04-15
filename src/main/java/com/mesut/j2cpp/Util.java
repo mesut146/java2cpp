@@ -5,10 +5,7 @@ import com.mesut.j2cpp.ast.CSource;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Util {
@@ -44,13 +41,16 @@ public class Util {
     }
 
     public static String read(File file) throws IOException {
-        FileInputStream fis = new FileInputStream(file);
+        return read(new FileInputStream(file));
+    }
+
+    public static String read(InputStream is) throws IOException {
         StringBuilder sb = new StringBuilder();
 
         byte[] buf = new byte[1024];
         int count;
 
-        while ((count = fis.read(buf)) != -1) {
+        while ((count = is.read(buf)) != -1) {
             sb.append(new String(buf, 0, count));
         }
         return sb.toString();

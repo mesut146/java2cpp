@@ -102,12 +102,17 @@ public class Conv {
         Mapper.instance.addMapper(getClass().getResource("/mappers/list.json").getPath());
         Mapper.instance.addMapper(getClass().getResource("/mappers/string.json").getPath());
         Mapper.instance.addMapper(getClass().getResource("/mappers/set.json").getPath());
+        Mapper.instance.addMapper(getClass().getResource("/mappers/Integer.json").getPath());
         converter.addClasspath(rtJar);
         //converter.getFilter().addIncludeClass("mapper.ListTest");
         //converter.getFilter().addIncludeClass("mapper.StringTest");
-        converter.getFilter().addIncludeClass("mapper.SetTest");
+        //converter.getFilter().addIncludeClass("mapper.SetTest");
+        converter.getFilter().addIncludeClass("mapper.IntegerTest");
         converter.convert();
     }
 
-
+    @Test
+    public void name() {
+        System.out.println(Integer.toBinaryString(0x0f0f0f0f));
+    }
 }
