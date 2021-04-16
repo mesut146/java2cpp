@@ -10,7 +10,9 @@ public class ListTest{
         list.add("world");
 
         String s1 = list.get(0);
-        list.set(1, s1);
+        String foo = list.set(1, s1);
+        String[] arr = (String[]) list.toArray();
+        String[] arr2 = list.toArray(new String[0]);
     }
 
 }

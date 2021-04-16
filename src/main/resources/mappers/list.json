@@ -1,7 +1,7 @@
 {
-  "name": "java.util.List,java.util.ArrayList",
+  "name": "java.util.List<T>,java.util.ArrayList<T>",
   "target": "std::vector",
-  "include": "CppHelper.h,<vector>",
+  "include": "CppHelper.h",
   "methods": [
     {
       "name": "add(<T>)",
@@ -13,7 +13,11 @@
     },
     {
       "name": "addAll(java.util.Collection)",
-      "target": "insert($1)"
+      "target": "insert(${varName}->end(), $1->begin(), $1->end())"
+    },
+    {
+      "name": "addAll(int,java.util.Collection)",
+      "target": "insert($1, $2->begin(), $2->end())"
     },
     {
       "name": "get(int)",
@@ -21,21 +25,23 @@
     },
     {
       "name": "set(int,<T>)",
-      "target": "at($1) = $2"
+      "target": "(${varName}->at($1) = $2)",
+      "external": true
     },
     {
       "name": "remove(int)",
-      "target": "erase($1)"
+      "target": "erase(${varName}->begin() + $1)"
     },
     {
       "name": "remove(<T>)",
-      "target": "erase(CppHelper::indexOf(${varName}, $1))",
-      "external": true
+      "target": "erase(std::find(${varName}->begin(),${varName}->end(), $1));",
+      "include": "<algorithm>"
     },
     {
       "name": "indexOf(<T>)",
-      "target": "CppHelper::indexOf(${varName}, $1)",
-      "external": true
+      "target": "std::find(${varName}->begin(), ${varName}->end(), $1) - ${varName}->begin()",
+      "external": true,
+      "include": "<algorithm>"
     },
     {
       "name": "size()",
@@ -48,6 +54,16 @@
     {
       "name": "clear()",
       "target": "clear()"
+    },
+    {
+      "name": "contains(java.lang.Object)",
+      "target": "(${varName}->find($1) != ${varName}->end())",
+      "external": true
+    },
+    {
+      "name": "toArray()",
+      "target": "new std::vector<T>(${varName}->begin(), ${varName}->end())",
+      "external": true
     }
   ]
 }

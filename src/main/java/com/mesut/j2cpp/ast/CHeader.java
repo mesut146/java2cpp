@@ -2,7 +2,6 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.IncludeList;
-import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.cppast.CNode;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.util.ForwardDeclarator;
@@ -25,10 +24,6 @@ public class CHeader extends CNode {
         rpath = path;
         scope = this;
         ns = new Namespace();
-    }
-
-    public void addInclude(IncludeStmt stmt) {
-        includes.add(stmt);
     }
 
     public void setNs(Namespace ns) {

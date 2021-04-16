@@ -1,8 +1,6 @@
 package com.mesut;
 
-import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Converter;
-import com.mesut.j2cpp.IncludeHelper;
 import com.mesut.j2cpp.map.Mapper;
 import org.junit.Test;
 
@@ -58,11 +56,10 @@ public class Conv {
     @Test
     public void testDx() throws IOException {
         String dir = "/home/mesut/Desktop/j2cpp-dev/dx-org";
-        String out = "/home/mesut/Desktop/j2cpp-dev/dx-cpp";
+        //String out = "/home/mesut/Desktop/j2cpp-dev/dx-cpp";
+        String out = "/home/mesut/Desktop/j2cpp-dev/dx2";
         Converter converter = new Converter(dir, out);
-        Mapper.instance.addMapper(getClass().getResource("/mappers/list.json").getPath());
-        Mapper.instance.addMapper(getClass().getResource("/mappers/string.json").getPath());
-        Mapper.instance.addMapper(getClass().getResource("/mappers/set.json").getPath());
+        Mapper.instance.initMappers();
         //converter.getFilter().addIncludeClass("com/android/dex/Dex");
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
         //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
@@ -106,13 +103,13 @@ public class Conv {
         converter.addClasspath(rtJar);
         //converter.getFilter().addIncludeClass("mapper.ListTest");
         //converter.getFilter().addIncludeClass("mapper.StringTest");
-        //converter.getFilter().addIncludeClass("mapper.SetTest");
-        converter.getFilter().addIncludeClass("mapper.IntegerTest");
+        converter.getFilter().addIncludeClass("mapper.SetTest");
+        //converter.getFilter().addIncludeClass("mapper.IntegerTest");
         converter.convert();
     }
 
     @Test
     public void name() {
-        System.out.println(Integer.toBinaryString(0x0f0f0f0f));
+
     }
 }

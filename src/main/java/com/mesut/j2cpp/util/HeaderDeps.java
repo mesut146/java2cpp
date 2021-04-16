@@ -1,20 +1,38 @@
 package com.mesut.j2cpp.util;
 
+import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.map.ClassMap;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class HeaderDeps extends ASTVisitor {
     CHeader header;
 
+    public HeaderDeps(CHeader header) {
+        this.header = header;
+    }
+
     public void handle() {
+        List<CClass> list = new ArrayList<>();
         if (header.cc.getSuper() != null) {
-            header.includes.add(header.cc.getSuper());
+            list.add(ClassMap.sourceMap.get(header.cc.getSuper()));
         }
         for (CType base : header.cc.ifaces) {
-            header.includes.add(base);
+            list.add(ClassMap.sourceMap.get(base));
+        }
+        try {
+            BaseClassSorter.sort(list);
+            for (CClass cc : list) {
+                header.includes.add(cc.getType());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

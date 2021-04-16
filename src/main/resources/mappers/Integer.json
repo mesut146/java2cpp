@@ -73,6 +73,11 @@
       "name": "signum(int)",
       "external": true,
       "target": "(($1 >> 31) | (-$1 >>> 31))"
+    },
+    {
+      "name": "reverseBytes(int)",
+      "external": true,
+      "target": "((($1>>>24))|(($1>>8)&0xFF00)|(($1<<8)&0xFF0000)|(($1 << 24)))"
     }
   ]
 }

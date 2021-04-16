@@ -7,6 +7,9 @@ import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 //visit complete types and include them,others already forward declared
 public class DepVisitor extends ASTVisitor {
     CClass cc;

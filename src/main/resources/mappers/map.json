@@ -1,14 +1,14 @@
 {
-  "name": "java.util.Map",
+  "name": "java.util.Map<K,V>",
   "target": "std::unordered_map",
   "include": "<unordered_map>",
   "methods": [
     {
-      "name": "put()",
-      "target": "insert_or_assign($1)"
+      "name": "put(<K>,<V>)",
+      "target": "insert_or_assign($1, $2)"
     },
     {
-      "name": "get()",
+      "name": "get(<K>)",
       "target": "at($1)"
     },
     {
@@ -22,6 +22,15 @@
     {
       "name": "size()",
       "target": "size()"
+    },
+    {
+      "name": "remove(java.lang.Object)",
+      "target": "erase($1)"
+    },
+    {
+      "name": "keySet()",
+      "target": "std::unordered_set<K> *keys = new std::unordered_set<K>();for(auto &a:*${varName}){\n    keys->push_back(a.first);\n  }",
+      "expr": "keys"
     }
   ]
 }

@@ -1,10 +1,8 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.IncludeList;
-import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.cppast.CClassImpl;
 import com.mesut.j2cpp.util.PrintHelper;
-import com.mesut.j2cpp.util.TypeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,36 +21,10 @@ public class CSource extends Node {
         scope = this;
     }
 
-    public void addInclude(IncludeStmt stmt) {
-        includes.add(stmt);
-    }
-
-    public void addInclude(CType type) {
-        if (type.isPrim() || type.isVoid()) return;
-        if (type.isTemplate) return;
-        if (type.equals(TypeHelper.getVectorType())) {
-            addInclude(IncludeStmt.sys("vector"));
-            return;
-        }
-        //can be local class,those already included by converter so ignore
-        if (type.fromSource) {
-            addInclude(IncludeStmt.src(type.basicForm().replace("::", "/")));
-        }
-        else {
-            addInclude(IncludeStmt.lib(type.basicForm().replace("::", "/")));
-        }
-    }
-
     public void useNamespace(Namespace ns) {
         if (!usings.contains(ns)) {
             usings.add(ns);
         }
-    }
-
-    //trim type's namespace by usings
-    //java::lang::String   using java::lang -> String
-    public CType normalizeType(CType type) {
-        return TypeHelper.normalizeType(type, usings);
     }
 
     @Override

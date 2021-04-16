@@ -2,14 +2,16 @@ package mapper;
 
 import java.util.*;
 
-public class SetTest{
-  
- void test(){
-   Set<String> set = new HashSet<>();
-   set.add("hello");
-   set.contains("hello");
-   set.size();
-   set.clear();
-   set.isEmpty();
- }
+public class SetTest {
+
+    void test() {
+        Set<String> set = new HashSet<>();
+        String hello = "hello";
+        set.add(hello);
+        boolean b = set.contains(hello);
+        int len = set.size();
+        set.clear();
+        boolean any = set.isEmpty();
+        set.remove(hello);
+    }
 }

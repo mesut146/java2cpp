@@ -22,7 +22,7 @@ import java.util.*;
 public class Mapper {
 
     public static Mapper instance = new Mapper();
-    Map<String, ClassInfo> classMap;//java class -> holder
+    Map<String, ClassInfo> classMap;//java class -> info
 
     public Mapper() {
         classMap = new HashMap<>();
@@ -50,12 +50,15 @@ public class Mapper {
         return new CType(str);
     }
 
-    static String subs(MethodInfo info) {
-        return "";
-    }
-
     public static String map(String name) {
         return name + "_renamed";
+    }
+
+    public void initMappers() throws IOException {
+        String[] all = {"list.json", "map.json", "set.json", "string.json", "Boolean.json", "Integer.json"};
+        for (String mapper : all) {
+            addMapper(getClass().getResourceAsStream("/mappers/" + mapper));
+        }
     }
 
     public void addMapper(String jsonPath) throws IOException {
@@ -95,16 +98,13 @@ public class Mapper {
     }
 
     public Mapped mapMethod(IMethodBinding binding, List<CExpression> args, CExpression scope) {
-        if (true) {
-            //return null;
-        }
         CType type = TypeVisitor.fromBinding(binding.getDeclaringClass());
         ClassInfo classInfo = classMap.get(type.realName);
         if (classInfo == null) return null;//no mapping for this type
         MethodInfo info = findMethod(classInfo, binding);
         if (info == null) {
             //no mapping
-            Logger.log("missing mapper for " + binding.toString());
+            Logger.log("missing mapper for " + binding);
             return null;
         }
         //replace

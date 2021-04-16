@@ -8,6 +8,10 @@
       "target": "insert($1)"
     },
     {
+      "name": "addAll(java.util.Collection)",
+      "target": "insert(${varName}->end(), $1->begin(), $1->end())"
+    },
+    {
       "name": "remove(java.lang.Object)",
       "target": "erase($1)"
     },
@@ -26,6 +30,11 @@
     {
       "name": "contains(java.lang.Object)",
       "target": "(${varName}->find($1) != ${varName}->end())",
+      "external": true
+    },
+    {
+      "name": "toArray()",
+      "target": "new std::vector<T>(${varName}->begin(), ${varName}->end())",
       "external": true
     }
   ]

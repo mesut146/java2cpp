@@ -1,18 +1,20 @@
 package com.mesut.j2cpp;
 
 
-import com.mesut.j2cpp.ast.CClass;
-import com.mesut.j2cpp.ast.CHeader;
-import com.mesut.j2cpp.ast.CSource;
-import com.mesut.j2cpp.ast.Namespace;
+import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.map.ClassMap;
-import com.mesut.j2cpp.util.ForwardDeclarator;
+import com.mesut.j2cpp.util.BaseClassSorter;
 import com.mesut.j2cpp.util.Filter;
+import com.mesut.j2cpp.util.ForwardDeclarator;
+import com.mesut.j2cpp.util.HeaderDeps;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
 import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.SourceVisitor;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FileASTRequestor;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -210,7 +212,8 @@ public class Converter {
                 CHeader header = new CHeader(cc.getHeaderPath());
                 header.setNs(ns);
                 header.setClass(cc);
-                source.addInclude(IncludeStmt.src(header.getInclude()));
+                source.includes.add(IncludeStmt.src(header.getInclude()));
+                new HeaderDeps(header).handle();
                 writeHeader(header);
             }
 
@@ -220,7 +223,7 @@ public class Converter {
                     source.includes.add(0, IncludeStmt.src(forwardHeader.getInclude()));
                 }
             }
-            IncludeHelper.handle(source);
+            handleDeps(source);
             Util.writeSource(source, new File(destDir));
 
             target.sourceFiles.add(source.name);
@@ -228,6 +231,27 @@ public class Converter {
         } catch (Exception e) {
             System.err.println("cant convert " + path);
             Logger.log(path + ":" + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    void handleDeps(CSource source) {
+        //source deps
+        Set<CClass> set = new HashSet<>();
+        for (CClass cc : source.classes) {
+            for (CType type : cc.types) {
+                CClass t = ClassMap.sourceMap.get(type);
+                if (t == null) continue;
+                set.add(t);
+            }
+        }
+        try {
+            List<CClass> list = new ArrayList<>(set);
+            BaseClassSorter.sort(list);
+            for (CClass cc : list) {
+                source.includes.add(cc.getType());
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
