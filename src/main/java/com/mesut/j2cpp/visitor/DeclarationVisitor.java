@@ -94,10 +94,8 @@ public class DeclarationVisitor {
     public CClass visit(EnumDeclaration n, CClass outer) {
         CClass cc = ClassMap.sourceMap.get(n.resolveBinding());
         classes.add(cc);
-
         for (EnumConstantDeclaration constant : (List<EnumConstantDeclaration>) n.enumConstants()) {
             CField field = PreVisitor.visitField(constant.resolveVariable(), cc);
-
             CClassInstanceCreation rhs = new CClassInstanceCreation();
             field.expression = rhs;
             rhs.setType(field.type);

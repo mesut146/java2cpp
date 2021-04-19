@@ -11,7 +11,9 @@ import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.cppast.literal.CCharacterLiteral;
 import com.mesut.j2cpp.cppast.literal.CNumberLiteral;
 import com.mesut.j2cpp.cppast.stmt.*;
-import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.SwitchCase;
+import org.eclipse.jdt.core.dom.SwitchStatement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,8 @@ import java.util.List;
 public class SwitchHelper {
 
     public boolean isEnum = false;
+    public boolean isString = false;
+    String label;
     SourceVisitor visitor;
     List<Statement> statements;
     CExpression left;
@@ -37,6 +41,28 @@ public class SwitchHelper {
         methodInvocation.scope = expression;
         methodInvocation.name = new CName("ordinal");
         return methodInvocation;
+    }
+
+    public CSwitch makeNormal(SwitchStatement node) {
+        CSwitch res = new CSwitch();
+        CExpression expression = (CExpression) visitor.visitExpr(node.getExpression(), null);
+        res.expression = expression;
+        statements = node.statements();
+        for (Statement statement : statements) {
+            if (statement instanceof SwitchCase) {
+                SwitchCase switchCase = (SwitchCase) statement;
+                if (switchCase.isDefault()) {
+                    res.statements.add(new CCase());
+                }
+                else {
+                    res.statements.add(new CCase((CExpression) visitor.visitExpr(switchCase.getExpression(), null)));
+                }
+            }
+            else {
+                res.statements.add((CStatement) visitor.visitExpr(statement, null));
+            }
+        }
+        return res;
     }
 
     public List<CStatement> makeIfElse(SwitchStatement node) {
@@ -74,31 +100,29 @@ public class SwitchHelper {
 
         for (i = 0; i < statements.size(); ) {
             Statement statement = statements.get(i);
-            if (statement instanceof SwitchCase) {
-                SwitchCase switchCase = (SwitchCase) statement;
-                if (switchCase.isDefault()) {
-                    i++;//skip default
-                    defaultStmt = collectStatements();
-                }
-                else {
-                    List<CExpression> cases = collectCases();
-                    CIfStatement ifStatement = new CIfStatement();
-
-                    ifStatement.condition = makeCondition(cases);
-                    ifStatement.thenStatement = collectStatements();
-
-                    if (firstIf == null) {
-                        firstIf = ifStatement;
-                        lastIf = firstIf;
-                    }
-                    else {
-                        lastIf.elseStatement = ifStatement;
-                        lastIf = ifStatement;
-                    }
-                }
+            if (!(statement instanceof SwitchCase)) {
+                throw new RuntimeException("invalid switch statement");
+            }
+            SwitchCase switchCase = (SwitchCase) statement;
+            if (switchCase.isDefault()) {
+                i++;//no condition
+                defaultStmt = collectStatements();
             }
             else {
-                throw new RuntimeException("invalid switch statement");
+                List<CExpression> cases = collectCases();
+                CIfStatement ifStatement = new CIfStatement();
+
+                ifStatement.condition = makeCondition(cases);
+                ifStatement.thenStatement = collectStatements();
+
+                if (firstIf == null) {
+                    firstIf = ifStatement;
+                    lastIf = firstIf;
+                }
+                else {
+                    lastIf.elseStatement = ifStatement;
+                    lastIf = ifStatement;
+                }
             }
         }
         if (lastIf == null) {
@@ -140,14 +164,27 @@ public class SwitchHelper {
             if (statement instanceof SwitchCase) {
                 break;
             }
-            else if (!(statement instanceof BreakStatement)) {//skip breaks since we use if's
+            else {
                 blockStatement.addStatement((CStatement) visitor.visitExpr(statement, null));
             }
         }
-        if (blockStatement.statements.size() == 1 && blockStatement.statements.get(0) instanceof CBlockStatement) {
-            return (CBlockStatement) blockStatement.statements.get(0);
-        }
+        trimBreak(blockStatement);
         return blockStatement;
+    }
+
+    void trimBreak(CBlockStatement block) {
+        if (block.statements.isEmpty()) return;
+        if (block.statements.get(block.statements.size() - 1) instanceof CBreakStatement) {
+            //ignore last break
+            block.statements.remove(block.statements.size() - 1);
+        }
+        for (int i = 0; i < block.statements.size(); i++) {
+            CStatement statement = block.statements.get(i);
+            if (statement instanceof CBreakStatement) {
+                //break switch label
+                ((CBreakStatement) statement).label = label;
+            }
+        }
     }
 
     //given a , b , c

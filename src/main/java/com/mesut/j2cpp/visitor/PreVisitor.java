@@ -34,6 +34,13 @@ public class PreVisitor {
         if (outer != null && !Modifier.isStatic(binding.getModifiers()) && !cc.isInterface) {
             InnerHelper.handleRef(cc, outer);
         }
+        if (binding.isEnum()) {
+            //add ordinal field
+            CField ord = new CField();
+            ord.type = new CType("int");
+            ord.name = new CName("ordinal");
+            cc.addField(ord);
+        }
         cc.initialized = true;
         return cc;
     }
@@ -114,6 +121,7 @@ public class PreVisitor {
         }
     }
 
+    //var binding to field
     public static CField visitField(IVariableBinding binding, CClass cc) {
         if (cc == null) return null;
         CType type = TypeVisitor.fromBinding(binding.getType(), cc);
@@ -130,6 +138,10 @@ public class PreVisitor {
         field.setProtected(Modifier.isProtected(binding.getModifiers()));
         if (cc.isInterface) {
             field.setPublic(true);
+        }
+        if (binding.isEnumConstant()) {
+            //todo
+
         }
         return field;
     }

@@ -2,16 +2,16 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.IncludeList;
-import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.cppast.CStatement;
-import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
-import org.eclipse.jdt.core.dom.ITypeBinding;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CClass extends CStatement {
@@ -55,11 +55,7 @@ public class CClass extends CStatement {
     }
 
     public String getHeaderPath() {
-        ITypeBinding binding = BindingMap.get(getType());
-        return binding.getBinaryName()
-                .replace("$", "_")
-                .replace(".", "/") +
-                ".h";
+        return IncludeList.getHeaderPath(getType());
     }
 
     public void addMethod(CMethod cm) {

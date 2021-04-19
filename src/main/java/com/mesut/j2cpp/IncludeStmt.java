@@ -1,5 +1,9 @@
 package com.mesut.j2cpp;
 
+import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.map.BindingMap;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
 import java.util.List;
 import java.util.Objects;
 

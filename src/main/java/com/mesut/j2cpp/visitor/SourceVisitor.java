@@ -153,11 +153,10 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(BreakStatement node, CNode arg) {
-        CBreakStatement breakStatement = new CBreakStatement();
         if (node.getLabel() != null) {
-            breakStatement.label = node.getLabel().getIdentifier();
+            return new CBreakStatement(node.getLabel().getIdentifier());
         }
-        return breakStatement;
+        return new CBreakStatement(null);
     }
 
     @Override
@@ -269,6 +268,12 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         if (binding.isEnum()) {
             //if else with ordinals
             helper.isEnum = true;
+        }
+        else if (binding.getQualifiedName().equals("java.lang.String")) {
+            helper.isString = true;
+        }
+        else if (binding.isPrimitive()) {
+            return helper.makeNormal(node);
         }
         List<CStatement> list = helper.makeIfElse(node);
         return new CMultiStatement(list);
@@ -650,7 +655,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(MethodInvocation node, CNode arg) {
         IMethodBinding binding = node.resolveMethodBinding();
         if (binding == null) {
-            Logger.log(clazz, node.toString() + " has null binding ,conversion may have problems");
+            Logger.log(clazz, node + " has null binding ,conversion may have problems");
             CMethodInvocation invocation = new CMethodInvocation();
             invocation.arguments = list(node.arguments());
             invocation.name = (CName) visit(node.getName(), null);
@@ -677,7 +682,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             //mapper
             Mapper.Mapped target = Mapper.instance.mapMethod(binding, invocation.arguments, scope);
             if (target != null) {
-                if (target.list==null) {
+                if (target.list == null) {
                     //single expr
                     return target.expr;
                 }

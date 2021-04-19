@@ -1,7 +1,6 @@
 package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.CClass;
-import org.eclipse.jdt.core.dom.Name;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +20,7 @@ public class Logger {
 
     public static void log(CClass cc, String msg) {
         log(cc.getType() + ": " + msg);
+        hasErrors = true;
     }
 
     public static void log(String msg) {

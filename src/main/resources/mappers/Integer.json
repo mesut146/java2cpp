@@ -38,6 +38,11 @@
       "target": "($1 < $2) ? -1 : (($1 == $2) ? 0 : 1)"
     },
     {
+      "name": "toString(int)",
+      "target": "std::to_string($1)",
+      "external": true
+    },
+    {
       "name": "toHexString(int)",
       "include": "<sstream>",
       "target": "std::stringstream ss;\nss << std::hex << $1;\n",
@@ -78,6 +83,26 @@
       "name": "reverseBytes(int)",
       "external": true,
       "target": "((($1>>>24))|(($1>>8)&0xFF00)|(($1<<8)&0xFF0000)|(($1 << 24)))"
+    },
+    {
+      "name": "bitCount(int)",
+      "external": true,
+      "target": [
+        "int tmp",
+        "tmp = tmp - ((tmp >> 1) & 0x55555555);",
+        "tmp = (tmp & 0x33333333) + ((tmp >> 2) & 0x33333333);"
+      ],
+      "expr": "(((tmp + (tmp >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24"
+    },
+    {
+      "name": "numberOfTrailingZeros(int)",
+      "external": true,
+      "target": "CppHelper::numberOfTrailingZeros($1)"
+    },
+    {
+      "name": "numberOfLeadingZeros(int)",
+      "external": true,
+      "target": "CppHelper::numberOfLeadingZeros($1)"
     }
   ]
 }

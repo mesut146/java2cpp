@@ -6,12 +6,13 @@ import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.map.ClassMap;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class HeaderDeps extends ASTVisitor {
+public class HeaderDeps{
     CHeader header;
 
     public HeaderDeps(CHeader header) {
@@ -36,14 +37,14 @@ public class HeaderDeps extends ASTVisitor {
         }
     }
 
-    @Override
+    /*@Override
     public boolean visit(FieldDeclaration node) {
         for (int i = 0; i < node.fragments().size(); i++) {
             VariableDeclarationFragment fragment = (VariableDeclarationFragment) node.fragments().get(i);
-            if (fragment.getInitializer() != null) {
-
+            if (!Modifier.isStatic(node.getModifiers()) && fragment.getInitializer() != null) {
+                //
             }
         }
         return super.visit(node);
-    }
+    }*/
 }

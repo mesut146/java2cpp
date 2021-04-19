@@ -1,8 +1,10 @@
 package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +30,7 @@ public class IncludeList {
             return;
         }
         //can be local class,those already included by converter so ignore
-        IncludeStmt stmt = new IncludeStmt(type.basicForm().replace("::", "/"));
+        IncludeStmt stmt = new IncludeStmt(getHeaderPath(type));
         if (type.fromSource) {
             stmt.isSys = false;
         }
@@ -36,6 +38,14 @@ public class IncludeList {
             stmt.isLib = true;
         }
         add(stmt);
+    }
+
+    public static String getHeaderPath(CType type) {
+        ITypeBinding binding = BindingMap.get(type);
+        return binding.getBinaryName()
+                .replace("$", "_")
+                .replace(".", "/") +
+                ".h";
     }
 
     @Override

@@ -47,6 +47,9 @@ public class Mapper {
         if (str.startsWith("<")) {
             return new CType(str.substring(1, str.length() - 1), true);
         }
+        if (str.endsWith("[]")) {
+
+        }
         return new CType(str);
     }
 
@@ -85,7 +88,18 @@ public class Mapper {
             JSONObject method = methods.getJSONObject(i);
             MethodInfo methodInfo = new MethodInfo();
             methodInfo.str = method.getString("name");
-            methodInfo.targetExpr = method.getString("target");
+            if (method.get("target") instanceof JSONArray) {
+                StringBuilder sb = new StringBuilder();
+                for (Object o : method.getJSONArray("target")) {
+                    sb.append(o).append("\n");
+                }
+                sb.setLength(sb.length() - 1);//trim last \n
+                methodInfo.targetExpr = sb.toString();
+            }
+            else {
+                methodInfo.targetExpr = method.getString("target");
+            }
+            methodInfo.warning = method.optString("warning", null);
             methodInfo.expr = method.optString("expr", null);
             methodInfo.external = method.optBoolean("external", false);
             String inc = method.optString("include", null);
@@ -104,7 +118,7 @@ public class Mapper {
         MethodInfo info = findMethod(classInfo, binding);
         if (info == null) {
             //no mapping
-            Logger.log("missing mapper for " + binding);
+            Logger.log("missing mapper for " + binding.getDeclaringClass().getQualifiedName() + " -> " + binding);
             return null;
         }
         //replace
@@ -123,9 +137,12 @@ public class Mapper {
         else {
             //with scope
             if (!info.external) {
-                e = scope.toString() + "->" + e;
+                e = scope + "->" + e;
             }
             mapped.expr = CName.simple(e);
+        }
+        if (info.warning != null) {
+            Logger.log(info.warning);
         }
         return mapped;
     }
@@ -234,6 +251,7 @@ public class Mapper {
         String name;
         String str;
         String targetExpr;
+        String warning;
         boolean external = false;
         boolean multi = false;
         String expr;

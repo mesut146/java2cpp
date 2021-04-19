@@ -75,7 +75,6 @@ public class LibHandler {
         forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
         for (CClass cc : ClassMap.sourceMap.map.values()) {
             if (cc.fromSource) continue;
-            //CHeader header = new CHeader(cc.getType().basicForm().replace("::", "/") + ".h");
             CHeader header = new CHeader(cc.getHeaderPath());
             header.setNs(cc.getType().ns);
             header.setClass(cc);
@@ -91,8 +90,8 @@ public class LibHandler {
         try {
             Util.writeHeader(forwardHeader, dir);
             Util.writeHeader(allHeader, dir);
-            System.out.println("wrote " + forwardHeader.getInclude());
-            System.out.println("wrote " + allHeader.getInclude());
+            System.out.println("write " + forwardHeader.getInclude());
+            System.out.println("write " + allHeader.getInclude());
         } catch (IOException e) {
             e.printStackTrace();
         }

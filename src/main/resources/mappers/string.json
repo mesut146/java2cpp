@@ -1,7 +1,7 @@
 {
   "name": "java.lang.String",
   "target": "std::string",
-  "include": "<string>,StringHelper.h",
+  "include": "<string>",
   "methods": [
     {
       "name": "length()",
@@ -32,8 +32,21 @@
       "target": "find($1, $2)"
     },
     {
+      "name": "lastIndexOf(java.lang.String)",
+      "target": "rfind(*$1)"
+    },
+    {
+      "name": "lastIndexOf(int)",
+      "target": "rfind($1)"
+    },
+    {
       "name": "toCharArray()",
       "target": "data()"
+    },
+    {
+      "name": "hashCode()",
+      "target": "std::hash<std::string>(${varName})",
+      "external": true
     },
     {
       "name": "compareTo(java.lang.String)",
@@ -45,31 +58,102 @@
     },
     {
       "name": "contains(java.lang.String)",
-      "target": "(find($1) != std::string::npos)"
+      "target": "(${varName}->find($1) != std::string::npos)",
+      "external": true
     },
     {
       "name": "endsWith(java.lang.String)",
       "target": "compare(${varName}.size() - $1.size(), $1.size(), $1)"
     },
     {
+      "name": "startsWith(java.lang.String)",
+      "target": "compare(0, $1->size(), *$1)"
+    },
+    {
+      "name": "toUpperCase()",
+      "target": [
+        "std::string *tmp = new std::string();",
+        "for(auto &c: *${varName}){",
+        "    tmp->append(1, std::toupper(c));",
+        "}"
+      ],
+      "expr": "tmp"
+    },
+    {
+      "name": "toUpperCase(java.util.Locale)",
+      "target": [
+        "std::string *tmp = new std::string();",
+        "for(auto &c: *${varName}){",
+        "    tmp->append(1, std::toupper(c));",
+        "}"
+      ],
+      "expr": "tmp",
+      "warning": "toUpperCase had locale but i didn't use"
+    },
+    {
+      "name": "toLowerCase()",
+      "target": [
+        "std::string *tmp = new std::string();",
+        "for(auto &c: *${varName}){",
+        "    tmp->append(1, std::tolower(c));",
+        "}"
+      ],
+      "expr": "tmp"
+    },
+    {
+      "name": "toLowerCase(java.util.Locale)",
+      "target": [
+        "std::string *tmp = new std::string();",
+        "for(auto &c: *${varName}){",
+        "    tmp->append(1, std::tolower(c));",
+        "}"
+      ],
+      "expr": "tmp",
+      "warning": "toLowerCase had locale but i didn't use"
+    },
+    {
       "name": "equals(java.lang.Object)",
       "target": "compare((std::string*)$1) == 0"
     },
     {
-      "name": "format(java.lang.String,java.lang.Object...)",
-      "target": "StringHelper.format($1, $2)"
+      "name": "format(java.lang.String,java.lang.Object[])",
+      "target": "CppHelper::format($1, $2)",
+      "external": true
     },
     {
       "name": "getBytes()",
       "target": "data()"
     },
     {
-      "name": "lastIndexOf(java.lang.String)",
-      "target": "rfind($1)"
+      "name": "getBytes(java.lang.String)",
+      "target": "CppHelper::encode(${varName}, $1)",
+      "external": true
     },
     {
-      "name": "replace(java.lang.String,java.lang.String)",
-      "target": "StringHelper::replace(${varName}, $1, $2)"
+      "name": "replace(java.lang.CharSequence,java.lang.CharSequence)",
+      "target": "CppHelper::replace(${varName}, $1, $2)",
+      "external": true
+    },
+    {
+      "name": "replace(char,char)",
+      "target": "CppHelper::replace(${varName}, $1, $2)",
+      "external": true
+    },
+    {
+      "name": "replaceAll(java.lang.String,java.lang.String)",
+      "target": "std::regex_replace(${varName}, std::regex($1), $2)",
+      "external": true,
+      "include": "<regex>"
+    },
+    {
+      "name": "split(java.lang.String)",
+      "target": "CppHelper::split(${varName}, $1)",
+      "external": true
+    },
+    {
+      "name": "valueOf(int)",
+      "target": "new std::string(std::to_string($1))",
+      "external": true
     }
   ]
 }

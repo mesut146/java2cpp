@@ -17,11 +17,17 @@ public class CName extends CExpression {
     public String orgName;
 
     public CName(String name) {
-        String[] arr = name.split("::");
-        this.orgName = arr[arr.length - 1];
-        this.name = Mapper.instance.mapName(arr[arr.length - 1]);
-        if (arr.length > 1) {
-            namespace = new Namespace(Arrays.asList(arr));
+        if (name.contains("::")) {
+            String[] arr = name.split("::");
+            this.orgName = arr[arr.length - 1];
+            this.name = Mapper.instance.mapName(arr[arr.length - 1]);
+            if (arr.length > 1) {
+                namespace = new Namespace(Arrays.asList(arr));
+            }
+        }
+        else {
+            orgName = name;
+            this.name = Mapper.instance.mapName(name);
         }
     }
 

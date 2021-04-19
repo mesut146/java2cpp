@@ -32,10 +32,6 @@ public class PrintHelper {
         return String.format("using namespace %s;", ns.getAll());
     }
 
-    public static String include(String str) {
-        return String.format("#include \"%s\"", str);
-    }
-
     public static String body(String body, String indent) {
         StringBuilder sb = new StringBuilder();
         for (String line : body.split("\n")) {

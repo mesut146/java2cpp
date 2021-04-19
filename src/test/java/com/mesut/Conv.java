@@ -59,6 +59,7 @@ public class Conv {
         //String out = "/home/mesut/Desktop/j2cpp-dev/dx-cpp";
         String out = "/home/mesut/Desktop/j2cpp-dev/dx2";
         Converter converter = new Converter(dir, out);
+        converter.addClasspath(rtJar);
         Mapper.instance.initMappers();
         //converter.getFilter().addIncludeClass("com/android/dex/Dex");
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
@@ -74,7 +75,7 @@ public class Conv {
         String out = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/cpp";
         Converter converter = new Converter(dir, out);
         converter.addClasspath(rtJar);
-        Mapper.instance.addMapper(getClass().getResource("/mappers/string.json").getPath());
+        Mapper.instance.initMappers();
         //Config.common_forwards = false;
         //converter.getFilter().addIncludeClass("base.InnerTest");
         //converter.getFilter().addIncludeClass("base.SuperTest");
@@ -85,9 +86,9 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Fields");
         //converter.getFilter().addIncludeClass("base.Try1");
         //converter.getFilter().addIncludeClass("base.Try2");
-        //converter.getFilter().addIncludeClass("base.SwitchTest");
+        converter.getFilter().addIncludeClass("base.SwitchTest");
         //converter.getFilter().addIncludeClass("base.Enum1");
-        converter.getFilter().addIncludeClass("base.StringTest");
+        //converter.getFilter().addIncludeClass("base.StringTest");
         converter.convert();
     }
 
@@ -96,10 +97,7 @@ public class Conv {
         String dir = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/java";
         String out = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/cpp";
         Converter converter = new Converter(dir, out);
-        Mapper.instance.addMapper(getClass().getResource("/mappers/list.json").getPath());
-        Mapper.instance.addMapper(getClass().getResource("/mappers/string.json").getPath());
-        Mapper.instance.addMapper(getClass().getResource("/mappers/set.json").getPath());
-        Mapper.instance.addMapper(getClass().getResource("/mappers/Integer.json").getPath());
+        Mapper.instance.initMappers();
         converter.addClasspath(rtJar);
         //converter.getFilter().addIncludeClass("mapper.ListTest");
         //converter.getFilter().addIncludeClass("mapper.StringTest");
@@ -109,7 +107,28 @@ public class Conv {
     }
 
     @Test
-    public void name() {
-
+    public void asd() {
+        name(6);
     }
+
+    int aa() {
+        return 1;
+    }
+
+    public void name(int y) {
+        switch (aa()) {
+            case 1: {
+                if (y % 2 == 0) {
+                    break;
+                }
+                System.out.println("1");
+                break;
+            }
+            case 2:
+                System.out.println("2");
+            default:
+                System.out.println("def");
+        }
+    }
+
 }
