@@ -1,5 +1,6 @@
 package com.mesut;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.map.Mapper;
 import org.junit.Test;
@@ -59,8 +60,9 @@ public class Conv {
         //String out = "/home/mesut/Desktop/j2cpp-dev/dx-cpp";
         String out = "/home/mesut/Desktop/j2cpp-dev/dx2";
         Converter converter = new Converter(dir, out);
-        converter.addClasspath(rtJar);
+        //converter.addClasspath(rtJar);
         Mapper.instance.initMappers();
+        Config.mainClass = "com.android.dx.command.Main";
         //converter.getFilter().addIncludeClass("com/android/dex/Dex");
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
         //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");

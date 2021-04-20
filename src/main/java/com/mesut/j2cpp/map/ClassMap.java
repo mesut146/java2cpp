@@ -1,6 +1,10 @@
 package com.mesut.j2cpp.map;
 
-import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.ast.CClass;
+import com.mesut.j2cpp.ast.CField;
+import com.mesut.j2cpp.ast.CMethod;
+import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.util.TypeHelper;
 import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.TypeVisitor;
@@ -17,6 +21,7 @@ import java.util.Map;
 public class ClassMap {
     public static ClassMap sourceMap = new ClassMap();
     public Map<CType, CClass> map = new HashMap<>();
+    public CClass mainClass;
 
     public static CMethod getAddedMethod(CClass cc, IMethodBinding binding, List<CType> params, CType type) {
         String name = binding.getMethodDeclaration().getName();
@@ -46,6 +51,9 @@ public class ClassMap {
     }
 
     public CClass get(CType type) {
+        if (Config.mainClass != null && type.basicForm().equals(mainClass.getType().basicForm())) {
+            return mainClass;
+        }
         if (type.mapped || type.equals(TypeHelper.getVectorType()) || type.isPrim() || type.isVoid()) return null;
         if (map.containsKey(type)) {
             return map.get(type);

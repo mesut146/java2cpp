@@ -30,7 +30,6 @@ public class CClass extends CStatement {
     public List<CMethod> methods = new ArrayList<>();
     public CClass parent;//outer
     public CHeader header;
-    public Node staticBlock = null;
     public List<CStatement> consStatements = new ArrayList<>();
     public Set<CType> types = new HashSet<>();
     public boolean initialized = false;
@@ -119,12 +118,6 @@ public class CClass extends CStatement {
         printDecl(sb);
         sb.append("{\n");
         up();
-        //impl
-        if (staticBlock != null) {
-            sb.append("\n\n");
-            sb.append(getIndent()).append(staticBlock);
-            sb.append("\n");
-        }
         printFields(sb);
         printMethods(sb);
         sb.append("};//class ").append(name);

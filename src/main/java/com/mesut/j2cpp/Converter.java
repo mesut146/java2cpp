@@ -2,11 +2,9 @@ package com.mesut.j2cpp;
 
 
 import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.map.ClassMap;
-import com.mesut.j2cpp.util.BaseClassSorter;
-import com.mesut.j2cpp.util.Filter;
-import com.mesut.j2cpp.util.ForwardDeclarator;
-import com.mesut.j2cpp.util.HeaderDeps;
+import com.mesut.j2cpp.util.*;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
 import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.SourceVisitor;
@@ -104,6 +102,7 @@ public class Converter {
             headerDir = Config.separateInclude ? new File(destDir, "include") : new File(destDir);
             headerDir.mkdirs();
             initCmake();
+            initMain();
             preVisitDir();
             System.out.println("pre visit done");
             convertDir();
@@ -116,6 +115,28 @@ public class Converter {
             e.printStackTrace();
         }
         System.out.println("conversion done for " + count + " files");
+    }
+
+    void initMain() {
+        CClass cc;
+        if (Config.mainClass != null) {
+            CType type = new CType(Config.mainClass.replace(".", "::"));
+            type.fromSource = true;
+            cc = new CClass(type);
+        }
+        else {
+            cc = new CClass();
+            cc.name = "main";
+        }
+        //si_init
+        CMethod method = new CMethod();
+        cc.addMethod(method);
+        method.body = new CBlockStatement();
+        method.name = new CName("si_init");
+        method.type = TypeHelper.getVoidType();
+        method.setStatic(true);
+        method.setPublic(true);
+        ClassMap.sourceMap.mainClass = cc;
     }
 
     void writeForwards() throws IOException {

@@ -6,7 +6,9 @@ import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CNode;
 import com.mesut.j2cpp.cppast.expr.CClassInstanceCreation;
+import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
+import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.util.DepVisitor;
@@ -161,12 +163,28 @@ public class DeclarationVisitor {
         CMethod method = new CMethod();
         cc.addMethod(method);
         method.name = CName.from(Config.static_init_name);
-        //todo main entry should call this
         Logger.log("static init in " + cc.getType().basicForm());
         method.type = TypeHelper.getVoidType();
         method.setStatic(true);
         sourceVisitor.method = method;
         sourceVisitor.clazz = cc;
         method.body = (CBlockStatement) sourceVisitor.visitExpr(node.getBody(), null);
+
+        //todo main entry should call this
+        CMethod si = getSiInit();
+        CMethodInvocation call = new CMethodInvocation();
+        call.name = method.name;
+        call.scope = cc.getType();
+        call.isArrow = false;
+        si.body.addStatement(new CExpressionStatement(call));
+    }
+
+    CMethod getSiInit() {
+        for (CMethod method : ClassMap.sourceMap.mainClass.methods) {
+            if (method.name.is("si_init")) {
+                return method;
+            }
+        }
+        return null;//never happens
     }
 }
