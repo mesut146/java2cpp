@@ -163,7 +163,6 @@ public class DeclarationVisitor {
         CMethod method = new CMethod();
         cc.addMethod(method);
         method.name = CName.from(Config.static_init_name);
-        Logger.log("static init in " + cc.getType().basicForm());
         method.type = TypeHelper.getVoidType();
         method.setStatic(true);
         sourceVisitor.method = method;

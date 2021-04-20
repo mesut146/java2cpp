@@ -680,7 +680,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
         if (scope != null) {
             //mapper
-            Mapper.Mapped target = Mapper.instance.mapMethod(binding, invocation.arguments, scope);
+            Mapper.Mapped target = Mapper.instance.mapMethod(binding, invocation.arguments, scope, clazz);
             if (target != null) {
                 if (target.list == null) {
                     //single expr

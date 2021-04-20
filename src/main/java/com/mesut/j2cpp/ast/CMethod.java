@@ -51,7 +51,7 @@ public class CMethod extends ModifierNode {
             if (isStatic() && !source) {
                 sb.append("static ");
             }
-            if (isVirtual()) {
+            if (isVirtual() && !source) {
                 sb.append("virtual ");
             }
             sb.append(type);

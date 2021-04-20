@@ -111,7 +111,7 @@ public class Mapper {
         }
     }
 
-    public Mapped mapMethod(IMethodBinding binding, List<CExpression> args, CExpression scope) {
+    public Mapped mapMethod(IMethodBinding binding, List<CExpression> args, CExpression scope, CClass cc) {
         CType type = TypeVisitor.fromBinding(binding.getDeclaringClass());
         ClassInfo classInfo = classMap.get(type.realName);
         if (classInfo == null) return null;//no mapping for this type
@@ -142,7 +142,7 @@ public class Mapper {
             mapped.expr = CName.simple(e);
         }
         if (info.warning != null) {
-            Logger.log(info.warning);
+            Logger.log(cc, info.warning);
         }
         return mapped;
     }

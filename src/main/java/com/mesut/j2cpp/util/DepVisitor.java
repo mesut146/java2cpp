@@ -2,13 +2,9 @@ package com.mesut.j2cpp.util;
 
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.CClass;
-import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 //visit complete types and include them,others already forward declared
 public class DepVisitor extends ASTVisitor {
@@ -21,10 +17,6 @@ public class DepVisitor extends ASTVisitor {
     }
 
     public void handle() {
-        cc.addType(cc.superClass);
-        for (CType type : cc.ifaces) {
-            cc.addType(type);
-        }
         declaration.accept(this);
     }
 
@@ -33,6 +25,7 @@ public class DepVisitor extends ASTVisitor {
             Logger.logBinding(cc, expression.toString());
             return;
         }
+        //todo prevent header types being included again
         cc.addType(TypeVisitor.fromBinding(binding));
         ClassMap.sourceMap.init(binding);
     }
@@ -60,7 +53,13 @@ public class DepVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(QualifiedName node) {
-        add(node.getQualifier().resolveTypeBinding(), node);
-        return super.visit(node);
+        //may be field access
+        IBinding binding = node.resolveBinding();
+        if (binding != null) {
+            if (binding instanceof IVariableBinding) {
+                add(node.getQualifier().resolveTypeBinding(), node);
+            }
+        }
+        return false;
     }
 }

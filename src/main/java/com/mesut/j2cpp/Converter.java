@@ -120,7 +120,7 @@ public class Converter {
     void initMain() {
         CClass cc;
         if (Config.mainClass != null) {
-            CType type = new CType(Config.mainClass.replace(".", "::"));
+            CType type = new CType(Config.mainClass);
             type.fromSource = true;
             cc = new CClass(type);
         }
@@ -257,17 +257,18 @@ public class Converter {
     }
 
     void handleDeps(CSource source) {
-        //source deps
-        Set<CClass> set = new HashSet<>();
+        Set<CClass> all = new HashSet<>();
         for (CClass cc : source.classes) {
             for (CType type : cc.types) {
                 CClass t = ClassMap.sourceMap.get(type);
                 if (t == null) continue;
-                set.add(t);
+                //prevent header types being included again
+                if (source.includes.has(t) || cc.header.includes.has(t)) continue;
+                all.add(t);
             }
         }
         try {
-            List<CClass> list = new ArrayList<>(set);
+            List<CClass> list = new ArrayList<>(all);
             BaseClassSorter.sort(list);
             for (CClass cc : list) {
                 source.includes.add(cc.getType());

@@ -19,7 +19,7 @@ public class Logger {
     }
 
     public static void log(CClass cc, String msg) {
-        log(cc.getType() + ": " + msg);
+        log(String.format("'%s' %s", cc.getType(), msg));
         hasErrors = true;
     }
 
@@ -32,6 +32,6 @@ public class Logger {
 
     public static void logBinding(CClass cc, String name) {
         hasErrors = true;
-        log(cc, "binding is null for " + name + " conversion may have problems");
+        log(cc, String.format("binding is null for expr '%s'", name));
     }
 }
