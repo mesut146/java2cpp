@@ -258,13 +258,25 @@ public class Converter {
 
     void handleDeps(CSource source) {
         Set<CClass> all = new HashSet<>();
+        List<CHeader> headers = new ArrayList<>();
+        for (CClass cc : source.classes) {
+            headers.add(cc.header);
+        }
         for (CClass cc : source.classes) {
             for (CType type : cc.types) {
                 CClass t = ClassMap.sourceMap.get(type);
                 if (t == null) continue;
                 //prevent header types being included again
                 if (source.includes.has(t) || cc.header.includes.has(t)) continue;
-                all.add(t);
+                boolean flag = true;
+                for (CHeader header : headers) {
+                    if (header.includes.has(t)) {
+                        flag = false;
+                        break;
+                    }
+                }
+                if (flag)
+                    all.add(t);
             }
         }
         try {

@@ -118,7 +118,7 @@ public class Mapper {
         MethodInfo info = findMethod(classInfo, binding);
         if (info == null) {
             //no mapping
-            Logger.log("missing mapper for " + binding.getDeclaringClass().getQualifiedName() + " -> " + binding);
+            Logger.log(String.format("missing mapper in '%s' method='%s'", cc.getType(), binding));
             return null;
         }
         //replace

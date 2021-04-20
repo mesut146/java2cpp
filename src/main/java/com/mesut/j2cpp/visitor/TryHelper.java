@@ -2,7 +2,10 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Logger;
-import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.ast.CMethod;
+import com.mesut.j2cpp.ast.CName;
+import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.ast.CUnionType;
 import com.mesut.j2cpp.cppast.*;
 import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
@@ -72,7 +75,7 @@ public class TryHelper {
         printCatches(node.catchClauses(), tryStatement);
         tryStatement.body = (CBlockStatement) visitor.visit(node.getBody(), null);
         if (Config.tryMode == Config.tryModes.AS_IS && node.getFinally() != null) {
-            Logger.log("not handled finally at pos:" + node.getStartPosition() + " in " + visitor.clazz.getType().basicForm());
+            Logger.log(String.format("not handled finally in '%s' pos=%s", visitor.clazz.getType(), node.getStartPosition()));
             tryStatement.finallyBlock = (CBlockStatement) visitor.visit(node.getFinally(), null);
         }
         int len = node.resources().size();
