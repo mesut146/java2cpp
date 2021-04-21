@@ -551,7 +551,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                             invocation.isArrow = true;
                             invocation.scope = expression;
                             invocation.name = new CName("toString");
-                            return invocation;
+                            return new DeferenceExpr(invocation);
                         }
                     }
                     //leave as it is
@@ -708,18 +708,20 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             invocation.isArrow = !isStatic;
         }
 
-        if (scope != null) {
-            //name already resolved by resolvedName()
-            return invocation;
-        }
         ITypeBinding onType = binding.getDeclaringClass();
         CType type = TypeVisitor.fromBinding(onType, clazz);
-        //static outer method
-        if (Modifier.isStatic(binding.getModifiers())) {
+        if (isStatic) {
+            //static method needs qualifier
             invocation.scope = type;
             invocation.isArrow = false;
             return invocation;
         }
+
+        if (scope != null) {
+            //name already resolved by resolvedName()
+            return invocation;
+        }
+
         //parent/super method
         // todo not necessary
         if (isSuper(this.binding, onType)) {

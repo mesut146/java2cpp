@@ -16,13 +16,13 @@ public class CCatchClause extends CNode {
         getScope(expr, body);
         StringBuilder sb = new StringBuilder();
         sb.append("catch(");
-        if (Config.ptr_catch) {
-            expr.type.setPointer(true);
-        }
         if (catchAll) {
             sb.append("...");
         }
         else {
+            if (Config.ptr_catch) {
+                expr.type.setPointer(true);
+            }
             sb.append(expr);
         }
         sb.append(")\n");
