@@ -20,6 +20,6 @@ public class CCase extends CStatement {
         if (isDefault) {
             return "default:";
         }
-        return "case: " + expression;
+        return "case " + expression + ":";
     }
 }

@@ -131,6 +131,10 @@ public class PreVisitor {
         }
         field = new CField();
         cc.addField(field);
+        if (Modifier.isStatic(binding.getModifiers()) && Modifier.isFinal(binding.getModifiers()) && binding.getType().isPrimitive()) {
+            //constexpr
+            field.set(ModifierNode.CONSTEXPR_NAME);
+        }
         field.name = Mapper.instance.mapFieldName(binding.getName(), cc);
         field.type = type;
         field.setPublic(Modifier.isPublic(binding.getModifiers()));
@@ -141,7 +145,6 @@ public class PreVisitor {
         }
         if (binding.isEnumConstant()) {
             //todo
-
         }
         return field;
     }

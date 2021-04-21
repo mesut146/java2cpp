@@ -41,7 +41,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         this.clazz = clazz;
         for (CField field : clazz.fields) {
             if (field.expression == null) continue;
-            if (field.isStatic()) {
+            if (field.isStatic() && !field.is(ModifierNode.CONSTEXPR_NAME)) {
                 //normal static field or enum constant
                 source.fieldDefs.add(field);
             }
@@ -493,6 +493,9 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
         CInfixExpression infixExpression = new CInfixExpression();
         infixExpression.operator = node.getOperator().toString();
+        if (infixExpression.operator.equals(">>>")) {
+            infixExpression.operator = ">>";
+        }
         infixExpression.left = (CExpression) visitExpr(node.getLeftOperand(), arg);
         infixExpression.right = (CExpression) visitExpr(node.getRightOperand(), arg);
         if (node.hasExtendedOperands()) {
@@ -528,20 +531,31 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
         else {
             ITypeBinding binding = node.resolveTypeBinding();
+            CExpression expression = (CExpression) visitExpr(node, null);
             if (binding.isPrimitive()) {
                 CMethodInvocation invocation = new CMethodInvocation();
                 invocation.name = CName.simple("std::to_string");
-                invocation.arguments.add((CExpression) visitExpr(node, null));
+                invocation.arguments.add(expression);
                 return invocation;
             }
             else {
-                //unknown type
-                if (node instanceof Name && binding.getName().equals("java.lang.String")) {
-                    //dereference
-                    return new DeferenceExpr((CExpression) visitExpr(node, null));
+                if (node instanceof Name && binding.getQualifiedName().equals("java.lang.String")) {
+                    //string variable -> dereference
+                    return new DeferenceExpr(expression);
                 }
                 else {
-                    return (CExpression) visitExpr(node, null);
+                    //may have toString
+                    for (IMethodBinding methodBinding : binding.getDeclaredMethods()) {
+                        if (methodBinding.getName().equals("toString") && methodBinding.getReturnType().getQualifiedName().equals("java.lang.String")) {
+                            CMethodInvocation invocation = new CMethodInvocation();
+                            invocation.isArrow = true;
+                            invocation.scope = expression;
+                            invocation.name = new CName("toString");
+                            return invocation;
+                        }
+                    }
+                    //leave as it is
+                    return expression;
                 }
             }
         }

@@ -7,14 +7,24 @@ import java.util.Set;
 
 public abstract class ModifierNode extends CNode {
 
-    final static String PUBLIC_NAME = "public";
-    final static String PRIVATE_NAME = "private";
-    final static String PROTECTED_NAME = "protected";
-    final static String STATIC_NAME = "static";
-    final static String VIRTUAL_NAME = "virtual";
-    final static String NATIVE_NAME = "native";
-    final static String EXTERN_NAME = "extern";
+    public final static String PUBLIC_NAME = "public";
+    public final static String PRIVATE_NAME = "private";
+    public final static String PROTECTED_NAME = "protected";
+    public final static String STATIC_NAME = "static";
+    public final static String VIRTUAL_NAME = "virtual";
+    public final static String NATIVE_NAME = "native";
+    public final static String EXTERN_NAME = "extern";
+    public final static String CONSTEXPR_NAME = "constexpr";
     Set<String> modifiers = new HashSet<>();
+
+
+    public void set(String mod) {
+        modifiers.add(mod);
+    }
+
+    public boolean is(String mod) {
+        return modifiers.contains(mod);
+    }
 
     public boolean isPublic() {
         return modifiers.contains(PUBLIC_NAME);
