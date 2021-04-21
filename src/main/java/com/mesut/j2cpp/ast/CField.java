@@ -50,7 +50,7 @@ public class CField extends ModifierNode/*statement*/ {
         sb.append(type);
         sb.append(" ");
         sb.append(name);
-        if (expression != null && !Config.fields_in_constructors && (is(CONSTEXPR_NAME) || !isStatic())) {
+        if (expression != null && (is(CONSTEXPR_NAME) || !Config.fields_in_constructors && !isStatic())) {
             sb.append(" = ");
             sb.append(expression);
         }

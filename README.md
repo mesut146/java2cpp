@@ -28,6 +28,9 @@ Instead of creating library headers you can use mappers to convert java runtime 
 Pre-added mappers is under src/main/resources/mappers however you can add your mapper by ``-mapper <json>``
 
 Keep in mind that mappers can only transpile a portion of source
+
+### constexpr
+primitives that are static final are converted to constexpr
 ## command line usage
 ````
 java -jar java2cpp.jar -src javaDir -out cppDir [-map] [-mapper <mapperpath>] -cp rt.jar -cp lib2.jar ...

@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.cppast;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.cppast.stmt.CSingleVariableDeclaration;
 import com.mesut.j2cpp.util.PrintHelper;
@@ -15,6 +16,9 @@ public class CCatchClause extends CNode {
         getScope(expr, body);
         StringBuilder sb = new StringBuilder();
         sb.append("catch(");
+        if (Config.ptr_catch) {
+            expr.type.setPointer(true);
+        }
         if (catchAll) {
             sb.append("...");
         }

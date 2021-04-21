@@ -40,8 +40,8 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     private void convertClass(CClass clazz) {
         this.clazz = clazz;
         for (CField field : clazz.fields) {
-            if (field.expression == null) continue;
-            if (field.isStatic() && !field.is(ModifierNode.CONSTEXPR_NAME)) {
+            if (field.expression == null || field.is(ModifierNode.CONSTEXPR_NAME)) continue;
+            if (field.isStatic()) {
                 //normal static field or enum constant
                 source.fieldDefs.add(field);
             }

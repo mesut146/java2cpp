@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Config {
 
-    public static List<String> ignored=new ArrayList<>();
+    public static List<String> ignored = new ArrayList<>();
 
     public static boolean ns_type_nested = true;
     public static boolean ns_indent = false;
@@ -41,6 +41,7 @@ public class Config {
     public static boolean ptr_typeArg = true;
     public static boolean ptr_varDecl = true;
     public static boolean ptr_cast = true;
+    public static boolean ptr_catch = true;
     //take outer ref as constructor arg otherwise create setter
     public static boolean outer_ref_cons_arg = false;
     //make all fields public
@@ -69,11 +70,11 @@ public class Config {
     public static String type_short = "char16_t";
     public static String type_boolean = "bool";
 
-    public enum tryModes {
-        AS_IS, TRANSFORM, LAMBDA;
-    }
-
     static {
         ignored.add("java.lang.Throwable");
+    }
+
+    public enum tryModes {
+        AS_IS, TRANSFORM, LAMBDA;
     }
 }
