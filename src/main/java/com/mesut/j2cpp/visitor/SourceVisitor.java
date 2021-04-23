@@ -30,6 +30,12 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         this.source = source;
     }
 
+    public static CExpression stringCreation(CStringLiteral node, CClass clazz) {
+        CObjectCreation objectCreation = new CObjectCreation();
+        objectCreation.type = Mapper.instance.mapType(TypeHelper.getStringType(), clazz);
+        objectCreation.args.add(node);
+        return objectCreation;
+    }
 
     public void convert(List<CClass> classes) {
         for (CClass clazz : classes) {
@@ -49,11 +55,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 //add to all cons
                 //make statement
                 CAssignment assignment = new CAssignment();
-                CFieldAccess access = new CFieldAccess();
-                access.scope = new CThisExpression();
-                access.name = field.name;
-                access.isArrow = true;
-                assignment.left = access;
+                assignment.left = new CFieldAccess(new CThisExpression(), field.name, true);
                 assignment.right = field.expression;
                 assignment.operator = "=";
                 clazz.consStatements.add(new CExpressionStatement(assignment));
@@ -91,14 +93,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(StringLiteral node, CNode arg) {
-        return stringCreation(new CStringLiteral(node.getLiteralValue(), node.getEscapedValue()));
-    }
-
-    CExpression stringCreation(CExpression node) {
-        CObjectCreation objectCreation = new CObjectCreation();
-        objectCreation.type = Mapper.instance.mapType(TypeHelper.getStringType(), clazz);
-        objectCreation.args.add(node);
-        return objectCreation;
+        return stringCreation(new CStringLiteral(node.getLiteralValue(), node.getEscapedValue()), clazz);
     }
 
     @Override
@@ -147,6 +142,9 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         CAssignment assignment = new CAssignment();
         assignment.left = (CExpression) visitExpr(node.getLeftHandSide(), arg);
         assignment.operator = node.getOperator().toString();
+        if (assignment.operator.equals(">>>=")) {
+            assignment.operator = ">>=";
+        }
         assignment.right = (CExpression) visitExpr(node.getRightHandSide(), arg);
         return assignment;
     }
@@ -515,6 +513,13 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         Expression right = node.getRightOperand();
         res.left = makeStrIfNot(left);
         res.right = makeStrIfNot(right);
+        if (left instanceof StringLiteral && right instanceof StringLiteral) {
+            //one must be converted
+            CMethodInvocation invocation = new CMethodInvocation();
+            invocation.name = new CName("std::string");
+            invocation.arguments.add(res.left);
+            res.left = invocation;
+        }
         if (node.hasExtendedOperands()) {
             for (Expression expression : (List<Expression>) node.extendedOperands()) {
                 res.other.add(makeStrIfNot(expression));
@@ -546,7 +551,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 else {
                     //may have toString
                     for (IMethodBinding methodBinding : binding.getDeclaredMethods()) {
-                        if (methodBinding.getName().equals("toString") && methodBinding.getReturnType().getQualifiedName().equals("java.lang.String")) {
+                        if (!binding.getQualifiedName().equals("java.lang.String") && methodBinding.getName().equals("toString") && methodBinding.getReturnType().getQualifiedName().equals("java.lang.String")) {
                             CMethodInvocation invocation = new CMethodInvocation();
                             invocation.isArrow = true;
                             invocation.scope = expression;
@@ -798,22 +803,14 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 CType type = TypeVisitor.fromBinding(onType, clazz);
                 //static field,qualify
                 if (isStatic) {
-                    CFieldAccess fieldAccess = new CFieldAccess();
-                    fieldAccess.name = name;
-                    fieldAccess.isArrow = false;
-                    fieldAccess.scope = type;
-                    return fieldAccess;
+                    return new CFieldAccess(type, name, false);
                 }
                 if (isSuper(this.binding, onType)) {
                     return name;
                 }
                 CExpression ref = ref2(this.binding, onType);
                 if (ref != null) {
-                    CFieldAccess fieldAccess = new CFieldAccess();
-                    fieldAccess.name = name;
-                    fieldAccess.isArrow = true;
-                    fieldAccess.scope = ref;
-                    return fieldAccess;
+                    return new CFieldAccess(ref, name, true);
                 }
             }
         }
@@ -834,11 +831,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         if (ref == null) {
             return null;
         }
-        CFieldAccess fieldAccess = new CFieldAccess();
-        fieldAccess.scope = ref;
-        fieldAccess.name = new CName(Config.parentName);
-        fieldAccess.isArrow = true;
-        return fieldAccess;
+        return new CFieldAccess(ref, new CName(Config.parentName), true);
     }
 
 
@@ -853,11 +846,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         if (ref == null) {
             return null;
         }
-        CFieldAccess fieldAccess = new CFieldAccess();
-        fieldAccess.scope = ref;
-        fieldAccess.name = new CName(Config.parentName);
-        fieldAccess.isArrow = true;
-        return fieldAccess;
+        return new CFieldAccess(ref, new CName(Config.parentName), true);
     }
 
     @Override
@@ -905,22 +894,11 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                     }
                 }
             }
-
-
             if (isStatic) {
-                CFieldAccess fieldAccess = new CFieldAccess();
-                fieldAccess.name = new CName(node.getName().getIdentifier());
-                fieldAccess.isArrow = false;
-                fieldAccess.scope = type;
-                return fieldAccess;
+                return new CFieldAccess(type, new CName(node.getName().getIdentifier()), false);
             }
             else {
-                CFieldAccess fieldAccess = new CFieldAccess();
-                fieldAccess.name = new CName(node.getName().getIdentifier());
-                fieldAccess.isArrow = true;
-                fieldAccess.scope = scope;
-
-                return fieldAccess;
+                return new CFieldAccess(scope, new CName(node.getName().getIdentifier()), true);
             }
         }
     }

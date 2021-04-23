@@ -5,7 +5,12 @@
   "methods": [
     {
       "name": "put(<K>,<V>)",
-      "target": "insert_or_assign($1, $2)"
+      "target": "insert({$1, $2})"
+    },
+    {
+      "name": "putIfAbsent(<K>,<V>)",
+      "target": "${varName}->insert({$1,$2});",
+      "expr": "${varName}->at()"
     },
     {
       "name": "get(<K>)",
@@ -29,7 +34,10 @@
     },
     {
       "name": "keySet()",
-      "target": "std::unordered_set<K> *keys = new std::unordered_set<K>();for(auto &a:*${varName}){\n    keys->push_back(a.first);\n  }",
+      "target": ["std::unordered_set<K> *keys = new std::unordered_set<K>();",
+                 "for(auto &a:*${varName}){",
+                 "    keys->push_back(a.first);",
+                 "  }"],
       "expr": "keys"
     }
   ]

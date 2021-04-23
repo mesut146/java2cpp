@@ -8,6 +8,15 @@ public class CFieldAccess extends CExpression {
     public CName name;
     public boolean isArrow;
 
+    public CFieldAccess(CExpression scope, CName name, boolean isArrow) {
+        this.scope = scope;
+        this.name = name;
+        this.isArrow = isArrow;
+    }
+
+    public CFieldAccess() {
+    }
+
     @Override
     public String toString() {
         getScope(name);

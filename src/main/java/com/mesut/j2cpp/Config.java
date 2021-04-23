@@ -7,6 +7,9 @@ public class Config {
 
     public static List<String> ignored = new ArrayList<>();
 
+    //inherit enums from java.lang.Enum
+    public static boolean enumBaseClass = false;
+
     public static boolean ns_type_nested = true;
     public static boolean ns_indent = false;
     public static boolean ns_nested_indent = false;

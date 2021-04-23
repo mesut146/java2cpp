@@ -7,7 +7,6 @@ import com.mesut.j2cpp.util.TypeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class CType extends CExpression {
     public Namespace ns;
@@ -38,6 +37,12 @@ public class CType extends CExpression {
     public CType(String type, boolean isTemplate) {
         this(type);
         this.isTemplate = isTemplate;
+    }
+
+    public static CType asPtr(CType type) {
+        CType p = type.copy();
+        p.setPointer(true);
+        return p;
     }
 
     public boolean isSys() {

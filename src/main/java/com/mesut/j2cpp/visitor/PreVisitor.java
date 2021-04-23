@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.visitor;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.LibHandler;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.map.ClassMap;
@@ -24,8 +25,10 @@ public class PreVisitor {
             cc.template.add(new CType(tp.getName(), true));
         }
         if (binding.getSuperclass() != null) {
-            cc.setSuper(TypeVisitor.fromBinding(binding.getSuperclass()));
-            LibHandler.instance.addType(binding.getSuperclass());
+            if (binding.isEnum() && Config.enumBaseClass) {
+                cc.setSuper(TypeVisitor.fromBinding(binding.getSuperclass()));
+                LibHandler.instance.addType(binding.getSuperclass());
+            }
         }
         for (ITypeBinding iface : binding.getInterfaces()) {
             cc.ifaces.add(TypeVisitor.fromBinding(iface));
@@ -33,13 +36,6 @@ public class PreVisitor {
         }
         if (outer != null && !Modifier.isStatic(binding.getModifiers()) && !cc.isInterface) {
             InnerHelper.handleRef(cc, outer);
-        }
-        if (binding.isEnum()) {
-            //add ordinal field
-            CField ord = new CField();
-            ord.type = new CType("int");
-            ord.name = new CName("ordinal");
-            cc.addField(ord);
         }
         cc.initialized = true;
         return cc;

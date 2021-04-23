@@ -11,6 +11,10 @@ public class CStringLiteral extends CExpression {
         this.escapedValue = escapedValue;
     }
 
+    public CStringLiteral(String literalValue) {
+        this.literalValue = literalValue;
+    }
+
     @Override
     public String toString() {
         if (escapedValue == null) {

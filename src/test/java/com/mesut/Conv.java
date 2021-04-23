@@ -67,7 +67,7 @@ public class Conv {
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
         //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
         //converter.getFilter().addIncludeClass("com/android/dx/dex/code/PositionList.java");
-        converter.getFilter().addIncludeClass("com/android/dx/rop/code/RegOps");
+        //converter.getFilter().addIncludeClass("com/android/dx/rop/code/RegOps");
         converter.convert();
     }
 
@@ -89,8 +89,8 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Try1");
         //converter.getFilter().addIncludeClass("base.Try2");
         //converter.getFilter().addIncludeClass("base.SwitchTest");
-        converter.getFilter().addIncludeClass("base.Cons");
-        //converter.getFilter().addIncludeClass("base.Enum1");
+        //converter.getFilter().addIncludeClass("base.Cons");
+        converter.getFilter().addIncludeClass("base.Enum1");
         //converter.getFilter().addIncludeClass("base.StringTest");
         converter.convert();
     }

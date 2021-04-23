@@ -9,6 +9,14 @@ public class CIfStatement extends CStatement {
     public CStatement thenStatement;
     public CStatement elseStatement;
 
+    public CIfStatement() {
+    }
+
+    public CIfStatement(CExpression condition, CStatement thenStatement) {
+        this.condition = condition;
+        this.thenStatement = thenStatement;
+    }
+
     @Override
     public String toString() {
         getScope(condition, thenStatement, elseStatement);

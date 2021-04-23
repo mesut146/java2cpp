@@ -1,15 +1,19 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
-import com.mesut.j2cpp.Logger;
+import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CNode;
-import com.mesut.j2cpp.cppast.expr.CClassInstanceCreation;
-import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
+import com.mesut.j2cpp.cppast.RawStatement;
+import com.mesut.j2cpp.cppast.expr.*;
+import com.mesut.j2cpp.cppast.literal.CNumberLiteral;
+import com.mesut.j2cpp.cppast.literal.CStringLiteral;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
+import com.mesut.j2cpp.cppast.stmt.CReturnStatement;
 import com.mesut.j2cpp.map.ClassMap;
+import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.util.DepVisitor;
 import com.mesut.j2cpp.util.TypeHelper;
@@ -93,11 +97,45 @@ public class DeclarationVisitor {
         }
     }
 
+    CBlockStatement initEnum(CClass cc) {
+        //add ordinal field
+        CField ord = new CField();
+        ord.type = new CType("int");
+        ord.name = new CName("ordinal");
+        cc.addField(ord);
+        //enum cons name field
+        CField name = new CField();
+        name.type = Mapper.instance.mapType(TypeHelper.getStringType(), cc);
+        name.name = new CName("cons_name");
+        cc.addField(name);
+        //init method for ordinal & cons name
+        CMethod init = new CMethod();
+        init.name = new CName("init_cons");
+        init.type = TypeHelper.getVoidType();
+        init.setStatic(true);
+        init.body = new CBlockStatement();
+        cc.addMethod(init);
+        //static init
+        mainEntrySiCall(init);
+        //toString method
+        CMethod toStr = new CMethod();
+        toStr.name = new CName("toString");
+        toStr.type = Mapper.instance.mapType(TypeHelper.getStringType(), cc);
+        toStr.body = new CBlockStatement();
+        toStr.body.addStatement(new CReturnStatement(name.name));
+        cc.addMethod(toStr);
+        return init.body;
+    }
+
     public CClass visit(EnumDeclaration n, CClass outer) {
         CClass cc = ClassMap.sourceMap.get(n.resolveBinding());
         classes.add(cc);
+        CBlockStatement block = initEnum(cc);
+        int ordinal = 0;
+        List<CField> consList = new ArrayList<>();
         for (EnumConstantDeclaration constant : (List<EnumConstantDeclaration>) n.enumConstants()) {
             CField field = PreVisitor.visitField(constant.resolveVariable(), cc);
+            consList.add(field);
             CClassInstanceCreation rhs = new CClassInstanceCreation();
             field.expression = rhs;
             rhs.setType(field.type);
@@ -109,7 +147,39 @@ public class DeclarationVisitor {
                 CClassInstanceCreation creation = AnonyHandler.handle(constant.getAnonymousClassDeclaration(), cc.getType(), cc, sourceVisitor);
                 rhs.setType(creation.type);
             }
+            //add ordinal && name
+            CFieldAccess name = new CFieldAccess(cc.getType(), field.name, false);
+            block.addStatement(new CExpressionStatement(new CAssignment(new CFieldAccess(name, new CName("ordinal"), true), new CNumberLiteral(Integer.toBinaryString(ordinal)), "=")));
+            block.addStatement(new CExpressionStatement(new CAssignment(new CFieldAccess(name, new CName("cons_name"), true), SourceVisitor.stringCreation(new CStringLiteral(field.name.name), cc), "=")));
+            ordinal++;
         }
+        //init values() method
+        CMethod values = Util.getMethod(cc, "values");
+        values.body = new CBlockStatement();
+        CObjectCreation obj = new CObjectCreation();
+        obj.type = TypeHelper.getVectorType();
+        obj.type.typeNames.add(CType.asPtr(cc.getType()));
+        obj.type.setPointer(false);
+        CArrayInitializer arr = new CArrayInitializer();
+        for (CField cons : consList) {
+            arr.expressions.add(new CFieldAccess(new CFieldAccess(cc.getType(), cons.name, false), cons.name, true));
+        }
+        obj.args.add(arr);
+        values.body.addStatement(new CReturnStatement(obj));
+
+        //init valueOf method
+        CMethod valueof = Util.getMethod(cc, "valueOf");
+        valueof.params.get(0).name = new CName("name");
+        String str = "for($type* e : *values()){\n" +
+                "    if(e->cons_name == name){\n" +
+                "        return e;\n" +
+                "    }\n" +
+                "}\n" +
+                "return nullptr;";
+        RawStatement raw = new RawStatement(str.replace("$type", cc.getType().toString()));
+        valueof.body = new CBlockStatement();
+        valueof.body.addStatement(raw);
+
         if (!n.bodyDeclarations().isEmpty()) {
             n.bodyDeclarations().forEach(p -> visitBody((BodyDeclaration) p, cc));
         }
@@ -159,6 +229,18 @@ public class DeclarationVisitor {
         return method;
     }
 
+    //make main entry call this method
+    void mainEntrySiCall(CMethod method) {
+        //main entry should call this
+        CMethod si = getSiInit();
+        CMethodInvocation call = new CMethodInvocation();
+        call.name = method.name;
+        call.scope = method.parent.getType();
+        call.isArrow = false;
+        si.body.addStatement(new CExpressionStatement(call));
+    }
+
+    //static initializer
     public void visit(Initializer node, CClass cc) {
         CMethod method = new CMethod();
         cc.addMethod(method);
@@ -169,15 +251,11 @@ public class DeclarationVisitor {
         sourceVisitor.clazz = cc;
         method.body = (CBlockStatement) sourceVisitor.visitExpr(node.getBody(), null);
 
-        //todo main entry should call this
-        CMethod si = getSiInit();
-        CMethodInvocation call = new CMethodInvocation();
-        call.name = method.name;
-        call.scope = cc.getType();
-        call.isArrow = false;
-        si.body.addStatement(new CExpressionStatement(call));
+        //main entry should call this
+        mainEntrySiCall(method);
     }
 
+    //get static initializer method init main entry
     CMethod getSiInit() {
         for (CMethod method : ClassMap.sourceMap.mainClass.methods) {
             if (method.name.is("si_init")) {
@@ -185,5 +263,9 @@ public class DeclarationVisitor {
             }
         }
         return null;//never happens
+    }
+
+    enum add {
+        EVEN;
     }
 }

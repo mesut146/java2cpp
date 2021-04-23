@@ -1,6 +1,8 @@
 package com.mesut.j2cpp;
 
+import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
+import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CSource;
 
 import java.io.*;
@@ -83,5 +85,12 @@ public class Util {
             return str.substring(prefix.length());
         }
         return str;
+    }
+
+    public static CMethod getMethod(CClass cc, String name) {
+        for (CMethod method : cc.methods) {
+            if (method.name.is(name)) return method;
+        }
+        return null;
     }
 }

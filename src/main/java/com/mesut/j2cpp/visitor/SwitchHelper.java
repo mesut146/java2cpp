@@ -7,7 +7,6 @@ import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.cppast.expr.CFieldAccess;
 import com.mesut.j2cpp.cppast.expr.CInfixExpression;
-import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.cppast.literal.CCharacterLiteral;
 import com.mesut.j2cpp.cppast.literal.CNumberLiteral;
 import com.mesut.j2cpp.cppast.stmt.*;
@@ -36,11 +35,7 @@ public class SwitchHelper {
         if (expression instanceof CNumberLiteral || expression instanceof CCharacterLiteral) {
             return expression;
         }
-        CMethodInvocation methodInvocation = new CMethodInvocation();
-        methodInvocation.isArrow = true;
-        methodInvocation.scope = expression;
-        methodInvocation.name = new CName("ordinal");
-        return methodInvocation;
+        return new CFieldAccess(expression, new CName("ordinal"), true);
     }
 
     public CSwitch makeNormal(SwitchStatement node) {

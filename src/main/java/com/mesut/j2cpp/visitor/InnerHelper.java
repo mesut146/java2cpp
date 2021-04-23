@@ -18,10 +18,7 @@ public class InnerHelper {
         cc.addField(new CField(outer.getType(), refName));
 
         //assign expr
-        CFieldAccess access = new CFieldAccess();
-        access.isArrow = true;
-        access.scope = new CThisExpression();
-        access.name = refName;
+        CFieldAccess access = new CFieldAccess(new CThisExpression(),refName,true);
         CExpressionStatement assign = new CExpressionStatement(new CAssignment(access, refName, "="));
 
         //make ref param
