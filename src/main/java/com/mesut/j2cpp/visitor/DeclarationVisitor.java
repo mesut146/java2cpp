@@ -233,10 +233,7 @@ public class DeclarationVisitor {
     void mainEntrySiCall(CMethod method) {
         //main entry should call this
         CMethod si = getSiInit();
-        CMethodInvocation call = new CMethodInvocation();
-        call.name = method.name;
-        call.scope = method.parent.getType();
-        call.isArrow = false;
+        CMethodInvocation call = new CMethodInvocation(method.parent.getType(),method.name,false);
         si.body.addStatement(new CExpressionStatement(call));
     }
 

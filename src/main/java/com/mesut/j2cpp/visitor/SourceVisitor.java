@@ -351,14 +351,8 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         if (typeBinding == null) {
             Logger.logBinding(clazz, node.toString());
         }
-        else {
-            if (typeBinding.isArray() && node.getName().getIdentifier().equals("length")) {
-                CMethodInvocation invocation = new CMethodInvocation();
-                invocation.name = new CName("size");
-                invocation.scope = scopeExpr;
-                invocation.isArrow = true;
-                return invocation;
-            }
+        else if (typeBinding.isArray() && node.getName().getIdentifier().equals("length")) {
+            return new CMethodInvocation(scopeExpr, new CName("size"), true);
         }
 
         if (scope instanceof Name) {//field/var or class
@@ -376,7 +370,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             else {
                 fieldAccess.isArrow = !Modifier.isStatic(binding.getModifiers());
             }
-
         }
         else {//another expr
             fieldAccess.isArrow = true;
@@ -449,7 +442,11 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(ThisExpression node, CNode arg) {
-        return new CThisExpression();
+        if (node.getQualifier() == null) {
+            return new CThisExpression();
+        }
+        ITypeBinding binding = node.getQualifier().resolveTypeBinding();
+        return ref2(this.binding, binding);
     }
 
     @Override

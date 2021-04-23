@@ -13,6 +13,15 @@ public class CMethodInvocation extends CExpression {
     public List<CExpression> arguments = new ArrayList<>();
     public boolean isArrow;//pointer or dot
 
+    public CMethodInvocation() {
+    }
+
+    public CMethodInvocation(CExpression scope, CName name, boolean isArrow) {
+        this.scope = scope;
+        this.name = name;
+        this.isArrow = isArrow;
+    }
+
     @Override
     public String toString() {
         getScope(name);

@@ -12,13 +12,13 @@ interface base {
     void baseMeth();
 }
 
-class test implements iface{
-  void asd(){
-  
-  }
-  
-  void baseMeth(){
-  
-  }
+class test implements iface {
+    void asd() {
+
+    }
+
+    void baseMeth() {
+
+    }
 
 }

@@ -79,18 +79,17 @@ public class Conv {
         converter.addClasspath(rtJar);
         Mapper.instance.initMappers();
         //Config.common_forwards = false;
-        //converter.getFilter().addIncludeClass("base.InnerTest");
+        converter.getFilter().addIncludeClass("base.Inner1");
         //converter.getFilter().addIncludeClass("base.SuperTest");
         //converter.getFilter().addIncludeClass("base.iface");
         //converter.getFilter().addIncludeClass("base.ArrayTest");
-        //converter.getFilter().addIncludeClass("base.Inner2Test");
         //converter.getFilter().addIncludeClass("base.Generic");
         //converter.getFilter().addIncludeClass("base.Fields");
         //converter.getFilter().addIncludeClass("base.Try1");
         //converter.getFilter().addIncludeClass("base.Try2");
         //converter.getFilter().addIncludeClass("base.SwitchTest");
         //converter.getFilter().addIncludeClass("base.Cons");
-        converter.getFilter().addIncludeClass("base.Enum1");
+        //converter.getFilter().addIncludeClass("base.Enum1");
         //converter.getFilter().addIncludeClass("base.StringTest");
         converter.convert();
     }
@@ -109,28 +108,16 @@ public class Conv {
         converter.convert();
     }
 
-    @Test
-    public void asd() {
-        name(6);
-    }
+    class inner {
+        void a() {
+            Conv obj = Conv.this;
+        }
 
-    int aa() {
-        return 1;
-    }
-
-    public void name(int y) {
-        switch (aa()) {
-            case 1: {
-                if (y % 2 == 0) {
-                    break;
-                }
-                System.out.println("1");
-                break;
+        class ii {
+            void b() {
+                Conv obj = Conv.this;
+                inner o2 = inner.this;
             }
-            case 2:
-                System.out.println("2");
-            default:
-                System.out.println("def");
         }
     }
 

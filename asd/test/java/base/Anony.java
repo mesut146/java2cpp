@@ -1,0 +1,5 @@
+package base;
+
+class Anony {
+
+}
