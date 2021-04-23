@@ -20,7 +20,12 @@ public class CMethodInvocation extends CExpression {
         StringBuilder sb = new StringBuilder();
         if (scope != null) {
             scope.scope = super.scope;
-            sb.append(scope);
+            if (scope instanceof CObjectCreation) {
+                sb.append("(").append(scope).append(")");
+            }
+            else {
+                sb.append(scope);
+            }
             if (isArrow) {
                 sb.append("->");
             }

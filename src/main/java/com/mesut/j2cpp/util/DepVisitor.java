@@ -20,9 +20,9 @@ public class DepVisitor extends ASTVisitor {
         declaration.accept(this);
     }
 
-    void add(ITypeBinding binding, Expression expression) {
+    void add(ITypeBinding binding, String expression) {
         if (binding == null) {
-            Logger.logBinding(cc, expression.toString());
+            Logger.logBinding(cc, expression);
             return;
         }
         //todo prevent header types being included again
@@ -32,7 +32,7 @@ public class DepVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(ClassInstanceCreation node) {
-        add(node.getType().resolveBinding(), node);
+        add(node.getType().resolveBinding(), node.toString());
         return super.visit(node);
     }
 
@@ -40,14 +40,14 @@ public class DepVisitor extends ASTVisitor {
     public boolean visit(MethodInvocation node) {
         if (node.getExpression() != null) {
             Expression scope = node.getExpression();
-            add(scope.resolveTypeBinding(), node);
+            add(scope.resolveTypeBinding(), node.toString());
         }
         return super.visit(node);
     }
 
     @Override
     public boolean visit(FieldAccess node) {
-        add(node.resolveTypeBinding(), node);
+        add(node.resolveTypeBinding(), node.toString());
         return super.visit(node);
     }
 
@@ -57,9 +57,15 @@ public class DepVisitor extends ASTVisitor {
         IBinding binding = node.resolveBinding();
         if (binding != null) {
             if (binding instanceof IVariableBinding) {
-                add(node.getQualifier().resolveTypeBinding(), node);
+                add(node.getQualifier().resolveTypeBinding(), node.toString());
             }
         }
         return false;
+    }
+
+    @Override
+    public boolean visit(CatchClause node) {
+        add(node.getException().getType().resolveBinding(), node.getException().toString());
+        return true;
     }
 }
