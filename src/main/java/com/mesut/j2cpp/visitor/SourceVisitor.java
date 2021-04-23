@@ -220,12 +220,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         forEachStatement.body = (CStatement) visitExpr(node.getBody(), arg);
         forEachStatement.left = (CSingleVariableDeclaration) visit(node.getParameter(), arg);
         forEachStatement.right = (CExpression) visitExpr(node.getExpression(), arg);
-        if (Config.use_vector) {
-            forEachStatement.right = new DeferenceExpr(forEachStatement.right);
-        }
-        else {
-            //todo java.iterator() or c++ type iterator
-        }
+        forEachStatement.right = new DeferenceExpr(forEachStatement.right);
         return forEachStatement;
     }
 
@@ -358,13 +353,11 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
         else {
             if (typeBinding.isArray() && node.getName().getIdentifier().equals("length")) {
-                if (Config.use_vector) {
-                    CMethodInvocation invocation = new CMethodInvocation();
-                    invocation.name = new CName("size");
-                    invocation.scope = scopeExpr;
-                    invocation.isArrow = true;
-                    return invocation;
-                }
+                CMethodInvocation invocation = new CMethodInvocation();
+                invocation.name = new CName("size");
+                invocation.scope = scopeExpr;
+                invocation.isArrow = true;
+                return invocation;
             }
         }
 
@@ -601,29 +594,19 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(ArrayAccess node, CNode arg) {
         CExpression expr = (CExpression) visitExpr(node.getArray(), arg);
         CExpression index = (CExpression) visitExpr(node.getIndex(), arg);
-
-        if (Config.use_vector) {
-            if (Config.array_access_bracket) {
-                CArrayAccess arrayAccess = new CArrayAccess();
-                arrayAccess.left = expr;
-                arrayAccess.index = index;
-                return arrayAccess;
-            }
-            else {
-                CMethodInvocation invocation = new CMethodInvocation();
-                invocation.name = new CName("at");
-                invocation.isArrow = true;
-                invocation.scope = expr;
-                invocation.arguments.add(index);
-                return invocation;
-            }
-        }
-        else {
-            //todo custom array
+        if (Config.array_access_bracket) {
             CArrayAccess arrayAccess = new CArrayAccess();
-            arrayAccess.left = expr;
+            arrayAccess.left = new DeferenceExpr(expr);
             arrayAccess.index = index;
             return arrayAccess;
+        }
+        else {
+            CMethodInvocation invocation = new CMethodInvocation();
+            invocation.name = new CName("at");
+            invocation.isArrow = true;
+            invocation.scope = expr;
+            invocation.arguments.add(index);
+            return invocation;
         }
     }
 
@@ -881,17 +864,14 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             type.isPointer = false;
             CExpression scope = (CExpression) visitExpr(node.getQualifier(), arg);
 
-
             if (typeBinding.isArray() && node.getName().getIdentifier().equals("length")) {
                 IVariableBinding variableBinding = (IVariableBinding) binding;
                 if (variableBinding.getDeclaringClass() == null) {//array.length
-                    if (Config.use_vector) {
-                        CMethodInvocation methodInvocation = new CMethodInvocation();
-                        methodInvocation.isArrow = true;
-                        methodInvocation.scope = scope;
-                        methodInvocation.name = new CName("size");
-                        return methodInvocation;
-                    }
+                    CMethodInvocation methodInvocation = new CMethodInvocation();
+                    methodInvocation.isArrow = true;
+                    methodInvocation.scope = scope;
+                    methodInvocation.name = new CName("size");
+                    return methodInvocation;
                 }
             }
             if (isStatic) {

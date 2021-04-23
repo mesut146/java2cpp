@@ -54,7 +54,7 @@ public class Config {
 
     public static String mainClass = null;
 
-    public static boolean use_vector = true;
+    //use arr[idx] instead of vector.at(idx)
     public static boolean array_access_bracket = false;
 
     public static tryModes tryMode = tryModes.AS_IS;

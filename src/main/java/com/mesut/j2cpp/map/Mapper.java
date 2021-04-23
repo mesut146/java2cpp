@@ -230,7 +230,6 @@ public class Mapper {
                 }
             }
         }
-
         res = new CName(name);
         res.orgName = org;
         return res;
