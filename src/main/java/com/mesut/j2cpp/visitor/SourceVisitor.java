@@ -654,7 +654,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(MethodInvocation node, CNode arg) {
         IMethodBinding binding = node.resolveMethodBinding();
         if (binding == null) {
-            Logger.log(clazz, node + " has null binding ,conversion may have problems");
+            Logger.logBinding(clazz, node.toString());
             CMethodInvocation invocation = new CMethodInvocation();
             invocation.arguments = list(node.arguments());
             invocation.name = (CName) visit(node.getName(), null);
@@ -767,32 +767,36 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         return list;
     }
 
-    CNode resolvedName(SimpleName node) {
+    CNode resolveName(SimpleName node) {
         IBinding binding = node.resolveBinding();
         CName name = new CName(node.getIdentifier());
         if (binding == null) {
             Logger.logBinding(clazz, node.toString());
             return name;
         }
+        if (binding.getKind() != IBinding.VARIABLE) {
+            return name;
+        }
         boolean isStatic = Modifier.isStatic(binding.getModifiers());
-        if (binding.getKind() == IBinding.VARIABLE) {
-            IVariableBinding variableBinding = (IVariableBinding) binding;
-            ITypeBinding onType = variableBinding.getDeclaringClass();
-            if (variableBinding.isField()) {
-                name = Mapper.instance.mapFieldName(name.name, clazz);
-                CType type = TypeVisitor.fromBinding(onType, clazz);
+        IVariableBinding variableBinding = (IVariableBinding) binding;
+        ITypeBinding onType = variableBinding.getDeclaringClass();
+        if (variableBinding.isField()) {
+            name = Mapper.instance.mapFieldName(name.name, clazz);
+            CType type = TypeVisitor.fromBinding(onType, clazz);
+            if (isStatic) {
                 //static field,qualify
-                if (isStatic) {
-                    return new CFieldAccess(type, name, false);
-                }
-                if (isSuper(this.binding, onType)) {
-                    return name;
-                }
-                CExpression ref = ref2(this.binding, onType);
-                if (ref != null) {
-                    return new CFieldAccess(ref, name, true);
-                }
+                return new CFieldAccess(type, name, false);
             }
+            if (isSuper(this.binding, onType)) {
+                return name;
+            }
+            CExpression ref = ref2(this.binding, onType);
+            if (ref != null) {
+                return new CFieldAccess(ref, name, true);
+            }
+        }
+        else if (variableBinding.isParameter()) {
+            return new CName(Mapper.instance.mapParamName(node.getIdentifier()));
         }
         return name;
     }
@@ -814,69 +818,48 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         return new CFieldAccess(ref, new CName(Config.parentName), true);
     }
 
-
-    CExpression ref(CClass from, CType target) {
-        if (from.parent == null) {
-            return null;
-        }
-        if (from.parent.getType().equals(target)) {
-            return new CName(Config.parentName);
-        }
-        CExpression ref = ref(from.parent, target);
-        if (ref == null) {
-            return null;
-        }
-        return new CFieldAccess(ref, new CName(Config.parentName), true);
-    }
-
     @Override
     public CNode visit(SimpleName node, CNode arg) {
-        return resolvedName(node);
+        return resolveName(node);
     }
 
     //qualified class,array.length,field access
     @Override
     public CNode visit(QualifiedName node, CNode arg) {
         IBinding binding = node.resolveBinding();
+        ITypeBinding typeBinding = node.getQualifier().resolveTypeBinding();
 
         if ((binding instanceof IVariableBinding) && Config.writeLibHeader) {
             LibHandler.instance.addField((IVariableBinding) binding);
         }
-
-        if (binding == null) {
+        if (binding == null || typeBinding == null) {
             Logger.logBinding(clazz, node.toString());
             //normal qualified name access
+            //qualifier is not a type so it is a package
             return new CName(node.getFullyQualifiedName());
         }
-        else {
-            ITypeBinding typeBinding = node.getQualifier().resolveTypeBinding();
 
-            if (typeBinding == null) {
-                //qualifier is not a type so it is a package
-                return new CName(node.getFullyQualifiedName());
-            }
+        boolean isStatic = Modifier.isStatic(binding.getModifiers());
+        CType type = TypeVisitor.fromBinding(typeBinding, clazz);
+        type.isPointer = false;
+        CExpression scope = (CExpression) visitExpr(node.getQualifier(), arg);
 
-            boolean isStatic = Modifier.isStatic(binding.getModifiers());
-            CType type = TypeVisitor.fromBinding(typeBinding, clazz);
-            type.isPointer = false;
-            CExpression scope = (CExpression) visitExpr(node.getQualifier(), arg);
+        String name = node.getName().getIdentifier();
 
-            if (typeBinding.isArray() && node.getName().getIdentifier().equals("length")) {
-                IVariableBinding variableBinding = (IVariableBinding) binding;
-                if (variableBinding.getDeclaringClass() == null) {//array.length
-                    CMethodInvocation methodInvocation = new CMethodInvocation();
-                    methodInvocation.isArrow = true;
-                    methodInvocation.scope = scope;
-                    methodInvocation.name = new CName("size");
-                    return methodInvocation;
-                }
-            }
-            if (isStatic) {
-                return new CFieldAccess(type, new CName(node.getName().getIdentifier()), false);
-            }
-            else {
-                return new CFieldAccess(scope, new CName(node.getName().getIdentifier()), true);
+        if (typeBinding.isArray() && name.equals("length")) {
+            IVariableBinding variableBinding = (IVariableBinding) binding;
+            //array.length
+            if (variableBinding.getDeclaringClass() == null) {
+                return new CMethodInvocation(scope, new CName("size"), true);
             }
         }
+        if (binding.getKind() == IBinding.VARIABLE) {
+            IVariableBinding variableBinding = (IVariableBinding) binding;
+            if (!isStatic && variableBinding.isField()) {
+                CName mapped = Mapper.instance.mapFieldName(name, clazz);
+                return new CFieldAccess(type, mapped, true);
+            }
+        }
+        return new CFieldAccess(type, new CName(name), !isStatic);
     }
 }

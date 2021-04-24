@@ -200,11 +200,10 @@ public class Mapper {
         return type;
     }
 
-    String mapParamName(String name, CMethod method) {
+    public String mapParamName(String name) {
         if (Util.isKeyword(name)) {
-            name = name + "_renamed";
+            return map(name);
         }
-        //todo add to map
         return name;
     }
 

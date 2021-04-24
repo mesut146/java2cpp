@@ -6,7 +6,6 @@ import com.mesut.j2cpp.map.Mapper;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -14,7 +13,7 @@ public class Conv {
     public static String rtJar = "/home/mesut/Desktop/j2cpp-dev/rt7.jar";
 
     @Test
-    public void testList() throws URISyntaxException, IOException {
+    public void testList() throws Exception {
         String dir = "/home/mesut/Desktop/j2cpp-dev/src7";
         String out = "/home/mesut/Desktop/j2cpp-dev/src7-cpp";
         Converter converter = new Converter(dir, out);
@@ -79,7 +78,7 @@ public class Conv {
         converter.addClasspath(rtJar);
         Mapper.instance.initMappers();
         //Config.common_forwards = false;
-        converter.getFilter().addIncludeClass("base.Inner1");
+        //converter.getFilter().addIncludeClass("base.Inner1");
         //converter.getFilter().addIncludeClass("base.SuperTest");
         //converter.getFilter().addIncludeClass("base.iface");
         //converter.getFilter().addIncludeClass("base.ArrayTest");
@@ -91,6 +90,7 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Cons");
         //converter.getFilter().addIncludeClass("base.Enum1");
         //converter.getFilter().addIncludeClass("base.StringTest");
+        converter.getFilter().addIncludeClass("base.Renamer");
         converter.convert();
     }
 
@@ -106,19 +106,6 @@ public class Conv {
         converter.getFilter().addIncludeClass("mapper.SetTest");
         //converter.getFilter().addIncludeClass("mapper.IntegerTest");
         converter.convert();
-    }
-
-    class inner {
-        void a() {
-            Conv obj = Conv.this;
-        }
-
-        class ii {
-            void b() {
-                Conv obj = Conv.this;
-                inner o2 = inner.this;
-            }
-        }
     }
 
 }
