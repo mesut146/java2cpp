@@ -296,12 +296,9 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(SuperConstructorInvocation node, CNode arg) {
-        //todo not so simple
         Call superCall = new Call();
         superCall.isThis = false;
-        for (Expression ar : (List<Expression>) node.arguments()) {
-            superCall.args.add((CExpression) visitExpr(ar, arg));
-        }
+        superCall.args = list(node.arguments());
         superCall.type = clazz.superClass;
         method.superCall = superCall;
         return new CEmptyStatement();

@@ -1,27 +1,27 @@
 package base;
 
 
-public class SuperTest{
+public class SuperTest {
 
-  int val;
+    int val;
 
-  void print(){};
-
-  static class inner extends SuperTest{
-    void print(){};
-  
-  
-    void print2(){
-      print();//this->print()
-      super.print();//SuperTest::print
-      this.print2();//this->print2()
+    void print() {
     }
-    
-    
-    static class inner2 extends inner{
-      void test(){
-        int x = val;
-      }
+
+    static class inner extends SuperTest {
+        void print() {
+        }
+
+        void print2() {
+            print();//this->print()
+            super.print();//SuperTest::print
+            this.print2();//this->print2()
+        }
+
+        static class inner2 extends inner {
+            void test() {
+                int x = val;
+            }
+        }
     }
-  }
 }

@@ -81,7 +81,7 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Inner1");
         //converter.getFilter().addIncludeClass("base.SuperTest");
         //converter.getFilter().addIncludeClass("base.iface");
-        //converter.getFilter().addIncludeClass("base.ArrayTest");
+        converter.getFilter().addIncludeClass("base.ArrayTest");
         //converter.getFilter().addIncludeClass("base.Generic");
         //converter.getFilter().addIncludeClass("base.Fields");
         //converter.getFilter().addIncludeClass("base.Try1");
@@ -90,7 +90,8 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Cons");
         //converter.getFilter().addIncludeClass("base.Enum1");
         //converter.getFilter().addIncludeClass("base.StringTest");
-        converter.getFilter().addIncludeClass("base.Renamer");
+        //converter.getFilter().addIncludeClass("base.Renamer");
+        //converter.getFilter().addIncludeClass("base.Anony");
         converter.convert();
     }
 
