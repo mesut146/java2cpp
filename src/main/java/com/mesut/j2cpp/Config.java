@@ -7,6 +7,8 @@ public class Config {
 
     public static List<String> ignored = new ArrayList<>();
 
+    public static boolean use_auto = true;
+
     //inherit enums from java.lang.Enum
     public static boolean enumBaseClass = false;
 

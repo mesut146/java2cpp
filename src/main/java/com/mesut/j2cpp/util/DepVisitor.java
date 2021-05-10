@@ -68,4 +68,10 @@ public class DepVisitor extends ASTVisitor {
         add(node.getException().getType().resolveBinding(), node.getException().toString());
         return true;
     }
+
+    @Override
+    public boolean visit(CastExpression node) {
+        add(node.getType().resolveBinding(), node.toString());
+        return super.visit(node);
+    }
 }

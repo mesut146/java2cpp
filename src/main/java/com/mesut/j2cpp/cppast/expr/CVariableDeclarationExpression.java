@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.cppast.expr;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.stmt.CVariableDeclarationFragment;

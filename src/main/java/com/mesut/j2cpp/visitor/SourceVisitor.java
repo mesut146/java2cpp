@@ -519,7 +519,8 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     CExpression makeStrIfNot(Expression node) {
         if (node instanceof StringLiteral) {
-            return str((StringLiteral) node);
+            StringLiteral lit = (StringLiteral) node;
+            return new CStringLiteral(lit.getLiteralValue(), lit.getEscapedValue());
         }
         else {
             ITypeBinding binding = node.resolveTypeBinding();
@@ -531,14 +532,13 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 return invocation;
             }
             else {
-                if (node instanceof Name && binding.getQualifiedName().equals("java.lang.String")) {
-                    //string variable -> dereference
+                if (binding.getQualifiedName().equals("java.lang.String")) {
                     return new DeferenceExpr(expression);
                 }
                 else {
                     //may have toString
                     for (IMethodBinding methodBinding : binding.getDeclaredMethods()) {
-                        if (!binding.getQualifiedName().equals("java.lang.String") && methodBinding.getName().equals("toString") && methodBinding.getReturnType().getQualifiedName().equals("java.lang.String")) {
+                        if (methodBinding.getName().equals("toString") && methodBinding.getReturnType().getQualifiedName().equals("java.lang.String")) {
                             CMethodInvocation invocation = new CMethodInvocation();
                             invocation.isArrow = true;
                             invocation.scope = expression;
@@ -553,35 +553,31 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
     }
 
-    CStringLiteral str(StringLiteral lit) {
-        return new CStringLiteral(lit.getLiteralValue(), lit.getEscapedValue());
-    }
-
     @Override
     public CNode visit(PostfixExpression node, CNode arg) {
-        CPostfixExpression postfixExpression = new CPostfixExpression();
-        postfixExpression.operator = node.getOperator().toString();
-        postfixExpression.expression = (CExpression) visitExpr(node.getOperand(), arg);
-        return postfixExpression;
+        CPostfixExpression res = new CPostfixExpression();
+        res.operator = node.getOperator().toString();
+        res.expression = (CExpression) visitExpr(node.getOperand(), arg);
+        return res;
     }
 
     @Override
     public CNode visit(PrefixExpression node, CNode arg) {
-        CPrefixExpression prefixExpression = new CPrefixExpression();
-        prefixExpression.operator = node.getOperator().toString();
-        prefixExpression.expression = (CExpression) visitExpr(node.getOperand(), arg);
-        return prefixExpression;
+        CPrefixExpression res = new CPrefixExpression();
+        res.operator = node.getOperator().toString();
+        res.expression = (CExpression) visitExpr(node.getOperand(), arg);
+        return res;
     }
 
     @Override
     public CNode visit(InstanceofExpression node, CNode arg) {
         source.hasRuntime = true;
-        CMethodInvocation invocation = new CMethodInvocation();
-        invocation.arguments.add((CExpression) visitExpr(node.getLeftOperand(), arg));
-        invocation.name = new CName("instance_of");
+        CMethodInvocation res = new CMethodInvocation();
+        res.arguments.add((CExpression) visitExpr(node.getLeftOperand(), arg));
+        res.name = new CName("instance_of");
         CType type = TypeVisitor.visitType(node.getRightOperand(), clazz);
-        invocation.name.typeArgs.add(type);
-        return invocation;
+        res.name.typeArgs.add(type);
+        return res;
     }
 
     @Override
@@ -635,10 +631,10 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(CastExpression node, CNode arg) {
-        CCastExpression castExpression = new CCastExpression();
-        castExpression.expression = (CExpression) visitExpr(node.getExpression(), arg);
-        castExpression.setTargetType(TypeVisitor.visitType(node.getType(), clazz));
-        return castExpression;
+        CCastExpression res = new CCastExpression();
+        res.expression = (CExpression) visitExpr(node.getExpression(), arg);
+        res.setTargetType(TypeVisitor.visitType(node.getType(), clazz));
+        return res;
     }
 
     @Override
