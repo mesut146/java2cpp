@@ -83,6 +83,17 @@ public class Mapper {
             info.includes.addAll(Arrays.asList(include.split(",")));
         }
 
+        if (cls.has("fields")) {
+            JSONArray farr = cls.getJSONArray("fields");
+            for (int i = 0; i < farr.length(); i++) {
+                JSONObject field = farr.getJSONObject(i);
+                FieldInfo fieldInfo = new FieldInfo();
+                fieldInfo.name = field.getString("name");
+                fieldInfo.target = field.getString("target");
+                fieldInfo.external = field.optBoolean("external", false);
+            }
+        }
+
         JSONArray methods = cls.getJSONArray("methods");
         for (int i = 0; i < methods.length(); i++) {
             JSONObject method = methods.getJSONObject(i);
@@ -255,5 +266,11 @@ public class Mapper {
         String expr;
         List<CType> args = new ArrayList<>();
         List<String> includes = new ArrayList<>();
+    }
+
+    static class FieldInfo {
+        String name;
+        boolean external = false;
+        String target;
     }
 }

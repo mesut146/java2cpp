@@ -16,7 +16,6 @@ public class Cmd {
         String srcDir = null;
         String destDir = null;
         List<String> cp = new ArrayList<>();
-        boolean useMapper = false;
 
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -36,9 +35,6 @@ public class Cmd {
                 case "-cp":
                 case "-classpath":
                     cp.add(args[++i]);
-                    break;
-                case "-map":
-                    useMapper = true;
                     break;
                 case "-mapper":
                     String path = args[++i];
@@ -67,12 +63,12 @@ public class Cmd {
             else {
                 converter.classpath.addAll(cp);
             }
-            if (useMapper) {
-                String[] all = {"list.json", "map.json", "set.json", "string.json", "Boolean.json", "Integer.json"};
-                for (String mapper : all) {
-                    Mapper.instance.addMapper(Cmd.class.getResourceAsStream("/mappers/" + mapper));
-                }
+
+            String[] all = {"list.json", "map.json", "set.json", "string.json", "Boolean.json", "Integer.json"};
+            for (String mapper : all) {
+                Mapper.instance.addMapper(Cmd.class.getResourceAsStream("/mappers/" + mapper));
             }
+
             converter.convert();
         }
     }

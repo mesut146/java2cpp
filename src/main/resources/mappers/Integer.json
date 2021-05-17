@@ -110,5 +110,17 @@
       "external": true,
       "target": "CppHelper::numberOfLeadingZeros($1)"
     }
+  ],
+  "fields": [
+    {
+      "name": "MAX_VALUE",
+      "target": "INT32_MAX",
+      "external": true
+    },
+    {
+      "name": "MIN_VALUE",
+      "target": "INT32_MIN",
+      "external": true
+    }
   ]
 }
