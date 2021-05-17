@@ -2,17 +2,16 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Logger;
-import com.mesut.j2cpp.ast.*;
-import com.mesut.j2cpp.map.ClassMap;
+import com.mesut.j2cpp.ast.CClass;
+import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.ast.CUnionType;
+import com.mesut.j2cpp.ast.Namespace;
+import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.ArrayHelper;
-import com.mesut.j2cpp.map.BindingMap;
 import com.mesut.j2cpp.util.TypeHelper;
-import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.dom.*;
-import org.eclipse.jdt.internal.core.util.BindingKeyResolver;
 
-import java.util.Arrays;
 import java.util.List;
 
 //visit types and ensures type is included
@@ -31,7 +30,10 @@ public class TypeVisitor {
             return ArrayHelper.makeArrayType(fromBinding0(binding.getElementType(), cc), binding.getDimensions());
         }
         if (binding.isWildcardType()) {
-            return TypeHelper.getObjectType();
+            if (binding.getBound() == null) {
+                return TypeHelper.getObjectType();
+            }
+            return fromBinding0(binding.getBound(), cc);
         }
         if (binding.isPrimitive()) {
             return new CType(TypeHelper.toCType(binding.getName()));

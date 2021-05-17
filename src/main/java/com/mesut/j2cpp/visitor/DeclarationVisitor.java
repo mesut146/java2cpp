@@ -124,6 +124,14 @@ public class DeclarationVisitor {
         toStr.body = new CBlockStatement();
         toStr.body.addStatement(new CReturnStatement(name.name));
         cc.addMethod(toStr);
+        //compareTo method
+        CMethod cmp = new CMethod();
+        cmp.name = new CName("compareTo");
+        cmp.type = new CType("int");
+        cmp.addParam(new CParameter(cc.getType(), CName.simple("other")));
+        cmp.body = new CBlockStatement();
+        cmp.body.addStatement(new CReturnStatement(new CInfixExpression(CName.simple("ordinal"), new CMethodInvocation(CName.simple("other"), CName.simple("ordinal"), true), "==")));
+        cc.addMethod(cmp);
         return init.body;
     }
 
@@ -233,7 +241,7 @@ public class DeclarationVisitor {
     void mainEntrySiCall(CMethod method) {
         //main entry should call this
         CMethod si = getSiInit();
-        CMethodInvocation call = new CMethodInvocation(method.parent.getType(),method.name,false);
+        CMethodInvocation call = new CMethodInvocation(method.parent.getType(), method.name, false);
         si.body.addStatement(new CExpressionStatement(call));
     }
 
@@ -261,6 +269,8 @@ public class DeclarationVisitor {
         }
         return null;//never happens
     }
+
+    enum aaa {}
 
     enum add {
         EVEN;

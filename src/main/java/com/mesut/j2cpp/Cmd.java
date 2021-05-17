@@ -63,12 +63,7 @@ public class Cmd {
             else {
                 converter.classpath.addAll(cp);
             }
-
-            String[] all = {"list.json", "map.json", "set.json", "string.json", "Boolean.json", "Integer.json"};
-            for (String mapper : all) {
-                Mapper.instance.addMapper(Cmd.class.getResourceAsStream("/mappers/" + mapper));
-            }
-
+            Mapper.instance.initMappers();
             converter.convert();
         }
     }
