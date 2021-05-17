@@ -113,7 +113,8 @@
     },
     {
       "name": "equals(java.lang.Object)",
-      "target": "compare((std::string*)$1) == 0"
+      "target": "(*${varName} == $1)",
+      "external": true
     },
     {
       "name": "format(java.lang.String,java.lang.Object[])",

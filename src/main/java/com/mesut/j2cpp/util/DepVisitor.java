@@ -40,6 +40,9 @@ public class DepVisitor extends ASTVisitor {
     public boolean visit(MethodInvocation node) {
         if (node.getExpression() != null) {
             Expression scope = node.getExpression();
+            if (scope.toString().equals("System.out") || scope.toString().equals("java.lang.System.out") || scope.toString().equals("System.err") || scope.toString().equals("java.lang.System.err")) {
+                return super.visit(node);
+            }
             add(scope.resolveTypeBinding(), node.toString());
         }
         return super.visit(node);
@@ -72,6 +75,12 @@ public class DepVisitor extends ASTVisitor {
     @Override
     public boolean visit(CastExpression node) {
         add(node.getType().resolveBinding(), node.toString());
+        return super.visit(node);
+    }
+
+    @Override
+    public boolean visit(InstanceofExpression node) {
+        add(node.getRightOperand().resolveBinding(), node.toString());
         return super.visit(node);
     }
 }

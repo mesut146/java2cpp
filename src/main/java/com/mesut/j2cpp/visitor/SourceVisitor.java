@@ -642,19 +642,54 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         return new CParenthesizedExpression((CExpression) visitExpr(node.getExpression(), arg));
     }
 
+
+    CExpression handlePrint(String name, Expression scope, Expression e, CExpression arc) {
+        String str = scope.toString();
+        if (str.equals("System.out") || str.equals("java.lang.System.out") || str.equals("System.err") || str.equals("java.lang.System.err")) {
+            boolean err = str.equals("System.err") || str.equals("java.lang.System.err");
+            CName out = err ? CName.from("std::cerr") : CName.from("std::cout");
+            //normalize arg
+            CExpression arg;
+            if (e instanceof StringLiteral) {
+                arg = new CStringLiteral(((StringLiteral) e).getLiteralValue());
+            }
+            else if (e instanceof NumberLiteral) {
+                arg = new CNumberLiteral(e.toString());
+            }
+            else {
+                arg = new DeferenceExpr(new CParenthesizedExpression(arc));
+            }
+            if (name.equals("print") || name.equals("append")) {
+                CInfixExpression infix = new CInfixExpression();
+                infix.operator = "<<";
+                infix.left = out;
+                infix.right = arg;
+                return infix;
+            }
+            else if (name.equals("println")) {
+                CInfixExpression infix = new CInfixExpression();
+                infix.operator = "<<";
+                infix.left = out;
+                infix.right = arg;
+                return new CInfixExpression(infix, new CStringLiteral("\\n"), "<<");
+            }
+        }
+        return null;
+    }
+
     @SuppressWarnings("unchecked")
     @Override
-    public CNode visit(MethodInvocation node, CNode arg) {
+    public CNode visit(MethodInvocation node, CNode arg0) {
         IMethodBinding binding = node.resolveMethodBinding();
         if (binding == null) {
             Logger.logBinding(clazz, node.toString());
             CMethodInvocation invocation = new CMethodInvocation();
             invocation.arguments = list(node.arguments());
             invocation.name = (CName) visit(node.getName(), null);
-            if (node.getExpression() != null) invocation.scope = (CExpression) visitExpr(node.getExpression(), arg);
+            if (node.getExpression() != null) invocation.scope = (CExpression) visitExpr(node.getExpression(), arg0);
             return invocation;
         }
-        CExpression scope = node.getExpression() == null ? null : (CExpression) visitExpr(node.getExpression(), arg);
+        CExpression scope = node.getExpression() == null ? null : (CExpression) visitExpr(node.getExpression(), arg0);
         CMethodInvocation invocation = new CMethodInvocation();
         invocation.name = (CName) visit(node.getName(), null);
         invocation.arguments = list(node.arguments());
@@ -671,6 +706,8 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
 
         if (scope != null) {
+            CExpression p = handlePrint(binding.getName(), node.getExpression(), (Expression) node.arguments().get(0), invocation.arguments.get(0));
+            if (p != null) return p;
             //mapper
             Mapper.Mapped target = Mapper.instance.mapMethod(binding, invocation.arguments, scope, clazz);
             if (target != null) {

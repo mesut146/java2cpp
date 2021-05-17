@@ -12,6 +12,7 @@ public class CStringLiteral extends CExpression {
     }
 
     public CStringLiteral(String literalValue) {
+        literalValue = literalValue.replace("\r\n", "\\r\\n").replace("\n", "\\n");
         this.literalValue = literalValue;
     }
 

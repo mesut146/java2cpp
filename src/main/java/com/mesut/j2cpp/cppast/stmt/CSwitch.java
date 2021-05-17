@@ -17,11 +17,27 @@ public class CSwitch extends CStatement {
         getScope(statements);
         StringBuilder sb = new StringBuilder();
         sb.append("switch(").append(expression).append("){\n");
-        for (CStatement statement : statements) {
+        for (int i = 0; i < statements.size(); ) {
+            CStatement statement = statements.get(i);
             if (statement instanceof CCase) {
                 sb.append(statement);
+                i++;
             }
             else {
+                //merge statements so that c++ compiler doesn't complain
+                if (!(statement instanceof CBlockStatement)) {
+                    CBlockStatement b = new CBlockStatement();
+                    b.addStatement(statement);
+                    i++;
+                    while (i < statements.size()) {
+                        if (statements.get(i) instanceof CCase) {
+                            break;
+                        }
+                        b.addStatement(statements.get(i));
+                        i++;
+                    }
+                    statement = b;
+                }
                 sb.append(PrintHelper.body(statement.toString(), "    "));
             }
             sb.append("\n");

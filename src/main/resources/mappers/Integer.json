@@ -55,6 +55,12 @@
       "expr": "binary"
     },
     {
+      "name": "ceil(int)",
+      "external": true,
+      "target": "ceil($1)",
+      "include": "<cmath>"
+    },
+    {
       "name": "max(int,int)",
       "external": true,
       "target": "std::max($1, $2)"
