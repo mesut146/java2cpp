@@ -15,6 +15,7 @@ public class CMethod extends ModifierNode {
     public List<CParameter> params = new ArrayList<>();
     public boolean isCons = false;//is constructor
     public boolean isPureVirtual = false;
+    public boolean isOverride = false;
     public CClass parent;
     public Call superCall;//super(args)
     public Call thisCall;//this(args)
@@ -88,6 +89,9 @@ public class CMethod extends ModifierNode {
             sb.append("\n").append(body);
         }
         else {
+            if (isOverride){
+                sb.append(" override");
+            }
             if (isPureVirtual) {
                 sb.append(" = 0");
             }

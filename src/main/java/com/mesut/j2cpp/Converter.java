@@ -2,7 +2,11 @@ package com.mesut.j2cpp;
 
 
 import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.cppast.expr.CAssignment;
+import com.mesut.j2cpp.cppast.expr.CFieldAccess;
+import com.mesut.j2cpp.cppast.expr.CThisExpression;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
+import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.*;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
@@ -204,21 +208,45 @@ public class Converter {
         visitor.handle(cu);
     }
 
+    private void processFields(CClass clazz, CSource source) {
+        for (CField field : clazz.fields) {
+            if (field.expression == null || field.is(ModifierNode.CONSTEXPR_NAME)) continue;
+            if (field.isStatic()) {
+                //normal static field or enum constant
+                source.fieldDefs.add(field);
+            }
+            else if (Config.fields_in_constructors) {
+                //add to all cons
+                //make statement
+                CAssignment assignment = new CAssignment();
+                assignment.left = new CFieldAccess(new CThisExpression(), field.name, true);
+                assignment.right = field.expression;
+                assignment.operator = "=";
+                clazz.consStatements.add(new CExpressionStatement(assignment));
+            }
+            else {
+                //header has it
+            }
+        }
+    }
+
     //convert bodies
     public void convertSingle(String path, CompilationUnit cu) {
         try {
-            String relPath = Util.trimPrefix(path, srcDir);
-            relPath = Util.trimPrefix(relPath, "/");
-            System.out.println("converting " + relPath);
+            String relativePath = Util.trimPrefix(path, srcDir);
+            relativePath = Util.trimPrefix(relativePath, "/");
+            System.out.println("converting " + relativePath);
             CSource source = new CSource();
-            source.name = Util.trimSuffix(relPath, ".java") + ".cpp";
+            source.name = Util.trimSuffix(relativePath, ".java") + ".cpp";
 
             SourceVisitor sourceVisitor = new SourceVisitor(source);
             DeclarationVisitor headerVisitor = new DeclarationVisitor(sourceVisitor);
-
-            List<CClass> classes = headerVisitor.classes;
             headerVisitor.convert(cu);
-            sourceVisitor.convert(classes);
+            //handle fields
+            List<CClass> classes = headerVisitor.classes;
+            for (CClass cc : classes) {
+                processFields(cc, source);
+            }
             source.classes.addAll(classes);
             Namespace ns = headerVisitor.ns;
 
@@ -228,6 +256,7 @@ public class Converter {
 
             source.useNamespace(ns);
 
+            //create headers
             for (CClass cc : classes) {
                 cc.ns = ns;
                 CHeader header = new CHeader(cc.getHeaderPath());

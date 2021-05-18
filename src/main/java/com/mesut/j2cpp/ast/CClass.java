@@ -38,6 +38,7 @@ public class CClass extends CStatement {
     public IncludeList includes = new IncludeList();
     CType type;
     int anonyCount = 0;
+    public List<CField> anonyFields = new ArrayList<>();
 
     public CClass() {
         if (Config.baseClassObject) {

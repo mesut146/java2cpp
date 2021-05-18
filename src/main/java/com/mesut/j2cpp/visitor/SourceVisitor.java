@@ -39,11 +39,11 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     public void convert(List<CClass> classes) {
         for (CClass clazz : classes) {
-            convertClass(clazz);
+            processFields(clazz);
         }
     }
 
-    private void convertClass(CClass clazz) {
+    private void processFields(CClass clazz) {
         this.clazz = clazz;
         for (CField field : clazz.fields) {
             if (field.expression == null || field.is(ModifierNode.CONSTEXPR_NAME)) continue;
@@ -387,19 +387,22 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     public CNode visit(ClassInstanceCreation node, CNode arg) {
         ITypeBinding binding = node.getType().resolveBinding();
         CClassInstanceCreation creation;
+        CClass anony = null;
         if (node.getAnonymousClassDeclaration() == null) {
             creation = new CClassInstanceCreation();
             creation.setType(TypeVisitor.visitType(node.getType(), clazz));
-            creation.args = list(node.arguments());
         }
         else {
-            creation = AnonyHandler.handle(node.getAnonymousClassDeclaration(), TypeVisitor.visitType(node.getType(), clazz), clazz, this);
+            AnonyHandler handler = new AnonyHandler();
+            creation = handler.handle(node.getAnonymousClassDeclaration(), TypeVisitor.visitType(node.getType(), clazz), clazz, this);
+            anony = handler.anony;
         }
+        creation.args = list(node.arguments());
         if (binding == null) {
             Logger.logBinding(clazz, node.toString());
             return creation;
         }
-        if (!Modifier.isStatic(binding.getModifiers()) && (binding.isAnonymous() || binding.isNested())) {
+        if (node.getAnonymousClassDeclaration() != null || !Modifier.isStatic(binding.getModifiers()) && binding.isNested()) {
             if (Config.outer_ref_cons_arg) {
                 //append arg
                 creation.args.add(new CThisExpression());
@@ -409,6 +412,12 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             invocation.isArrow = true;
             invocation.name = CName.from(Config.refSetterName);
             invocation.arguments.add(new CThisExpression());
+            //set local var references
+            if (node.getAnonymousClassDeclaration() != null) {
+                for (CField field : anony.anonyFields) {
+                    invocation.arguments.add(field.name);
+                }
+            }
             invocation.scope = new CParenthesizedExpression(creation);
             return invocation;
         }
@@ -643,21 +652,24 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     }
 
 
-    CExpression handlePrint(String name, Expression scope, Expression e, CExpression arc) {
+    CExpression handlePrint(String name, Expression scope, List<Expression> args0, List<CExpression> args1) {
         String str = scope.toString();
         if (str.equals("System.out") || str.equals("java.lang.System.out") || str.equals("System.err") || str.equals("java.lang.System.err")) {
             boolean err = str.equals("System.err") || str.equals("java.lang.System.err");
             CName out = err ? CName.from("std::cerr") : CName.from("std::cout");
             //normalize arg
-            CExpression arg;
-            if (e instanceof StringLiteral) {
-                arg = new CStringLiteral(((StringLiteral) e).getLiteralValue());
-            }
-            else if (e instanceof NumberLiteral) {
-                arg = new CNumberLiteral(e.toString());
-            }
-            else {
-                arg = new DeferenceExpr(new CParenthesizedExpression(arc));
+            CExpression arg = null;
+            if (!args0.isEmpty()) {
+                Expression arg0 = args0.get(0);
+                if (arg0 instanceof StringLiteral) {
+                    arg = new CStringLiteral(((StringLiteral) arg0).getLiteralValue());
+                }
+                else if (arg0 instanceof NumberLiteral) {
+                    arg = new CNumberLiteral(arg0.toString());
+                }
+                else {
+                    arg = new DeferenceExpr(new CParenthesizedExpression(args1.get(0)));
+                }
             }
             if (name.equals("print") || name.equals("append")) {
                 CInfixExpression infix = new CInfixExpression();
@@ -671,6 +683,11 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 infix.operator = "<<";
                 infix.left = out;
                 infix.right = arg;
+                if (arg == null) {
+                    //just println()
+                    infix.right = new CStringLiteral("\\n");
+                    return infix;
+                }
                 return new CInfixExpression(infix, new CStringLiteral("\\n"), "<<");
             }
         }
@@ -706,7 +723,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
 
         if (scope != null) {
-            CExpression p = handlePrint(binding.getName(), node.getExpression(), (Expression) node.arguments().get(0), invocation.arguments.get(0));
+            CExpression p = handlePrint(binding.getName(), node.getExpression(), (List<Expression>) node.arguments(), invocation.arguments);
             if (p != null) return p;
             //mapper
             Mapper.Mapped target = Mapper.instance.mapMethod(binding, invocation.arguments, scope, clazz);
@@ -733,24 +750,31 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
 
         if (scope != null) {
-            //name already resolved by resolvedName()
+            //scope already resolved by resolvedName()
             return invocation;
         }
 
         //parent/super method
         // todo not necessary
-        if (isSuper(this.binding, onType)) {
+        if (!this.binding.equals(onType) && this.binding.isSubTypeCompatible(onType)) {
             //qualify super method,not needed but more precise
             invocation.scope = clazz.getSuper();
             invocation.isArrow = false;
             return invocation;
         }
-        invocation.isArrow = true;
-        //outer method
+//        if (isSuper(this.binding, onType)) {
+//            //qualify super method,not needed but more precise
+//            invocation.scope = clazz.getSuper();
+//            invocation.isArrow = false;
+//            return invocation;
+//        }
+        invocation.isArrow = true;//assume pointer
+        //check outer method
         CExpression ref = ref2(this.binding, onType);
         if (ref != null) {
             invocation.scope = ref;
         }
+        //in pointer
         if (!clazz.isStatic && !isAbstract && !type.equals(clazz.getType()) && !isSame(this.binding, onType)) {
             invocation.isArrow = true;
         }
@@ -765,25 +789,16 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         return from.isSubTypeCompatible(to);
     }
 
-    //is it one of my ancestors
-    boolean isSuper(ITypeBinding from, ITypeBinding to) {
+    //is target one of my ancestors
+    /*boolean isSuper(ITypeBinding from, ITypeBinding target) {
         if (from == null || from.getSuperclass() == null) {
             return false;
         }
-        if (from.getSuperclass().equals(to)) {
+        if (from.getSuperclass().equals(target)) {
             return true;
         }
-        for (ITypeBinding binding : from.getInterfaces()) {
-            if (binding.equals(to)) {
-                //todo more depth
-                return true;
-            }
-        }
-        if (isSuper(from.getSuperclass(), to)) {
-            return true;
-        }
-        return false;
-    }
+        return isSuper(from.getSuperclass(), target);
+    }*/
 
     private void args(List<Expression> arguments, CMethodInvocation methodInvocation) {
         methodInvocation.arguments.addAll(list(arguments));
@@ -817,31 +832,54 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 //static field,qualify
                 return new CFieldAccess(type, name, false);
             }
-            if (isSuper(this.binding, onType)) {
+            if (!this.binding.equals(onType) && this.binding.isSubTypeCompatible(onType)) {
+                //super field?
                 return name;
             }
+//            if (isSuper(this.binding, onType)) {
+//                //super field?
+//                return name;
+//            }
             CExpression ref = ref2(this.binding, onType);
             if (ref != null) {
                 return new CFieldAccess(ref, name, true);
             }
         }
-        else if (variableBinding.isParameter()) {
+        if (variableBinding.isParameter() || !variableBinding.isField()) {
+            if (clazz.isAnonymous && onType == null) {
+                CType type = TypeVisitor.fromBinding(variableBinding.getType());
+                //access to local variable from anony class
+                //make field and setter
+                for (CField field : clazz.fields) {
+                    if (field.name.is(name.name) && field.type.equals(type)) {
+                        //already added
+                        return name;
+                    }
+                }
+                CField field = new CField();
+                field.setType(type);
+                field.setName(name);
+                clazz.addField(field);
+                clazz.anonyFields.add(field);
+            }
+        }
+        if (variableBinding.isParameter()) {
             return new CName(Mapper.instance.mapParamName(node.getIdentifier()));
         }
         return name;
     }
 
-    //t1 -> t2
-    //is t2 outer of t1
-    CExpression ref2(ITypeBinding t1, ITypeBinding t2) {
+    //t1 -> t2 -> ... -> target
+    //is target outer of t1
+    CExpression ref2(ITypeBinding t1, ITypeBinding target) {
         ITypeBinding parent = t1.getDeclaringClass();
         if (parent == null) {
             return null;
         }
-        if (parent.equals(t2)) {
+        if (parent.equals(target)) {
             return new CName(Config.parentName);
         }
-        CExpression ref = ref2(parent, t2);
+        CExpression ref = ref2(parent, target);
         if (ref == null) {
             return null;
         }
@@ -876,6 +914,10 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
         String name = node.getName().getIdentifier();
 
+        if (isStatic) {
+            return new CFieldAccess(type, Mapper.instance.mapFieldName(name, clazz), false);
+        }
+
         if (typeBinding.isArray() && name.equals("length")) {
             IVariableBinding variableBinding = (IVariableBinding) binding;
             //array.length
@@ -885,11 +927,15 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
         if (binding.getKind() == IBinding.VARIABLE) {
             IVariableBinding variableBinding = (IVariableBinding) binding;
-            if (!isStatic && variableBinding.isField()) {
+            if (variableBinding.isField()) {
                 CName mapped = Mapper.instance.mapFieldName(name, clazz);
-                return new CFieldAccess(type, mapped, true);
+                return new CFieldAccess(scope, mapped, true);
+            }
+            else if (variableBinding.isParameter()) {
+                return new CFieldAccess(scope, CName.simple(Mapper.instance.mapParamName(name)), true);
             }
         }
-        return new CFieldAccess(type, new CName(name), !isStatic);
+        //qualified type
+        return new CFieldAccess(scope, new CName(name), true);
     }
 }

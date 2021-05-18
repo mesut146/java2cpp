@@ -2,36 +2,52 @@ package base;
 
 public class Inner1 {
 
-    static int x_static = 22;
-    int x = 123456;
-    Inner obj;
+    static int f11;
+    int f12;
+    Inner2 f13;
 
-    static void print_static() {
+    static void m11() {
     }
 
     void print() {
-        obj = new Inner();
-        obj.innerMeth();
+        m11();
+        f13 = new Inner2();
+        f13.m21();
     }
 
-    class Inner {
-        void innerMeth() {
+    class Inner2 {
+        static int f22;
+        int f21;
+
+        void m21() {
+            m11();
             print();//ref.print
-            x = 555;//ref.x
-            obj.innerMeth();//ref.obj.innerMeth
-            local();
+            f11 = 555;//ref.f11
+            f13.m21();//ref.f13.m21
+            m22();
 
-            Inner1 par;
-            par = Inner1.this;
+            Inner1 par = Inner1.this;
         }
 
-        void local() {
+        void m22() {
         }
 
-        class ii {
-            void aa() {
-                Inner1 par;
-                par = Inner1.this;
+        static class Inner4 {
+            void m41() {
+                f11 = 1;
+                f22 = 2;
+            }
+        }
+
+        class Inner3 {
+            int f31;
+
+            void m31() {
+                f11 = 1;
+                f21 = 5;
+                f31 = 10;
+                print();
+                Inner1 par = Inner1.this;
             }
         }
 

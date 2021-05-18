@@ -152,7 +152,7 @@ public class DeclarationVisitor {
                 rhs.args = sourceVisitor.list(constant.arguments());
             }
             if (constant.getAnonymousClassDeclaration() != null) {
-                CClassInstanceCreation creation = AnonyHandler.handle(constant.getAnonymousClassDeclaration(), cc.getType(), cc, sourceVisitor);
+                CClassInstanceCreation creation = new AnonyHandler().handle(constant.getAnonymousClassDeclaration(), cc.getType(), cc, sourceVisitor);
                 rhs.setType(creation.type);
             }
             //add ordinal && name

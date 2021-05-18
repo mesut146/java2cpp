@@ -1,7 +1,6 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.ast.CClass;
-import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CClassImpl;
 import com.mesut.j2cpp.cppast.expr.CClassInstanceCreation;
@@ -10,20 +9,20 @@ import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
-import java.net.Socket;
 import java.util.List;
 
 public class AnonyHandler {
+    CClass anony;
 
     //make separate class def for anonymous class
-    public static CClassInstanceCreation handle(AnonymousClassDeclaration declaration, CType type, CClass clazz, SourceVisitor visitor) {
-        CClass anony = new CClass();
+    public CClassInstanceCreation handle(AnonymousClassDeclaration declaration, CType base, CClass clazz, SourceVisitor visitor) {
+        anony = new CClass();
         anony.header = clazz.header;
         anony.parent = clazz;
         anony.isAnonymous = true;
         anony.name = clazz.getAnonyName();
         anony.ns = clazz.ns;
-        anony.setSuper(type);
+        anony.setSuper(base);
 
         SourceVisitor newVisitor = new SourceVisitor(visitor.source);
         TypeVisitor.fromBinding(declaration.resolveBinding());
@@ -39,7 +38,7 @@ public class AnonyHandler {
             }
             else {
                 //inner of anony?
-                throw new RuntimeException("ClassInstanceCreation anony");
+                throw new RuntimeException("ClassInstanceCreation of anony");
             }
         }
         InnerHelper.handleRef(anony, clazz);

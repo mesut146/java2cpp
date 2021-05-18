@@ -8,7 +8,12 @@ public class SuperTest {
     void print() {
     }
 
+    void m11() {
+    }
+
     static class inner extends SuperTest {
+
+        @Override
         void print() {
         }
 
@@ -16,11 +21,16 @@ public class SuperTest {
             print();//this->print()
             super.print();//SuperTest::print
             this.print2();//this->print2()
+            m11();//SuperTest::m11()
         }
 
         static class inner2 extends inner {
             void test() {
-                int x = val;
+                val = 1;
+                print();
+                print2();
+                super.print();
+
             }
         }
     }

@@ -4,6 +4,7 @@ import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ public class CType extends CExpression {
     public boolean isInner;
     public boolean fromSource;
     public boolean mapped;
+    public ITypeBinding binding;
 
     public CType() {
     }

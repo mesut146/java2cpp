@@ -43,7 +43,6 @@ public class TypeVisitor {
             if (arr.length == 1) {
                 return fromBinding(arr[0]);
             }
-            System.out.println("capture with " + binding);
             return TypeHelper.getObjectType();
         }
 
@@ -56,13 +55,16 @@ public class TypeVisitor {
         }
         else {
             String name = getBinaryName(binding);
-            if (binding.isNested()) {//trim parent class ns
-                type = new CType(binding.getPackage().getName().replace(".", "::") + "::" + binding.getName());
+            if (binding.isNested()) {
+                String ns = binding.getPackage().getName();
+                String rest = name.substring(ns.length() + 1);
+                type = new CType(ns + "::" + rest.replace('.', '_'));
             }
             else {
                 type = new CType(name);
             }
             type.realName = name;
+            type.binding = binding;
             if (binding.isGenericType()) {
                 for (ITypeBinding prm : binding.getTypeParameters()) {
                     type.typeNames.add(fromBinding(prm));

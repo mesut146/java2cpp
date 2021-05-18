@@ -1,6 +1,5 @@
 package com.mesut.j2cpp.visitor;
 
-import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.LibHandler;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.map.ClassMap;
@@ -25,7 +24,7 @@ public class PreVisitor {
             cc.template.add(new CType(tp.getName(), true));
         }
         if (binding.getSuperclass() != null) {
-            if (binding.isEnum() && Config.enumBaseClass) {
+            if (!binding.isEnum()) {
                 cc.setSuper(TypeVisitor.fromBinding(binding.getSuperclass()));
                 LibHandler.instance.addType(binding.getSuperclass());
             }
@@ -93,14 +92,15 @@ public class PreVisitor {
         for (ITypeBinding tp : binding.getTypeParameters()) {
             method.template.add(new CType(tp.getName(), true));
         }
-
-        handleVirtual(binding);
+        if (!binding.isConstructor()){
+            handleVirtual(binding, method);
+        }
 
         cc.addMethod(method);
         return method;
     }
 
-    private static void handleVirtual(IMethodBinding binding) {
+    private static void handleVirtual(IMethodBinding binding, CMethod method) {
         //find super method and set virtual
         ITypeBinding superBinding = binding.getDeclaringClass().getSuperclass();
         if (superBinding == null) return;
@@ -110,6 +110,7 @@ public class PreVisitor {
         //todo may be deeper
         for (IMethodBinding superMethod : superBinding.getDeclaredMethods()) {
             if (binding.isSubsignature(superMethod)) {
+                method.isOverride = true;
                 ClassMap.sourceMap.getMethod(superMethod).setVirtual(true);
                 //System.out.println("virtual parent " + superBinding.getQualifiedName() + " " + binding.getName());
                 break;
