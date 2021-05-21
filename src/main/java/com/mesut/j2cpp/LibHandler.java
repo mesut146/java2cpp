@@ -1,11 +1,16 @@
 package com.mesut.j2cpp;
 
-import com.mesut.j2cpp.ast.*;
+import com.mesut.j2cpp.ast.CClass;
+import com.mesut.j2cpp.ast.CField;
+import com.mesut.j2cpp.ast.CHeader;
+import com.mesut.j2cpp.ast.CName;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.ForwardDeclarator;
 import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.TypeVisitor;
-import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,11 +19,9 @@ public class LibHandler {
     public static LibHandler instance = new LibHandler();
     public static boolean allMethods = true;
     public CHeader forwardHeader;
-    CHeader allHeader;
 
     public LibHandler() {
         forwardHeader = new CHeader("lib_common.h");
-        allHeader = new CHeader("lib_all.h");
     }
 
     public CClass getClazz(ITypeBinding binding) {
@@ -83,15 +86,11 @@ public class LibHandler {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            allHeader.includes.add(cc.getType());
             forwardHeader.forwardDeclarator.add(cc);
         }
-        allHeader.includes.add(forwardHeader.getInclude());
         try {
             Util.writeHeader(forwardHeader, dir);
-            Util.writeHeader(allHeader, dir);
-            System.out.println("write " + forwardHeader.getInclude());
-            System.out.println("write " + allHeader.getInclude());
+            System.out.println("wrote " + forwardHeader.getInclude());
         } catch (IOException e) {
             e.printStackTrace();
         }

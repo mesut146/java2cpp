@@ -44,6 +44,13 @@ public class CField extends ModifierNode/*statement*/ {
         if (isStatic()) {
             sb.append("static ");
         }
+        //creating method is convenient but whatever
+        if (isStatic() && Config.static_field_cofui && !is(CONSTEXPR_NAME) && expression != null) {
+            sb.append(type);
+            sb.append("& ");
+            sb.append(name).append("();");
+            return sb.toString();
+        }
         if (is(CONSTEXPR_NAME)) {
             sb.append("constexpr ");
         }

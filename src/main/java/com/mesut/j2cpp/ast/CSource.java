@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.ast;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.IncludeList;
 import com.mesut.j2cpp.cppast.CClassImpl;
 import com.mesut.j2cpp.util.PrintHelper;
@@ -56,12 +57,25 @@ public class CSource extends Node {
     }
 
     private void printFields(StringBuilder sb) {
-        //todo group by class(or they already ordered)
+        //todo group by class(or they already ordered?)
         if (!fieldDefs.isEmpty()) {
             getScope(fieldDefs);
             sb.append("//static fields\n");
             for (CField field : fieldDefs) {
-                if (field.isStatic() && field.expression != null) {
+                if (!field.isStatic() || field.expression == null) {
+                    continue;
+                }
+                if (Config.static_field_cofui) {
+                    //create method
+                    sb.append(field.type).append("& ");
+                    sb.append(field.parent.type);
+                    sb.append("::");
+                    sb.append(field.name).append("(){\n");
+                    sb.append("    auto static tmp = ").append(field.expression).append(";\n");
+                    sb.append("    return tmp;\n");
+                    sb.append("}\n");
+                }
+                else {
                     sb.append(field).append("\n");
                 }
             }

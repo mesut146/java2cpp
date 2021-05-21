@@ -24,11 +24,11 @@ public class CSwitch extends CStatement {
                 i++;
             }
             else {
-                //merge statements so that c++ compiler doesn't complain
-                if (!(statement instanceof CBlockStatement)) {
+                i++;
+                //merge statements so that c++ compiler doesn't complain about var decl
+                if (!(statement instanceof CBlockStatement) && !(statement instanceof CReturnStatement)) {
                     CBlockStatement b = new CBlockStatement();
                     b.addStatement(statement);
-                    i++;
                     while (i < statements.size()) {
                         if (statements.get(i) instanceof CCase) {
                             break;

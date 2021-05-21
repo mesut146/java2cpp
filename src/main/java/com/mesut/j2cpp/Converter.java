@@ -36,13 +36,11 @@ public class Converter {
     List<String> sourceList;
     int count = 0;
     CHeader forwardHeader;
-    CHeader allHeader;
 
     public Converter(String srcDir, String destDir) {
         this.srcDir = srcDir;
         this.destDir = destDir;
         filter = new Filter(srcDir);
-        allHeader = new CHeader("all.h");
         forwardHeader = new CHeader("common.h");
         forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
         try {
@@ -151,10 +149,6 @@ public class Converter {
             System.out.println("wrote " + forwardHeader.getInclude());
             Util.writeHeader(forwardHeader, headerDir);
         }
-        if (Config.all_headers) {
-            Util.writeHeader(allHeader, headerDir);
-            System.out.println("wrote " + allHeader.getInclude());
-        }
         if (Config.writeLibHeader) {
             LibHandler.instance.writeAll(new File(headerDir, "lib"));
         }
@@ -250,10 +244,6 @@ public class Converter {
             source.classes.addAll(classes);
             Namespace ns = headerVisitor.ns;
 
-            if (Config.all_headers && Config.include_all_headers) {
-                source.includes.add(0, IncludeStmt.src(allHeader.getInclude()));
-            }
-
             source.useNamespace(ns);
 
             //create headers
@@ -321,9 +311,6 @@ public class Converter {
 
     void writeHeader(CHeader header) throws IOException {
         Util.writeHeader(header, headerDir);
-        if (Config.all_headers) {
-            allHeader.includes.add(header.getInclude());
-        }
     }
 
     public void writeCmake() throws IOException {
