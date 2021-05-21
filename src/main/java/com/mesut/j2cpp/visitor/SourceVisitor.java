@@ -830,7 +830,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             CType type = TypeVisitor.fromBinding(onType, clazz);
             if (isStatic) {
                 //static field,qualify
-                if (Config.static_field_cofui) {
+                if (Config.static_field_cofui && !Modifier.isFinal(binding.getModifiers())) {
                     return new CMethodInvocation(type, name, false);
                 }
                 return new CFieldAccess(type, name, false);
@@ -918,7 +918,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         String name = node.getName().getIdentifier();
 
         if (isStatic) {
-            if (Config.static_field_cofui) {
+            if (Config.static_field_cofui && !Modifier.isFinal(binding.getModifiers())) {
                 return new CMethodInvocation(type, Mapper.instance.mapFieldName(name, clazz), false);
             }
             return new CFieldAccess(type, Mapper.instance.mapFieldName(name, clazz), false);
