@@ -229,7 +229,7 @@ public class Converter {
         try {
             String relativePath = Util.trimPrefix(path, srcDir);
             relativePath = Util.trimPrefix(relativePath, "/");
-            System.out.println("converting " + relativePath);
+            //System.out.println("converting " + relativePath);
             CSource source = new CSource();
             source.name = Util.trimSuffix(relativePath, ".java") + ".cpp";
 

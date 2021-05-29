@@ -640,10 +640,26 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(CastExpression node, CNode arg) {
-        CCastExpression res = new CCastExpression();
-        res.expression = (CExpression) visitExpr(node.getExpression(), arg);
-        res.setTargetType(TypeVisitor.visitType(node.getType(), clazz));
-        return res;
+        CExpression expr = (CExpression) visitExpr(node.getExpression(), arg);
+        CType type = TypeVisitor.visitType(node.getType(), clazz);
+        type.isTypeArg = true;
+        if (TypeHelper.canCast(node.getExpression(),node.getExpression().resolveTypeBinding(),node.getType().resolveBinding())) {
+            //System.out.println("static "+clazz.getType());
+            //static cast
+            CCastExpression res = new CCastExpression();
+            res.expression = expr;
+            res.setTargetType(type);
+            return res;
+        }
+        else {
+            //System.out.println("dynamic " + clazz.getType());
+            //dynamic e.g base class to base class
+            CName nm = CName.from("dynamic_cast");
+            nm.typeArgs.add(type);
+            CMethodInvocation invocation = new CMethodInvocation(null, nm, false);
+            invocation.arguments.add(expr);
+            return invocation;
+        }
     }
 
     @Override

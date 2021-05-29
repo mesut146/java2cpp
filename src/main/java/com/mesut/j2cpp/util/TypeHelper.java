@@ -3,9 +3,13 @@ package com.mesut.j2cpp.util;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.ast.Namespace;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TypeHelper {
 
@@ -98,6 +102,30 @@ public class TypeHelper {
             }*/
         }
         return copied;
+    }
+
+    public static boolean canCast(Expression e, ITypeBinding expr, ITypeBinding type) {
+        if (expr.equals(type)) return true;
+        if (type.isPrimitive()) {
+            return expr.isPrimitive() || e.resolveBoxing() || e.resolveUnboxing();
+        }
+        HashSet<ITypeBinding> set = new HashSet<>();
+        collectBases(expr, set);
+        return set.contains(type);
+    }
+
+    public static void collectBases(ITypeBinding type, Set<ITypeBinding> set) {
+        if (set.contains(type)) return;
+        set.add(type);
+        if (type.getSuperclass() != null) {
+            if (!type.getSuperclass().getQualifiedName().equals("java.lang.Object") || Config.baseClassObject) {
+                collectBases(type.getSuperclass(), set);
+            }
+        }
+        for (ITypeBinding iface : type.getInterfaces()) {
+            collectBases(iface, set);
+        }
+
     }
 
 }

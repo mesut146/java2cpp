@@ -27,7 +27,8 @@ public class CName extends CExpression {
         }
         else {
             orgName = name;
-            this.name = Mapper.instance.mapName(name);
+            this.name = name;
+            //this.name = Mapper.instance.mapName(name);
         }
     }
 
