@@ -92,7 +92,8 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Enum1");
         //converter.getFilter().addIncludeClass("base.StringTest");
         //converter.getFilter().addIncludeClass("base.Renamer");
-        converter.getFilter().addIncludeClass("base.Anony");
+        //converter.getFilter().addIncludeClass("base.Anony");
+        converter.getFilter().addIncludeClass("base.Ops");
         converter.convert();
     }
 

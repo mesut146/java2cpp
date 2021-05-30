@@ -115,10 +115,20 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         assignment.left = (CExpression) visitExpr(node.getLeftHandSide(), arg);
         assignment.operator = node.getOperator().toString();
         if (assignment.operator.equals(">>>=")) {
-            assignment.operator = ">>=";
+            assignment.operator = "=";
+            assignment.right = makeUnsignedRshift(node.getLeftHandSide(), node.getRightHandSide());
+            return assignment;
         }
         assignment.right = (CExpression) visitExpr(node.getRightHandSide(), arg);
         return assignment;
+    }
+
+    CInfixExpression makeUnsignedRshift(Expression left, Expression right) {
+        CInfixExpression infix = new CInfixExpression();
+        infix.left = new CName("(unsigned " + TypeVisitor.fromBinding(left.resolveTypeBinding()) + ")" + visitExpr(left, null));
+        infix.right = (CExpression) visitExpr(right, null);
+        infix.operator = ">>";
+        return infix;
     }
 
     @Override
@@ -477,16 +487,14 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 return infixString(node);
             }
         }
+        if (node.getOperator().toString().equals(">>>")) {
+            return makeUnsignedRshift(node.getLeftOperand(), node.getRightOperand());
+        }
+
         CInfixExpression infixExpression = new CInfixExpression();
         infixExpression.operator = node.getOperator().toString();
         infixExpression.left = (CExpression) visitExpr(node.getLeftOperand(), arg);
         infixExpression.right = (CExpression) visitExpr(node.getRightOperand(), arg);
-
-        if (infixExpression.operator.equals(">>>")) {
-            infixExpression.operator = ">>";
-            infixExpression.left = new CName("(unsigned " + infixExpression.left + ")");
-            return infixExpression;
-        }
 
         if (node.hasExtendedOperands()) {
             for (Expression expression : (List<Expression>) node.extendedOperands()) {
