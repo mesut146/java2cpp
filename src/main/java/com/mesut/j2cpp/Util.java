@@ -31,7 +31,7 @@ public class Util {
     }
 
     public static void writeHeader(CHeader header, File dir) throws IOException {
-        File path = new File(dir, header.rpath);
+        File path = new File(dir, header.path);
         path.getParentFile().mkdirs();
         Files.write(path.toPath(), header.toString().getBytes());
     }

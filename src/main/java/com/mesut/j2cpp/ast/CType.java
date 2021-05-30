@@ -8,6 +8,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class CType extends CExpression {
     public Namespace ns;
@@ -101,7 +102,7 @@ public class CType extends CExpression {
             return type;
         }
         if (Config.normalizeTypes && scope != null) {
-            List<Namespace> usings;
+            Set<Namespace> usings;
             if (scope instanceof CHeader) {
                 usings = ((CHeader) scope).usings;
             }

@@ -72,7 +72,7 @@ public class TypeHelper {
 
     //trim type's namespace by usings
     //java::lang::String   using java::lang -> String
-    public static CType normalizeType(CType type, List<Namespace> usings) {
+    public static CType normalizeType(CType type, Set<Namespace> usings) {
         if (type.ns == null) {
             return type;
         }

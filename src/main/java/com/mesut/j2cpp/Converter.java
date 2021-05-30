@@ -244,7 +244,7 @@ public class Converter {
             source.classes.addAll(classes);
             Namespace ns = headerVisitor.ns;
 
-            source.useNamespace(ns);
+            source.usings.add(ns);
 
             //create headers
             for (CClass cc : classes) {

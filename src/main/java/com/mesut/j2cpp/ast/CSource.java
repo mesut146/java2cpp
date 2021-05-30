@@ -6,26 +6,22 @@ import com.mesut.j2cpp.cppast.CClassImpl;
 import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CSource extends Node {
 
     public List<CClass> classes = new ArrayList<>();
     public String name;
     public IncludeList includes = new IncludeList();
-    public List<Namespace> usings = new ArrayList<>();
+    public Set<Namespace> usings = new HashSet<>();
     public List<CField> fieldDefs = new ArrayList<>();
     public boolean hasRuntime = false;
     public List<CClassImpl> anony = new ArrayList<>();
 
     public CSource() {
         scope = this;
-    }
-
-    public void useNamespace(Namespace ns) {
-        if (!usings.contains(ns)) {
-            usings.add(ns);
-        }
     }
 
     @Override

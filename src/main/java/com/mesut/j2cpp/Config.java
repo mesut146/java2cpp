@@ -56,7 +56,7 @@ public class Config {
     //shrink types based on namespaces
     public static boolean normalizeTypes = true;
     //print parameter names in header
-    public static boolean printParamNames = false;
+    public static boolean printParamNames = true;
     public static String parentName = "_parent_ref";
     public static String refSetterName = "setRef";
     public static String type_int = "int";

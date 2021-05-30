@@ -8,43 +8,39 @@ import com.mesut.j2cpp.util.ForwardDeclarator;
 import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-//represents c++ header (.hpp)
+//represents c++ header (.h)
 public class CHeader extends CNode {
-    public String rpath;//header path e.g java/lang/String.h
+    public String path;//header path e.g java/lang/String.h
     public Namespace ns;
-    public CClass cc;
-    public List<Namespace> usings = new ArrayList<>();
+    public CClass cc;//a class per header
+    public Set<Namespace> usings = new HashSet<>();
     public IncludeList includes = new IncludeList();
     public ForwardDeclarator forwardDeclarator;
     boolean handledFieldInits = false;
 
     public CHeader(String path) {
-        rpath = path;
+        this.path = path;
         scope = this;
         ns = new Namespace();
     }
 
     public void setNs(Namespace ns) {
         this.ns = ns;
-        useNamespace(ns);
+        usings.add(ns);
     }
 
     public String getInclude() {
-        return rpath;
+        return path;
     }
 
     public void setClass(CClass cc) {
         cc.ns = ns;
         cc.header = this;
         this.cc = cc;
-    }
-
-    public void useNamespace(Namespace ns) {
-        if (!usings.contains(ns)) {
-            usings.add(ns);
-        }
     }
 
     private void handleFieldInits() {
@@ -87,7 +83,7 @@ public class CHeader extends CNode {
         sb.append(includes);
         sb.append("\n");
         if (forwardDeclarator != null) {
-            sb.append(forwardDeclarator.toString());
+            sb.append(forwardDeclarator);
             sb.append("\n");
         }
 

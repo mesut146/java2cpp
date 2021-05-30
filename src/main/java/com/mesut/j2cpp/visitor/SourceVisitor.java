@@ -30,40 +30,12 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         this.source = source;
     }
 
+    //make str to std::string
     public static CExpression stringCreation(CStringLiteral node, CClass clazz) {
-        CObjectCreation objectCreation = new CObjectCreation();
-        objectCreation.type = Mapper.instance.mapType(TypeHelper.getStringType(), clazz);
-        objectCreation.args.add(node);
-        return objectCreation;
-    }
-
-    public void convert(List<CClass> classes) {
-        for (CClass clazz : classes) {
-            processFields(clazz);
-        }
-    }
-
-    private void processFields(CClass clazz) {
-        this.clazz = clazz;
-        for (CField field : clazz.fields) {
-            if (field.expression == null || field.is(ModifierNode.CONSTEXPR_NAME)) continue;
-            if (field.isStatic()) {
-                //normal static field or enum constant
-                source.fieldDefs.add(field);
-            }
-            else if (Config.fields_in_constructors) {
-                //add to all cons
-                //make statement
-                CAssignment assignment = new CAssignment();
-                assignment.left = new CFieldAccess(new CThisExpression(), field.name, true);
-                assignment.right = field.expression;
-                assignment.operator = "=";
-                clazz.consStatements.add(new CExpressionStatement(assignment));
-            }
-            else {
-                //header has it
-            }
-        }
+        CObjectCreation obj = new CObjectCreation();
+        obj.type = Mapper.instance.mapType(TypeHelper.getStringType(), clazz);
+        obj.args.add(node);
+        return obj;
     }
 
     @Override
@@ -226,10 +198,15 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(SingleVariableDeclaration node, CNode arg) {
-        CSingleVariableDeclaration variableDeclaration = new CSingleVariableDeclaration();
-        variableDeclaration.type = TypeVisitor.visitType(node.getType(), clazz);
-        variableDeclaration.name = new CName(node.getName().getIdentifier());
-        return variableDeclaration;
+        CSingleVariableDeclaration decl = new CSingleVariableDeclaration();
+        if (Config.use_auto) {
+            decl.type = TypeHelper.getAutoType();
+        }
+        else {
+            decl.type = TypeVisitor.visitType(node.getType(), clazz);
+        }
+        decl.name = new CName(node.getName().getIdentifier());
+        return decl;
     }
 
     @Override
@@ -313,18 +290,33 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(VariableDeclarationStatement node, CNode arg) {
-        //split single or keep multi?
-        CVariableDeclarationStatement variableDeclaration = new CVariableDeclarationStatement();
-        CType type = TypeVisitor.visitType(node.getType(), clazz);
-        variableDeclaration.setType(type);
+        CVariableDeclarationStatement decl = new CVariableDeclarationStatement();
+        if (node.fragments().size() == 1 && Config.use_auto) {
+            VariableDeclarationFragment f = (VariableDeclarationFragment) node.fragments().get(0);
+            if (f.getInitializer() != null) {
+                CVariableDeclarationFragment fragment = new CVariableDeclarationFragment();
+                fragment.name = new CName(f.getName().getIdentifier());
+                fragment.initializer = (CExpression) visitExpr(f.getInitializer(), arg);
+                decl.fragments.add(fragment);
+                if (node.getType().resolveBinding().equals(f.getInitializer().resolveTypeBinding())) {
+                    decl.type = TypeHelper.getAutoType();
+                }
+                else {
+                    decl.type = TypeVisitor.visitType(node.getType(), clazz);
+                }
+                return decl;
+            }
+
+        }
+        decl.type = TypeVisitor.visitType(node.getType(), clazz);
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
             CVariableDeclarationFragment fragment = new CVariableDeclarationFragment();
             fragment.name = new CName(frag.getName().getIdentifier());
             fragment.initializer = (CExpression) visitExpr(frag.getInitializer(), arg);
 
-            variableDeclaration.fragments.add(fragment);
+            decl.fragments.add(fragment);
         }
-        return variableDeclaration;
+        return decl;
     }
 
     @Override
@@ -487,11 +479,15 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
         CInfixExpression infixExpression = new CInfixExpression();
         infixExpression.operator = node.getOperator().toString();
-        if (infixExpression.operator.equals(">>>")) {
-            infixExpression.operator = ">>";
-        }
         infixExpression.left = (CExpression) visitExpr(node.getLeftOperand(), arg);
         infixExpression.right = (CExpression) visitExpr(node.getRightOperand(), arg);
+
+        if (infixExpression.operator.equals(">>>")) {
+            infixExpression.operator = ">>";
+            infixExpression.left = new CName("(unsigned " + infixExpression.left + ")");
+            return infixExpression;
+        }
+
         if (node.hasExtendedOperands()) {
             for (Expression expression : (List<Expression>) node.extendedOperands()) {
                 CExpression exp = (CExpression) visitExpr(expression, arg);
@@ -535,6 +531,9 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             ITypeBinding binding = node.resolveTypeBinding();
             CExpression expression = (CExpression) visitExpr(node, null);
             if (binding.isPrimitive()) {
+                if (node instanceof CharacterLiteral) {
+                    return new CStringLiteral("" + ((CharacterLiteral) node).charValue());
+                }
                 CMethodInvocation invocation = new CMethodInvocation();
                 invocation.name = CName.simple("std::to_string");
                 invocation.arguments.add(expression);
@@ -643,7 +642,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         CExpression expr = (CExpression) visitExpr(node.getExpression(), arg);
         CType type = TypeVisitor.visitType(node.getType(), clazz);
         type.isTypeArg = true;
-        if (TypeHelper.canCast(node.getExpression(),node.getExpression().resolveTypeBinding(),node.getType().resolveBinding())) {
+        if (TypeHelper.canCast(node.getExpression(), node.getExpression().resolveTypeBinding(), node.getType().resolveBinding())) {
             //System.out.println("static "+clazz.getType());
             //static cast
             CCastExpression res = new CCastExpression();
