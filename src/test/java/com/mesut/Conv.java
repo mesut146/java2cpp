@@ -6,8 +6,8 @@ import com.mesut.j2cpp.map.Mapper;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 
 public class Conv {
     public static String rtJar = "/home/mesut/Desktop/j2cpp-dev/rt7.jar";
@@ -85,7 +85,7 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Print");
         //converter.getFilter().addIncludeClass("base.Generic");
         //converter.getFilter().addIncludeClass("base.Fields");
-        //converter.getFilter().addIncludeClass("base.Try1");
+        converter.getFilter().addIncludeClass("base.Try1");
         //converter.getFilter().addIncludeClass("base.Try2");
         //converter.getFilter().addIncludeClass("base.SwitchTest");
         //converter.getFilter().addIncludeClass("base.Cons");
@@ -93,7 +93,7 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.StringTest");
         //converter.getFilter().addIncludeClass("base.Renamer");
         //converter.getFilter().addIncludeClass("base.Anony");
-        converter.getFilter().addIncludeClass("base.Ops");
+        //converter.getFilter().addIncludeClass("base.Ops");
         converter.convert();
     }
 

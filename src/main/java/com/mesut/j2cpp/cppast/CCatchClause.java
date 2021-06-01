@@ -1,6 +1,5 @@
 package com.mesut.j2cpp.cppast;
 
-import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.cppast.stmt.CSingleVariableDeclaration;
 import com.mesut.j2cpp.util.PrintHelper;
@@ -20,9 +19,7 @@ public class CCatchClause extends CNode {
             sb.append("...");
         }
         else {
-            if (Config.ptr_catch) {
-                expr.type.setPointer(true);
-            }
+            expr.type.ref = true;
             sb.append(expr);
         }
         sb.append(")\n");

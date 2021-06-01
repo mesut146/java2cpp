@@ -22,9 +22,9 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     CSource source;
     CClass clazz;
     CMethod method;
-    Catcher catcher;
     ITypeBinding binding;
     CBlockStatement block;
+    String catchName;
 
     public SourceVisitor(CSource source) {
         this.source = source;
@@ -150,24 +150,31 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
 
     @Override
     public CNode visit(ReturnStatement node, CNode arg) {
-        if (catcher != null) {
-            return catcher.visit(node);
-        }
         return new CReturnStatement((CExpression) visitExpr(node.getExpression(), arg));
     }
 
     @Override
     public CNode visit(ThrowStatement node, CNode arg) {
-        if (catcher != null) {
-            return catcher.visit(node);
+        CExpression e = (CExpression) visitExpr(node.getExpression(), arg);
+        //convert heap allocation into stack allocation
+        if (e instanceof CClassInstanceCreation) {
+            CClassInstanceCreation cc = (CClassInstanceCreation) e;
+            CMethodInvocation res = new CMethodInvocation();
+            res.name = new CName(cc.type.toString());
+            res.arguments = cc.args;
+            return new CThrowStatement(res);
         }
-        return new CThrowStatement((CExpression) visitExpr(node.getExpression(), arg));
+        //if throwing custom exception
+        if (e instanceof CName && !((CName) e).is(catchName)) {
+            return new CThrowStatement(new DeferenceExpr(e));
+        }
+        return new CThrowStatement(e);
     }
 
     @Override
     public CNode visit(TryStatement node, CNode arg) {
-        TryHelper helper = new TryHelper(this);
-        return helper.handle(node);
+        TryHelper helper = new TryHelper(this, node);
+        return helper.handle();
     }
 
     @Override
@@ -180,7 +187,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
         return ifStatement;
     }
-
 
     @Override
     public CNode visit(ForStatement node, CNode arg) {
@@ -209,7 +215,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(SingleVariableDeclaration node, CNode arg) {
         CSingleVariableDeclaration decl = new CSingleVariableDeclaration();
-        if (Config.use_auto) {
+        if (Config.use_auto && !(node.getParent() instanceof CatchClause)) {
             decl.type = TypeHelper.getAutoType();
         }
         else {
@@ -444,7 +450,7 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         methodInvocation.scope = clazz.getSuper();
         methodInvocation.name = (CName) visitName(node.getName(), null);
         methodInvocation.isArrow = false;
-        args(node.arguments(), methodInvocation);
+        methodInvocation.arguments = list(node.arguments());
         return methodInvocation;
     }
 
@@ -483,7 +489,8 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
     @Override
     public CNode visit(InfixExpression node, CNode arg) {
         if (node.getOperator().toString().equals("+")) {
-            if (node.getLeftOperand().resolveTypeBinding().getQualifiedName().equals("java.lang.String") || node.getRightOperand().resolveTypeBinding().getQualifiedName().equals("java.lang.String")) {
+            //if either side is string then whole expr is string concatenation
+            if (isStr(node.getLeftOperand()) || isStr(node.getRightOperand())) {
                 return infixString(node);
             }
         }
@@ -505,6 +512,10 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         return infixExpression;
     }
 
+    boolean isStr(Expression e) {
+        return e.resolveTypeBinding().getQualifiedName().equals("java.lang.String");
+    }
+
     CExpression infixString(InfixExpression node) {
         CClassInstanceCreation creation = new CClassInstanceCreation();
         CInfixExpression res = new CInfixExpression();
@@ -513,10 +524,10 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         Expression right = node.getRightOperand();
         res.left = makeStrIfNot(left);
         res.right = makeStrIfNot(right);
-        if (left instanceof StringLiteral && right instanceof StringLiteral) {
+        if ((left instanceof StringLiteral || left instanceof CharacterLiteral) && (right instanceof StringLiteral || right instanceof CharacterLiteral)) {
             //one must be converted
             CMethodInvocation invocation = new CMethodInvocation();
-            invocation.name = new CName("std::string");
+            invocation.name = CName.simple("std::string");
             invocation.arguments.add(res.left);
             res.left = invocation;
         }
@@ -761,6 +772,9 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 return target.expr;
             }
             invocation.isArrow = !isStatic;
+            if (catchName != null && catchName.equals(scope.toString())) {
+                invocation.isDot = true;
+            }
         }
 
         ITypeBinding onType = binding.getDeclaringClass();
@@ -777,20 +791,13 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             return invocation;
         }
 
-        //parent/super method
-        // todo not necessary
-        if (!this.binding.equals(onType) && this.binding.isSubTypeCompatible(onType)) {
+        //base method
+        if (Config.qualifyBaseMethod && !this.binding.equals(onType) && this.binding.isSubTypeCompatible(onType) && !onType.isInterface()) {
             //qualify super method,not needed but more precise
-            invocation.scope = clazz.getSuper();
+            invocation.scope = TypeVisitor.fromBinding(onType);
             invocation.isArrow = false;
             return invocation;
         }
-//        if (isSuper(this.binding, onType)) {
-//            //qualify super method,not needed but more precise
-//            invocation.scope = clazz.getSuper();
-//            invocation.isArrow = false;
-//            return invocation;
-//        }
         invocation.isArrow = true;//assume pointer
         //check outer method
         CExpression ref = ref2(this.binding, onType);
@@ -822,10 +829,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         }
         return isSuper(from.getSuperclass(), target);
     }*/
-
-    private void args(List<Expression> arguments, CMethodInvocation methodInvocation) {
-        methodInvocation.arguments.addAll(list(arguments));
-    }
 
     public List<CExpression> list(List<Expression> arguments) {
         List<CExpression> list = new ArrayList<>();
@@ -862,10 +865,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 //super field?
                 return name;
             }
-//            if (isSuper(this.binding, onType)) {
-//                //super field?
-//                return name;
-//            }
             CExpression ref = ref2(this.binding, onType);
             if (ref != null) {
                 return new CFieldAccess(ref, name, true);
@@ -888,9 +887,15 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
                 clazz.addField(field);
                 clazz.anonyFields.add(field);
             }
-        }
-        if (variableBinding.isParameter()) {
-            return new CName(Mapper.instance.mapParamName(node.getIdentifier()));
+            if (variableBinding.isParameter()) {
+                return new CName(Mapper.instance.mapParamName(node.getIdentifier()));
+            }
+            //access to catch variable
+            if (catchName != null && name.is(catchName) && !(node.getParent() instanceof ThrowStatement)) {
+                if (node.getParent() instanceof VariableDeclarationFragment || node.getParent() instanceof Assignment || node.getParent() instanceof ClassInstanceCreation) {
+                    return new ReferenceExpr(name);
+                }
+            }
         }
         return name;
     }

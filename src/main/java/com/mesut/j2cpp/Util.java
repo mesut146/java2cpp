@@ -5,8 +5,13 @@ import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CSource;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +26,7 @@ public class Util {
             while ((s = reader.readLine()) != null) {
                 keywords.add(s);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -30,21 +35,18 @@ public class Util {
         return keywords.contains(str);
     }
 
-    public static void writeHeader(CHeader header, File dir) throws IOException {
-        File path = new File(dir, header.path);
-        path.getParentFile().mkdirs();
-        Files.write(path.toPath(), header.toString().getBytes());
+    public static void writeHeader(CHeader header, Path dir) throws IOException {
+        Path path = Paths.get(dir.toString(), header.path);
+        Files.createDirectories(path.getParent());
+        Files.write(path, header.toString().getBytes());
     }
 
-    public static void writeSource(CSource source, File dir) throws IOException {
-        File path = new File(dir, source.name);
-        path.getParentFile().mkdirs();
-        Files.write(path.toPath(), source.toString().getBytes());
+    public static void writeSource(CSource source, Path dir) throws IOException {
+        Path path = Paths.get(dir.toString(), source.name);
+        Files.createDirectories(path.getParent());
+        Files.write(path, source.toString().getBytes());
     }
 
-    public static String read(File file) throws IOException {
-        return read(new FileInputStream(file));
-    }
 
     public static String read(InputStream is) throws IOException {
         StringBuilder sb = new StringBuilder();
@@ -59,30 +61,9 @@ public class Util {
     }
 
 
-    public static String relative(String file, String root) {
-        if (file.equals(root)) {
-            return "";
-        }
-        if (file.startsWith(root)) {
-            return file.substring(root.length() + 1);
-        }
-        return file;
-    }
-
-    public static String relative(File file, File root) {
-        return relative(file.getAbsolutePath(), root.getAbsolutePath());
-    }
-
     public static String trimSuffix(String str, String suffix) {
         if (str.endsWith(suffix)) {
             return str.substring(0, str.length() - suffix.length());
-        }
-        return str;
-    }
-
-    public static String trimPrefix(String str, String prefix) {
-        if (str.startsWith(prefix)) {
-            return str.substring(prefix.length());
         }
         return str;
     }

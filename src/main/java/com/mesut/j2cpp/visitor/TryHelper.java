@@ -1,7 +1,5 @@
 package com.mesut.j2cpp.visitor;
 
-import com.mesut.j2cpp.Config;
-import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CName;
 import com.mesut.j2cpp.ast.CType;
@@ -23,28 +21,30 @@ import java.util.List;
 public class TryHelper {
 
     SourceVisitor visitor;
+    TryStatement node;
+    CBlockStatement body;
 
-    public TryHelper(SourceVisitor visitor) {
+    public TryHelper(SourceVisitor visitor, TryStatement node) {
         this.visitor = visitor;
+        this.node = node;
     }
 
-    public CBlockStatement with_finally(TryStatement node) {
+    public CBlockStatement with_finally() {
         CBlockStatement blockStatement = new CBlockStatement();
         blockStatement.addStatement(new CLineCommentStatement("try_catch"));
         CTryStatement tryStatement = new CTryStatement();
 
         printCatches(node.catchClauses(), tryStatement);
-
-        tryStatement.body = (CBlockStatement) visitor.visit(node.getBody(), null);
+        tryStatement.body = body;
 
         CMethod method = visitor.method;
         if (method.isCons || method.type.isVoid()) {
-            with_void(node, tryStatement, blockStatement);
+            with_void(tryStatement, blockStatement);
         }
         return blockStatement;
     }
 
-    private void with_void(TryStatement node, CTryStatement tryStatement, CBlockStatement blockStatement) {
+    private void with_void(CTryStatement tryStatement, CBlockStatement blockStatement) {
         //make lambda
         CLambdaExpression lambdaExpression = new CLambdaExpression();
         lambdaExpression.byReference = true;
@@ -70,14 +70,10 @@ public class TryHelper {
         return (CBlockStatement) visitor.visit(node.getFinally(), null);
     }
 
-    public CTryStatement no_finally(TryStatement node) {
+    public CTryStatement no_finally() {
         CTryStatement tryStatement = new CTryStatement();
         printCatches(node.catchClauses(), tryStatement);
-        tryStatement.body = (CBlockStatement) visitor.visit(node.getBody(), null);
-        if (Config.tryMode == Config.tryModes.AS_IS && node.getFinally() != null) {
-            Logger.log(String.format("not handled finally in '%s' pos=%s", visitor.clazz.getType(), node.getStartPosition()));
-            tryStatement.finallyBlock = (CBlockStatement) visitor.visit(node.getFinally(), null);
-        }
+        tryStatement.body = body;
         int len = node.resources().size();
         if (len > 0) {
             for (int i = 0; i < len; i++) {
@@ -100,7 +96,9 @@ public class TryHelper {
         }
         for (CatchClause cc : list) {
             CSingleVariableDeclaration var = (CSingleVariableDeclaration) visitor.visit(cc.getException(), null);
+            visitor.catchName = cc.getException().getName().getIdentifier();
             CBlockStatement body = (CBlockStatement) visitor.visit(cc.getBody(), null);
+            visitor.catchName = null;
 
             if (var.type instanceof CUnionType) {
                 //make multiple catch clauses
@@ -121,8 +119,6 @@ public class TryHelper {
                 catchClause.body = body;
                 tryStatement.catchClauses.add(catchClause);
             }
-
-
         }
     }
 
@@ -134,12 +130,13 @@ public class TryHelper {
 
     }
 
-    public CNode handle(TryStatement node) {
-        if (node.getFinally() == null || Config.tryMode == Config.tryModes.AS_IS) {
-            return no_finally(node);
+    public CNode handle() {
+        body = (CBlockStatement) visitor.visit(node.getBody(), null);
+        if (node.getFinally() == null) {
+            return no_finally();
         }
         else {
-            return with_finally(node);
+            return with_finally();
         }
     }
 }

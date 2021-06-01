@@ -8,14 +8,15 @@ public class Try1 {
                 throw new RuntimeException("err");
             }
             int inTry;
-        }
-        catch (RuntimeException e) {
-            e.printStackTrace();
-            int c2;
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            int c1;
+        } catch (RuntimeException re) {
+            re.printStackTrace();
+            Exception exc = re;
+            throw exc;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            RuntimeException re0 = new RuntimeException(ex);
+            re0.printStackTrace();
+            throw re0;
         }
     }
 
@@ -33,8 +34,7 @@ public class Try1 {
     }
 
     void no_catch() {
-        try
-        {
+        try {
             int x;
             return;
         } finally {

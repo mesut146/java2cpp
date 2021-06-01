@@ -29,6 +29,9 @@ public class Config {
     public static boolean static_field_cofui = true;
     public static String static_init_name = "si";
 
+    //put base class name in front of method,e.g Base::member()
+    public static boolean qualifyBaseMethod = false;
+
     //force all types inherit from java::lang::Object
     public static boolean baseClassObject = false;
     public static boolean printDestructor = false;
@@ -39,7 +42,6 @@ public class Config {
     public static boolean ptr_typeArg = true;
     public static boolean ptr_varDecl = true;
     public static boolean ptr_cast = true;
-    public static boolean ptr_catch = true;
     //take outer ref as constructor arg otherwise create setter
     public static boolean outer_ref_cons_arg = false;
     //make all fields public
@@ -52,7 +54,6 @@ public class Config {
     //use arr[idx] instead of vector.at(idx)
     public static boolean array_access_bracket = false;
 
-    public static tryModes tryMode = tryModes.AS_IS;
     //shrink types based on namespaces
     public static boolean normalizeTypes = true;
     //print parameter names in header
@@ -72,7 +73,4 @@ public class Config {
         ignored.add("java.lang.Throwable");
     }
 
-    public enum tryModes {
-        AS_IS, TRANSFORM, LAMBDA;
-    }
 }

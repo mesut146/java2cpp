@@ -14,6 +14,7 @@ import org.eclipse.jdt.core.dom.IVariableBinding;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class LibHandler {
     public static LibHandler instance = new LibHandler();
@@ -74,7 +75,7 @@ public class LibHandler {
         cc.addField(field);
     }
 
-    public void writeAll(File dir) {
+    public void writeAll(Path dir) {
         forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
         for (CClass cc : ClassMap.sourceMap.map.values()) {
             if (cc.fromSource) continue;

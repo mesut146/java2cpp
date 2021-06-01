@@ -2,7 +2,7 @@ package com.mesut.j2cpp.util;
 
 import com.mesut.j2cpp.Util;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,10 +12,10 @@ public class Filter {
     List<String> excludeDirs = new ArrayList<>();
     List<String> includeClasses = new ArrayList<>();
     List<String> excludeClasses = new ArrayList<>();
-    String srcDir;
+    Path srcDir;
 
 
-    public Filter(String srcDir) {
+    public Filter(Path srcDir) {
         this.srcDir = srcDir;
     }
 
@@ -44,11 +44,11 @@ public class Filter {
         this.includeAll = flag;
     }
 
-    public boolean checkPath(File file) {
+    public boolean checkPath(Path file) {
         if (includeAll) {
             return true;
         }
-        String parent = file.getParent();
+        Path parent = file.getParent();
         for (PackageName name : includeDirs) {
             if (parent.endsWith(name.getString())) {
                 return true;
@@ -59,7 +59,8 @@ public class Filter {
                 return false;
             }
         }
-        String clsName = Util.relative(file.getAbsolutePath(), srcDir);
+        String clsName = srcDir.relativize(file).toString();
+        //String clsName = Util.relative(file.getAbsolutePath(), srcDir);
         clsName = Util.trimSuffix(clsName, ".java");
         for (String cls : includeClasses) {
             cls = cls.replace(".", "/");

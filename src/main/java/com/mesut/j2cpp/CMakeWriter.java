@@ -14,6 +14,16 @@ public class CMakeWriter {
         this.projectName = projectName;
     }
 
+    public static String relative(String file, String root) {
+        if (file.equals(root)) {
+            return "";
+        }
+        if (file.startsWith(root)) {
+            return file.substring(root.length() + 1);
+        }
+        return file;
+    }
+
     public Target addTarget(String name, boolean isShared) {
         Target target = new Target();
         target.name = name;
@@ -34,7 +44,7 @@ public class CMakeWriter {
             sb.append("\n");
             for (String src : target.sourceFiles) {
                 sb.append("  ");//indention
-                sb.append(Util.relative(src, sourceDir));
+                sb.append(relative(src, sourceDir));
                 sb.append("\n");
             }
             sb.append(")\n");
@@ -45,7 +55,7 @@ public class CMakeWriter {
             for (String dir : target.includeDirs) {
                 sb.append("  ");//indent
                 sb.append("${CMAKE_SOURCE_DIR}");
-                String path = Util.relative(dir, sourceDir);
+                String path = relative(dir, sourceDir);
                 if (!path.isEmpty()) {
                     sb.append("/");
                     sb.append(path);

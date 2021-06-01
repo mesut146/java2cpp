@@ -21,6 +21,8 @@ import org.eclipse.jdt.core.dom.FileASTRequestor;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 public class Converter {
@@ -28,9 +30,9 @@ public class Converter {
     public List<String> classpath = new ArrayList<>();
     public CMakeWriter cMakeWriter;
     public CMakeWriter.Target target;
-    String srcDir;//source folder
-    String destDir;//destination folder for c++ files
-    File headerDir;
+    Path srcDir;//source folder
+    Path destDir;//destination folder for c++ files
+    Path headerDir;
     Filter filter;
     ASTParser parser;
     List<String> sourceList;
@@ -38,13 +40,13 @@ public class Converter {
     CHeader forwardHeader;
 
     public Converter(String srcDir, String destDir) {
-        this.srcDir = srcDir;
-        this.destDir = destDir;
-        filter = new Filter(srcDir);
+        this.srcDir = Paths.get(srcDir);
+        this.destDir = Paths.get(destDir);
+        filter = new Filter(this.srcDir);
         forwardHeader = new CHeader("common.h");
         forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
         try {
-            Logger.init(new File(destDir, "log.txt"));
+            Logger.init(this.destDir.resolve( "log.txt"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -73,7 +75,7 @@ public class Converter {
                 cpDirs.add(path);
             }
         }
-        cpDirs.add(srcDir);
+        cpDirs.add(srcDir.toString());
         parser.setEnvironment(cpJars.toArray(new String[0]), cpDirs.toArray(new String[0]), null, true);
 
         parser.setResolveBindings(true);
@@ -92,21 +94,20 @@ public class Converter {
 
     void initCmake() {
         cMakeWriter = new CMakeWriter("myproject");
-        cMakeWriter.sourceDir = destDir;
+        cMakeWriter.sourceDir = destDir.toString();
         target = cMakeWriter.addTarget("mylib", false);
-        target.addInclude(destDir);
-        target.addInclude(headerDir.getAbsolutePath());
+        target.addInclude(destDir.toString());
+        target.addInclude(headerDir.toString());
         target.addInclude("lib");
     }
 
     public void convert() {
         try {
-            headerDir = Config.separateInclude ? new File(destDir, "include") : new File(destDir);
-            headerDir.mkdirs();
+            headerDir = Config.separateInclude ? destDir.resolve("include") : destDir;
+            Files.createDirectories(headerDir);
             initCmake();
             initMain();
             preVisitDir();
-            System.out.println("pre visit done");
             convertDir();
             writeCmake();
             writeForwards();
@@ -150,7 +151,7 @@ public class Converter {
             Util.writeHeader(forwardHeader, headerDir);
         }
         if (Config.writeLibHeader) {
-            LibHandler.instance.writeAll(new File(headerDir, "lib"));
+            LibHandler.instance.writeAll(Paths.get(headerDir.toString(), "lib"));
         }
     }
 
@@ -161,14 +162,14 @@ public class Converter {
         parser.createASTs(sourceList.toArray(new String[0]), null, b, new FileASTRequestor() {
             @Override
             public void acceptAST(String sourceFilePath, CompilationUnit ast) {
-                convertSingle(sourceFilePath, ast);
+                convertSingle(Paths.get(sourceFilePath), ast);
             }
         }, null);
     }
 
     private void preVisitDir() throws IOException {
         sourceList = new ArrayList<>();
-        collect(new File(srcDir));
+        collect();
         System.out.println("total of " + sourceList.size() + " files");
         initParser();
         String[] b = new String[sourceList.size()];
@@ -179,21 +180,19 @@ public class Converter {
                 preVisit(ast);
             }
         }, null);
+        System.out.println("pre visit done");
     }
 
-    void collect(File dir) {
-        if (dir.isDirectory()) {
-            for (File file : dir.listFiles()) {
-                if (file.isDirectory()) {
-                    collect(file);
+    void collect() throws IOException {
+        Files.walkFileTree(srcDir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (file.toString().endsWith(".java") && filter.checkPath(file)) {
+                    sourceList.add(file.toString());
                 }
-                else if (file.getName().endsWith(".java")) {
-                    if (filter.checkPath(file)) {
-                        sourceList.add(file.getAbsolutePath());
-                    }
-                }
+                return super.visitFile(file, attrs);
             }
-        }
+        });
     }
 
     //create class-member model
@@ -225,13 +224,13 @@ public class Converter {
     }
 
     //convert bodies
-    public void convertSingle(String path, CompilationUnit cu) {
+    public void convertSingle(Path path, CompilationUnit cu) {
         try {
-            String relativePath = Util.trimPrefix(path, srcDir);
-            relativePath = Util.trimPrefix(relativePath, "/");
-            //System.out.println("converting " + relativePath);
+            Path relativePath = srcDir.relativize(path);
+            //relativePath = Util.trimPrefix(relativePath, "/");
+            System.out.println("converting " + relativePath);
             CSource source = new CSource();
-            source.name = Util.trimSuffix(relativePath, ".java") + ".cpp";
+            source.name = Util.trimSuffix(relativePath.toString(), ".java") + ".cpp";
 
             SourceVisitor sourceVisitor = new SourceVisitor(source);
             DeclarationVisitor headerVisitor = new DeclarationVisitor(sourceVisitor);
@@ -264,7 +263,7 @@ public class Converter {
                 }
             }
             handleDeps(source);
-            Util.writeSource(source, new File(destDir));
+            Util.writeSource(source, destDir);
 
             target.sourceFiles.add(source.name);
             count++;
@@ -316,8 +315,8 @@ public class Converter {
     public void writeCmake() throws IOException {
         target.addInclude("lib");
         String src = cMakeWriter.generate();
-        File file = new File(destDir, "CMakeLists.txt");
-        FileWriter writer = new FileWriter(file);
+        Path file = destDir.resolve("CMakeLists.txt");
+        FileWriter writer = new FileWriter(file.toString());
         writer.write(src);
         writer.close();
         System.out.println("cmake generation done");

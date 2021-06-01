@@ -11,7 +11,8 @@ public class CMethodInvocation extends CExpression {
     public CExpression scope;
     public CName name;
     public List<CExpression> arguments = new ArrayList<>();
-    public boolean isArrow;//pointer or dot
+    public boolean isArrow;//pointer
+    public boolean isDot;//object
 
     public CMethodInvocation() {
     }
@@ -35,12 +36,9 @@ public class CMethodInvocation extends CExpression {
             else {
                 sb.append(scope);
             }
-            if (isArrow) {
-                sb.append("->");
-            }
-            else {
-                sb.append("::");
-            }
+            if (isDot) sb.append(".");
+            else if (isArrow) sb.append("->");
+            else sb.append("::");
         }
         sb.append(name);
         sb.append("(").append(PrintHelper.joinStr(arguments, ", ")).append(")");

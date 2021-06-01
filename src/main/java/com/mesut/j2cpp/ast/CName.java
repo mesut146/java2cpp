@@ -1,7 +1,6 @@
 package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.cppast.CExpression;
-import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
@@ -20,7 +19,7 @@ public class CName extends CExpression {
         if (name.contains("::")) {
             String[] arr = name.split("::");
             this.orgName = arr[arr.length - 1];
-            this.name = Mapper.instance.mapName(arr[arr.length - 1]);
+            this.name = arr[arr.length - 1];
             if (arr.length > 1) {
                 namespace = new Namespace(Arrays.asList(arr));
             }
@@ -28,7 +27,6 @@ public class CName extends CExpression {
         else {
             orgName = name;
             this.name = name;
-            //this.name = Mapper.instance.mapName(name);
         }
     }
 

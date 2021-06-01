@@ -21,6 +21,7 @@ public class CType extends CExpression {
     public boolean isInner;
     public boolean fromSource;
     public boolean mapped;
+    public boolean ref;
     public ITypeBinding binding;
 
     public CType() {
@@ -72,6 +73,7 @@ public class CType extends CExpression {
         copied.isTypeArg = isTypeArg;
         copied.fromSource = fromSource;
         copied.isInner = isInner;
+        copied.ref = ref;
         return copied;
     }
 
@@ -125,7 +127,8 @@ public class CType extends CExpression {
             setScope(scope, typeNames);
             sb.append("<").append(PrintHelper.joinStr(typeNames, ", ")).append(">");
         }
-        if (isPointer()) sb.append("*");
+        if (ref) sb.append("&");
+        else if (isPointer()) sb.append("*");
         return sb.toString();
     }
 

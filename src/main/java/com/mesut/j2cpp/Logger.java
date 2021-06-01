@@ -2,20 +2,21 @@ package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.CClass;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class Logger {
     public static boolean hasErrors = false;
     static PrintWriter writer;
 
-    public static void init(File file) throws IOException {
-        if (!file.exists()) {
-            file.getParentFile().mkdirs();
-            file.createNewFile();
+    public static void init(Path file) throws IOException {
+        if (!Files.exists(file)) {
+            Files.createDirectories(file.getParent());
+            Files.createFile(file);
         }
-        writer = new PrintWriter(file);
+        writer = new PrintWriter(file.toFile());
     }
 
     public static void log(CClass cc, String msg) {
