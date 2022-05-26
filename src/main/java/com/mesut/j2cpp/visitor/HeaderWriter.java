@@ -175,7 +175,7 @@ public class HeaderWriter {
             visit((MethodDeclaration) body);
         }
         else if (body instanceof Initializer) {
-            visit((Initializer) body, cc);
+            //visit((Initializer) body, cc);
         }
     }
 
@@ -318,7 +318,8 @@ public class HeaderWriter {
         method.name = CName.from(Config.static_init_name);
         method.type = TypeHelper.getVoidType();
         method.setStatic(true);
-        sourceVisitor2.binding = cc;
+
+        //sourceVisitor2.binding = cc;
         //method.body = (CBlockStatement) sourceVisitor.visitExpr(node.getBody(), null);
 
         //main entry should call this

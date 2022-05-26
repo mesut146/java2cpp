@@ -8,7 +8,6 @@ import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.expr.CFieldAccess;
 import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
-import com.mesut.j2cpp.cppast.literal.CStringLiteral;
 import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
@@ -112,33 +111,9 @@ public class SourceVisitor2 extends ASTVisitor {
         return false;
     }
 
-    //make str to std::string
-    public void stringCreation(CStringLiteral node) {
-        write("new %s(%s)", TypeHelper.getStringType(), node);
-    }
-
-    void write(String s) {
-        code.write(s);
-    }
 
     public void write(String s, Object... args) {
         code.write(s, args);
-    }
-
-    void line(String s) {
-        code.line(s);
-    }
-
-    void line(String s, Object... args) {
-        code.line(s, args);
-    }
-
-    void write(CType type) {
-        write(type.toString());
-    }
-
-    void write(ITypeBinding b) {
-        write(TypeVisitor.fromBinding(b));
     }
 
     @Override
@@ -232,7 +207,7 @@ public class SourceVisitor2 extends ASTVisitor {
             write(" ");
             write(node.getLabel().getIdentifier());
         }
-        line(";");
+        code.write(";");
         return false;
     }
 
@@ -243,7 +218,7 @@ public class SourceVisitor2 extends ASTVisitor {
             write(" ");
             write(node.getLabel().getIdentifier());
         }
-        line(";");
+        code.write(";");
         return false;
     }
 
@@ -350,7 +325,7 @@ public class SourceVisitor2 extends ASTVisitor {
             code.line("%s %s = %s->at(%s);", code.ptr(type), v.getName().toString(), ve, i);
             bodyNoFirst(node.getBody());
             code.down();
-            line("}");
+            code.line("}");
             throw new RuntimeException("foreach array");
         }
         else {
@@ -359,12 +334,12 @@ public class SourceVisitor2 extends ASTVisitor {
             write("%s it = ", code.ptr(it));
             node.getExpression().accept(this);
             code.write(";\n");
-            line("it->hasNext();){\n");
+            code.write("it->hasNext();){\n");
             code.up();
             code.line("%s %s = (%s)it->next();\n", code.ptr(type), v.getName().toString(), type);
             bodyNoFirst(node.getBody());
             code.down();
-            line("}\n");
+            code.line("}\n");
         }
         code.down();
         code.line("}");
@@ -439,13 +414,13 @@ public class SourceVisitor2 extends ASTVisitor {
 
     @Override
     public boolean visit(LabeledStatement node) {
-        line("%s:", node.getLabel().getIdentifier());
+        code.line("%s:", node.getLabel().getIdentifier());
         return false;
     }
 
     @Override
     public boolean visit(ExpressionStatement node) {
-        line("");
+        code.line("");
         node.getExpression().accept(this);
         code.write(";");
         return false;
@@ -867,12 +842,12 @@ public class SourceVisitor2 extends ASTVisitor {
             //CType type = TypeVisitor.fromBinding(onType, cla);
             if (isStatic) {
                 //static method needs qualifier
-                write(onType);
+                code.write(onType);
                 write("::");
             }
             else if (Config.qualifyBaseMethod && !this.binding.equals(onType) && this.binding.isSubTypeCompatible(onType) && !onType.isInterface()) {
                 //qualify super method,not needed but more precise
-                write(onType);
+                code.write(onType);
                 write("::");
             }
             write(node.getName().toString());

@@ -8,7 +8,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 
 public class Conv {
     public static String rtJar = "/home/mesut/Desktop/j2cpp-dev/rt7.jar";
@@ -33,6 +32,16 @@ public class Conv {
         //converter.getFilter().addIncludeDir("java.lang");
         //converter.getFilter().addIncludeClass("java.lang.CharacterData01.java");
         //converter.setDebugMembers(true);
+        converter.convert();
+    }
+
+    @Test
+    public void testRt2() {
+        Config.full = false;
+        String dir = "/home/mesut/Desktop/j2cpp-dev/src7";
+        String out = "/home/mesut/Desktop/j2cpp-dev/src7-cpp";
+        Converter converter = new Converter(dir, out);
+        converter.getFilter().addIncludeClass("java.lang.String");
         converter.convert();
     }
 
@@ -110,7 +119,7 @@ public class Conv {
     }
 
     @Test
-    public void full() throws IOException{
+    public void full() throws IOException {
         Config.full = true;
         Converter converter = new Converter("./asd/test/java", "./asd/out");
         //converter.addClasspath(rtJar);
