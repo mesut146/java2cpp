@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 public class Conv {
     public static String rtJar = "/home/mesut/Desktop/j2cpp-dev/rt7.jar";
@@ -107,7 +108,7 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Ops");
         converter.convert();
     }
-    
+
     @Test
     public void full() throws IOException{
         Config.full = true;

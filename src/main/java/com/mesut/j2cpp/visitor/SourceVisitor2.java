@@ -3,82 +3,85 @@ package com.mesut.j2cpp.visitor;
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.LibHandler;
 import com.mesut.j2cpp.Logger;
-import com.mesut.j2cpp.ast.*;
-import com.mesut.j2cpp.cppast.*;
-import com.mesut.j2cpp.cppast.expr.*;
-import com.mesut.j2cpp.cppast.literal.*;
-import com.mesut.j2cpp.cppast.stmt.*;
+import com.mesut.j2cpp.ast.CName;
+import com.mesut.j2cpp.ast.CType;
+import com.mesut.j2cpp.cppast.CExpression;
+import com.mesut.j2cpp.cppast.expr.CFieldAccess;
+import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
+import com.mesut.j2cpp.cppast.literal.CStringLiteral;
 import com.mesut.j2cpp.map.Mapper;
-import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
-import java.util.*;
-import java.nio.file.*;
-import java.io.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public class SourceVisitor2 extends ASTVisitor {
 
     Path dir;
     CompilationUnit cu;
-    CSource source;
     ITypeBinding binding;
     String catchName;
     Code code = new Code();
     int forVarCnt = 0;
-    
-    public SourceVisitor2(Path dir, CompilationUnit cu){
+
+    public SourceVisitor2(Path dir, CompilationUnit cu) {
         this.dir = dir;
         this.cu = cu;
     }
-    
-    public void all(Path rel){
-        if(cu.getPackage() != null){
+
+    public void all(Path rel) {
+        if (cu.getPackage() != null) {
             String ns = cu.getPackage().getName().toString().replace(".", "::");
             code.usings.add(ns);
             code.write("using namespace %s;\n", ns);
         }
         code.write("\n");
-        for(Object o : cu.types()){
+        for (Object o : cu.types()) {
             AbstractTypeDeclaration decl = (AbstractTypeDeclaration) o;
             visit(decl);
         }
         String name = rel.toString();
         name = name.substring(0, name.length() - 5) + ".cpp";
         Path file = Paths.get(dir.toString(), name);
-        try{
+        try {
             Files.createDirectories(file.getParent());
             Files.write(file, code.toString().getBytes());
-        }catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
-    public void visit(AbstractTypeDeclaration decl){
+
+    public void visit(AbstractTypeDeclaration decl) {
         //includes
-            if (decl instanceof EnumDeclaration) {
-                //visit((EnumDeclaration) decl, null);
-            }
-            else if (decl instanceof AnnotationTypeDeclaration) {
-                //visit((AnnotationTypeDeclaration) decl, null);
-            }
-            else {
-                visit((TypeDeclaration) decl, null);
-            }
+        if (decl instanceof EnumDeclaration) {
+            //visit((EnumDeclaration) decl, null);
+        }
+        else if (decl instanceof AnnotationTypeDeclaration) {
+            //visit((AnnotationTypeDeclaration) decl, null);
+        }
+        else {
+            visit((TypeDeclaration) decl, null);
+        }
     }
-    
-    public void visit(TypeDeclaration node, ITypeBinding outer){
+
+    public void visit(TypeDeclaration node, ITypeBinding outer) {
         this.binding = node.resolveBinding();
         code.write("//class %s\n", node.getName());
         //static fields
-        for(Object o : node.bodyDeclarations()){
-            if(o instanceof FieldDeclaration){
-                FieldDeclaration fd = (FieldDeclaration)o;
+        for (Object o : node.bodyDeclarations()) {
+            if (o instanceof FieldDeclaration) {
+                FieldDeclaration fd = (FieldDeclaration) o;
                 ITypeBinding type = fd.getType().resolveBinding();
-                if(Modifier.isStatic(fd.getModifiers()) && !Modifier.isFinal(fd.getModifiers())){
+                if (Modifier.isStatic(fd.getModifiers()) && !Modifier.isFinal(fd.getModifiers())) {
                     for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) fd.fragments()) {
-                        if(frag.getInitializer() != null){
+                        if (frag.getInitializer() != null) {
                             code.write("%s %s::%s = ", code.ptr(type), this.binding, frag.getName());
                             frag.getInitializer().accept(this);
                             code.write(";\n");
@@ -87,21 +90,21 @@ public class SourceVisitor2 extends ASTVisitor {
                 }
             }
         }
-        for(Object o : node.bodyDeclarations()){
-            if(o instanceof MethodDeclaration){
-               visit((MethodDeclaration)o);
+        for (Object o : node.bodyDeclarations()) {
+            if (o instanceof MethodDeclaration) {
+                visit((MethodDeclaration) o);
             }
         }
     }
-    
-    public boolean visit(MethodDeclaration node){
-        if(node.getBody() == null) return false;
+
+    public boolean visit(MethodDeclaration node) {
+        if (node.getBody() == null) return false;
         IMethodBinding b = node.resolveBinding();
         code.write("%s %s::%s(", code.ptr(b.getReturnType()), this.binding, b.getName());
         for (int i = 0; i < node.parameters().size(); i++) {
             SingleVariableDeclaration param = (SingleVariableDeclaration) node.parameters().get(i);
             code.write("%s %s", code.ptr(param.getType().resolveBinding()), Mapper.instance.mapParamName(param.getName().getIdentifier()));
-            if(i < node.parameters().size() - 1) code.write(", ");
+            if (i < node.parameters().size() - 1) code.write(", ");
         }
         code.write(")");
         node.getBody().accept(this);
@@ -117,31 +120,33 @@ public class SourceVisitor2 extends ASTVisitor {
     void write(String s) {
         code.write(s);
     }
-    public void write(String s, Object...args){
+
+    public void write(String s, Object... args) {
         code.write(s, args);
     }
-    
+
     void line(String s) {
         code.line(s);
     }
-    void line(String s, Object...args){
+
+    void line(String s, Object... args) {
         code.line(s, args);
     }
-    
-    void write(CType type){
+
+    void write(CType type) {
         write(type.toString());
-     }
-     
-     void write(ITypeBinding b){
+    }
+
+    void write(ITypeBinding b) {
         write(TypeVisitor.fromBinding(b));
-     }
-     
+    }
+
     @Override
     public boolean visit(Block n) {
         //block = n;
         code.line("{\n");
         code.up();
-        for (Statement s: (List < Statement > ) n.statements()) {
+        for (Statement s : (List<Statement>) n.statements()) {
             s.accept(this);
             code.write("\n");
         }
@@ -211,7 +216,8 @@ public class SourceVisitor2 extends ASTVisitor {
             write("(unsigned " + type + ")" + left);
             write(" >> ");
             node.getRightHandSide().accept(this);
-        } else {
+        }
+        else {
             node.getLeftHandSide().accept(this);
             write(node.getOperator().toString());
             node.getRightHandSide().accept(this);
@@ -257,14 +263,17 @@ public class SourceVisitor2 extends ASTVisitor {
         Expression e = node.getExpression();
         //convert heap allocation into stack allocation
         if (e instanceof ClassInstanceCreation) {
-            write("*");
+            code.write("*(");
             e.accept(this);
-        } else
+            code.write(")");
+        }
+        else
             //if throwing custom exception
             if (e instanceof Name && !e.toString().equals(catchName)) {
                 write("*");
                 e.accept(this);
-            } else {
+            }
+            else {
                 throw new RuntimeException("throw other");
             }
         write(";");
@@ -282,11 +291,11 @@ public class SourceVisitor2 extends ASTVisitor {
     public boolean visit(IfStatement node) {
         code.line("if(");
         node.getExpression().accept(this);
-        write(")");
+        code.write(")");
         node.getThenStatement().accept(this);
-        line("");
+        code.line("");
         if (node.getElseStatement() != null) {
-            write("else ");
+            code.write("else ");
             node.getElseStatement().accept(this);
         }
         return false;
@@ -296,45 +305,44 @@ public class SourceVisitor2 extends ASTVisitor {
     public boolean visit(ForStatement node) {
         code.line("for(");
         int i = 0;
-        for (Expression init: (List < Expression > ) node.initializers()) {
+        for (Expression init : (List<Expression>) node.initializers()) {
             if (i > 0) write(", ");
             init.accept(this);
             i++;
         }
-        write(";");
+        code.write(";");
         node.getExpression().accept(this);
         i = 0;
-        for (Expression updater: (List < Expression > ) node.updaters()) {
-            if (i > 0) write(", ");
+        for (Expression updater : (List<Expression>) node.updaters()) {
+            if (i > 0) code.write(", ");
             updater.accept(this);
             i++;
         }
-        write(")");
+        code.write(")");
         node.getBody().accept(this);
         return false;
     }
 
     @Override
     public boolean visit(EnhancedForStatement node) {
-        line("{");
+        code.line("{");
         code.up();
         ITypeBinding bind = node.getExpression().resolveTypeBinding();
         String ve = "var" + (forVarCnt++);
         if (node.getExpression() instanceof SimpleName) {
             //todo only for other case
-            write(bind);
-            write(" %s = ", ve);
+            write("%s %s = ", code.ptr(bind), ve);
             node.getExpression().accept(this);
-            line(";");
-        } else {
-            write(bind);
-            write(" %s = ", ve);
-            node.getExpression().accept(this);
-            line(";");
+            code.write(";\n");
         }
-        write("for(");
+        else {
+            write("%s %s = ", code.ptr(bind), ve);
+            node.getExpression().accept(this);
+            code.write(";\n");
+        }
+        code.line("for(");
         SingleVariableDeclaration v = node.getParameter();
-        ITypeBinding type =v.getType().resolveBinding();
+        ITypeBinding type = v.getType().resolveBinding();
         if (bind.isArray()) {
             String i = "i_" + forVarCnt++;
             code.write("int %s = 0;%s < %s->size();%s++){", i, i, ve, i);
@@ -344,12 +352,13 @@ public class SourceVisitor2 extends ASTVisitor {
             code.down();
             line("}");
             throw new RuntimeException("foreach array");
-        } else {
+        }
+        else {
             CType it = new CType("java::util::Iterator");
             //it.typeArgs.add(type);
             write("%s it = ", code.ptr(it));
             node.getExpression().accept(this);
-            write(";");
+            code.write(";\n");
             line("it->hasNext();){\n");
             code.up();
             code.line("%s %s = (%s)it->next();\n", code.ptr(type), v.getName().toString(), type);
@@ -365,10 +374,11 @@ public class SourceVisitor2 extends ASTVisitor {
     void bodyNoFirst(Statement st) {
         if (st instanceof Block) {
             Block b = (Block) st;
-            for (Statement s: (List < Statement > ) b.statements()) {
+            for (Statement s : (List<Statement>) b.statements()) {
                 s.accept(this);
             }
-        } else {
+        }
+        else {
             st.accept(this);
         }
     }
@@ -377,7 +387,8 @@ public class SourceVisitor2 extends ASTVisitor {
     public boolean visit(SingleVariableDeclaration node) {
         if (Config.use_auto && !(node.getParent() instanceof CatchClause)) {
             code.line("auto %s", node.getName().getIdentifier());
-        } else {
+        }
+        else {
             ITypeBinding type = node.getType().resolveBinding();
             code.line("%s %s", code.ptr(type), node.getName().getIdentifier());
         }
@@ -470,14 +481,16 @@ public class SourceVisitor2 extends ASTVisitor {
     @Override
     public boolean visit(VariableDeclarationStatement node) {
         ITypeBinding type = node.getType().resolveBinding();
-        for (VariableDeclarationFragment frag: (List < VariableDeclarationFragment > ) node.fragments()) {
-            if(frag.getInitializer() == null){
-                code.line("%s %s;\n", code.ptr(type), frag.getName());
-            }else{
+        for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
+            if (frag.getInitializer() == null) {
+                code.line("%s %s;", code.ptr(type), frag.getName());
+            }
+            else {
                 if (Config.use_auto && type.equals(frag.getInitializer().resolveTypeBinding())) {
-                    line("auto %s = ", frag.getName());
-                }else{
-                    line("%s %s = ", code.ptr(type), frag.getName());
+                    code.line("auto %s = ", frag.getName());
+                }
+                else {
+                    code.line("%s %s = ", code.ptr(type), frag.getName());
                 }
                 frag.getInitializer().accept(this);
                 write(";");
@@ -485,22 +498,27 @@ public class SourceVisitor2 extends ASTVisitor {
         }
         return false;
     }
-    
-        @Override
-        public boolean visit(VariableDeclarationExpression node) {
-            code.write(code.ptr(node.getType().resolveBinding()));
-            for (VariableDeclarationFragment frag: (List < VariableDeclarationFragment > ) node.fragments()) {
-                frag.getName().accept(this);
-                write(" = ");
-                frag.getInitializer().accept(this);
+
+    @Override
+    public boolean visit(VariableDeclarationExpression node) {
+        ITypeBinding type = node.getType().resolveBinding();
+        for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
+            if (frag.getInitializer() == null) {
+                code.line("%s %s;", code.ptr(type), frag.getName());
             }
-            return false;
+            else {
+                if (Config.use_auto && type.equals(frag.getInitializer().resolveTypeBinding())) {
+                    code.line("auto %s = ", frag.getName());
+                }
+                else {
+                    code.line("%s %s = ", code.ptr(type), frag.getName());
+                }
+                frag.getInitializer().accept(this);
+                write(";");
+            }
         }
-        
-    /*@Override
-    public boolean visit(VariableDeclaration node) {
-        throw new RuntimeException("vdecl");
-    }*/
+        return false;
+    }
 
     @Override
     public boolean visit(FieldAccess node) {
@@ -513,144 +531,167 @@ public class SourceVisitor2 extends ASTVisitor {
         if (typeBinding == null) {
             Logger.logBinding(this.binding, node.toString());
             throw new RuntimeException("null type binding");
-        } else if (typeBinding.isArray() && node.getName().getIdentifier().equals("length")) {
+        }
+        else if (typeBinding.isArray() && node.getName().getIdentifier().equals("length")) {
             scope.accept(this);
             write("->size()");
             return false;
         }
 
         if (binding.isEnumConstant() || Modifier.isStatic(binding.getModifiers())) {
-                scope.accept(this);
-                write("::");
-                node.getName().accept(this);
-                return false;
-            }
-
-            scope.accept(this); write("->"); node.getName().accept(this);
-            //todo Main.this.field
+            scope.accept(this);
+            write("::%s", node.getName());
             return false;
         }
 
-        @Override
-        public boolean visit(ClassInstanceCreation node) {
-            ITypeBinding binding = node.getType().resolveBinding();
-            if (binding == null) {
-                Logger.logBinding(this.binding, node.toString());
-                throw new RuntimeException("cic null binding");
+        scope.accept(this);
+        write("->%s", node.getName());
+        //todo Main.this.field
+        return false;
+    }
+
+    @Override
+    public boolean visit(ClassInstanceCreation node) {
+        ITypeBinding binding = node.getType().resolveBinding();
+        if (binding == null) {
+            Logger.logBinding(this.binding, node.toString());
+            throw new RuntimeException("cic null binding");
+        }
+        boolean inner = node.getAnonymousClassDeclaration() != null || !Modifier.isStatic(binding.getModifiers()) && binding.isNested();
+        if (node.getAnonymousClassDeclaration() == null) {
+            write("new %s(", node.getType().resolveBinding());
+            args(node.arguments());
+            if (inner) {
+                write(", this");
             }
-            boolean inner = node.getAnonymousClassDeclaration() != null || !Modifier.isStatic(binding.getModifiers()) && binding.isNested();
-            if (node.getAnonymousClassDeclaration() == null) {
-                write("new ");
-                write("%s", node.getType().resolveBinding());
-                write("(");
-                args(node.arguments());
-                if (inner) {
-                    write(", this");
-                }
-                write(")");
-            } else {
-                //collect locals and set
-                throw new RuntimeException("anony ");
+            write(")");
+        }
+        else {
+            //collect locals and set
+            throw new RuntimeException("anony ");
                 /*AnonyHandler handler = new AnonyHandler();
                 creation = handler.handle(node.getAnonymousClassDeclaration(), TypeVisitor.visitType(node.getType(), clazz), clazz, this);
                 anony = handler.anony;
                 */
+        }
+        return false;
+    }
+
+    @Override
+    public boolean visit(ConditionalExpression node) {
+        node.getExpression().accept(this);
+        write(" ? ");
+        node.getThenExpression().accept(this);
+        write(" : ");
+        node.getElseExpression().accept(this);
+        return false;
+    }
+
+    @Override
+    public boolean visit(SuperMethodInvocation node) {
+        if (node.getQualifier() != null) {
+            throw new RuntimeException("qualified SuperMethodInvocation");
+        }
+        code.write("%s::%s(", binding.getSuperclass(), node.getName());
+        args(node.arguments());
+        write(")");
+        return false;
+    }
+
+    void args(List<Expression> list) {
+        for (int i = 0; i < list.size(); i++) {
+            list.get(i).accept(this);
+            if (i < list.size() - 1) write(", ");
+        }
+    }
+
+    @Override
+    public boolean visit(ThisExpression node) {
+        if (node.getQualifier() == null) {
+            code.write("this");
+        }
+        else {
+            ITypeBinding binding = node.getQualifier().resolveTypeBinding();
+            CExpression r = ref2(this.binding, binding);
+            if (r != null) {
+                code.write(r.toString());
             }
-            return false;
-        }
-
-        @Override
-        public boolean visit(ConditionalExpression node) {
-            node.getExpression().accept(this);
-            write(" ? ");
-            node.getThenExpression().accept(this);
-            write(" : ");
-            node.getElseExpression().accept(this);
-            return false;
-        }
-
-        @Override
-        public boolean visit(SuperMethodInvocation node) {
-            if (node.getQualifier() != null) {
-                throw new RuntimeException("qualified SuperMethodInvocation");
-            }
-            code.write(binding.getSuperclass());
-            write("::");
-            write(node.getName().toString());
-            write("(");
-            args(node.arguments());
-            write(")");
-            return false;
-        }
-
-        void args(List < Expression > list) {
-            for (int i = 0; i < list.size(); i++) {
-                list.get(i).accept(this);
-                if (i < list.size() -1 ) write(", ");
+            else {
+                throw new RuntimeException("qualified this");
             }
         }
+        return false;
+    }
 
-        @Override
-        public boolean visit(ThisExpression node) {
-            if (node.getQualifier() == null) {
-                write("this");
-            } else {
-                ITypeBinding binding = node.getQualifier().resolveTypeBinding();
-                CExpression r= ref2(this.binding, binding);
-                if(r!=null){
-                    write(r.toString());
-                }else{
-                    throw new RuntimeException("qualified this");
-                }
-            }
-            return false;
+    @Override
+    public boolean visit(NumberLiteral node) {
+        write(node.getToken());
+        return false;
+    }
+
+    @Override
+    public boolean visit(SuperFieldAccess node) {
+        if (node.getQualifier() != null) {
+            throw new RuntimeException("SuperFieldAccess qualifier");
         }
+        code.write("%s::%s", binding.getSuperclass(), node.getName());
+        return false;
+    }
 
-        @Override
-        public boolean visit(NumberLiteral node) {
-            write(node.getToken());
-            return false;
-        }
+    void wrapStr(Expression e) {
+        code.write("%s::valueOf(", TypeHelper.getStringType());
+        e.accept(this);
+        code.write(")");
+    }
 
-        @Override
-        public boolean visit(SuperFieldAccess node) {
-            throw new RuntimeException("SuperFieldAccess");
-        }
-
-        @Override
-        public boolean visit(InfixExpression node) {
-            String op = node.getOperator().toString();
-            if (op.equals("+")) {
-                //if either side is string then whole expr is string concatenation
-                if (isStr(node.getLeftOperand()) || isStr(node.getRightOperand())) {
-                    //infixString(node);
+    @Override
+    public boolean visit(InfixExpression node) {
+        String op = node.getOperator().toString();
+        if (op.equals("+")) {
+            //if either side is string then whole expr is string concatenation
+            if (isStr(node.getLeftOperand())) {
+                node.getLeftOperand().accept(this);
+                code.write("->concat(");
+                node.getRightOperand().accept(this);
+                code.write(")");
+                if (node.hasExtendedOperands()) {
                     throw new RuntimeException("str concat");
                 }
             }
-            if (node.getOperator().toString().equals(">>>")) {
-                CType type = TypeVisitor.fromBinding(node.getLeftOperand().resolveTypeBinding());
-                write("(unsigned %s)", type);
-                node.getLeftOperand().accept(this);
-                write(">>");
+            else if (isStr(node.getRightOperand())) {
+                wrapStr(node.getLeftOperand());
+                code.write("->concat(");
                 node.getRightOperand().accept(this);
-                return false;
-            }
-
-            node.getLeftOperand().accept(this);
-            write(op);
-            node.getRightOperand().accept(this);
-            if (node.hasExtendedOperands()) {
-                for (Expression e: (List < Expression > ) node.extendedOperands()) {
-                    write(op);
-                    e.accept(this);
+                code.write(")");
+                if (node.hasExtendedOperands()) {
+                    throw new RuntimeException("str concat");
                 }
             }
+        }
+        if (node.getOperator().toString().equals(">>>")) {
+            CType type = TypeVisitor.fromBinding(node.getLeftOperand().resolveTypeBinding());
+            write("(unsigned %s)", type);
+            node.getLeftOperand().accept(this);
+            write(">>");
+            node.getRightOperand().accept(this);
             return false;
         }
 
-        boolean isStr(Expression e) {
-            return e.resolveTypeBinding().getQualifiedName().equals("java.lang.String");
+        node.getLeftOperand().accept(this);
+        write(op);
+        node.getRightOperand().accept(this);
+        if (node.hasExtendedOperands()) {
+            for (Expression e : (List<Expression>) node.extendedOperands()) {
+                write(op);
+                e.accept(this);
+            }
         }
+        return false;
+    }
+
+    boolean isStr(Expression e) {
+        return e.resolveTypeBinding().getQualifiedName().equals("java.lang.String");
+    }
 
         /*CExpression infixString(InfixExpression node) {
             CClassInstanceCreation creation = new CClassInstanceCreation();
@@ -713,423 +754,359 @@ public class SourceVisitor2 extends ASTVisitor {
             }
         }*/
 
-        @Override
-        public boolean visit(PostfixExpression node) {
-            node.getOperand().accept(this);
-            write(node.getOperator().toString());
-            return false;
-        }
+    @Override
+    public boolean visit(PostfixExpression node) {
+        node.getOperand().accept(this);
+        write(node.getOperator().toString());
+        return false;
+    }
 
-        @Override
-        public boolean visit(PrefixExpression node) {
-            write(node.getOperator().toString());
-            node.getOperand().accept(this);
-            return false;
-        }
+    @Override
+    public boolean visit(PrefixExpression node) {
+        write(node.getOperator().toString());
+        node.getOperand().accept(this);
+        return false;
+    }
 
-        @Override
-        public boolean visit(InstanceofExpression node) {
-            //source.hasRuntime = true;
-            write("instance_of<");
-            write(node.getRightOperand().resolveBinding());
-            write(">(");
-            node.getLeftOperand().accept(this);
+    @Override
+    public boolean visit(InstanceofExpression node) {
+        code.write("dynamic_cast<%s>(", code.ptr(node.getRightOperand().resolveBinding()));
+        node.getLeftOperand().accept(this);
+        code.write(")");
+        /*
+        //source.hasRuntime = true;
+        write("instance_of<");
+        write(node.getRightOperand().resolveBinding());
+        write(">(");
+        node.getLeftOperand().accept(this);
+        write(")");*/
+        return false;
+    }
+
+    @Override
+    public boolean visit(ArrayAccess node) {
+        node.getArray().accept(this);
+        write("->at(");
+        node.getIndex().accept(this);
+        write(")");
+        return false;
+    }
+
+    @Override
+    public boolean visit(ArrayCreation node) {
+        if (node.getInitializer() != null) {
+            write("arrays::from(");
+            node.getInitializer().accept(this);
             write(")");
-            return false;
         }
-
-        @Override
-        public boolean visit(ArrayAccess node) {
-            node.getArray().accept(this);
-            write("->at(");
-            node.getIndex().accept(this);
+        else {
+            ITypeBinding elemType = node.getType().getElementType().resolveBinding();
+            write("arrays::make%d<%s>(", node.getType().getDimensions(), code.ptr(elemType));
+            args(node.dimensions());
+            //set missing dims to zero
+            for (int i = node.dimensions().size(); i < node.getType().getDimensions(); i++) {
+                write(", 0");
+            }
             write(")");
-            return false;
         }
+        return false;
+    }
 
-        @Override
-        public boolean visit(ArrayCreation node) {
-            if (node.getInitializer() != null) {
-                write("arrays::from(");
-                node.getInitializer().accept(this);
-                write(")");
-            } else {
-                ITypeBinding elemType = node.getType().getElementType().resolveBinding();
-                write("arrays::make%d<%s>(", node.getType().getDimensions(), code.ptr(elemType));
-                args(node.dimensions());
-                //set missing dims to zero
-                for (int i = node.dimensions().size(); i < node.getType().getDimensions(); i++) {
-                    write(", 0");
-                }
-                write(")");
-            }
-            return false;
+    //{...}
+    @Override
+    public boolean visit(ArrayInitializer node) {
+        throw new RuntimeException("ArrayInitializer");
+    }
+
+    @Override
+    public boolean visit(CastExpression node) {
+        ITypeBinding type = node.getType().resolveBinding();
+        if (TypeHelper.canCast(node.getExpression(), node.getExpression().resolveTypeBinding(), type)) {
+            //System.out.println("static "+clazz.getType());
+            //static cast
+            write("(%s)", code.ptr(type));
+            node.getExpression().accept(this);
         }
-
-        //{...}
-        @Override
-        public boolean visit(ArrayInitializer node) {
-            //return new CArrayInitializer(list(node.expressions()));
-            return false;
-        }
-
-        @Override
-        public boolean visit(CastExpression node) {
-            ITypeBinding type = node.getType().resolveBinding();
-            if (TypeHelper.canCast(node.getExpression(), node.getExpression().resolveTypeBinding(), type)) {
-                //System.out.println("static "+clazz.getType());
-                //static cast
-                write("(%s)", code.ptr(type));
-                node.getExpression().accept(this);
-            } else {
-                //System.out.println("dynamic " + clazz.getType());
-                //dynamic e.g derived class to base class
-                write("dynamic_cast<%s>(", code.ptr(type));
-                node.getExpression().accept(this);
-                write(")");
-            }
-            return false;
-        }
-
-        @Override
-        public boolean visit(ParenthesizedExpression node) {
-            write("(");
+        else {
+            //System.out.println("dynamic " + clazz.getType());
+            //dynamic e.g derived class to base class
+            write("dynamic_cast<%s>(", code.ptr(type));
             node.getExpression().accept(this);
             write(")");
-            return false;
         }
+        return false;
+    }
 
-        CExpression handlePrint(String name, Expression scope, List < Expression > args0, List < CExpression > args1) {
-            String str = scope.toString();
-            if (str.equals("System.out") || str.equals("java.lang.System.out") || str.equals("System.err") || str.equals("java.lang.System.err")) {
-                boolean err = str.equals("System.err") || str.equals("java.lang.System.err");
-                CName out = err ? CName.from("std::cerr") : CName.from("std::cout");
-                //normalize arg
-                CExpression arg = null;
-                if (!args0.isEmpty()) {
-                    Expression arg0 = args0.get(0);
-                    if (arg0 instanceof StringLiteral) {
-                        arg = new CStringLiteral(((StringLiteral) arg0).getLiteralValue());
-                    } else if (arg0 instanceof NumberLiteral) {
-                        arg = new CNumberLiteral(arg0.toString());
-                    } else {
-                        arg = new DeferenceExpr(new CParenthesizedExpression(args1.get(0)));
-                    }
-                }
-                if (name.equals("print") || name.equals("append")) {
-                    CInfixExpression infix = new CInfixExpression();
-                    infix.operator = "<<";
-                    infix.left = out;
-                    infix.right = arg;
-                    return infix;
-                } else if (name.equals("println")) {
-                    CInfixExpression infix = new CInfixExpression();
-                    infix.operator = "<<";
-                    infix.left = out;
-                    infix.right = arg;
-                    if (arg == null) {
-                        //just println()
-                        infix.right = new CStringLiteral("\\n");
-                        return infix;
-                    }
-                    return new CInfixExpression(infix, new CStringLiteral("\\n"), "<<");
-                }
+    @Override
+    public boolean visit(ParenthesizedExpression node) {
+        write("(");
+        node.getExpression().accept(this);
+        write(")");
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean visit(MethodInvocation node) {
+        IMethodBinding binding = node.resolveMethodBinding();
+        if (binding == null) {
+            Logger.logBinding(this.binding, node.toString());
+            throw new RuntimeException("inv null binding");
+        }
+        ITypeBinding ret = binding.getReturnType();
+        ITypeBinding org = binding.getMethodDeclaration().getReturnType();
+        boolean needCast = !org.equals(ret) && (org.isWildcardType() || org.isTypeVariable());
+        if (needCast) {
+            //cast
+            write("dynamic_cast<%s>(", code.ptr(ret));
+        }
+        System.out.printf("rt of %s = %s other=%s\n", node, ret.getName(), org.getName());
+        boolean isStatic = Modifier.isStatic(binding.getModifiers());
+        if (node.getExpression() == null) {
+            ITypeBinding onType = binding.getDeclaringClass();
+            //CType type = TypeVisitor.fromBinding(onType, cla);
+            if (isStatic) {
+                //static method needs qualifier
+                write(onType);
+                write("::");
             }
+            else if (Config.qualifyBaseMethod && !this.binding.equals(onType) && this.binding.isSubTypeCompatible(onType) && !onType.isInterface()) {
+                //qualify super method,not needed but more precise
+                write(onType);
+                write("::");
+            }
+            write(node.getName().toString());
+            write("(");
+            args(node.arguments());
+            write(")");
+        }
+        else {
+            node.getExpression().accept(this);
+            if (catchName != null && catchName.equals(node.getExpression().toString())) {
+                write(".");
+            }
+            else if (isStatic) {
+                write("::");
+            }
+            else {
+                write("->");
+            }
+            write(node.getName().toString());
+            write("(");
+            args(node.arguments());
+            write(")");
+        }
+        if (needCast) {
+            code.write(")");
+        }
+        return false;
+    }
+
+    int refCnt(ITypeBinding cur, ITypeBinding target) {
+        int cnt = 0;
+        while (true) {
+            ITypeBinding parent = cur.getDeclaringClass();
+            if (parent == null) return 0;
+            cnt++;
+            if (parent.equals(target)) {
+                return cnt;
+            }
+            cur = parent;
+        }
+        //return 0;
+    }
+
+    CExpression ref3(ITypeBinding t1, ITypeBinding target) {
+        int cnt = refCnt(t1, target);
+        if (cnt == 0) return null;
+        CExpression res = new CName(Config.parentName);
+        cnt--;
+        while (cnt-- > 0) {
+            res = new CFieldAccess(res, new CName(Config.parentName), true);
+        }
+        return res;
+    }
+
+    //t1 -> t2 -> ... -> target
+    //is target outer of t1
+    CExpression ref2(ITypeBinding t1, ITypeBinding target) {
+        ITypeBinding parent = t1.getDeclaringClass();
+        if (parent == null) {
             return null;
         }
+        if (parent.equals(target)) {
+            return new CName(Config.parentName);
+        }
+        CExpression ref = ref2(parent, target);
+        if (ref == null) {
+            return null;
+        }
+        return new CFieldAccess(ref, new CName(Config.parentName), true);
+    }
 
-        @SuppressWarnings("unchecked")
-        @Override
-        public boolean visit(MethodInvocation node) {
-            IMethodBinding binding = node.resolveMethodBinding();
-            if (binding == null) {
-                Logger.logBinding(this.binding, node.toString());
-                throw new RuntimeException("inv null binding");
-            }
-            ITypeBinding org = binding.getMethodDeclaration().getReturnType();
-            boolean needCast = !org.equals(binding) && (org.isWildcardType() || org.isTypeVariable()) && bin;
-            if(needCast){
-                //cast
-                write("dynamic_cast<%s>(", code.ptr(binding.getReturnType()));
-            }
-            System.out.printf("rt of %s = %s other=%s\n", node, binding.getReturnType().getName(), org.getName());
-            boolean isStatic = Modifier.isStatic(binding.getModifiers());
-            if (node.getExpression() == null) {
-                ITypeBinding onType = binding.getDeclaringClass();
-                //CType type = TypeVisitor.fromBinding(onType, cla);
-                if (isStatic) {
-                    //static method needs qualifier
-                    write(onType);
-                    write("::");
-                } else if (Config.qualifyBaseMethod && !this.binding.equals(onType) && this.binding.isSubTypeCompatible(onType) && !onType.isInterface()) {
-                    //qualify super method,not needed but more precise
-                    write(onType);
-                    write("::");
-                }
-                write(node.getName().toString());
-                write("(");
-                args(node.arguments());
-                write(")");
-            } else {
-                node.getExpression().accept(this);
-                if (catchName != null && catchName.equals(node.getExpression().toString())) {
-                    write(".");
-                } else if (isStatic) {
-                    write("::");
-                } else {
-                    write("->");
-                }
-                write(node.getName().toString());
-                write("(");
-                args(node.arguments());
-                write(")");
-            }
-            if(needCast){
-                code.write(")");
-            }
-
-            //boolean isAbstract = Modifier.isAbstract(binding.getModifiers());
-            //scoped static
-            //non scoped static
-            //outer
-
-            /*if (!binding.getDeclaringClass().isFromSource() && Config.writeLibHeader) {
-                LibHandler.instance.addMethod(binding);
-            }*/
-
-            //base method
-            //check outer method
-            /*CExpression ref = ref2(this.binding, onType);
-            if (ref != null) {
-                scope = ref;
-            }*/
+    @Override
+    public boolean visit(SimpleName node) {
+        IBinding binding = node.resolveBinding();
+        CName name = new CName(node.getIdentifier());
+        if (binding == null) {
+            Logger.logBinding(this.binding, node.toString());
+            throw new RuntimeException("sn null binding");
+        }
+        if (binding.getKind() != IBinding.VARIABLE) {
+            write(name.toString());
+            throw new RuntimeException("non var sn " + node);
+        }
+        boolean isStatic = Modifier.isStatic(binding.getModifiers());
+        IVariableBinding variableBinding = (IVariableBinding) binding;
+        ITypeBinding onType = variableBinding.getDeclaringClass();
+        if (variableBinding.isParameter()) {
+            write(Mapper.instance.mapParamName(node.getIdentifier()).toString());
             return false;
         }
 
-        boolean isSame(ITypeBinding from, ITypeBinding to) {
-            if (!from.getBinaryName().isEmpty()) {
-                return from.getBinaryName().equals(to.getBinaryName());
+        if (variableBinding.isField()) {
+            name = Mapper.instance.mapFieldName(name.name, this.binding);
+            if (isStatic) {
+                if (variableBinding.getType().isPrimitive()) {
+                    write("%s::%s", onType, name.toString());
+                }
+                else {
+                    write("%s::%s()", onType, name.toString());
+                }
             }
-            //todo
-            return from.isSubTypeCompatible(to);
+            else {
+                if (this.binding.equals(onType)) {
+                    write(name.toString());
+                    return false;
+                }
+                if (this.binding.isSubTypeCompatible(onType)) {
+                    //super field?
+                    write(name.toString());
+                    return false;
+                }
+                CExpression ref = ref2(this.binding, onType);
+                if (ref != null) {
+                    write("%s->%s", ref, name.toString());
+                    return false;
+                }
+                throw new RuntimeException("sn field");
+            }
+        }
+        else {
+            //access to catch variable
+            if (catchName != null && name.is(catchName) && !(node.getParent() instanceof ThrowStatement)) {
+                if (node.getParent() instanceof VariableDeclarationFragment || node.getParent() instanceof Assignment || node.getParent() instanceof ClassInstanceCreation) {
+                    write("(&%s)", name.toString());
+                    return false;
+                }
+            }
+            if (this.binding.isAnonymous() && onType == null) {
+            }
+            write(name.toString());
+        }
+        return false;
+    }
+
+    //qualified class,array.length,field access
+    @Override
+    public boolean visit(QualifiedName node) {
+        IBinding binding = node.resolveBinding();
+        ITypeBinding typeBinding = node.getQualifier().resolveTypeBinding();
+
+        if ((binding instanceof IVariableBinding) && Config.writeLibHeader) {
+            LibHandler.instance.addField((IVariableBinding) binding);
+        }
+        if (binding == null || typeBinding == null) {
+            Logger.logBinding(this.binding, node.toString());
+            //normal qualified name access
+            //qualifier is not a type so it is a package
+            //return new CName(node.getFullyQualifiedName());
+            throw new RuntimeException("qname null binding");
         }
 
-        //is target one of my ancestors
-        /*boolean isSuper(ITypeBinding from, ITypeBinding target) {
-            if (from == null || from.getSuperclass() == null) {
+        String name = node.getName().getIdentifier();
+
+        if (typeBinding.isArray() && name.equals("length")) {
+            //array.length
+            node.getQualifier().accept(this);
+            write("->size()");
+            return false;
+        }
+
+        boolean isStatic = Modifier.isStatic(binding.getModifiers());
+
+        if (isStatic) {
+            IVariableBinding variableBinding = (IVariableBinding) binding;
+            if (Config.static_field_cofui && Modifier.isFinal(binding.getModifiers()) && !variableBinding.getType().isPrimitive()) {
+                CName mapped = Mapper.instance.mapFieldName(name, this.binding);
+                write("%s::%s()", typeBinding, mapped);
                 return false;
             }
-            if (from.getSuperclass().equals(target)) {
-                return true;
-            }
-            return isSuper(from.getSuperclass(), target);
-        }*/
+        }
 
-        void resolveName(SimpleName node) {
-            IBinding binding = node.resolveBinding();
-            CName name = new CName(node.getIdentifier());
-            if (binding == null) {
-                Logger.logBinding(this.binding, node.toString());
-                throw new RuntimeException("sn null binding");
-            }
-            if (binding.getKind() != IBinding.VARIABLE) {
-                write(name.toString());
-                throw new RuntimeException("non var sn " + node);
-            }
-            boolean isStatic = Modifier.isStatic(binding.getModifiers());
+        if (binding.getKind() == IBinding.VARIABLE) {
             IVariableBinding variableBinding = (IVariableBinding) binding;
-            ITypeBinding onType = variableBinding.getDeclaringClass();
-            if (variableBinding.isParameter()) {
-                write(Mapper.instance.mapParamName(node.getIdentifier()).toString());
-                return;
-            }
-
             if (variableBinding.isField()) {
-                name = Mapper.instance.mapFieldName(name.name, this.binding); 
-                if (isStatic) {
-                    if (variableBinding.getType().isPrimitive()) {
-                        write("%s::%s", onType, name.toString());
-                    } else {
-                        write("%s::%s()", onType, name.toString());
-                    }
-                } else {
-                    if(this.binding.equals(onType) ){
-                        write(name.toString());
-                        return;
-                    }
-                    if (this.binding.isSubTypeCompatible(onType)) {
-                        //super field?
-                        write(name.toString());
-                        return;
-                    }
-                    CExpression ref = ref2(this.binding, onType);
-                    if (ref != null) {
-                        write("%s->%s", ref, name.toString());
-                        return;
-                    }
-                    throw new RuntimeException("sn field");
-                }
-            }else {
-                //access to catch variable
-                if (catchName != null && name.is(catchName) && !(node.getParent() instanceof ThrowStatement)) {
-                    if (node.getParent() instanceof VariableDeclarationFragment || node.getParent() instanceof Assignment || node.getParent() instanceof ClassInstanceCreation) {
-                        write("(&%s)", name.toString());
-                        return;
-                    }
-                }
-                if (this.binding.isAnonymous() && onType == null) {
-                }
-                write(name.toString());
-                return;
+                CName mapped = Mapper.instance.mapFieldName(name, this.binding);
+                write("%s->%s", typeBinding, mapped);
+                return false;
+            }
+            else if (variableBinding.isParameter()) {
+                String mapped = Mapper.instance.mapParamName(name);
+                write("%s", mapped);
             }
         }
+        return false;
+    }
 
-        int refCnt(ITypeBinding cur, ITypeBinding target){
-            int  cnt = 0;
-            while(true){
-                ITypeBinding parent = cur.getDeclaringClass();
-                if(parent == null) return 0;
-                cnt++;
-                if(parent.equals(target)){
-                    return cnt;
-                }
-                cur = parent;
-            }
-            //return 0;
-        }
-        
-        CExpression ref3(ITypeBinding t1, ITypeBinding target) {
-            int cnt = refCnt(t1, target);
-            if(cnt == 0) return null;
-            CExpression res = new CName(Config.parentName);
-            cnt--;
-            while(cnt-- > 0){
-                res = new CFieldAccess(res, new CName(Config.parentName), true);
-            }
+    String toWrapper(String s) {
+        Map<String, String> map = new HashMap<>();
+        map.put("boolean", "Boolean");
+        map.put("byte", "Byte");
+        map.put("char", "Character");
+        map.put("short", "Short");
+        map.put("int", "Integer");
+        map.put("long", "Long");
+        map.put("float", "Float");
+        map.put("double", "Double");
+        return map.get(s);
+    }
+
+    String fromWrapper(String s) {
+        Map<String, String> map = new HashMap<>();
+        map.put("Boolean", "boolean");
+        map.put("Byte", "byte");
+        map.put("Character", "char");
+        map.put("Short", "short");
+        map.put("Integer", "int");
+        map.put("Long", "lon");
+        map.put("Float", "float");
+        map.put("Double", "double");
+        return map.get(s);
+    }
+
+
+    CExpression box(Expression e, CExpression ce) {
+        //Double d = i;
+        if (e.resolveBoxing()) {
+            ITypeBinding t = e.resolveTypeBinding();
+            String type = t.getName();
+            //$Wrapper$::valueOf(e)
+            CType wr = new CType("java::lang::" + toWrapper(type));
+            CMethodInvocation res = new CMethodInvocation(wr, new CName("valueOf"), false);
+            res.arguments.add(ce);
             return res;
         }
-
-        //t1 -> t2 -> ... -> target
-        //is target outer of t1
-        CExpression ref2(ITypeBinding t1, ITypeBinding target) {
-            ITypeBinding parent = t1.getDeclaringClass();
-            if (parent == null) {
-                return null;
-            }
-            if (parent.equals(target)) {
-                return new CName(Config.parentName);
-            }
-            CExpression ref = ref2(parent, target);
-            if (ref == null) {
-                return null;
-            }
-            return new CFieldAccess(ref, new CName(Config.parentName), true);
+        if (e.resolveUnboxing()) {
+            ITypeBinding t = e.resolveTypeBinding();
+            String type = t.getName();
+            //e.$prim$Value
+            String prim = fromWrapper(type);
+            CMethodInvocation res = new CMethodInvocation(ce, new CName(prim + "Value"), true);
+            return res;
         }
-
-        @Override
-        public boolean visit(SimpleName node) {
-            resolveName(node);
-            return false;
-        }
-
-        //qualified class,array.length,field access
-        @Override
-        public boolean visit(QualifiedName node) {
-            IBinding binding = node.resolveBinding();
-            ITypeBinding typeBinding = node.getQualifier().resolveTypeBinding();
-
-            if ((binding instanceof IVariableBinding) && Config.writeLibHeader) {
-                LibHandler.instance.addField((IVariableBinding) binding);
-            }
-            if (binding == null || typeBinding == null) {
-                Logger.logBinding(this.binding, node.toString());
-                //normal qualified name access
-                //qualifier is not a type so it is a package
-                //return new CName(node.getFullyQualifiedName());
-                throw new RuntimeException("qname null binding");
-            }
-
-            String name = node.getName().getIdentifier();
-
-            if (typeBinding.isArray() && name.equals("length")) {
-                //array.length
-                node.getQualifier().accept(this);
-                write("->size()");
-                return false;
-            }
-
-            boolean isStatic = Modifier.isStatic(binding.getModifiers());            
-
-            if (isStatic) {
-                    IVariableBinding variableBinding = (IVariableBinding) binding;
-                        if (Config.static_field_cofui && Modifier.isFinal(binding.getModifiers()) && !variableBinding.getType().isPrimitive()) {
-                            CName mapped = Mapper.instance.mapFieldName(name, this.binding);
-                            write("%s::%s()", typeBinding, mapped);
-                            return false;
-                        }
-            }
-
-            if (binding.getKind() == IBinding.VARIABLE) {
-                IVariableBinding variableBinding = (IVariableBinding) binding;
-                if (variableBinding.isField()) {
-                    CName mapped = Mapper.instance.mapFieldName(name, this.binding);
-                    write("%s->%s", typeBinding, mapped);
-                    return false;
-                } else if (variableBinding.isParameter()) {
-                    String mapped = Mapper.instance.mapParamName(name);
-                    write("%s", mapped);
-                }
-            }
-            return false;
-        }
-
-        String toWrapper(String s) {
-            Map < String, String > map = new HashMap < > ();
-            map.put("boolean", "Boolean");
-            map.put("byte", "Byte");
-            map.put("char", "Character");
-            map.put("short", "Short");
-            map.put("int", "Integer");
-            map.put("long", "Long");
-            map.put("float", "Float");
-            map.put("double", "Double");
-            return map.get(s);
-        }
-        String fromWrapper(String s) {
-            Map < String, String > map = new HashMap < > ();
-            map.put("Boolean", "boolean");
-            map.put("Byte", "byte");
-            map.put("Character", "char");
-            map.put("Short", "short");
-            map.put("Integer", "int");
-            map.put("Long", "lon");
-            map.put("Float", "float");
-            map.put("Double", "double");
-            return map.get(s);
-        }
-
-
-        CExpression box(Expression e, CExpression ce) {
-            //Double d = i;
-            if (e.resolveBoxing()) {
-                ITypeBinding t = e.resolveTypeBinding();
-                String type = t.getName();
-                //$Wrapper$::valueOf(e)
-                CType wr = new CType("java::lang::" + toWrapper(type));
-                CMethodInvocation res = new CMethodInvocation(wr, new CName("valueOf"), false);
-                res.arguments.add(ce);
-                return res;
-            }
-            if (e.resolveUnboxing()) {
-                ITypeBinding t = e.resolveTypeBinding();
-                String type = t.getName();
-                //e.$prim$Value
-                String prim = fromWrapper(type);
-                CMethodInvocation res = new CMethodInvocation(ce, new CName(prim + "Value"), true);
-                return res;
-            }
-            return ce;
-        }
+        return ce;
+    }
 
         /*String getTargetType(Expression e){
     	ASTNode p = e.getParent();
@@ -1167,4 +1144,4 @@ public class SourceVisitor2 extends ASTVisitor {
     	}
 		return null;
 	}*/
-    }
+}

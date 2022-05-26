@@ -1,28 +1,23 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
-import com.mesut.j2cpp.Util;
 import com.mesut.j2cpp.ast.*;
-import com.mesut.j2cpp.cppast.CExpression;
-import com.mesut.j2cpp.cppast.CNode;
-import com.mesut.j2cpp.cppast.RawStatement;
-import com.mesut.j2cpp.cppast.expr.*;
-import com.mesut.j2cpp.cppast.literal.CNumberLiteral;
-import com.mesut.j2cpp.cppast.literal.CStringLiteral;
+import com.mesut.j2cpp.cppast.expr.CInfixExpression;
+import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
 import com.mesut.j2cpp.cppast.stmt.CReturnStatement;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.map.Mapper;
-import com.mesut.j2cpp.util.ArrayHelper;
-import com.mesut.j2cpp.util.DepVisitor;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.nio.file.*;
-import java.io.*;
 
 @SuppressWarnings("unchecked")
 public class HeaderWriter {
@@ -34,40 +29,40 @@ public class HeaderWriter {
     CompilationUnit cu;
     Path dir;
     List<AbstractTypeDeclaration> types = new ArrayList<>();
-    
+
     public HeaderWriter(Path dir) {
         this.dir = dir;
     }
-    
-    public void all(CompilationUnit cu){
+
+    public void all(CompilationUnit cu) {
         this.cu = cu;
-        for(Object o : cu.types()){
+        for (Object o : cu.types()) {
             AbstractTypeDeclaration decl = (AbstractTypeDeclaration) o;
             collect(decl);
         }
-        for(AbstractTypeDeclaration decl : types){
+        for (AbstractTypeDeclaration decl : types) {
             visit(decl);
         }
     }
-    
-    void collect(AbstractTypeDeclaration decl){
+
+    void collect(AbstractTypeDeclaration decl) {
         types.add(decl);
-        for(Object o : decl.bodyDeclarations()){
+        for (Object o : decl.bodyDeclarations()) {
             if (o instanceof AbstractTypeDeclaration) {//inner class
-                collect((AbstractTypeDeclaration)o);
+                collect((AbstractTypeDeclaration) o);
             }
         }
     }
-    
-    String cname(ITypeBinding binding){
+
+    String cname(ITypeBinding binding) {
         String name = binding.getBinaryName()
                 .replace("$", "_");
         int i = name.lastIndexOf(".");
         //if(i==-1) i=0;
         return name.substring(i + 1);
     }
-    
-    Path headerPath(ITypeBinding binding){
+
+    Path headerPath(ITypeBinding binding) {
         String name = binding.getBinaryName()
                 .replace("$", "_")
                 .replace(".", "/") +
@@ -75,81 +70,79 @@ public class HeaderWriter {
         return Paths.get(dir.toString(), name);
     }
 
-    public void visit(AbstractTypeDeclaration decl){
+    public void visit(AbstractTypeDeclaration decl) {
         //includes
-        
-            if (decl instanceof EnumDeclaration) {
-                visit((EnumDeclaration) decl, null);
-            }
-            else if (decl instanceof AnnotationTypeDeclaration) {
-                //visit((AnnotationTypeDeclaration) decl, null);
-            }
-            else {
-                visit((TypeDeclaration) decl, null);
-            }
-            
-    }
-    
-    void erase(ITypeBinding type){
-    }
-    
-    void nsBegin(){
-        PackageDeclaration pd = cu.getPackage();
-        if(pd == null) return;
-        String s = pd.getName().toString();
-            if (Config.ns_type_nested) {
-                for (String cur : s.split("\\.")) {
-                    if (Config.ns_nested_indent) {
-                        code.line("namespace %s{\n", cur);
-                        code.up();
-                    }else{
-                        code.write("namespace %s{\n", cur);
-                    }
-                }
-                code.write("\n");
-            }
-            else {
-                code.line("namespace %s{\n", s.replace(".", "::"));
-                if (Config.ns_indent) {
-                    code.up();
-                }
-            }
-    }
-    
-    void nsEnd(){
-        PackageDeclaration pd = cu.getPackage();
-        if(pd == null) return;
-        String s = pd.getName().toString();
-            if (Config.ns_type_nested) {
-                for (String cur : s.split("\\.")) {
-                   if (Config.ns_nested_indent) {
-                        code.down();
-                        code.line("\n}\n");
-                    }else{
-                        code.write("\n}\n");
-                    }
-                }
-            }
-            else {
-                code.down();
-                code.line("\n\n}");
-            }
+        if (decl instanceof EnumDeclaration) {
+            visit((EnumDeclaration) decl);
+        }
+        else if (decl instanceof AnnotationTypeDeclaration) {
+            //visit((AnnotationTypeDeclaration) decl, null);
+        }
+        else {
+            visit((TypeDeclaration) decl);
+        }
     }
 
-    public void visit(TypeDeclaration node, ITypeBinding outer){
+    void nsBegin() {
+        PackageDeclaration pd = cu.getPackage();
+        if (pd == null) return;
+        String s = pd.getName().toString();
+        if (Config.ns_type_nested) {
+            for (String cur : s.split("\\.")) {
+                if (Config.ns_nested_indent) {
+                    code.line("namespace %s{\n", cur);
+                    code.up();
+                }
+                else {
+                    code.write("namespace %s{\n", cur);
+                }
+            }
+            code.write("\n");
+        }
+        else {
+            code.line("namespace %s{\n", s.replace(".", "::"));
+            if (Config.ns_indent) {
+                code.up();
+            }
+        }
+    }
+
+    void nsEnd() {
+        PackageDeclaration pd = cu.getPackage();
+        if (pd == null) return;
+        String s = pd.getName().toString();
+        if (Config.ns_type_nested) {
+            for (String cur : s.split("\\.")) {
+                if (Config.ns_nested_indent) {
+                    code.down();
+                    code.line("\n}\n");
+                }
+                else {
+                    code.write("\n}\n");
+                }
+            }
+        }
+        else {
+            code.down();
+            code.line("\n\n}");
+        }
+    }
+
+    public void visit(TypeDeclaration node) {
         code = new Code();
         code.write("#pragma once\n\n");
-        
+
         nsBegin();
-        
+
         ITypeBinding binding = node.resolveBinding();
-        code.line("class %s: ", cname(binding)); 
-        if(node.getSuperclassType() != null){
+        code.line("class %s: ", cname(binding));
+        if (node.getSuperclassType() != null) {
             code.write("public %s", binding.getSuperclass());
-        }else{
+        }
+        else {
             code.write("public %s", TypeHelper.getObjectType());
         }
-        for(ITypeBinding iface : binding.getInterfaces()){
+        for (ITypeBinding iface : binding.getInterfaces()) {
             code.write(", ");
             code.write("public %s", iface);
         }
@@ -160,15 +153,15 @@ public class HeaderWriter {
         //new DepVisitor(cc, node).handle();
         code.down();
         code.line("};");
-        
+
         nsEnd();
-        
+
         Path file = headerPath(binding);
         System.out.println("writing " + file);
-        try{
+        try {
             Files.createDirectories(file.getParent());
             Files.write(file, code.toString().getBytes());
-        }catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
         code = null;
@@ -179,12 +172,12 @@ public class HeaderWriter {
             visit((FieldDeclaration) body, cc);
         }
         else if (body instanceof MethodDeclaration) {
-            visit((MethodDeclaration) body, cc);
+            visit((MethodDeclaration) body);
         }
         else if (body instanceof Initializer) {
             visit((Initializer) body, cc);
-        }    
-}
+        }
+    }
 
     CBlockStatement initEnum(CClass cc) {
         //add ordinal field
@@ -224,20 +217,20 @@ public class HeaderWriter {
         return init.body;
     }
 
-    public void visit(EnumDeclaration n, ITypeBinding outer) {
+    public void visit(EnumDeclaration n) {
         code = new Code();
         code.write("#pragma once\n\n");
-        
+
         code.line("class %s: public %s{\n", n.getName(), TypeHelper.getEnumType());
         code.line("public:\n");
         code.up();
         //CBlockStatement block = initEnum(cc);
         int ordinal = 0;
         ITypeBinding binding = n.resolveBinding();
-        
+
         for (EnumConstantDeclaration cons : (List<EnumConstantDeclaration>) n.enumConstants()) {
             //constant.resolveVariable();
-            code.line("static %s %s;\n", code.ptr(binding), cons.getName());     
+            code.line("static %s %s;\n", code.ptr(binding), cons.getName());
             if (!cons.arguments().isEmpty()) {
                 //rhs.args = sourceVisitor.list(constant.arguments());
             }
@@ -255,10 +248,10 @@ public class HeaderWriter {
         code.line("};");
         Path file = headerPath(binding);
         System.out.println("writing " + file);
-        try{
+        try {
             Files.createDirectories(file.getParent());
             Files.write(file, code.toString().getBytes());
-        }catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
         code = null;
@@ -270,41 +263,42 @@ public class HeaderWriter {
             ITypeBinding type = frag.resolveBinding().getType();
             boolean coe = isStatic && frag.getInitializer() != null && type.isPrimitive() && Modifier.isFinal(node.getModifiers());
             boolean cof = isStatic && Config.static_field_cofui && Modifier.isFinal(node.getModifiers()) && !type.isPrimitive();
-            
+
             code.line("");
-            if(isStatic){
+            if (isStatic) {
                 code.write("static ");
-                if(coe){
+                if (coe) {
                     code.write("constexpr ");
                 }
             }
             code.write("%s %s", code.ptr(type), frag.getName());
-            if(cof){
+            if (cof) {
                 code.write("();\n");
                 return;
             }
-            if (coe || frag.getInitializer() != null && !Config.fields_in_constructors){
-                    sourceVisitor2 = new SourceVisitor2(null, null);
-                    sourceVisitor2.binding = clazz;
-                    frag.getInitializer().accept(sourceVisitor2);
-                    code.write(" = %s;\n", sourceVisitor2.code.toString());
-                    sourceVisitor2 = null;
-            }else{
+            if (coe || frag.getInitializer() != null && !Config.fields_in_constructors) {
+                sourceVisitor2 = new SourceVisitor2(null, null);
+                sourceVisitor2.binding = clazz;
+                frag.getInitializer().accept(sourceVisitor2);
+                code.write(" = %s;\n", sourceVisitor2.code.toString());
+                sourceVisitor2 = null;
+            }
+            else {
                 code.write(";\n");
             }
         }
     }
 
-    public void visit(MethodDeclaration node, ITypeBinding clazz) {
-        if(Modifier.isStatic(node.getModifiers())) code.line("static ");
+    public void visit(MethodDeclaration node) {
+        if (Modifier.isStatic(node.getModifiers())) code.line("static ");
         else code.line("");
         IMethodBinding binding = node.resolveBinding();
         code.write("%s %s(", code.ptr(binding.getReturnType()), node.getName());
         for (int i = 0; i < node.parameters().size(); i++) {
             SingleVariableDeclaration param = (SingleVariableDeclaration) node.parameters().get(i);
-            
+
             code.write("%s %s", code.ptr(param.getType().resolveBinding()), param.getName().getIdentifier());
-            if(i < node.parameters().size() - 1) code.write(", ");
+            if (i < node.parameters().size() - 1) code.write(", ");
         }
         code.write(");\n");
     }
