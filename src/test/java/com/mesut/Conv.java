@@ -6,8 +6,8 @@ import com.mesut.j2cpp.map.Mapper;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class Conv {
     public static String rtJar = "/home/mesut/Desktop/j2cpp-dev/rt7.jar";
@@ -67,6 +67,17 @@ public class Conv {
         //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
         //converter.getFilter().addIncludeClass("com/android/dx/dex/code/PositionList.java");
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/RegOps");
+        converter.convert();
+    }
+
+    @Test
+    public void javac13() throws IOException {
+        String dir = "/media/mesut/SSD-DATA/IdeaProjects/javac13/src/main/java";
+        String out = "/media/mesut/SSD-DATA/IdeaProjects/javac13/cpp";
+        Converter converter = new Converter(dir, out);
+        converter.addClasspath(rtJar);
+        converter.addClasspath("/media/mesut/SSD-DATA/IdeaProjects/javac13/nio-1.0-SNAPSHOT.jar");
+        Mapper.instance.initMappers();
         converter.convert();
     }
 

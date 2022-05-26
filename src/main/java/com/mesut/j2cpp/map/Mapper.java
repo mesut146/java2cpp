@@ -58,7 +58,8 @@ public class Mapper {
     }
 
     public void initMappers() throws IOException {
-        String[] all = {"list.json", "map.json", "set.json", "string.json", "Boolean.json", "Integer.json"};
+        //String[] all = {"list.json", "map.json", "set.json", "string.json", "Boolean.json", "Integer.json"};
+        String[] all = {"list.json", "string.json", "Boolean.json"};
         for (String mapper : all) {
             addMapper(getClass().getResourceAsStream("/mappers/" + mapper));
         }

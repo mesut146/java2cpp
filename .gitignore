@@ -1,8 +1,8 @@
 /bin/
 /build/
 /out/
-/target/*
-.idea/
+/target/
+/.idea/
 /asd/test/cpp/
 /asd/out
 /.gradle
