@@ -244,6 +244,25 @@ public class Mapper {
         res.orgName = org;
         return res;
     }
+    
+    public CName mapFieldName(String name, ITypeBinding cc) {
+        String org = name;
+        CName res;
+        if (Util.isKeyword(name)) {
+            name = map(name);
+        }
+        else {
+            for (IMethodBinding method : cc.getDeclaredMethods()) {
+                if (method.getName().equals(name)) {
+                    name = map(name);
+                    break;
+                }
+            }
+        }
+        res = new CName(name);
+        res.orgName = org;
+        return res;
+    }
 
     public static class Mapped {
         public String list;

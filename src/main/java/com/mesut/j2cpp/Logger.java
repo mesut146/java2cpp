@@ -1,6 +1,7 @@
 package com.mesut.j2cpp;
 
 import com.mesut.j2cpp.ast.CClass;
+import org.eclipse.jdt.core.dom.*;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,6 +24,12 @@ public class Logger {
         log(String.format("'%s' %s", cc.getType(), msg));
         hasErrors = true;
     }
+    
+    public static void log(ITypeBinding cc, String msg) {
+        log(String.format("'%s' %s", cc.getBinaryName(), msg));
+        hasErrors = true;
+    }
+    
 
     public static void log(String msg) {
         if (writer != null) {
@@ -32,6 +39,10 @@ public class Logger {
     }
 
     public static void logBinding(CClass cc, String name) {
+        hasErrors = true;
+        log(cc, String.format("binding is null for expr '%s'", name));
+    }
+    public static void logBinding(ITypeBinding cc, String name) {
         hasErrors = true;
         log(cc, String.format("binding is null for expr '%s'", name));
     }

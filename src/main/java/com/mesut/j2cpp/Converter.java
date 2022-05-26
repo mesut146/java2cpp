@@ -10,8 +10,10 @@ import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.*;
 import com.mesut.j2cpp.visitor.DeclarationVisitor;
+import com.mesut.j2cpp.visitor.HeaderWriter;
 import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.SourceVisitor;
+import com.mesut.j2cpp.visitor.SourceVisitor2;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -222,10 +224,40 @@ public class Converter {
             }
         }
     }
+    
+    void convertSingle2(Path path, CompilationUnit cu){
+        try {
+            Path relativePath = srcDir.relativize(path);
+            System.out.println("converting " + relativePath);
+
+            HeaderWriter hw = new HeaderWriter(headerDir);
+            hw.all(cu);
+            
+            SourceVisitor2 sv = new SourceVisitor2(destDir, cu);
+            sv.all(relativePath);
+          
+            if (Config.common_forwards) {
+                //forwardHeader.forwardDeclarator.addAll(classes);
+                if (Config.include_common_forwards) {
+                    //source.includes.add(0, IncludeStmt.src(forwardHeader.getInclude()));
+                }
+            }
+            //target.sourceFiles.add(source.name);
+            count++;
+        } catch (Exception e) {
+            System.err.println("cant convert " + path);
+            Logger.log(path + ":" + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
     //convert bodies
     public void convertSingle(Path path, CompilationUnit cu) {
         try {
+            if(Config.full){
+                convertSingle2(path, cu);
+                return;
+            }
             Path relativePath = srcDir.relativize(path);
             //relativePath = Util.trimPrefix(relativePath, "/");
             System.out.println("converting " + relativePath);

@@ -2,7 +2,7 @@ package base;
 
 public class ArrayTest {
 
-    //MyType str[][] = {{null}, {new MyType()}};
+    int[] arr[];
     long mylong[];
     int[] int1 = new int[]{1, 2, 3};
     int[] int11 = new int[5];

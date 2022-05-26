@@ -1,0 +1,7 @@
+./asd/test/java/base/Anony.java:anony 
+./asd/test/java/base/Try2.java:try
+./asd/test/java/base/ArrayTest.java:foreach array
+./asd/test/java/base/InnerTest.java:anony 
+./asd/test/java/base/StringTest.java:str concat
+./asd/test/java/base/Try1.java:try
+./asd/test/java/base/Print.java:str concat

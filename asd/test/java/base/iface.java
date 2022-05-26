@@ -13,11 +13,11 @@ interface base {
 }
 
 class test implements iface {
-    void asd() {
+    public void asd() {
 
     }
 
-    void baseMeth() {
+    public void baseMeth() {
 
     }
 

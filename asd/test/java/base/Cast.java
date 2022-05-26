@@ -2,26 +2,31 @@ package base;
 
 public class Cast {
 
-    /*void static_cast(Derived d) {
-        Base1 base1 = d;
-    }*/
-
-    void dyn_cast(cst d) {
-        bearer base1 = (bearer) d;
+    void static_cast(Derived d) {
+        Base base = d;
     }
 
-    static interface bearer {
+    void dyn_cast(Base b) {
+        Derived d = (Derived) b;
     }
 
-    static class cst {
+    void cross(Derived2 d){
+        Base b = (Base)d;
+        iface i = (iface)b;
     }
 
-    /*static class Derived extends Base1 {
+    interface iface {
+    }
 
-    }*/
+    static class Base {
+    }
 
-    /*static class Derived2 extends Base1 implements Base2 {
+    static class Derived extends Base {
 
-    }*/
+    }
+
+    static class Derived2 extends Base implements iface {
+
+    }
 
 }

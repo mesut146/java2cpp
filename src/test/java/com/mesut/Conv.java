@@ -96,6 +96,15 @@ public class Conv {
         //converter.getFilter().addIncludeClass("base.Ops");
         converter.convert();
     }
+    
+    @Test
+    public void full() throws IOException{
+        Config.full = true;
+        Converter converter = new Converter("./asd/test/java", "./asd/out");
+        //converter.addClasspath(rtJar);
+        converter.getFilter().addIncludeDir("base");
+        converter.convert();
+    }
 
     @Test
     public void testMapper() throws IOException {

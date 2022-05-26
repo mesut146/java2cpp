@@ -20,6 +20,7 @@ public class CMethod extends ModifierNode {
     public Call superCall;//super(args)
     public Call thisCall;//this(args)
     public CBlockStatement body;
+    public String bodyStr;
 
     public void addParam(CParameter param) {
         params.add(param);

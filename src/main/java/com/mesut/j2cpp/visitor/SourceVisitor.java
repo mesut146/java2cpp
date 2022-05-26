@@ -13,8 +13,7 @@ import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @SuppressWarnings("unchecked")
 public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
@@ -977,4 +976,89 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         //qualified type
         return new CFieldAccess(scope, new CName(name), true);
     }
+    
+    String toWrapper(String s){
+    	Map<String, String> map=new HashMap<>();
+			map.put("boolean", "Boolean");
+			map.put("byte", "Byte");
+			map.put("char", "Character");
+			map.put("short", "Short");
+			map.put("int", "Integer");
+			map.put("long", "Long");
+			map.put("float", "Float");
+			map.put("double", "Double");
+			return map.get(s);
+    }
+    String fromWrapper(String s){
+    	Map<String, String> map=new HashMap<>();
+			map.put("Boolean", "boolean");
+			map.put("Byte", "byte");
+			map.put("Character", "char");
+			map.put("Short", "short");
+			map.put("Integer", "int");
+			map.put("Long", "lon");
+			map.put("Float", "float");
+			map.put("Double", "double");
+			return map.get(s);
+    }
+    
+    
+    CExpression box(Expression e, CExpression ce){
+    	//Double d = i;
+    	if(e.resolveBoxing()){
+    		ITypeBinding t = e.resolveTypeBinding();
+			String type = t.getName();
+			//$Wrapper$::valueOf(e)
+			CType wr = new CType("java::lang::"+toWrapper(type));
+			CMethodInvocation res = new CMethodInvocation(wr, new CName("valueOf"), false);
+			res.arguments.add(ce);
+			return res;
+    	}
+    	if(e.resolveUnboxing()){
+    		ITypeBinding t = e.resolveTypeBinding();
+			String type = t.getName();
+			//e.$prim$Value
+			String prim=fromWrapper(type);
+			CMethodInvocation res = new CMethodInvocation(ce, new CName(prim + "Value"), true);
+			return res;
+    	}
+    	return ce;
+	}
+	
+    /*String getTargetType(Expression e){
+    	ASTNode p = e.getParent();
+    	if(p instanceof VariableDeclarationFragment){
+    		VariableDeclarationFragment f = (VariableDeclarationFragment)p;
+    		return f.resolveBinding().getType().getName();
+    	}
+    	else if(p instanceof Assignment){
+    		Assignment as = (Assignment)p;
+    		return as.getLeftHandSide().resolveTypeBinding().getName();
+    	}
+   	 else if(p instanceof MethodInvocation){
+   	 	MethodInvocation m=(MethodInvocation)p;
+    	}
+    	else if(p instanceof ClassInstanceCreation){
+			ClassInstanceCreation cic=(ClassInstanceCreation)p;
+			
+		}
+    	else if(p instanceof InfixExpression){
+			throw new RuntimeException("infix box");
+		}
+    	else if(p instanceof PrefixExpression){
+    		PrefixExpression pr = (PrefixExpression)p;
+    		return toWrapper(e.resolveTypeBinding().getName());
+		}
+		else if(p instanceof CastExpression){
+			CastExpression ce=(CastExpression)p;
+			return ce.getType().toString();
+		}
+    	else if(p instanceof ArrayAccess){
+    		return "int";
+    	}
+    	else if(p instanceof ArrayCreation){
+    		return "int";
+    	}
+		return null;
+	}*/
 }

@@ -1,8 +1,8 @@
-//package base;
+package base;
 
 public class Try1 {
 
-    void withCatch() {
+    void withCatch() throws Exception{
         try {
             if (1 == 1) {
                 throw new RuntimeException("err");

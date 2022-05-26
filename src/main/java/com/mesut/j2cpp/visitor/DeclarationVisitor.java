@@ -33,6 +33,7 @@ public class DeclarationVisitor {
     public DeclarationVisitor(SourceVisitor sourceVisitor) {
         this.sourceVisitor = sourceVisitor;
     }
+    
 
     public void convert(CompilationUnit cu) {
         ns = visit(cu.getPackage());
@@ -215,6 +216,7 @@ public class DeclarationVisitor {
                 sourceVisitor.binding = frag.resolveBinding().getDeclaringClass();
                 field.expression = (CExpression) sourceVisitor.visitExpr(frag.getInitializer(), null);
                 sourceVisitor.clazz = null;
+                
             }
         }
     }
@@ -268,11 +270,5 @@ public class DeclarationVisitor {
             }
         }
         return null;//never happens
-    }
-
-    enum aaa {}
-
-    enum add {
-        EVEN;
     }
 }

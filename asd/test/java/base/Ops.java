@@ -15,8 +15,8 @@ public class Ops {
         return a >>> b;
     }
 
-    short rshift4(short a, int b) {
+    int rshift4(short a, int b) {
         return a >>> b;
-    }r
+    }
 
 }

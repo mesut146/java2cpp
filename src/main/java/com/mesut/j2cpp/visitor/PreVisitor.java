@@ -117,6 +117,17 @@ public class PreVisitor {
             }
         }
     }
+    
+    CMethod findSuper(IMethodBinding method, ITypeBinding superBinding){
+        if(superBinding == null) return null;
+        for (IMethodBinding superMethod : superBinding.getDeclaredMethods()) {
+            if (method.isSubsignature(superMethod)) {
+                return ClassMap.sourceMap.getMethod(superMethod);
+            }
+        }
+        ITypeBinding super2 = superBinding.getSuperclass();
+        return findSuper(method, super2);
+    }
 
     //var binding to field
     public static CField visitField(IVariableBinding binding, CClass cc) {

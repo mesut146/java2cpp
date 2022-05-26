@@ -8,6 +8,8 @@ public class Config {
     public static List<String> ignored = new ArrayList<>();
 
     public static boolean use_auto = true;
+    public static boolean use_boxing = true;
+    public static boolean full = true;
 
     public static boolean ns_type_nested = true;
     public static boolean ns_indent = false;
