@@ -9,18 +9,13 @@ import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.*;
-import com.mesut.j2cpp.visitor.DeclarationVisitor;
-import com.mesut.j2cpp.visitor.HeaderWriter;
-import com.mesut.j2cpp.visitor.PreVisitor;
-import com.mesut.j2cpp.visitor.SourceVisitor;
-import com.mesut.j2cpp.visitor.SourceVisitor2;
+import com.mesut.j2cpp.visitor.*;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FileASTRequestor;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.*;
@@ -40,15 +35,23 @@ public class Converter {
     List<String> sourceList;
     int count = 0;
     CHeader forwardHeader;
+    boolean rust;
 
     public Converter(String srcDir, String destDir) {
+        this(srcDir, destDir, false);
+    }
+
+    public Converter(String srcDir, String destDir, boolean rust) {
         this.srcDir = Paths.get(srcDir);
         this.destDir = Paths.get(destDir);
+        this.rust = rust;
         filter = new Filter(this.srcDir);
-        forwardHeader = new CHeader("common.h");
-        forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
+        if (!rust) {
+            forwardHeader = new CHeader("common.h");
+            forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
+        }
         try {
-            Logger.init(this.destDir.resolve( "log.txt"));
+            Logger.init(this.destDir.resolve("log.txt"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -104,6 +107,10 @@ public class Converter {
     }
 
     public void convert() {
+        if (rust) {
+            convertRust();
+            return;
+        }
         try {
             headerDir = Config.separateInclude ? destDir.resolve("include") : destDir;
             Files.createDirectories(headerDir);
@@ -120,6 +127,27 @@ public class Converter {
             e.printStackTrace();
         }
         System.out.println("conversion done for " + count + " files");
+    }
+
+    public void convertRust() {
+        try {
+            initCargo();
+            initMain();
+            preVisitDir();
+            convertDir();
+            //writeCmake();
+            //writeForwards();
+            if (Logger.hasErrors) {
+                System.err.println("conversion has errors check logs");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("conversion done for " + count + " files");
+    }
+
+    private void initCargo() {
+
     }
 
     void initMain() {
@@ -164,7 +192,12 @@ public class Converter {
         parser.createASTs(sourceList.toArray(new String[0]), null, b, new FileASTRequestor() {
             @Override
             public void acceptAST(String sourceFilePath, CompilationUnit ast) {
-                convertSingle(Paths.get(sourceFilePath), ast);
+                if (rust) {
+                    convertSingleRust(Paths.get(sourceFilePath), ast);
+                }
+                else {
+                    convertSingle(Paths.get(sourceFilePath), ast);
+                }
             }
         }, null);
     }
@@ -174,14 +207,16 @@ public class Converter {
         collect();
         System.out.println("total of " + sourceList.size() + " files");
         initParser();
-        String[] b = new String[sourceList.size()];
-        Arrays.fill(b, "");
-        parser.createASTs(sourceList.toArray(new String[0]), null, b, new FileASTRequestor() {
-            @Override
-            public void acceptAST(String sourceFilePath, CompilationUnit ast) {
-                preVisit(ast);
-            }
-        }, null);
+        if (!rust) {
+            String[] b = new String[sourceList.size()];
+            Arrays.fill(b, "");
+            parser.createASTs(sourceList.toArray(new String[0]), null, b, new FileASTRequestor() {
+                @Override
+                public void acceptAST(String sourceFilePath, CompilationUnit ast) {
+                    preVisit(ast);
+                }
+            }, null);
+        }
         System.out.println("pre visit done");
     }
 
@@ -224,18 +259,18 @@ public class Converter {
             }
         }
     }
-    
-    void convertSingle2(Path path, CompilationUnit cu){
+
+    void convertSingle2(Path path, CompilationUnit cu) {
         try {
             Path relativePath = srcDir.relativize(path);
             System.out.println("converting " + relativePath);
 
             HeaderWriter hw = new HeaderWriter(headerDir);
             hw.all(cu);
-            
+
             SourceVisitor2 sv = new SourceVisitor2(destDir, cu);
             sv.all(relativePath);
-          
+
             if (Config.common_forwards) {
                 //forwardHeader.forwardDeclarator.addAll(classes);
                 if (Config.include_common_forwards) {
@@ -251,10 +286,26 @@ public class Converter {
         }
     }
 
+    public void convertSingleRust(Path path, CompilationUnit cu) {
+        try {
+            Path relativePath = srcDir.relativize(path);
+            //relativePath = Util.trimPrefix(relativePath, "/");
+            System.out.println("converting " + relativePath);
+
+            Rust sourceVisitor = new Rust(destDir, cu);
+            sourceVisitor.all(relativePath);
+            count++;
+        } catch (Exception e) {
+            System.err.println("cant convert " + path);
+            Logger.log(path + ":" + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     //convert bodies
     public void convertSingle(Path path, CompilationUnit cu) {
         try {
-            if(Config.full){
+            if (Config.full) {
                 convertSingle2(path, cu);
                 return;
             }

@@ -15,6 +15,7 @@ public class Cmd {
         }
         String srcDir = null;
         String destDir = null;
+        boolean rust = false;
         List<String> cp = new ArrayList<>();
 
         for (int i = 0; i < args.length; i++) {
@@ -24,6 +25,9 @@ public class Cmd {
                 case "--help":
                     usage();
                     return;
+                case "rust":
+                    rust = true;
+                    break;
                 case "-src":
                 case "-source":
                     srcDir = args[++i];
@@ -56,7 +60,7 @@ public class Cmd {
             if (destDir == null) {
                 System.out.println("enter output path");
             }
-            Converter converter = new Converter(srcDir, destDir);
+            Converter converter = new Converter(srcDir, destDir, rust);
             if (cp.isEmpty()) {
                 System.out.println("converting without classpath");
             }

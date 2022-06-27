@@ -9,6 +9,7 @@ repositories {
     maven {
         url = uri('https://repo.maven.apache.org/maven2/')
     }
+    mavenCentral()
 }
 
 application {
@@ -18,12 +19,12 @@ application {
 group = 'com.mesut'
 version = '1.0'
 description = 'java2cpp'
-java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.sourceCompatibility = JavaVersion.VERSION_11
 
 dependencies {
     implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.21.0'
-    implementation 'org.json:json:20201115'
-    testImplementation 'junit:junit:4.12'
+    implementation 'org.json:json:20220320'
+    testImplementation 'junit:junit:4.13.2'
 }
 
 
