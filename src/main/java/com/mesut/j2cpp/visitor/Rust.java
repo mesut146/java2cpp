@@ -59,12 +59,13 @@ public class Rust extends ASTVisitor {
             deps.handle();
             for (var type : deps.set) {
                 if (type.isFromSource()) {
-                    code.write("use crate::%s;", type.getQualifiedName());
+                    code.write("use crate::%s;\n", type.getQualifiedName());
                 }
                 else {
                     //todo
                 }
             }
+            code.write("\n");
         }
     }
 
@@ -111,7 +112,7 @@ public class Rust extends ASTVisitor {
         statics(fields);
         if (node.isInterface()) {
             if (!fields.isEmpty()) {
-                throw new RuntimeException("trait field");
+                statics(fields);
             }
             trait(node);
         }
@@ -121,10 +122,10 @@ public class Rust extends ASTVisitor {
                 FieldDeclaration fd = (FieldDeclaration) frag.getParent();
                 ITypeBinding type = fd.getType().resolveBinding();
                 if (isNormal(fd.getModifiers(), type, frag)) {
-                    code.write("pub %s: %s,", frag.getName(), fd.getType());
+                    code.write("pub %s: %s,\n", frag.getName(), fd.getType());
                 }
             }
-            code.write("}");
+            code.write("}\n");
             impl(node, fields);
         }
         return false;
@@ -139,7 +140,7 @@ public class Rust extends ASTVisitor {
                 code.write(";\n");
             }
         }
-        code.write("}");
+        code.write("}\n");
     }
 
     void impl(TypeDeclaration node, List<VariableDeclarationFragment> fields) {
@@ -148,7 +149,7 @@ public class Rust extends ASTVisitor {
             FieldDeclaration fd = (FieldDeclaration) frag.getParent();
             ITypeBinding type = fd.getType().resolveBinding();
             if (isCons(fd.getModifiers(), type, frag)) {
-                code.write("pub const %s: %s = ", frag.getName(), fd.getType());
+                code.line("pub const %s: %s = ", frag.getName(), fd.getType());
                 frag.getInitializer().accept(this);
                 code.write(";\n");
             }
@@ -165,14 +166,14 @@ public class Rust extends ASTVisitor {
         for (var frag : node) {
             FieldDeclaration fd = (FieldDeclaration) frag.getParent();
             ITypeBinding type = fd.getType().resolveBinding();
-            if (isStatic(fd.getModifiers(), type, frag)) {
+            if (this.binding.isInterface() || isStatic(fd.getModifiers(), type, frag)) {
                 if (frag.getInitializer() != null) {
-                    code.write("let static %s: %s = ", frag.getName(), fd.getType());
+                    code.line("let static %s: %s = ", frag.getName(), fd.getType());
                     frag.getInitializer().accept(this);
                     code.write(";\n");
                 }
                 else {
-                    code.write("let static %s: Option<%s> = Node;\n", frag.getName(), fd.getType());
+                    code.line("let static %s: Option<%s> = Node;\n", frag.getName(), fd.getType());
                 }
             }
         }
@@ -180,10 +181,10 @@ public class Rust extends ASTVisitor {
 
     void methodHeader(MethodDeclaration node) {
         if (node.isConstructor()) {
-            code.write("pub fn new(", node.getName());
+            code.line("pub fn new(", node.getName());
         }
         else {
-            code.write("pub fn %s(", node.getName());
+            code.line("pub fn %s(", node.getName());
         }
         boolean first = true;
         if (!Modifier.isStatic(node.getModifiers())) {
@@ -203,7 +204,12 @@ public class Rust extends ASTVisitor {
 
     public boolean visit(MethodDeclaration node) {
         methodHeader(node);
-        node.getBody().accept(this);
+        if (node.getBody() != null) {
+            node.getBody().accept(this);
+        }
+        else {
+            code.write(";");
+        }
         code.write("\n");
         return false;
     }
@@ -237,7 +243,9 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(AssertStatement node) {
-        throw new RuntimeException("assert");
+        //throw new RuntimeException("assert");
+        code.write("//%s", node.toString());
+        return false;
     }
 
     @Override
@@ -384,7 +392,9 @@ public class Rust extends ASTVisitor {
             i++;
         }
         code.write(";");
-        node.getExpression().accept(this);
+        if (node.getExpression() != null) {
+            node.getExpression().accept(this);
+        }
         i = 0;
         for (Expression updater : (List<Expression>) node.updaters()) {
             if (i > 0) code.write(", ");
@@ -401,6 +411,12 @@ public class Rust extends ASTVisitor {
         code.line("{");
         code.up();
         ITypeBinding bind = node.getExpression().resolveTypeBinding();
+        if (bind.isArray()) {
+            code.write("for %s in ", node.getParameter().getName());
+            node.getExpression().accept(this);
+            node.getBody().accept(this);
+            return false;
+        }
         String ve = "var" + (forVarCnt++);
         if (node.getExpression() instanceof SimpleName) {
             //todo only for other case
@@ -416,29 +432,19 @@ public class Rust extends ASTVisitor {
         code.line("for(");
         SingleVariableDeclaration v = node.getParameter();
         ITypeBinding type = v.getType().resolveBinding();
-        if (bind.isArray()) {
-            String i = "i_" + forVarCnt++;
-            code.write("int %s = 0;%s < %s->size();%s++){", i, i, ve, i);
-            code.up();
-            code.line("%s %s = %s->at(%s);", code.ptr(type), v.getName().toString(), ve, i);
-            bodyNoFirst(node.getBody());
-            code.down();
-            code.line("}");
-            throw new RuntimeException("foreach array");
-        }
-        else {
-            CType it = new CType("java::util::Iterator");
-            //it.typeArgs.add(type);
-            write("%s it = ", code.ptr(it));
-            node.getExpression().accept(this);
-            code.write(";\n");
-            code.write("it->hasNext();){\n");
-            code.up();
-            code.line("%s %s = (%s)it->next();\n", code.ptr(type), v.getName().toString(), type);
-            bodyNoFirst(node.getBody());
-            code.down();
-            code.line("}\n");
-        }
+
+        CType it = new CType("java::util::Iterator");
+        //it.typeArgs.add(type);
+        write("%s it = ", code.ptr(it));
+        node.getExpression().accept(this);
+        code.write(";\n");
+        code.write("it->hasNext();){\n");
+        code.up();
+        code.line("%s %s = (%s)it->next();\n", code.ptr(type), v.getName().toString(), type);
+        bodyNoFirst(node.getBody());
+        code.down();
+        code.line("}\n");
+
         code.down();
         code.line("}");
         return false;
@@ -548,7 +554,9 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(SynchronizedStatement node) {
-        throw new RuntimeException("synchronized");
+        //throw new RuntimeException("synchronized");
+        code.write("//%s", node);
+        return false;
     }
 
     @Override
@@ -630,9 +638,9 @@ public class Rust extends ASTVisitor {
             Logger.logBinding(this.binding, node.toString());
             throw new RuntimeException("cic null binding");
         }
-        boolean inner = node.getAnonymousClassDeclaration() != null || !Modifier.isStatic(binding.getModifiers()) && binding.isNested();
         if (node.getAnonymousClassDeclaration() == null) {
-            write("new %s(", node.getType().resolveBinding());
+            boolean inner = node.getAnonymousClassDeclaration() != null || !Modifier.isStatic(binding.getModifiers()) && binding.isNested();
+            write("%s::new(", node.getType());
             args(node.arguments());
             if (inner) {
                 write(", this");
@@ -641,11 +649,10 @@ public class Rust extends ASTVisitor {
         }
         else {
             //collect locals and set
-            throw new RuntimeException("anony ");
-                /*AnonyHandler handler = new AnonyHandler();
-                creation = handler.handle(node.getAnonymousClassDeclaration(), TypeVisitor.visitType(node.getType(), clazz), clazz, this);
-                anony = handler.anony;
-                */
+            code.write("/*");
+            code.write(node.toString());
+            code.write("*/");
+            //throw new RuntimeException("anony ");
         }
         return false;
     }
@@ -720,27 +727,6 @@ public class Rust extends ASTVisitor {
     @Override
     public boolean visit(InfixExpression node) {
         String op = node.getOperator().toString();
-        if (op.equals("+")) {
-            //if either side is string then whole expr is string concatenation
-            if (isStr(node.getLeftOperand())) {
-                node.getLeftOperand().accept(this);
-                code.write("->concat(");
-                node.getRightOperand().accept(this);
-                code.write(")");
-                if (node.hasExtendedOperands()) {
-                    throw new RuntimeException("str concat");
-                }
-            }
-            else if (isStr(node.getRightOperand())) {
-                wrapStr(node.getLeftOperand());
-                code.write("->concat(");
-                node.getRightOperand().accept(this);
-                code.write(")");
-                if (node.hasExtendedOperands()) {
-                    throw new RuntimeException("str concat");
-                }
-            }
-        }
         if (node.getOperator().toString().equals(">>>")) {
             CType type = TypeVisitor.fromBinding(node.getLeftOperand().resolveTypeBinding());
             write("(unsigned %s)", type);
@@ -843,16 +829,7 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(InstanceofExpression node) {
-        code.write("dynamic_cast<%s>(", code.ptr(node.getRightOperand().resolveBinding()));
-        node.getLeftOperand().accept(this);
-        code.write(")");
-        /*
-        //source.hasRuntime = true;
-        write("instance_of<");
-        write(node.getRightOperand().resolveBinding());
-        write(">(");
-        node.getLeftOperand().accept(this);
-        write(")");*/
+        code.write("//%s", node);
         return false;
     }
 
@@ -868,9 +845,9 @@ public class Rust extends ASTVisitor {
     @Override
     public boolean visit(ArrayCreation node) {
         if (node.getInitializer() != null) {
-            write("arrays::from(");
+            write("vec![");
             node.getInitializer().accept(this);
-            write(")");
+            write("]");
         }
         else {
             ITypeBinding elemType = node.getType().getElementType().resolveBinding();
@@ -888,7 +865,14 @@ public class Rust extends ASTVisitor {
     //{...}
     @Override
     public boolean visit(ArrayInitializer node) {
-        throw new RuntimeException("ArrayInitializer");
+        //throw new RuntimeException("ArrayInitializer");
+        boolean first = true;
+        for (var v : (List<Expression>) node.expressions()) {
+            if (!first) code.write(", ");
+            v.accept(this);
+            first = false;
+        }
+        return false;
     }
 
     @Override
@@ -934,7 +918,7 @@ public class Rust extends ASTVisitor {
             //cast
             write("dynamic_cast<%s>(", code.ptr(ret));
         }
-        System.out.printf("rt of %s = %s other=%s\n", node, ret.getName(), org.getName());
+        //System.out.printf("rt of %s = %s other=%s\n", node, ret.getName(), org.getName());
         boolean isStatic = Modifier.isStatic(binding.getModifiers());
         if (node.getExpression() == null) {
             ITypeBinding onType = binding.getDeclaringClass();
