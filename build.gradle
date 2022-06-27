@@ -22,7 +22,8 @@ description = 'java2cpp'
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 dependencies {
-    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.21.0'
+    //implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.21.0'
+    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.29.0'
     implementation 'org.json:json:20220320'
     testImplementation 'junit:junit:4.13.2'
 }

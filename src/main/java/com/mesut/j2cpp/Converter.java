@@ -207,16 +207,16 @@ public class Converter {
         collect();
         System.out.println("total of " + sourceList.size() + " files");
         initParser();
-        if (!rust) {
-            String[] b = new String[sourceList.size()];
-            Arrays.fill(b, "");
-            parser.createASTs(sourceList.toArray(new String[0]), null, b, new FileASTRequestor() {
-                @Override
-                public void acceptAST(String sourceFilePath, CompilationUnit ast) {
+
+        String[] b = new String[sourceList.size()];
+        Arrays.fill(b, "");
+        parser.createASTs(sourceList.toArray(new String[0]), null, b, new FileASTRequestor() {
+            @Override
+            public void acceptAST(String sourceFilePath, CompilationUnit ast) {
+                if (!rust)
                     preVisit(ast);
-                }
-            }, null);
-        }
+            }
+        }, null);
         System.out.println("pre visit done");
     }
 

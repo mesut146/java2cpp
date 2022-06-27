@@ -203,7 +203,6 @@ public class Rust extends ASTVisitor {
 
     public boolean visit(MethodDeclaration node) {
         methodHeader(node);
-        IMethodBinding b = node.resolveBinding();
         node.getBody().accept(this);
         code.write("\n");
         return false;
@@ -355,7 +354,8 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(TryStatement node) {
-        throw new RuntimeException("try");
+        return false;
+        //throw new RuntimeException("try");
         //TryHelper helper = new TryHelper(this, node);
         //helper.handle();
     }
@@ -924,7 +924,8 @@ public class Rust extends ASTVisitor {
         IMethodBinding binding = node.resolveMethodBinding();
         if (binding == null) {
             Logger.logBinding(this.binding, node.toString());
-            throw new RuntimeException("inv null binding");
+            return visitMI(node);
+            //throw new RuntimeException("inv null binding");
         }
         ITypeBinding ret = binding.getReturnType();
         ITypeBinding org = binding.getMethodDeclaration().getReturnType();
@@ -975,6 +976,19 @@ public class Rust extends ASTVisitor {
         return false;
     }
 
+    @SuppressWarnings("unchecked")
+    public boolean visitMI(MethodInvocation node) {
+        if (node.getExpression() != null) {
+            node.getExpression().accept(this);
+            code.write(".");
+        }
+        code.write(node.getName().toString());
+        code.write("(");
+        args(node.arguments());
+        code.write(")");
+        return false;
+    }
+
     int refCnt(ITypeBinding cur, ITypeBinding target) {
         int cnt = 0;
         while (true) {
@@ -1022,8 +1036,14 @@ public class Rust extends ASTVisitor {
         IBinding binding = node.resolveBinding();
         CName name = new CName(node.getIdentifier());
         if (binding == null) {
-            Logger.logBinding(this.binding, node.toString());
-            throw new RuntimeException("sn null binding");
+            code.write(node.getIdentifier());
+            return false;
+//            Logger.logBinding(this.binding, node.toString());
+//            throw new RuntimeException("sn null binding");
+        }
+        if (binding.getKind() == IBinding.TYPE) {
+            write(name.toString());
+            return false;
         }
         if (binding.getKind() != IBinding.VARIABLE) {
             write(name.toString());
@@ -1090,11 +1110,15 @@ public class Rust extends ASTVisitor {
             LibHandler.instance.addField((IVariableBinding) binding);
         }
         if (binding == null || typeBinding == null) {
+            node.getQualifier().accept(this);
+            code.write(".");
+            code.write(node.getName().getIdentifier());
             Logger.logBinding(this.binding, node.toString());
             //normal qualified name access
             //qualifier is not a type so it is a package
             //return new CName(node.getFullyQualifiedName());
-            throw new RuntimeException("qname null binding");
+            //throw new RuntimeException("qname null binding");
+            return false;
         }
 
         String name = node.getName().getIdentifier();
