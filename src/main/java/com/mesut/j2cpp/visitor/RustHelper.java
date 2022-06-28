@@ -9,9 +9,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class RustHelper {
 
@@ -31,24 +29,14 @@ public class RustHelper {
     }
 
     public static String toRustType(String str) {
-        if (str.equals("byte")) {
-            return "i8";
-        }
-        if (str.equals("short")) {
-            return "i16";
-        }
-        if (str.equals("char")) {
-            return "char";
-        }
-        if (str.equals("long")) {
-            return "i64";
-        }
-        if (str.equals("float")) {
-            return "f32";
-        }
-        if (str.equals("double")) {
-            return "f64";
-        }
+        if (str.equals("boolean")) return "bool";
+        if (str.equals("byte")) return "i8";
+        if (str.equals("short")) return "i16";
+        if (str.equals("char")) return "char";
+        if (str.equals("int")) return "i32";
+        if (str.equals("long")) return "i64";
+        if (str.equals("float")) return "f32";
+        if (str.equals("double")) return "f64";
         return str;
     }
 
@@ -74,6 +62,7 @@ public class RustHelper {
     }
 
     public static String makeArray(Type elem, int dims) {
+        if (dims == 0) return mapType(elem);
         if (dims == 1) {
             return "Vec<" + mapType(elem) + ">";
         }
@@ -81,6 +70,7 @@ public class RustHelper {
     }
 
     static String makeArray(ITypeBinding elem, int dims) {
+        if (dims == 0) return mapType(elem);
         if (dims == 1) {
             return "Vec<" + mapType(elem) + ">";
         }
@@ -95,25 +85,25 @@ public class RustHelper {
     public static String mapMethodName(IMethodBinding binding) {
         //todo cache
         var clazz = binding.getDeclaringClass();
-        Map<String, Integer> countMap = new HashMap<>();
+        int cnt = 0;
         for (var method : clazz.getDeclaredMethods()) {
-            var cnt = countMap.getOrDefault(method.getName(), 0);
-            countMap.put(method.getName(), cnt + 1);
+            if (method.getName().endsWith(binding.getName())) cnt++;
+        }
+        if (cnt == 1) {
+            return binding.getName();
         }
         //rename by params
-        for (var method : clazz.getDeclaredMethods()) {
-            var cnt = countMap.get(method.getName());
-            if (cnt == 1) {
-                return method.getName();
+        StringBuilder sb = new StringBuilder();
+        sb.append(binding.getName());
+        for (var param : binding.getParameterTypes()) {
+            sb.append("_");
+            if (param.isArray()) {
+                sb.append(param.getElementType().getName());
             }
-            StringBuilder sb = new StringBuilder();
-            sb.append(method.getName());
-            for (var param : method.getParameterTypes()) {
-                sb.append("_");
-                sb.append(mapType(param));
+            else {
+                sb.append(param.getName());
             }
-            return sb.toString();
         }
-        return binding.getName();
+        return sb.toString();
     }
 }

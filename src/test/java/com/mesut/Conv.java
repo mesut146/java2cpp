@@ -88,7 +88,7 @@ public class Conv {
         Converter converter = new Converter(dir, out, true);
         //converter.addClasspath(rtJar);
         Config.mainClass = "com.android.dx.command.Main";
-        //converter.getFilter().addIncludeClass("com/android/dex/Dex");
+        converter.getFilter().addIncludeClass("Tool");
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
         //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
         //converter.getFilter().addIncludeClass("com/android/dx/dex/code/PositionList.java");

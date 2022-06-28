@@ -140,6 +140,10 @@ public class Converter {
             preVisitDir();
             convertDir();
             makeMods();
+            //add helper
+            Path helper = Paths.get(".").resolve("rust/helper.rs");
+            Path targetHelper = destSrc.resolve("helper.rs");
+            Files.copy(helper, targetHelper);
             if (Logger.hasErrors) {
                 System.err.println("conversion has errors check logs");
             }
@@ -184,7 +188,7 @@ public class Converter {
 
     private void initCargo() throws IOException {
         Path file = destDir.resolve("Cargo.toml");
-        Files.write(file, "[package]\nname = \"hello\"\nversion = \"0.1.0\"\n".getBytes());
+        Files.write(file, "[package]\nname = \"hello\"\nversion = \"0.1.0\"\nedition = \"2021\"".getBytes());
     }
 
     void initMain() {

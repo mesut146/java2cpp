@@ -52,6 +52,7 @@ public class Rust extends ASTVisitor {
         for (var decl : (List<AbstractTypeDeclaration>) cu.types()) {
             RustDeps deps = new RustDeps(decl);
             deps.handle();
+            code.line("use crate::helper;\n");
             for (var type : deps.set) {
                 if (type.isFromSource()) {
                     code.line("use crate::%s;\n", type.getQualifiedName().replace(".", "::"));
@@ -187,7 +188,13 @@ public class Rust extends ASTVisitor {
         }
         for (var param : (List<SingleVariableDeclaration>) node.parameters()) {
             if (!first) code.write(", ");
-            code.write("%s: %s", param.getName().getIdentifier(), param.getType());
+            if (param.getType().isPrimitiveType()) {
+                code.write("%s: %s", param.getName().getIdentifier(), param.getType());
+            }
+            else {
+                //all params are references
+                code.write("%s: &%s", param.getName().getIdentifier(), param.getType());
+            }
             first = false;
         }
         code.write(")");
@@ -409,6 +416,10 @@ public class Rust extends ASTVisitor {
     public boolean visit(SingleVariableDeclaration node) {
         ITypeBinding type = node.getType().resolveBinding();
         code.line("let %s: %s", node.getName(), type);
+        if (node.getInitializer() != null) {
+            code.write(" = ");
+            node.getInitializer().accept(this);
+        }
         return false;
     }
 
@@ -590,7 +601,15 @@ public class Rust extends ASTVisitor {
 
     void args(List<Expression> list) {
         for (int i = 0; i < list.size(); i++) {
-            list.get(i).accept(this);
+            var arg = list.get(i);
+            if (arg instanceof Name) {
+                //probably a variable
+                var type = arg.resolveTypeBinding();
+                if (type != null && !type.isPrimitive()) {
+                    code.write("&");
+                }
+            }
+            arg.accept(this);
             if (i < list.size() - 1) write(", ");
         }
     }
@@ -671,20 +690,32 @@ public class Rust extends ASTVisitor {
         }
         else {
             //new Type[d1][d2]
-            code.write(node.toString());
-//            if (node.dimensions().size() == 1) {
-//                var expr = (Expression) node.dimensions().get(0);
-//                code.write("Vec::with_capacity(");
-//                expr.accept(this);
-//                code.write(")");
-//
-//                code.write("arr.resize(");
-//                expr.accept(this);
-//                code.write(")");
-            //todo move into upper line
-//            }
+            var type = node.getType().getElementType();
+            makeArrayAlloc(type, node.dimensions(), 0);
         }
         return false;
+    }
+
+    void makeArrayAlloc(Type type, List<Expression> dims, int pos) {
+        if (pos == dims.size()) {
+            String def;
+            if (type.toString().equals("boolean")) {
+                def = "false";
+            }
+            else if (type.isPrimitiveType()) {
+                def = "0";
+            }
+            else {
+                def = "None";
+            }
+            code.write(def);
+            code.write(")");
+            return;
+        }
+        code.write("helper::make::<%s>(", RustHelper.makeArray(type, dims.size() - pos - 1));
+        dims.get(pos).accept(this);
+        code.write(", ");
+        makeArrayAlloc(type, dims, pos + 1);
     }
 
     //{...}
@@ -893,11 +924,10 @@ public class Rust extends ASTVisitor {
             //throw new RuntimeException("qname null binding");
             return false;
         }
-        var type = node.resolveTypeBinding();
-        if (type.isArray() && name.equals("length")) {
+        if (onType.isArray() && name.equals("length")) {
             //array.length
             node.getQualifier().accept(this);
-            code.write(".%s.len()", name);
+            code.write(".len()");
             return false;
         }
 
