@@ -82,7 +82,7 @@ public class Conv {
 
     @Test
     public void testRust() throws IOException {
-        String dir = "/home/mesut/Desktop/j2cpp-dev/dx-org";
+        String dir = "/home/mesut/Desktop/j2cpp-dev/dx-org/src";
         //String out = "/home/mesut/Desktop/j2cpp-dev/dx-cpp";
         String out = "/home/mesut/Desktop/j2cpp-dev/dx-rust";
         Converter converter = new Converter(dir, out, true);

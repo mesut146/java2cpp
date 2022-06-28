@@ -29,6 +29,7 @@ public class Converter {
     public CMakeWriter.Target target;
     Path srcDir;//source folder
     Path destDir;//destination folder for c++ files
+    Path destSrc;
     Path headerDir;
     Filter filter;
     ASTParser parser;
@@ -44,6 +45,7 @@ public class Converter {
     public Converter(String srcDir, String destDir, boolean rust) {
         this.srcDir = Paths.get(srcDir);
         this.destDir = Paths.get(destDir);
+        this.destSrc = this.destDir.resolve("src");
         this.rust = rust;
         filter = new Filter(this.srcDir);
         if (!rust) {
@@ -68,7 +70,7 @@ public class Converter {
 
     @SuppressWarnings("rawtypes,unchecked")
     public void initParser() {
-        parser = ASTParser.newParser(AST.JLS13);
+        parser = ASTParser.newParser(AST.getJLSLatest());
         List<String> cpDirs = new ArrayList<>();
         List<String> cpJars = new ArrayList<>();
 
@@ -107,11 +109,13 @@ public class Converter {
     }
 
     public void convert() {
-        if (rust) {
-            convertRust();
-            return;
-        }
         try {
+            Files.createDirectories(destDir);
+            Files.createDirectories(destSrc);
+            if (rust) {
+                convertRust();
+                return;
+            }
             headerDir = Config.separateInclude ? destDir.resolve("include") : destDir;
             Files.createDirectories(headerDir);
             initCmake();
@@ -135,19 +139,52 @@ public class Converter {
             initMain();
             preVisitDir();
             convertDir();
-            //writeCmake();
-            //writeForwards();
+            makeMods();
             if (Logger.hasErrors) {
                 System.err.println("conversion has errors check logs");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         System.out.println("conversion done for " + count + " files");
     }
 
-    private void initCargo() {
+    private void makeMods() {
+        try {
+            Files.walkFileTree(srcDir, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    try (var stream = Files.list(dir)) {
+                        if (dir.equals(srcDir)) return super.preVisitDirectory(dir, attrs);
+                        StringBuilder sb = new StringBuilder();
+                        var it = stream.iterator();
+                        while (it.hasNext()) {
+                            var sub = it.next();
+                            var name = sub.toFile().getName();
+                            if (name.endsWith(".java")) {
+                                sb.append("pub mod ").append(name.substring(0, name.length() - 5)).append(";\n");
+                            }
+                            else if (!name.equals("mod.rs")) {
+                                sb.append("pub mod ").append(name).append(";\n");
+                            }
+                        }
+                        var next = srcDir.relativize(dir);
+                        Path mod = Paths.get(destSrc.toString(), next.toString(), "mod.rs");
+                        Files.createDirectories(mod.getParent());
+                        Files.write(mod, sb.toString().getBytes());
+                    }
+                    return super.preVisitDirectory(dir, attrs);
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+
+    private void initCargo() throws IOException {
+        Path file = destDir.resolve("Cargo.toml");
+        Files.write(file, "[package]\nname = \"hello\"\nversion = \"0.1.0\"\n".getBytes());
     }
 
     void initMain() {
@@ -192,11 +229,12 @@ public class Converter {
         parser.createASTs(sourceList.toArray(new String[0]), null, b, new FileASTRequestor() {
             @Override
             public void acceptAST(String sourceFilePath, CompilationUnit ast) {
+                Path path = Path.of(sourceFilePath);
                 if (rust) {
-                    convertSingleRust(Paths.get(sourceFilePath), ast);
+                    convertSingleRust(path, ast);
                 }
                 else {
-                    convertSingle(Paths.get(sourceFilePath), ast);
+                    convertSingle(path, ast);
                 }
             }
         }, null);
@@ -268,7 +306,7 @@ public class Converter {
             HeaderWriter hw = new HeaderWriter(headerDir);
             hw.all(cu);
 
-            SourceVisitor2 sv = new SourceVisitor2(destDir, cu);
+            SourceVisitor2 sv = new SourceVisitor2(destSrc, cu);
             sv.all(relativePath);
 
             if (Config.common_forwards) {
@@ -292,7 +330,7 @@ public class Converter {
             //relativePath = Util.trimPrefix(relativePath, "/");
             System.out.println("converting " + relativePath);
 
-            Rust sourceVisitor = new Rust(destDir, cu);
+            Rust sourceVisitor = new Rust(destSrc, cu);
             sourceVisitor.all(relativePath);
             count++;
         } catch (Exception e) {
@@ -346,7 +384,7 @@ public class Converter {
                 }
             }
             handleDeps(source);
-            Util.writeSource(source, destDir);
+            Util.writeSource(source, destSrc);
 
             target.sourceFiles.add(source.name);
             count++;

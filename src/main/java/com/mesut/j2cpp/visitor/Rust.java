@@ -4,12 +4,9 @@ import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.LibHandler;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.CName;
-import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.cppast.CExpression;
 import com.mesut.j2cpp.cppast.expr.CFieldAccess;
-import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
 import com.mesut.j2cpp.map.Mapper;
-import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
 import java.io.IOException;
@@ -17,9 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public class Rust extends ASTVisitor {
@@ -59,7 +54,7 @@ public class Rust extends ASTVisitor {
             deps.handle();
             for (var type : deps.set) {
                 if (type.isFromSource()) {
-                    code.write("use crate::%s;\n", type.getQualifiedName());
+                    code.line("use crate::%s;\n", type.getQualifiedName().replace(".", "::"));
                 }
                 else {
                     //todo
@@ -70,7 +65,6 @@ public class Rust extends ASTVisitor {
     }
 
     public void visit(AbstractTypeDeclaration decl) {
-        //includes
         if (decl instanceof EnumDeclaration) {
             //visit((EnumDeclaration) decl, null);
         }
@@ -117,22 +111,22 @@ public class Rust extends ASTVisitor {
             trait(node);
         }
         else {
-            code.write("struct %s{\n", node.getName());
+            code.line("struct %s{\n", node.getName());
             for (var frag : fields) {
                 FieldDeclaration fd = (FieldDeclaration) frag.getParent();
                 ITypeBinding type = fd.getType().resolveBinding();
                 if (isNormal(fd.getModifiers(), type, frag)) {
-                    code.write("pub %s: %s,\n", frag.getName(), fd.getType());
+                    code.line("pub %s: %s,\n", frag.getName(), fd.getType());
                 }
             }
-            code.write("}\n");
+            code.line("}\n");
             impl(node, fields);
         }
         return false;
     }
 
     void trait(TypeDeclaration node) {
-        code.write("trait %s{\n", node.getName());
+        code.line("trait %s{\n", node.getName());
         for (Object o : node.bodyDeclarations()) {
             if (o instanceof MethodDeclaration) {
                 MethodDeclaration md = (MethodDeclaration) o;
@@ -140,11 +134,11 @@ public class Rust extends ASTVisitor {
                 code.write(";\n");
             }
         }
-        code.write("}\n");
+        code.line("}\n");
     }
 
     void impl(TypeDeclaration node, List<VariableDeclarationFragment> fields) {
-        code.write("impl %s{\n", node.getName());
+        code.line("impl %s{\n", node.getName());
         for (var frag : fields) {
             FieldDeclaration fd = (FieldDeclaration) frag.getParent();
             ITypeBinding type = fd.getType().resolveBinding();
@@ -198,7 +192,7 @@ public class Rust extends ASTVisitor {
         }
         code.write(")");
         if (!node.isConstructor() && !node.getReturnType2().toString().equals("void")) {
-            code.write(" -> %s", node.getName(), node.getReturnType2());
+            code.write(" -> %s", node.getReturnType2());
         }
     }
 
@@ -214,7 +208,6 @@ public class Rust extends ASTVisitor {
         return false;
     }
 
-
     public void write(String s, Object... args) {
         code.write(s, args);
     }
@@ -223,12 +216,10 @@ public class Rust extends ASTVisitor {
     public boolean visit(Block n) {
         //block = n;
         code.line("{\n");
-        code.up();
         for (Statement s : (List<Statement>) n.statements()) {
             s.accept(this);
             code.write("\n");
         }
-        code.down();
         code.line("}");
         return false;
     }
@@ -250,7 +241,7 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(StringLiteral node) {
-        write("new %s(%s)", TypeHelper.getStringType(), node.getEscapedValue());
+        write(node.getEscapedValue());
         return false;
     }
 
@@ -269,7 +260,7 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(NullLiteral node) {
-        write("nullptr");
+        write("None");
         return true;
     }
 
@@ -277,7 +268,7 @@ public class Rust extends ASTVisitor {
     @Override
     public boolean visit(TypeLiteral node) {
         //Class::forName(type)
-        write("%s::forName(\"%s\")", TypeHelper.getClassType(), node.getType().resolveBinding());
+        code.write(node.toString());
         return true;
     }
 
@@ -288,20 +279,9 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(Assignment node) {
-        if (node.getOperator().toString().equals(">>>=")) {
-            String left = node.getLeftHandSide().toString();
-            CType type = TypeVisitor.fromBinding(node.getLeftHandSide().resolveTypeBinding());
-            write(left);
-            write(" = ");
-            write("(unsigned " + type + ")" + left);
-            write(" >> ");
-            node.getRightHandSide().accept(this);
-        }
-        else {
-            node.getLeftHandSide().accept(this);
-            write(node.getOperator().toString());
-            node.getRightHandSide().accept(this);
-        }
+        node.getLeftHandSide().accept(this);
+        write(node.getOperator().toString());
+        node.getRightHandSide().accept(this);
         return false;
     }
 
@@ -331,6 +311,7 @@ public class Rust extends ASTVisitor {
     public boolean visit(ReturnStatement node) {
         code.line("return");
         if (node.getExpression() != null) {
+            code.write(" ");
             node.getExpression().accept(this);
         }
         code.write(";");
@@ -341,43 +322,52 @@ public class Rust extends ASTVisitor {
     public boolean visit(ThrowStatement node) {
         code.line("throw ");
         Expression e = node.getExpression();
-        //convert heap allocation into stack allocation
-        if (e instanceof ClassInstanceCreation) {
-            code.write("*(");
-            e.accept(this);
-            code.write(")");
-        }
-        else
-            //if throwing custom exception
-            if (e instanceof Name && !e.toString().equals(catchName)) {
-                write("*");
-                e.accept(this);
-            }
-            else {
-                throw new RuntimeException("throw other");
-            }
+        e.accept(this);
         write(";");
         return false;
     }
 
     @Override
     public boolean visit(TryStatement node) {
+        code.line("try");
+        node.getBody().accept(this);
+        for (var c : node.catchClauses()) {
+            var cc = (CatchClause) c;
+            code.line("catch(");
+            cc.getException().accept(this);
+            code.write(")");
+            cc.getBody().accept(this);
+        }
+        if (node.getFinally() != null) {
+            code.line("finally");
+            node.getFinally().accept(this);
+        }
         return false;
-        //throw new RuntimeException("try");
-        //TryHelper helper = new TryHelper(this, node);
-        //helper.handle();
     }
 
     @Override
     public boolean visit(IfStatement node) {
-        code.line("if(");
+        code.line("if ");
         node.getExpression().accept(this);
-        code.write(")");
-        node.getThenStatement().accept(this);
+        if (node.getThenStatement() instanceof Block) {
+            node.getThenStatement().accept(this);
+        }
+        else {
+            code.write("{");
+            node.getThenStatement().accept(this);
+            code.line("}");
+        }
         code.line("");
         if (node.getElseStatement() != null) {
             code.write("else ");
-            node.getElseStatement().accept(this);
+            if (node.getElseStatement() instanceof Block || node.getElseStatement() instanceof IfStatement) {
+                node.getElseStatement().accept(this);
+            }
+            else {
+                code.write("{\n");
+                node.getElseStatement().accept(this);
+                code.line("}");
+            }
         }
         return false;
     }
@@ -408,88 +398,45 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(EnhancedForStatement node) {
-        code.line("{");
-        code.up();
-        ITypeBinding bind = node.getExpression().resolveTypeBinding();
-        if (bind.isArray()) {
-            code.write("for %s in ", node.getParameter().getName());
-            node.getExpression().accept(this);
-            node.getBody().accept(this);
-            return false;
-        }
-        String ve = "var" + (forVarCnt++);
-        if (node.getExpression() instanceof SimpleName) {
-            //todo only for other case
-            write("%s %s = ", code.ptr(bind), ve);
-            node.getExpression().accept(this);
-            code.write(";\n");
-        }
-        else {
-            write("%s %s = ", code.ptr(bind), ve);
-            node.getExpression().accept(this);
-            code.write(";\n");
-        }
-        code.line("for(");
-        SingleVariableDeclaration v = node.getParameter();
-        ITypeBinding type = v.getType().resolveBinding();
-
-        CType it = new CType("java::util::Iterator");
-        //it.typeArgs.add(type);
-        write("%s it = ", code.ptr(it));
+        var vd = node.getParameter();
+        code.line("for %s in ", vd.getName());
         node.getExpression().accept(this);
-        code.write(";\n");
-        code.write("it->hasNext();){\n");
-        code.up();
-        code.line("%s %s = (%s)it->next();\n", code.ptr(type), v.getName().toString(), type);
-        bodyNoFirst(node.getBody());
-        code.down();
-        code.line("}\n");
-
-        code.down();
-        code.line("}");
+        node.getBody().accept(this);
         return false;
-    }
-
-    void bodyNoFirst(Statement st) {
-        if (st instanceof Block) {
-            Block b = (Block) st;
-            for (Statement s : (List<Statement>) b.statements()) {
-                s.accept(this);
-            }
-        }
-        else {
-            st.accept(this);
-        }
     }
 
     @Override
     public boolean visit(SingleVariableDeclaration node) {
-        if (Config.use_auto && !(node.getParent() instanceof CatchClause)) {
-            code.line("auto %s", node.getName().getIdentifier());
-        }
-        else {
-            ITypeBinding type = node.getType().resolveBinding();
-            code.line("%s %s", code.ptr(type), node.getName().getIdentifier());
-        }
+        ITypeBinding type = node.getType().resolveBinding();
+        code.line("let %s: %s", node.getName(), type);
         return false;
     }
 
     @Override
     public boolean visit(WhileStatement node) {
-        code.line("while(");
+        code.line("while ");
         node.getExpression().accept(this);
-        write(")");
         node.getBody().accept(this);
         return false;
     }
 
     @Override
     public boolean visit(DoStatement node) {
-        code.line("do");
-        node.getBody().accept(this);
-        code.line("while(");
+        code.line("loop");
+        code.line("{\n");
+        if (node.getBody() instanceof Block) {
+            var block = (Block) node.getBody();
+            for (var st : (List<Statement>) block.statements()) {
+                st.accept(this);
+            }
+        }
+        else {
+            node.getBody().accept(this);
+        }
+        code.line("if !");
         node.getExpression().accept(this);
-        write(");");
+        code.write("{ break; }");
+        code.line("}");
         return false;
     }
 
@@ -500,19 +447,32 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(SwitchStatement node) {
-        /*Expression expression = node.getExpression();
-        ITypeBinding binding = expression.resolveTypeBinding();
-        SwitchHelper helper = new SwitchHelper(this);
-        if (binding.isEnum()) {
-            //if else with ordinals
-            helper.isEnum = true;
-        } else if (binding.getQualifiedName().equals("java.lang.String")) {
-            helper.isString = true;
-        } else if (binding.isPrimitive()) {
-            helper.makeNormal(node);
+        var info = new SwitchInfo(node);
+        info.make();
+        code.line("match ");
+        node.getExpression().accept(this);
+        code.write("{");
+        for (var st : (List<Statement>) node.statements()) {
+            st.accept(this);
         }
-        List < CStatement > list = helper.makeIfElse(node);
-        new CMultiStatement(list);*/
+        code.line("}");
+        return false;
+    }
+
+    @Override
+    public boolean visit(SwitchCase node) {
+        if (node.isDefault()) {
+            code.line("_ => {}");
+        }
+        else {
+            boolean first = true;
+            for (var e : (List<Expression>) node.expressions()) {
+                if (!first) code.write(" | ");
+                e.accept(this);
+                first = false;
+            }
+            code.write(" => ");
+        }
         return false;
     }
 
@@ -532,23 +492,13 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(ConstructorInvocation node) {
-        /*Call thisCall = new Call();
-        for (Expression ar: (List < Expression > ) node.arguments()) {
-            thisCall.args.add((CExpression) visitExpr(ar, arg));
-        }
-        thisCall.isThis = true;
-        thisCall.type = clazz.getType();
-        method.thisCall = thisCall;*/
+        code.line(node.toString());
         return false;
     }
 
     @Override
     public boolean visit(SuperConstructorInvocation node) {
-        /*Call superCall = new Call();
-        superCall.isThis = false;
-        superCall.args = list(node.arguments());
-        superCall.type = clazz.superClass;
-        method.superCall = superCall;*/
+        code.line(node.toString());
         return false;
     }
 
@@ -564,15 +514,10 @@ public class Rust extends ASTVisitor {
         ITypeBinding type = node.getType().resolveBinding();
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
             if (frag.getInitializer() == null) {
-                code.line("%s %s;", code.ptr(type), frag.getName());
+                code.line("let %s: %s;", frag.getName(), type);
             }
             else {
-                if (Config.use_auto && type.equals(frag.getInitializer().resolveTypeBinding())) {
-                    code.line("auto %s = ", frag.getName());
-                }
-                else {
-                    code.line("%s %s = ", code.ptr(type), frag.getName());
-                }
+                code.line("let %s: %s = ", frag.getName(), type);
                 frag.getInitializer().accept(this);
                 write(";");
             }
@@ -585,49 +530,14 @@ public class Rust extends ASTVisitor {
         ITypeBinding type = node.getType().resolveBinding();
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
             if (frag.getInitializer() == null) {
-                code.line("%s %s;", code.ptr(type), frag.getName());
+                code.line("let %s: %s;", frag.getName(), type);
             }
             else {
-                if (Config.use_auto && type.equals(frag.getInitializer().resolveTypeBinding())) {
-                    code.line("auto %s = ", frag.getName());
-                }
-                else {
-                    code.line("%s %s = ", code.ptr(type), frag.getName());
-                }
+                code.line("let %s: %s = ", frag.getName(), type);
                 frag.getInitializer().accept(this);
                 write(";");
             }
         }
-        return false;
-    }
-
-    @Override
-    public boolean visit(FieldAccess node) {
-        IVariableBinding binding = node.resolveFieldBinding();
-        if (binding != null && Config.writeLibHeader && binding.isField()) {
-            LibHandler.instance.addField(binding);
-        }
-        Expression scope = node.getExpression();
-        ITypeBinding typeBinding = scope.resolveTypeBinding();
-        if (typeBinding == null) {
-            Logger.logBinding(this.binding, node.toString());
-            throw new RuntimeException("null type binding");
-        }
-        else if (typeBinding.isArray() && node.getName().getIdentifier().equals("length")) {
-            scope.accept(this);
-            write("->size()");
-            return false;
-        }
-
-        if (binding.isEnumConstant() || Modifier.isStatic(binding.getModifiers())) {
-            scope.accept(this);
-            write("::%s", node.getName());
-            return false;
-        }
-
-        scope.accept(this);
-        write("->%s", node.getName());
-        //todo Main.this.field
         return false;
     }
 
@@ -643,7 +553,7 @@ public class Rust extends ASTVisitor {
             write("%s::new(", node.getType());
             args(node.arguments());
             if (inner) {
-                write(", this");
+                write(", self");
             }
             write(")");
         }
@@ -659,11 +569,13 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(ConditionalExpression node) {
+        code.write("if ");
         node.getExpression().accept(this);
-        write(" ? ");
+        write(" { ");
         node.getThenExpression().accept(this);
-        write(" : ");
+        write(" } else { ");
         node.getElseExpression().accept(this);
+        code.write(" }");
         return false;
     }
 
@@ -672,9 +584,7 @@ public class Rust extends ASTVisitor {
         if (node.getQualifier() != null) {
             throw new RuntimeException("qualified SuperMethodInvocation");
         }
-        code.write("%s::%s(", binding.getSuperclass(), node.getName());
-        args(node.arguments());
-        write(")");
+        code.write(node.toString());
         return false;
     }
 
@@ -688,17 +598,10 @@ public class Rust extends ASTVisitor {
     @Override
     public boolean visit(ThisExpression node) {
         if (node.getQualifier() == null) {
-            code.write("this");
+            code.write("self");
         }
         else {
-            ITypeBinding binding = node.getQualifier().resolveTypeBinding();
-            CExpression r = ref2(this.binding, binding);
-            if (r != null) {
-                code.write(r.toString());
-            }
-            else {
-                throw new RuntimeException("qualified this");
-            }
+            code.write("self.%s", node.getQualifier());
         }
         return false;
     }
@@ -714,28 +617,13 @@ public class Rust extends ASTVisitor {
         if (node.getQualifier() != null) {
             throw new RuntimeException("SuperFieldAccess qualifier");
         }
-        code.write("%s::%s", binding.getSuperclass(), node.getName());
+        code.write(node.toString());
         return false;
-    }
-
-    void wrapStr(Expression e) {
-        code.write("%s::valueOf(", TypeHelper.getStringType());
-        e.accept(this);
-        code.write(")");
     }
 
     @Override
     public boolean visit(InfixExpression node) {
         String op = node.getOperator().toString();
-        if (node.getOperator().toString().equals(">>>")) {
-            CType type = TypeVisitor.fromBinding(node.getLeftOperand().resolveTypeBinding());
-            write("(unsigned %s)", type);
-            node.getLeftOperand().accept(this);
-            write(">>");
-            node.getRightOperand().accept(this);
-            return false;
-        }
-
         node.getLeftOperand().accept(this);
         write(op);
         node.getRightOperand().accept(this);
@@ -748,75 +636,15 @@ public class Rust extends ASTVisitor {
         return false;
     }
 
-    boolean isStr(Expression e) {
-        return e.resolveTypeBinding().getQualifiedName().equals("java.lang.String");
-    }
-
-        /*CExpression infixString(InfixExpression node) {
-            CClassInstanceCreation creation = new CClassInstanceCreation();
-            CInfixExpression res = new CInfixExpression();
-            res.operator = "+";
-            Expression left = node.getLeftOperand();
-            Expression right = node.getRightOperand();
-            res.left = makeStrIfNot(left);
-            res.right = makeStrIfNot(right);
-            if ((left instanceof StringLiteral || left instanceof CharacterLiteral) && (right instanceof StringLiteral || right instanceof CharacterLiteral)) {
-                //one must be converted
-                CMethodInvocation invocation = new CMethodInvocation();
-                invocation.name = CName.simple("std::string");
-                invocation.arguments.add(res.left);
-                res.left = invocation;
-            }
-            if (node.hasExtendedOperands()) {
-                for (Expression expression: (List < Expression > ) node.extendedOperands()) {
-                    res.other.add(makeStrIfNot(expression));
-                }
-            }
-            creation.args.add(res);
-            creation.type = Mapper.instance.mapType(TypeHelper.getStringType(), clazz);
-            return creation;
-        }*/
-
-        /*CExpression makeStrIfNot(Expression node) {
-            if (node instanceof StringLiteral) {
-                StringLiteral lit = (StringLiteral) node;
-                return new CStringLiteral(lit.getLiteralValue(), lit.getEscapedValue());
-            } else {
-                ITypeBinding binding = node.resolveTypeBinding();
-                CExpression expression = (CExpression) visitExpr(node, null);
-                if (binding.isPrimitive()) {
-                    if (node instanceof CharacterLiteral) {
-                        return new CStringLiteral("" + ((CharacterLiteral) node).charValue());
-                    }
-                    CMethodInvocation invocation = new CMethodInvocation();
-                    invocation.name = CName.simple("std::to_string");
-                    invocation.arguments.add(expression);
-                    return invocation;
-                } else {
-                    if (binding.getQualifiedName().equals("java.lang.String")) {
-                        return new DeferenceExpr(expression);
-                    } else {
-                        //may have toString
-                        for (IMethodBinding methodBinding: binding.getDeclaredMethods()) {
-                            if (methodBinding.getName().equals("toString") && methodBinding.getReturnType().getQualifiedName().equals("java.lang.String")) {
-                                CMethodInvocation invocation = new CMethodInvocation();
-                                invocation.isArrow = true;
-                                invocation.scope = expression;
-                                invocation.name = new CName("toString");
-                                return new DeferenceExpr(invocation);
-                            }
-                        }
-                        //leave as it is
-                        return expression;
-                    }
-                }
-            }
-        }*/
-
     @Override
     public boolean visit(PostfixExpression node) {
         node.getOperand().accept(this);
-        write(node.getOperator().toString());
+        if (node.getOperator().toString().equals("++")) {
+            code.write(" += 1");
+        }
+        else {
+            code.write(" -= 1");
+        }
         return false;
     }
 
@@ -828,36 +656,33 @@ public class Rust extends ASTVisitor {
     }
 
     @Override
-    public boolean visit(InstanceofExpression node) {
-        code.write("//%s", node);
-        return false;
-    }
-
-    @Override
     public boolean visit(ArrayAccess node) {
         node.getArray().accept(this);
-        write("->at(");
+        write("[");
         node.getIndex().accept(this);
-        write(")");
+        write("]");
         return false;
     }
 
     @Override
     public boolean visit(ArrayCreation node) {
         if (node.getInitializer() != null) {
-            write("vec![");
             node.getInitializer().accept(this);
-            write("]");
         }
         else {
-            ITypeBinding elemType = node.getType().getElementType().resolveBinding();
-            write("arrays::make%d<%s>(", node.getType().getDimensions(), code.ptr(elemType));
-            args(node.dimensions());
-            //set missing dims to zero
-            for (int i = node.dimensions().size(); i < node.getType().getDimensions(); i++) {
-                write(", 0");
-            }
-            write(")");
+            //new Type[d1][d2]
+            code.write(node.toString());
+//            if (node.dimensions().size() == 1) {
+//                var expr = (Expression) node.dimensions().get(0);
+//                code.write("Vec::with_capacity(");
+//                expr.accept(this);
+//                code.write(")");
+//
+//                code.write("arr.resize(");
+//                expr.accept(this);
+//                code.write(")");
+            //todo move into upper line
+//            }
         }
         return false;
     }
@@ -866,28 +691,42 @@ public class Rust extends ASTVisitor {
     @Override
     public boolean visit(ArrayInitializer node) {
         //throw new RuntimeException("ArrayInitializer");
-        boolean first = true;
+        code.write("vec![");
+        var first = true;
         for (var v : (List<Expression>) node.expressions()) {
             if (!first) code.write(", ");
             v.accept(this);
             first = false;
         }
+        code.write("]");
+        return false;
+    }
+
+    @Override
+    public boolean visit(InstanceofExpression node) {
+        code.write("//%s", node);
         return false;
     }
 
     @Override
     public boolean visit(CastExpression node) {
-        ITypeBinding type = node.getType().resolveBinding();
-        if (TypeHelper.canCast(node.getExpression(), node.getExpression().resolveTypeBinding(), type)) {
+        var target = node.getType().resolveBinding();
+        var exprType = node.getExpression().resolveTypeBinding();
+        if (target.isPrimitive()) {
+            node.getExpression().accept(this);
+            code.write(" as %s", target);
+            return false;
+        }
+        if (target.isCastCompatible(exprType)) {
             //System.out.println("static "+clazz.getType());
             //static cast
-            write("(%s)", code.ptr(type));
+            write("(%s)", code.ptr(target));
             node.getExpression().accept(this);
         }
         else {
             //System.out.println("dynamic " + clazz.getType());
             //dynamic e.g derived class to base class
-            write("dynamic_cast<%s>(", code.ptr(type));
+            write("dynamic_cast<%s>(", code.ptr(target));
             node.getExpression().accept(this);
             write(")");
         }
@@ -902,6 +741,7 @@ public class Rust extends ASTVisitor {
         return false;
     }
 
+
     @SuppressWarnings("unchecked")
     @Override
     public boolean visit(MethodInvocation node) {
@@ -911,52 +751,24 @@ public class Rust extends ASTVisitor {
             return visitMI(node);
             //throw new RuntimeException("inv null binding");
         }
-        ITypeBinding ret = binding.getReturnType();
-        ITypeBinding org = binding.getMethodDeclaration().getReturnType();
-        boolean needCast = !org.equals(ret) && (org.isWildcardType() || org.isTypeVariable());
-        if (needCast) {
-            //cast
-            write("dynamic_cast<%s>(", code.ptr(ret));
-        }
+        String name = RustHelper.mapMethodName(binding);
         //System.out.printf("rt of %s = %s other=%s\n", node, ret.getName(), org.getName());
         boolean isStatic = Modifier.isStatic(binding.getModifiers());
-        if (node.getExpression() == null) {
+        if (isStatic) {
             ITypeBinding onType = binding.getDeclaringClass();
-            //CType type = TypeVisitor.fromBinding(onType, cla);
-            if (isStatic) {
-                //static method needs qualifier
-                code.write(onType);
-                write("::");
-            }
-            else if (Config.qualifyBaseMethod && !this.binding.equals(onType) && this.binding.isSubTypeCompatible(onType) && !onType.isInterface()) {
-                //qualify super method,not needed but more precise
-                code.write(onType);
-                write("::");
-            }
-            write(node.getName().toString());
-            write("(");
+            code.write("%s::%s(", onType, name);
             args(node.arguments());
-            write(")");
-        }
-        else {
-            node.getExpression().accept(this);
-            if (catchName != null && catchName.equals(node.getExpression().toString())) {
-                write(".");
-            }
-            else if (isStatic) {
-                write("::");
-            }
-            else {
-                write("->");
-            }
-            write(node.getName().toString());
-            write("(");
-            args(node.arguments());
-            write(")");
-        }
-        if (needCast) {
             code.write(")");
+            return false;
         }
+        if (node.getExpression() != null) {
+            node.getExpression().accept(this);
+            write(".");
+        }
+        write(name);
+        write("(");
+        args(node.arguments());
+        write(")");
         return false;
     }
 
@@ -1018,69 +830,45 @@ public class Rust extends ASTVisitor {
     @Override
     public boolean visit(SimpleName node) {
         IBinding binding = node.resolveBinding();
-        CName name = new CName(node.getIdentifier());
+        var name = RustHelper.map(node.getIdentifier());
         if (binding == null) {
+            Logger.logBinding(this.binding, node.toString());
             code.write(node.getIdentifier());
             return false;
-//            Logger.logBinding(this.binding, node.toString());
 //            throw new RuntimeException("sn null binding");
         }
         if (binding.getKind() == IBinding.TYPE) {
-            write(name.toString());
+            code.write(RustHelper.toRustType(name));
             return false;
         }
         if (binding.getKind() != IBinding.VARIABLE) {
-            write(name.toString());
+            code.write(name);
             throw new RuntimeException("non var sn " + node);
         }
-        boolean isStatic = Modifier.isStatic(binding.getModifiers());
+
         IVariableBinding variableBinding = (IVariableBinding) binding;
-        ITypeBinding onType = variableBinding.getDeclaringClass();
         if (variableBinding.isParameter()) {
-            write(Mapper.instance.mapParamName(node.getIdentifier()).toString());
+            write(Mapper.instance.mapParamName(node.getIdentifier()));
             return false;
         }
+        ITypeBinding onType = variableBinding.getDeclaringClass();
 
-        if (variableBinding.isField()) {
-            name = Mapper.instance.mapFieldName(name.name, this.binding);
-            if (isStatic) {
-                if (variableBinding.getType().isPrimitive()) {
-                    write("%s::%s", onType, name.toString());
-                }
-                else {
-                    write("%s::%s()", onType, name.toString());
-                }
-            }
-            else {
-                if (this.binding.equals(onType)) {
-                    write(name.toString());
-                    return false;
-                }
-                if (this.binding.isSubTypeCompatible(onType)) {
-                    //super field?
-                    write(name.toString());
-                    return false;
-                }
-                CExpression ref = ref2(this.binding, onType);
-                if (ref != null) {
-                    write("%s->%s", ref, name.toString());
-                    return false;
-                }
-                throw new RuntimeException("sn field");
-            }
+        if (Modifier.isStatic(binding.getModifiers())) {
+            //still works bc onType represents file name not struct
+            write("%s::%s", onType, name);
+            return false;
         }
-        else {
-            //access to catch variable
-            if (catchName != null && name.is(catchName) && !(node.getParent() instanceof ThrowStatement)) {
-                if (node.getParent() instanceof VariableDeclarationFragment || node.getParent() instanceof Assignment || node.getParent() instanceof ClassInstanceCreation) {
-                    write("(&%s)", name.toString());
-                    return false;
-                }
-            }
-            if (this.binding.isAnonymous() && onType == null) {
-            }
-            write(name.toString());
+        if (this.binding.equals(onType)) {
+            //local field
+            code.write("self.%s", name);
+            return false;
         }
+        if (this.binding.isSubTypeCompatible(onType)) {
+            //super field
+            code.write("self.super_.%s", name);
+            return false;
+        }
+        code.write(name);
         return false;
     }
 
@@ -1088,15 +876,16 @@ public class Rust extends ASTVisitor {
     @Override
     public boolean visit(QualifiedName node) {
         IBinding binding = node.resolveBinding();
-        ITypeBinding typeBinding = node.getQualifier().resolveTypeBinding();
+        ITypeBinding onType = node.getQualifier().resolveTypeBinding();
+        var name = RustHelper.map(node.getName().getIdentifier());
 
         if ((binding instanceof IVariableBinding) && Config.writeLibHeader) {
             LibHandler.instance.addField((IVariableBinding) binding);
         }
-        if (binding == null || typeBinding == null) {
+        if (binding == null || onType == null) {
             node.getQualifier().accept(this);
             code.write(".");
-            code.write(node.getName().getIdentifier());
+            code.write(name);
             Logger.logBinding(this.binding, node.toString());
             //normal qualified name access
             //qualifier is not a type so it is a package
@@ -1104,125 +893,60 @@ public class Rust extends ASTVisitor {
             //throw new RuntimeException("qname null binding");
             return false;
         }
-
-        String name = node.getName().getIdentifier();
-
-        if (typeBinding.isArray() && name.equals("length")) {
+        var type = node.resolveTypeBinding();
+        if (type.isArray() && name.equals("length")) {
             //array.length
             node.getQualifier().accept(this);
-            write("->size()");
+            code.write(".%s.len()", name);
             return false;
         }
 
         boolean isStatic = Modifier.isStatic(binding.getModifiers());
 
         if (isStatic) {
-            IVariableBinding variableBinding = (IVariableBinding) binding;
-            if (Config.static_field_cofui && Modifier.isFinal(binding.getModifiers()) && !variableBinding.getType().isPrimitive()) {
-                CName mapped = Mapper.instance.mapFieldName(name, this.binding);
-                write("%s::%s()", typeBinding, mapped);
-                return false;
-            }
+            write("%s::%s", onType, name);
+            return false;
         }
 
-        if (binding.getKind() == IBinding.VARIABLE) {
-            IVariableBinding variableBinding = (IVariableBinding) binding;
-            if (variableBinding.isField()) {
-                CName mapped = Mapper.instance.mapFieldName(name, this.binding);
-                write("%s->%s", typeBinding, mapped);
-                return false;
+        if (binding instanceof IVariableBinding) {
+            var vb = (IVariableBinding) binding;
+            if (vb.isParameter()) {
+                code.write(name);
             }
-            else if (variableBinding.isParameter()) {
-                String mapped = Mapper.instance.mapParamName(name);
-                write("%s", mapped);
-            }
+        }
+        else {
+            code.write("self.");
+            node.getQualifier().accept(this);
+            code.write(".");
+            code.write(name);
         }
         return false;
     }
 
-    String toWrapper(String s) {
-        Map<String, String> map = new HashMap<>();
-        map.put("boolean", "Boolean");
-        map.put("byte", "Byte");
-        map.put("char", "Character");
-        map.put("short", "Short");
-        map.put("int", "Integer");
-        map.put("long", "Long");
-        map.put("float", "Float");
-        map.put("double", "Double");
-        return map.get(s);
-    }
-
-    String fromWrapper(String s) {
-        Map<String, String> map = new HashMap<>();
-        map.put("Boolean", "boolean");
-        map.put("Byte", "byte");
-        map.put("Character", "char");
-        map.put("Short", "short");
-        map.put("Integer", "int");
-        map.put("Long", "lon");
-        map.put("Float", "float");
-        map.put("Double", "double");
-        return map.get(s);
-    }
-
-
-    CExpression box(Expression e, CExpression ce) {
-        //Double d = i;
-        if (e.resolveBoxing()) {
-            ITypeBinding t = e.resolveTypeBinding();
-            String type = t.getName();
-            //$Wrapper$::valueOf(e)
-            CType wr = new CType("java::lang::" + toWrapper(type));
-            CMethodInvocation res = new CMethodInvocation(wr, new CName("valueOf"), false);
-            res.arguments.add(ce);
-            return res;
+    @Override
+    public boolean visit(FieldAccess node) {
+        IVariableBinding binding = node.resolveFieldBinding();
+        Expression scope = node.getExpression();
+        ITypeBinding typeBinding = scope.resolveTypeBinding();
+        if (typeBinding == null) {
+            Logger.logBinding(this.binding, node.toString());
+            throw new RuntimeException("null type binding");
         }
-        if (e.resolveUnboxing()) {
-            ITypeBinding t = e.resolveTypeBinding();
-            String type = t.getName();
-            //e.$prim$Value
-            String prim = fromWrapper(type);
-            CMethodInvocation res = new CMethodInvocation(ce, new CName(prim + "Value"), true);
-            return res;
+        else if (typeBinding.isArray() && node.getName().getIdentifier().equals("length")) {
+            scope.accept(this);
+            write("->len()");
+            return false;
         }
-        return ce;
-    }
 
-        /*String getTargetType(Expression e){
-    	ASTNode p = e.getParent();
-    	if(p instanceof VariableDeclarationFragment){
-    		VariableDeclarationFragment f = (VariableDeclarationFragment)p;
-    		return f.resolveBinding().getType().getName();
-    	}
-    	else if(p instanceof Assignment){
-    		Assignment as = (Assignment)p;
-    		return as.getLeftHandSide().resolveTypeBinding().getName();
-    	}
-   	 else if(p instanceof MethodInvocation){
-   	 	MethodInvocation m=(MethodInvocation)p;
-    	}
-    	else if(p instanceof ClassInstanceCreation){
-			ClassInstanceCreation cic=(ClassInstanceCreation)p;
-			
-		}
-    	else if(p instanceof InfixExpression){
-			throw new RuntimeException("infix box");
-		}
-    	else if(p instanceof PrefixExpression){
-    		PrefixExpression pr = (PrefixExpression)p;
-    		return toWrapper(e.resolveTypeBinding().getName());
-		}
-		else if(p instanceof CastExpression){
-			CastExpression ce=(CastExpression)p;
-			return ce.getType().toString();
-		}
-    	else if(p instanceof ArrayAccess){
-    		return "int";
-    	}
-    	else if(p instanceof ArrayCreation){
-    		return "int";
-    	}
-		return null;
-	}*/
+        if (binding.isEnumConstant() || Modifier.isStatic(binding.getModifiers())) {
+            scope.accept(this);
+            write("::%s", node.getName());
+            return false;
+        }
+
+        scope.accept(this);
+        write("->%s", node.getName());
+        //todo Main.this.field
+        return false;
+    }
 }
