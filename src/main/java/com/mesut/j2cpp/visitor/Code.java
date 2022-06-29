@@ -64,12 +64,10 @@ public class Code {
     String format(String s, Object... args) {
         if (args.length != 0) {
             for (int i = 0; i < args.length; i++) {
-                if (args[i] instanceof ITypeBinding) {
-                    var type = (ITypeBinding) args[i];
+                if (args[i] instanceof ITypeBinding type) {
                     args[i] = str(type);
                 }
-                else if (args[i] instanceof Type) {
-                    var type = (Type) args[i];
+                else if (args[i] instanceof Type type) {
                     args[i] = mapType(type);
                 }
             }

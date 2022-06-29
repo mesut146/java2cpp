@@ -19,7 +19,7 @@ application {
 group = 'com.mesut'
 version = '1.0'
 description = 'java2cpp'
-java.sourceCompatibility = JavaVersion.VERSION_11
+java.sourceCompatibility = JavaVersion.VERSION_16
 
 dependencies {
     //implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.21.0'

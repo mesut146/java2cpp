@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.visitor;
 
+import com.mesut.j2cpp.map.Mapper;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -58,7 +59,7 @@ public class RustHelper {
         if (type.isArray()) {
             return makeArray(type.getElementType(), type.getDimensions());
         }
-        return type.getName();
+        return Mapper.instance.mapType(type).toString();
     }
 
     public static String makeArray(Type elem, int dims) {
@@ -85,6 +86,9 @@ public class RustHelper {
     public static String mapMethodName(IMethodBinding binding) {
         //todo cache
         var clazz = binding.getDeclaringClass();
+        if (!clazz.isFromSource()) {
+            return binding.getName();
+        }
         int cnt = 0;
         for (var method : clazz.getDeclaredMethods()) {
             if (binding.isConstructor() && method.isConstructor()) cnt++;

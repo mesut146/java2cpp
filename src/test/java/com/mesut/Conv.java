@@ -98,17 +98,6 @@ public class Conv {
     }
 
     @Test
-    public void javac13() throws IOException {
-        String dir = "/media/mesut/SSD-DATA/IdeaProjects/javac13/src/main/java";
-        String out = "/media/mesut/SSD-DATA/IdeaProjects/javac13/cpp";
-        Converter converter = new Converter(dir, out);
-        converter.addClasspath(rtJar);
-        converter.addClasspath("/media/mesut/SSD-DATA/IdeaProjects/javac13/nio-1.0-SNAPSHOT.jar");
-        Mapper.instance.initMappers();
-        converter.convert();
-    }
-
-    @Test
     public void testMy() throws IOException {
         String dir = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/java";
         String out = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/cpp";
@@ -145,15 +134,25 @@ public class Conv {
     }
 
     @Test
-    public void testMapper() throws IOException {
-        String dir = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/java";
-        String out = "/home/mesut/Desktop/IdeaProjects/java2cpp/asd/test/cpp";
-        Converter converter = new Converter(dir, out);
+    public void cppMapper() throws IOException {
+        Converter converter = new Converter("./asd/test/java", "./asd/test/cpp");
         Mapper.instance.initMappers();
         converter.addClasspath(rtJar);
         //converter.getFilter().addIncludeClass("mapper.ListTest");
         //converter.getFilter().addIncludeClass("mapper.StringTest");
         converter.getFilter().addIncludeClass("mapper.SetTest");
+        //converter.getFilter().addIncludeClass("mapper.IntegerTest");
+        converter.convert();
+    }
+
+    @Test
+    public void rustMapper() throws IOException {
+        Converter converter = new Converter("./asd/test/java", "./asd/test/rust", true);
+        Mapper.instance.initMappers(true);
+        //converter.addClasspath(rtJar);
+        converter.getFilter().addIncludeClass("mapper.ListTest");
+        converter.getFilter().addIncludeClass("mapper.SetTest");
+        //converter.getFilter().addIncludeClass("mapper.StringTest");
         //converter.getFilter().addIncludeClass("mapper.IntegerTest");
         converter.convert();
     }

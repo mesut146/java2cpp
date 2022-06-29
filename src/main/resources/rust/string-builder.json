@@ -1,0 +1,66 @@
+{
+  "name": "java.lang.StringBuilder",
+  "target": "String",
+  "methods": [
+    {
+      "name": "StringBuilder()",
+      "target": "String::new()"
+    },
+    {
+      "name": "StringBuilder(int)",
+      "target": "String::with_capacity($1)"
+    },
+    {
+      "name": "StringBuilder(java.lang.String)",
+      "target": "String::from($1)"
+    },
+    {
+      "name": "append(char)",
+      "target": "$0.push($1)"
+    },
+    {
+      "name": "append(java.lang.String)",
+      "target": "$0.push_str($1)"
+    },
+    {
+      "name": "append(boolean)",
+      "target": "$0.push_str(&$1.to_string())"
+    },
+    {
+      "name": "append(int)",
+      "target": "$0.push_str(&$1.to_string())"
+    },
+    {
+      "name": "append(long)",
+      "target": "$0.push_str(&$1.to_string())"
+    },
+    {
+      "name": "append(float)",
+      "target": "$0.push_str(&$1.to_string())"
+    },
+    {
+      "name": "append(double)",
+      "target": "$0.push_str(&$1.to_string())"
+    },
+    {
+      "name": "insert(int,char)",
+      "target": "$0.insert($1)"
+    },
+    {
+      "name": "insert(int,String)",
+      "target": "$0.insert_str(&$1)"
+    },
+    {
+      "name": "capacity()",
+      "target": "$0.capacity()"
+    },
+    {
+      "name": "charAt(int)",
+      "target": "$0.as_bytes()[$1] as char"
+    },
+    {
+      "name": "length()",
+      "target": "$0.len()"
+    }
+  ]
+}

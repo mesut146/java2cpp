@@ -5,7 +5,7 @@
   "methods": [
     {
       "name": "length()",
-      "target": "size()"
+      "target": "$0.size()"
     },
     {
       "name": "substring(int)",
@@ -45,29 +45,28 @@
     },
     {
       "name": "hashCode()",
-      "target": "std::hash<std::string>(${varName})",
-      "external": true
+      "target": "std::hash<std::string>($0)"
     },
     {
       "name": "compareTo(java.lang.String)",
-      "target": "compare(*$1)"
+      "target": "$0.compare(*$1)"
     },
     {
       "name": "charAt(int)",
-      "target": "at($1)"
+      "target": "$0.at($1)"
     },
     {
       "name": "contains(java.lang.String)",
-      "target": "(${varName}->find($1) != std::string::npos)",
+      "target": "($0->find($1) != std::string::npos)",
       "external": true
     },
     {
       "name": "endsWith(java.lang.String)",
-      "target": "compare(${varName}.size() - $1.size(), $1.size(), $1)"
+      "target": "compare($0.size() - $1.size(), $1.size(), $1)"
     },
     {
       "name": "startsWith(java.lang.String)",
-      "target": "compare(0, $1->size(), *$1)"
+      "target": "$0.compare(0, $1->size(), *$1)"
     },
     {
       "name": "toUpperCase()",
@@ -75,9 +74,9 @@
         "std::string *tmp = new std::string();",
         "for(auto &c: *${varName}){",
         "    tmp->append(1, std::toupper(c));",
-        "}"
-      ],
-      "expr": "tmp"
+        "}",
+        "tmp"
+      ]
     },
     {
       "name": "toUpperCase(java.util.Locale)",

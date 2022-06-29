@@ -739,6 +739,17 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
             if (node.getExpression() != null) invocation.scope = (CExpression) visitExpr(node.getExpression(), arg0);
             return invocation;
         }
+//        if (node.getExpression() != null) {
+//            List<String> res = Mapper.instance.mapMethodRust(binding, node.arguments(), node.getExpression(), this.binding);
+//            if (res != null) {
+//                if (res.size() > 1) {
+//                    //todo access to prev line
+//                }
+//                else {
+//                    code.line(res.get(0));
+//                }
+//            }
+//        }
         CExpression scope = node.getExpression() == null ? null : (CExpression) visitExpr(node.getExpression(), arg0);
         CMethodInvocation invocation = new CMethodInvocation();
         invocation.name = (CName) visit(node.getName(), null);
@@ -758,18 +769,6 @@ public class SourceVisitor extends DefaultVisitor<CNode, CNode> {
         if (scope != null) {
             CExpression p = handlePrint(binding.getName(), node.getExpression(), (List<Expression>) node.arguments(), invocation.arguments);
             if (p != null) return p;
-            //mapper
-            Mapper.Mapped target = Mapper.instance.mapMethod(binding, invocation.arguments, scope, clazz);
-            if (target != null) {
-                if (target.list == null) {
-                    //single expr
-                    return target.expr;
-                }
-                for (String line : target.list.split("\n")) {
-                    block.addStatement(new RawStatement(line));
-                }
-                return target.expr;
-            }
             invocation.isArrow = !isStatic;
             if (catchName != null && catchName.equals(scope.toString())) {
                 invocation.isDot = true;

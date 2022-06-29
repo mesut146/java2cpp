@@ -1,0 +1,68 @@
+{
+  "name": "java.util.List<T>,java.util.ArrayList<T>",
+  "target": "Vec<T>",
+  "methods": [
+    {
+      "name": "ArrayList()",
+      "target": "Vec::new()"
+    },
+    {
+      "name": "add(T)",
+      "target": "$0.push($1)"
+    },
+    {
+      "name": "add(int,T)",
+      "target": "$0.insert($1, $2)"
+    },
+    {
+      "name": "get(int)",
+      "target": "$0[$1]"
+    },
+    {
+      "name": "set(int,T)",
+      "target": "std::mem::replace($0[$1], $2)"
+    },
+    {
+      "name": "remove(int)",
+      "target": "$0.remove($1)"
+    },
+    {
+      "name": "remove(T)",
+      "target": [
+        "let _idx = $0.iter().position(|&e| e == $1);",
+        "if _idx.is_some(){ $0.remove(_idx.as_ref().unwrap()); }",
+        "_idx.is_some()"
+      ]
+    },
+    {
+      "name": "indexOf(T)",
+      "target": [
+        "$0.iter().position(|&e| e == $1).unwrap_or(-1)"
+      ]
+    },
+    {
+      "name": "size()",
+      "target": "$0.len()"
+    },
+    {
+      "name": "isEmpty()",
+      "target": "$0.is_empty()"
+    },
+    {
+      "name": "clear()",
+      "target": "$0.clear()"
+    },
+    {
+      "name": "contains(T)",
+      "target": "$0.iter().find(|&e| e == $1).is_some()"
+    },
+    {
+      "name": "toArray()",
+      "target": "$0"
+    },
+    {
+      "name": "toArray(T[])",
+      "target": "$0"
+    }
+  ]
+}

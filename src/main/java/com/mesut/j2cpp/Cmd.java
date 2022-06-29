@@ -72,7 +72,7 @@ public class Cmd {
             else {
                 converter.classpath.addAll(cp);
             }
-            Mapper.instance.initMappers();
+            Mapper.instance.initMappers(rust);
             if (stats) {
                 converter.stats();
             }

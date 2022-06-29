@@ -14,15 +14,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings("unchecked")
 public class Rust extends ASTVisitor {
 
     Path dir;
     CompilationUnit cu;
-    ITypeBinding binding;
-    Code code = new Code();
+    public ITypeBinding binding;
+    public Code code = new Code();
 
     public Rust(Path dir, CompilationUnit cu) {
         this.dir = dir;
@@ -125,11 +127,12 @@ public class Rust extends ASTVisitor {
                 FieldDeclaration fd = (FieldDeclaration) frag.getParent();
                 ITypeBinding type = fd.getType().resolveBinding();
                 if (isNormal(fd.getModifiers(), type, frag)) {
-                    code.line("pub %s: %s,\n", frag.getName(), fd.getType());
+                    code.line("pub %s: %s,\n", frag.getName(), type);
                 }
             }
             code.line("}\n");
             impl(node, fields);
+            //writeDefault(node, fields);
         }
         return false;
     }
@@ -137,8 +140,7 @@ public class Rust extends ASTVisitor {
     void trait(TypeDeclaration node) {
         code.line("trait %s{\n", node.getName());
         for (Object o : node.bodyDeclarations()) {
-            if (o instanceof MethodDeclaration) {
-                MethodDeclaration md = (MethodDeclaration) o;
+            if (o instanceof MethodDeclaration md) {
                 methodHeader(md);
                 code.write(";\n");
             }
@@ -152,7 +154,7 @@ public class Rust extends ASTVisitor {
             FieldDeclaration fd = (FieldDeclaration) frag.getParent();
             ITypeBinding type = fd.getType().resolveBinding();
             if (isCons(fd.getModifiers(), type, frag)) {
-                code.line("pub const %s: %s = ", frag.getName(), fd.getType());
+                code.line("pub const %s: %s = ", frag.getName(), type);
                 frag.getInitializer().accept(this);
                 code.write(";\n");
             }
@@ -207,7 +209,12 @@ public class Rust extends ASTVisitor {
         }
         code.write(")");
         if (!node.isConstructor() && !node.getReturnType2().toString().equals("void")) {
-            code.write(" -> %s", node.getReturnType2());
+            if (node.thrownExceptionTypes().isEmpty()) {
+                code.write(" -> %s", node.getReturnType2());
+            }
+            else {
+                code.write(" -> Result<%s, String>", node.getReturnType2());
+            }
         }
     }
 
@@ -223,6 +230,21 @@ public class Rust extends ASTVisitor {
         return false;
     }
 
+//    void writeDefault(TypeDeclaration node, List<VariableDeclarationFragment> fields) {
+//        code.line("impl Default for %s{\n", node.getName());
+//        code.line("fn default() -> Self {\n");
+//        code.line("%s{}", node.getName());
+//        for (var frag : fields) {
+//            var fd = (FieldDeclaration) frag.getParent();
+//            var type = fd.getType().resolveBinding();
+//            if (isNormal(fd.getModifiers(), type, frag)) {
+//
+//            }
+//        }
+//        code.line("}");
+//        code.line("}");
+//    }
+
     public void write(String s, Object... args) {
         code.write(s, args);
     }
@@ -232,6 +254,12 @@ public class Rust extends ASTVisitor {
         //block = n;
         code.line("{\n");
         for (Statement s : (List<Statement>) n.statements()) {
+            var m = needMultiLineMap(s);
+            if (m != null) {
+                for (int i = 0; i < m.size() - 1; i++) {
+                    code.line("%s\n", m.get(i));
+                }
+            }
             s.accept(this);
             code.write("\n");
         }
@@ -510,18 +538,6 @@ public class Rust extends ASTVisitor {
     }
 
     @Override
-    public boolean visit(ConstructorInvocation node) {
-        code.line(node.toString());
-        return false;
-    }
-
-    @Override
-    public boolean visit(SuperConstructorInvocation node) {
-        code.line(node.toString());
-        return false;
-    }
-
-    @Override
     public boolean visit(SynchronizedStatement node) {
         //throw new RuntimeException("synchronized");
         code.write("//%s", node);
@@ -561,32 +577,6 @@ public class Rust extends ASTVisitor {
     }
 
     @Override
-    public boolean visit(ClassInstanceCreation node) {
-        ITypeBinding binding = node.getType().resolveBinding();
-        if (binding == null) {
-            Logger.logBinding(this.binding, node.toString());
-            throw new RuntimeException("cic null binding");
-        }
-        if (node.getAnonymousClassDeclaration() == null) {
-            boolean inner = node.getAnonymousClassDeclaration() != null || !Modifier.isStatic(binding.getModifiers()) && binding.isNested();
-            write("%s::new(", node.getType());
-            args(node.arguments());
-            if (inner) {
-                write(", self");
-            }
-            write(")");
-        }
-        else {
-            //collect locals and set
-            code.write("/*");
-            code.write(node.toString());
-            code.write("*/");
-            //throw new RuntimeException("anony ");
-        }
-        return false;
-    }
-
-    @Override
     public boolean visit(ConditionalExpression node) {
         code.write("if ");
         node.getExpression().accept(this);
@@ -595,15 +585,6 @@ public class Rust extends ASTVisitor {
         write(" } else { ");
         node.getElseExpression().accept(this);
         code.write(" }");
-        return false;
-    }
-
-    @Override
-    public boolean visit(SuperMethodInvocation node) {
-        if (node.getQualifier() != null) {
-            throw new RuntimeException("qualified SuperMethodInvocation");
-        }
-        code.write(node.toString());
         return false;
     }
 
@@ -743,7 +724,7 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(InstanceofExpression node) {
-        code.write("//%s", node);
+        code.write("/*%s*/", node);
         return false;
     }
 
@@ -780,6 +761,121 @@ public class Rust extends ASTVisitor {
         return false;
     }
 
+    //is return value is local[move]
+    boolean isReturnLocal(MethodDeclaration md) {
+        if (md.isConstructor() || md.getReturnType2().toString().equals("void")) return false;
+        Set<String> locals = new HashSet<>();
+        for (var st : (List<Statement>) md.getBody().statements()) {
+            if (st instanceof ReturnStatement ret) {
+                var expr = ret.getExpression();
+                if (expr instanceof ClassInstanceCreation) return true;
+                if (expr instanceof SimpleName s) {
+                    return locals.contains(s.getIdentifier());
+                }
+                if (expr instanceof MethodInvocation mi) {
+//                    if (mi.resolveMethodBinding().getDeclaringClass().equals(md.resolveBinding().getDeclaringClass())) {
+//                        return isReturnLocal();
+//                    }
+                    //todo previsit
+                }
+                var obj = expr.resolveConstantExpressionValue();
+                return false;
+            }
+            else if (st instanceof VariableDeclarationStatement vd) {
+                for (var frag : (List<VariableDeclarationFragment>) vd.fragments()) {
+                    //todo more cases
+                    if (frag.getInitializer() != null && frag.getInitializer() instanceof ClassInstanceCreation) {
+                        locals.add(frag.getName().toString());
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean visit(ClassInstanceCreation node) {
+        ITypeBinding binding = node.getType().resolveBinding();
+        if (binding == null) {
+            Logger.logBinding(this.binding, node.toString());
+            throw new RuntimeException("cic null binding");
+        }
+        if (node.getAnonymousClassDeclaration() == null) {
+            List<String> mapped = Mapper.instance.mapMethodRust(node.resolveConstructorBinding(), node.arguments(), null, this.binding);
+            if (mapped != null) {
+                code.write(mapped.get(mapped.size() - 1));
+                return false;
+            }
+            boolean inner = node.getAnonymousClassDeclaration() != null || !Modifier.isStatic(binding.getModifiers()) && binding.isNested();
+            write("%s::new(", node.getType());
+            args(node.arguments());
+            if (inner) {
+                write(", self");
+            }
+            write(")");
+        }
+        else {
+            //collect locals and set
+            code.write("/*");
+            code.write(node.toString());
+            code.write("*/");
+            //throw new RuntimeException("anony ");
+        }
+        return false;
+    }
+
+    @Override
+    public boolean visit(ConstructorInvocation node) {
+        code.line(node.toString());
+        return false;
+    }
+
+    @Override
+    public boolean visit(SuperConstructorInvocation node) {
+        code.line(node.toString());
+        return false;
+    }
+
+    @Override
+    public boolean visit(SuperMethodInvocation node) {
+        if (node.getQualifier() != null) {
+            throw new RuntimeException("qualified SuperMethodInvocation");
+        }
+        code.write(node.toString());
+        return false;
+    }
+
+    List<String> needMultiLineMap(Statement statement) {
+        //after vardecl,while expr,for init,
+        ASTNode firstLine = statement;
+        if (firstLine instanceof IfStatement is) {
+            firstLine = is.getExpression();
+        }
+        else if (firstLine instanceof WhileStatement ws) {
+            firstLine = ws.getExpression();
+        }
+        final List<String>[] arr = new List[1];
+        var visitor = new ASTVisitor() {
+            @Override
+            public boolean visit(IfStatement node) {
+                return false;
+            }
+
+            @Override
+            public boolean visit(MethodInvocation node) {
+                if (node.getExpression() != null) {
+                    var binding = node.resolveMethodBinding();
+                    List<String> a = Mapper.instance.mapMethodRust(binding, node.arguments(), node.getExpression(), Rust.this.binding);
+                    if (a != null && a.size() > 1) {
+                        arr[0] = a;
+                    }
+                }
+                return false;
+            }
+        };
+        firstLine.accept(visitor);
+        return arr[0];
+    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -789,6 +885,13 @@ public class Rust extends ASTVisitor {
             Logger.logBinding(this.binding, node.toString());
             return visitMI(node);
             //throw new RuntimeException("inv null binding");
+        }
+        if (node.getExpression() != null) {
+            List<String> res = Mapper.instance.mapMethodRust(binding, node.arguments(), node.getExpression(), this.binding);
+            if (res != null) {
+                code.write(res.get(res.size() - 1));
+                return false;
+            }
         }
         String name = RustHelper.mapMethodName(binding);
         //System.out.printf("rt of %s = %s other=%s\n", node, ret.getName(), org.getName());
@@ -810,6 +913,7 @@ public class Rust extends ASTVisitor {
         write(")");
         return false;
     }
+
 
     @SuppressWarnings("unchecked")
     public boolean visitMI(MethodInvocation node) {

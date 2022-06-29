@@ -1,0 +1,45 @@
+{
+  "name": "java.util.Set<T>,java.util.HashSet<T>",
+  "target": "HashSet<T>",
+  "include": "use std::collections::HashSet;",
+  "methods": [
+    {
+      "name": "HashSet()",
+      "target": "HashSet::new()"
+    },
+    {
+      "name": "add(T)",
+      "target": "$0.insert($1)"
+    },
+    {
+      "name": "remove(T)",
+      "target": [
+        "$0.remove($1)"
+      ]
+    },
+    {
+      "name": "size()",
+      "target": "$0.len()"
+    },
+    {
+      "name": "isEmpty()",
+      "target": "$0.is_empty()"
+    },
+    {
+      "name": "clear()",
+      "target": "$0.clear()"
+    },
+    {
+      "name": "contains(T)",
+      "target": "$0.contains()"
+    },
+    {
+      "name": "toArray()",
+      "target": "Vec::from_iter($0)"
+    },
+    {
+      "name": "toArray(T[])",
+      "target": "Vec::from_iter($0)"
+    }
+  ]
+}

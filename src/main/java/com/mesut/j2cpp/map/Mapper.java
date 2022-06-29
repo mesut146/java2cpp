@@ -7,10 +7,11 @@ import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CName;
 import com.mesut.j2cpp.ast.CType;
-import com.mesut.j2cpp.cppast.CExpression;
-import com.mesut.j2cpp.visitor.TypeVisitor;
+import com.mesut.j2cpp.visitor.Rust;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.Name;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -18,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class Mapper {
 
@@ -28,29 +30,16 @@ public class Mapper {
         classMap = new HashMap<>();
     }
 
-    static void parseSignature(MethodInfo methodInfo) {
-        String sig = methodInfo.str;
+    static void parseSignature(MethodInfo methodInfo, String sig) {
         int parL = sig.indexOf("(");
         int parR = sig.lastIndexOf(")");
         String name = sig.substring(0, parL);
         String argStr = sig.substring(parL + 1, parR);
         if (!argStr.isEmpty()) {
             String[] args = argStr.split(",");
-            for (String type : args) {
-                methodInfo.args.add(parseType(type));
-            }
+            methodInfo.args.addAll(Arrays.asList(args));
         }
         methodInfo.name = name;
-    }
-
-    static CType parseType(String str) {
-        if (str.startsWith("<")) {
-            return new CType(str.substring(1, str.length() - 1), true);
-        }
-        if (str.endsWith("[]")) {
-
-        }
-        return new CType(str);
     }
 
     public static String map(String name) {
@@ -58,10 +47,22 @@ public class Mapper {
     }
 
     public void initMappers() throws IOException {
-        //String[] all = {"list.json", "map.json", "set.json", "string.json", "Boolean.json", "Integer.json"};
-        String[] all = {"list.json", "string.json", "Boolean.json"};
-        for (String mapper : all) {
-            addMapper(getClass().getResourceAsStream("/mappers/" + mapper));
+        initMappers(false);
+    }
+
+    public void initMappers(boolean rust) throws IOException {
+        if (rust) {
+            String[] all = {"list.json", "set.json", "string-builder.json"};
+            for (String mapper : all) {
+                addMapper(getClass().getResourceAsStream("/rust/" + mapper));
+            }
+        }
+        else {
+            //String[] all = {"list.json", "map.json", "set.json", "string.json", "Boolean.json", "Integer.json"};
+            String[] all = {"list.json", "string.json", "Boolean.json"};
+            for (String mapper : all) {
+                addMapper(getClass().getResourceAsStream("/cpp/" + mapper));
+            }
         }
     }
 
@@ -71,13 +72,24 @@ public class Mapper {
 
     public void addMapper(InputStream is) throws IOException {
         JSONObject cls = new JSONObject(Util.read(is));
-        List<CType> fromTypes = new ArrayList<>();
         String target = cls.getString("target");
 
         ClassInfo info = new ClassInfo();
         info.target = new CType(target);
+        boolean hadVar = false;
         for (String name : cls.getString("name").split(",")) {
-            classMap.put(name, info);
+            int pos = name.indexOf("<");
+            if (pos != -1) {
+                String real = name.substring(0, pos);
+                int end = name.indexOf(">");
+                if (!hadVar)
+                    info.typeVars.addAll(Arrays.asList(name.substring(pos + 1, end).split(",")));
+                classMap.put(real, info);
+                hadVar = true;
+            }
+            else {
+                classMap.put(name, info);
+            }
         }
         String include = cls.optString("include", null);
         if (include != null) {
@@ -99,92 +111,134 @@ public class Mapper {
         for (int i = 0; i < methods.length(); i++) {
             JSONObject method = methods.getJSONObject(i);
             MethodInfo methodInfo = new MethodInfo();
-            methodInfo.str = method.getString("name");
+            parseSignature(methodInfo, method.getString("name"));
             if (method.get("target") instanceof JSONArray) {
-                StringBuilder sb = new StringBuilder();
                 for (Object o : method.getJSONArray("target")) {
-                    sb.append(o).append("\n");
+                    methodInfo.target.add(o.toString());
                 }
-                sb.setLength(sb.length() - 1);//trim last \n
-                methodInfo.targetExpr = sb.toString();
             }
             else {
-                methodInfo.targetExpr = method.getString("target");
+                methodInfo.target.add(method.getString("target"));
             }
             methodInfo.warning = method.optString("warning", null);
-            methodInfo.expr = method.optString("expr", null);
-            methodInfo.external = method.optBoolean("external", false);
             String inc = method.optString("include", null);
             if (inc != null) {
                 info.includes.addAll(Arrays.asList(inc.split(",")));
             }
             info.methods.add(methodInfo);
-            parseSignature(methodInfo);
         }
     }
 
-    public Mapped mapMethod(IMethodBinding binding, List<CExpression> args, CExpression scope, CClass cc) {
-        CType type = TypeVisitor.fromBinding(binding.getDeclaringClass());
-        ClassInfo classInfo = classMap.get(type.realName);
+    String toStr(Expression expr, ITypeBinding binding) {
+        var visitor = new Rust(null, null);
+        visitor.binding = binding;
+        expr.accept(visitor);
+        return visitor.code.toString();
+    }
+
+    public List<String> mapMethodRust(IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc) {
+        ClassInfo classInfo = classMap.get(binding.getDeclaringClass().getBinaryName());
         if (classInfo == null) return null;//no mapping for this type
         MethodInfo info = findMethod(classInfo, binding);
         if (info == null) {
             //no mapping
-            Logger.log(String.format("missing mapper in '%s' method='%s'", cc.getType(), binding));
+            Logger.log(String.format("missing mapper in '%s' method='%s'", cc, binding));
             return null;
         }
         //replace
-        String e = info.targetExpr;
-        //args
-        for (int i = 0; i < args.size(); i++) {
-            e = e.replace("$" + (i + 1), args.get(i).toString());
-        }
-        e = e.replace("${varName}", scope.toString());//todo put in variable maybe?
-        Mapped mapped = new Mapped();
-        if (info.expr != null) {
-            //multi statement
-            mapped.expr = CName.simple(info.expr);
-            mapped.list = e;
-        }
-        else {
-            //with scope
-            if (!info.external) {
-                e = scope + "->" + e;
+        List<String> result = new ArrayList<>();
+        int varCnt = 0;
+        for (var line : info.target) {
+            var pat = Pattern.compile("\\$0");
+            var m = pat.matcher(line);
+            while (m.find()) {
+                varCnt++;
             }
-            mapped.expr = CName.simple(e);
+        }
+        String scopeVar = "";
+        if (!binding.isConstructor()) {
+            //complex and multiple occurrence, declare as var
+            if (!(scope instanceof Name) && varCnt > 1) {
+                scopeVar = "tmp_";
+                result.add(String.format("let %s = %s;", scopeVar, toStr(scope, cc)));
+            }
+            else {
+                scopeVar = toStr(scope, cc);
+            }
+        }
+        for (var line : info.target) {
+            for (int i = 0; i < args.size(); i++) {
+                line = line.replace("$" + (i + 1), args.get(i).toString());
+            }
+            line = line.replace("$0", scopeVar);
+            result.add(line);
         }
         if (info.warning != null) {
             Logger.log(cc, info.warning);
         }
-        return mapped;
+        return result;
+    }
+
+    static class JavaType {
+        String name;
+        boolean isGeneric;
+        List<String> typeVars = new ArrayList<>();
+        int dims;
+
+        public JavaType(String name) {
+            this.name = name;
+        }
+
+        public static JavaType parse(String name, ClassInfo classInfo) {
+            if (classInfo.typeVars.contains(name)) {
+                var res = new JavaType(name);
+                res.isGeneric = true;
+                return res;
+            }
+            int pos = name.indexOf("<");
+            JavaType res;
+            int off;
+            if (pos != -1) {
+                String real = name.substring(0, pos);
+                int end = name.indexOf(">");
+                res = new JavaType(real);
+                res.typeVars.addAll(Arrays.asList(name.substring(pos + 1, end).split(",")));
+                off = end + 1;
+                while (off < name.length() && name.indexOf("[]", off) != -1) {
+                    off += 2;
+                    res.dims++;
+                }
+            }
+            else {
+                off = name.indexOf("[");
+                if (off != -1) {
+                    res = new JavaType(name.substring(0, off));
+                    while (off < name.length() && name.indexOf("[]", off) != -1) {
+                        off += 2;
+                        res.dims++;
+                    }
+                }
+                else {
+                    res = new JavaType(name);
+                }
+            }
+            return res;
+        }
     }
 
     MethodInfo findMethod(ClassInfo classInfo, IMethodBinding binding) {
         IMethodBinding real = binding.getMethodDeclaration();
-        Map<CType, Integer> order = new HashMap<>();
 
         for (MethodInfo info : classInfo.methods) {
-            if (!info.name.equals(binding.getName())) continue;
+            if (!info.name.equals(real.getName())) continue;
             if (info.args.size() != binding.getParameterTypes().length) continue;
             boolean found = true;
-            for (int i = 0; i < binding.getParameterTypes().length; i++) {
-                CType t1 = info.args.get(i);
-                ITypeBinding t2 = binding.getParameterTypes()[i];
+            for (int i = 0; i < real.getParameterTypes().length; i++) {
+                var t1 = JavaType.parse(info.args.get(i), classInfo);
                 ITypeBinding t3 = real.getParameterTypes()[i];
-                if (t1.isTemplate) {
-                    if (t3.isTypeVariable()) {
-                        //save?
-                    }
-                    else {
-                        found = false;
-                        break;
-                    }
-                }
-                else {
-                    if (!t1.realName.equals(t2.getQualifiedName())) {
-                        found = false;
-                        break;
-                    }
+                if (!isSame(t1, t3)) {
+                    found = false;
+                    break;
                 }
             }
             if (found) {
@@ -192,6 +246,18 @@ public class Mapper {
             }
         }
         return null;
+    }
+
+    boolean isSame(JavaType t1, ITypeBinding t2) {
+        if (t1.isGeneric) return true;
+        if (t2.isPrimitive()) {
+            return t1.name.equals(t2.getName());
+        }
+        if (t1.dims != t2.getDimensions()) return false;
+        if (t1.dims > 0) {
+            return t1.name.equals(t2.getElementType().getQualifiedName());
+        }
+        return t1.name.equals(t2.getBinaryName());
     }
 
     public CType mapType(CType type, CClass cc) {
@@ -212,18 +278,23 @@ public class Mapper {
         return type;
     }
 
+    public CType mapType(ITypeBinding type) {
+        if (classMap.containsKey(type.getBinaryName())) {
+            ClassInfo info = classMap.get(type.getBinaryName());
+            CType target = info.target.copy();
+            for (int i = 0; i < info.typeVars.size(); i++) {
+                target.typeNames.add(new CType(type.getTypeArguments()[i].getName()));
+            }
+            target.mapped = true;
+            return target;
+        }
+        return new CType(type.getName());
+    }
+
     public String mapParamName(String name) {
         if (Util.isKeyword(name)) {
             return map(name);
         }
-        return name;
-    }
-
-    public String mapName(String name) {
-        if (Util.isKeyword(name)) {
-            name = map(name);
-        }
-        //todo add to map
         return name;
     }
 
@@ -245,7 +316,7 @@ public class Mapper {
         res.orgName = org;
         return res;
     }
-    
+
     public CName mapFieldName(String name, ITypeBinding cc) {
         String org = name;
         CName res;
@@ -265,12 +336,8 @@ public class Mapper {
         return res;
     }
 
-    public static class Mapped {
-        public String list;
-        public CExpression expr;
-    }
-
     static class ClassInfo {
+        List<String> typeVars = new ArrayList<>();
         CType target;
         List<String> includes = new ArrayList<>();
         List<MethodInfo> methods = new ArrayList<>();
@@ -278,14 +345,9 @@ public class Mapper {
 
     static class MethodInfo {
         String name;
-        String str;
-        String targetExpr;
+        List<String> target = new ArrayList<>();
         String warning;
-        boolean external = false;
-        boolean multi = false;
-        String expr;
-        List<CType> args = new ArrayList<>();
-        List<String> includes = new ArrayList<>();
+        List<String> args = new ArrayList<>();
     }
 
     static class FieldInfo {
