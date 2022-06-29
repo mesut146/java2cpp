@@ -108,6 +108,29 @@ public class Converter {
         target.addInclude("lib");
     }
 
+    public void stats() {
+        try {
+            Files.createDirectories(destDir);
+            sourceList = new ArrayList<>();
+            collect();
+            System.out.println("total of " + sourceList.size() + " files");
+            initParser();
+
+            String[] b = new String[sourceList.size()];
+            Arrays.fill(b, "");
+            Stats stats = new Stats();
+            parser.createASTs(sourceList.toArray(new String[0]), null, b, new FileASTRequestor() {
+                @Override
+                public void acceptAST(String sourceFilePath, CompilationUnit ast) {
+                    ast.accept(stats);
+                }
+            }, null);
+            stats.write(destDir);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void convert() {
         try {
             Files.createDirectories(destDir);
@@ -143,6 +166,9 @@ public class Converter {
             //add helper
             Path helper = Paths.get(".").resolve("rust/helper.rs");
             Path targetHelper = destSrc.resolve("helper.rs");
+            if (Files.exists(targetHelper)) {
+                Files.delete(targetHelper);
+            }
             Files.copy(helper, targetHelper);
             if (Logger.hasErrors) {
                 System.err.println("conversion has errors check logs");

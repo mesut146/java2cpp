@@ -87,13 +87,14 @@ public class Conv {
         String out = "/home/mesut/Desktop/j2cpp-dev/dx-rust";
         Converter converter = new Converter(dir, out, true);
         //converter.addClasspath(rtJar);
-        Config.mainClass = "com.android.dx.command.Main";
-        converter.getFilter().addIncludeClass("Tool");
+        Config.mainClass = "Tool";
+        //converter.getFilter().addIncludeClass("Tool");
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/Insn.java");
         //converter.getFilter().addIncludeClass("com/android/dx/util/Output.java");
         //converter.getFilter().addIncludeClass("com/android/dx/dex/code/PositionList.java");
         //converter.getFilter().addIncludeClass("com/android/dx/rop/code/RegOps");
-        converter.convert();
+        //converter.convert();
+        converter.stats();
     }
 
     @Test

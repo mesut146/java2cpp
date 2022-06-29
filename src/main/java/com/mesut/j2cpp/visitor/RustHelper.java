@@ -87,14 +87,15 @@ public class RustHelper {
         var clazz = binding.getDeclaringClass();
         int cnt = 0;
         for (var method : clazz.getDeclaredMethods()) {
-            if (method.getName().endsWith(binding.getName())) cnt++;
+            if (binding.isConstructor() && method.isConstructor()) cnt++;
+            else if (method.getName().endsWith(binding.getName())) cnt++;
         }
         if (cnt == 1) {
-            return binding.getName();
+            return binding.isConstructor() ? "new" : binding.getName();
         }
         //rename by params
         StringBuilder sb = new StringBuilder();
-        sb.append(binding.getName());
+        sb.append(binding.isConstructor() ? "new" : binding.getName());
         for (var param : binding.getParameterTypes()) {
             sb.append("_");
             if (param.isArray()) {

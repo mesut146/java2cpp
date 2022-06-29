@@ -16,6 +16,7 @@ public class Cmd {
         String srcDir = null;
         String destDir = null;
         boolean rust = false;
+        boolean stats = false;
         List<String> cp = new ArrayList<>();
 
         for (int i = 0; i < args.length; i++) {
@@ -53,6 +54,10 @@ public class Cmd {
                     }
                     Mapper.instance.addMapper(path);
                     break;
+                case "-stats": {
+                    stats = true;
+                    break;
+                }
             }
             if (srcDir == null) {
                 System.out.println("enter source path");
@@ -68,7 +73,12 @@ public class Cmd {
                 converter.classpath.addAll(cp);
             }
             Mapper.instance.initMappers();
-            converter.convert();
+            if (stats) {
+                converter.stats();
+            }
+            else {
+                converter.convert();
+            }
         }
     }
 

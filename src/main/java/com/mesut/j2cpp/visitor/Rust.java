@@ -22,9 +22,7 @@ public class Rust extends ASTVisitor {
     Path dir;
     CompilationUnit cu;
     ITypeBinding binding;
-    String catchName;
     Code code = new Code();
-    int forVarCnt = 0;
 
     public Rust(Path dir, CompilationUnit cu) {
         this.dir = dir;
@@ -34,12 +32,22 @@ public class Rust extends ASTVisitor {
 
     public void all(Path rel) {
         deps();
+        boolean isMain = false;
         for (var decl : (List<AbstractTypeDeclaration>) cu.types()) {
             visit(decl);
+            if (this.binding != null && this.binding.getBinaryName().equals(Config.mainClass)) {
+                isMain = true;
+            }
         }
         String name = rel.toString();
-        name = name.substring(0, name.length() - 5) + ".rs";
-        Path file = Paths.get(dir.toString(), name);
+        Path file;
+        if (isMain) {
+            file = dir.resolve("main.rs");
+        }
+        else {
+            name = name.substring(0, name.length() - 5) + ".rs";
+            file = Paths.get(dir.toString(), name);
+        }
         try {
             Files.createDirectories(file.getParent());
             Files.write(file, code.toString().getBytes());
@@ -175,14 +183,9 @@ public class Rust extends ASTVisitor {
     }
 
     void methodHeader(MethodDeclaration node) {
-        if (node.isConstructor()) {
-            code.line("pub fn new(", node.getName());
-        }
-        else {
-            code.line("pub fn %s(", node.getName());
-        }
+        code.line("pub fn %s(", RustHelper.mapMethodName(node.resolveBinding()));
         boolean first = true;
-        if (!Modifier.isStatic(node.getModifiers())) {
+        if (!Modifier.isStatic(node.getModifiers()) && !node.isConstructor()) {
             code.write("&self");
             first = false;
         }
@@ -192,8 +195,13 @@ public class Rust extends ASTVisitor {
                 code.write("%s: %s", param.getName().getIdentifier(), param.getType());
             }
             else {
-                //all params are references
-                code.write("%s: &%s", param.getName().getIdentifier(), param.getType());
+                if (param.getType().toString().equals("String")) {
+                    code.write("%s: &str", param.getName().getIdentifier());
+                }
+                else {
+                    //all params are references
+                    code.write("%s: &%s", param.getName().getIdentifier(), param.getType());
+                }
             }
             first = false;
         }
