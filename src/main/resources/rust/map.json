@@ -1,0 +1,51 @@
+{
+  "name": "java.util.Map<K,V> java.util.HashMap<K,V>",
+  "target": "HashMap<&K,&V>",
+  "include": "use std::collections::HashMap;",
+  "methods": [
+    {
+      "name": "HashMap()",
+      "target": "HashMap::new()"
+    },
+    {
+      "name": "get(K)",
+      "target": "$0.get(&$1)"
+    },
+    {
+      "name": "put(K,V)",
+      "target": "$0.insert($1,$2)"
+    },
+    {
+      "name": "size()",
+      "target": "$0.len()"
+    },
+    {
+      "name": "clear()",
+      "target": "$0.clear()"
+    },
+    {
+      "name": "isEmpty()",
+      "target": "$0.is_empty()"
+    },
+    {
+      "name": "containsKey(K)",
+      "target": "$0.contains_key($1)"
+    },
+    {
+      "name": "containsValue(V)",
+      "target": "$0.values().any(|&val_| *val_ == $1)"
+    },
+    {
+      "name": "remove(K)",
+      "target": "$0.remove($1)"
+    },
+    {
+      "name": "values()",
+      "target": "$0.values()"
+    },
+    {
+      "name": "keySet()",
+      "target": "$0.keys()"
+    }
+  ]
+}

@@ -21,8 +21,10 @@ public class Rust extends ASTVisitor {
     Path dir;
     CompilationUnit cu;
     public ITypeBinding binding;
+    public IMethodBinding method;
     public Code code = new Code();
     static String baseName = "_base";
+    String argsName;
 
     public Rust(Path dir, CompilationUnit cu) {
         this.dir = dir;
@@ -57,17 +59,12 @@ public class Rust extends ASTVisitor {
     }
 
     private void deps() {
+        RustDeps deps = new RustDeps(code);
+        code.line("use crate::helper;\n");
         for (var decl : (List<AbstractTypeDeclaration>) cu.types()) {
-            RustDeps deps = new RustDeps(decl);
-            deps.handle();
-            code.line("use crate::helper;\n");
-            for (var type : deps.set) {
-                if (type.isFromSource()) {
-                    code.line("use crate::%s;\n", type.getQualifiedName().replace(".", "::"));
-                }
-            }
-            code.write("\n");
+            deps.handle(decl);
         }
+        code.write("\n");
     }
 
     public void visit(AbstractTypeDeclaration decl) {
@@ -128,9 +125,8 @@ public class Rust extends ASTVisitor {
                     code.line("pub %s: %s,\n", frag.getName(), type);
                 }
             }
-            code.line("}\n");
+            code.line("}\n\n");
             impl(node, fields);
-            //todo collect trait methods into separate impl block
             //writeDefault(node, fields);
         }
         return false;
@@ -171,6 +167,17 @@ public class Rust extends ASTVisitor {
         code.line("}\n");
     }
 
+    static boolean isMain(IMethodBinding binding) {
+        return binding.getDeclaringClass().isTopLevel() &&
+                binding.getName().equals("main") &&
+                Modifier.isPublic(binding.getModifiers()) &&
+                Modifier.isStatic(binding.getModifiers()) &&
+                binding.getReturnType().getName().equals("void") &&
+                binding.getParameterTypes().length == 1 &&
+                binding.getParameterTypes()[0].isArray() &&
+                binding.getParameterTypes()[0].getElementType().getQualifiedName().equals("java.lang.String");
+    }
+
     void impl(TypeDeclaration node, List<VariableDeclarationFragment> fields) {
         var methods = collectMethods(node);
         code.line("impl %s{\n", node.getName());
@@ -183,17 +190,27 @@ public class Rust extends ASTVisitor {
                 code.write(";\n");
             }
         }
+        MethodDeclaration main = null;
         for (MethodDeclaration md : methods.get(binding)) {
-            visit(md);
+            if (isMain(md.resolveBinding())) {
+                main = md;
+            }
+            else {
+                visit(md);
+            }
         }
-        code.write("}\n");
+        code.line("}\n\n");
         for (var entry : methods.entrySet()) {
             var iface = entry.getKey();
+            if (iface.equals(binding)) continue;
             code.line("impl %s for %s{\n", iface, binding);
             for (var method : entry.getValue()) {
                 visit(method);
             }
-            code.line("}\n");
+            code.line("}\n\n");
+        }
+        if (main != null) {
+            visit(main);
         }
     }
 
@@ -215,6 +232,12 @@ public class Rust extends ASTVisitor {
     }
 
     void methodHeader(MethodDeclaration node) {
+        method = node.resolveBinding();
+        if (isMain(method)) {
+            code.line("pub fn main()");
+            argsName = ((SingleVariableDeclaration) node.parameters().get(0)).getName().getIdentifier();
+            return;
+        }
         code.line("pub fn %s(", RustHelper.mapMethodName(node.resolveBinding()));
         boolean first = true;
         if (!Modifier.isStatic(node.getModifiers()) && !node.isConstructor()) {
@@ -282,6 +305,9 @@ public class Rust extends ASTVisitor {
     @Override
     public boolean visit(Block n) {
         code.line("{\n");
+        if (isMain(method)) {
+            code.line("let %s: Vec<String> = env::args().collect();\n", argsName);
+        }
         for (Statement s : (List<Statement>) n.statements()) {
             var m = needMultiLineMap(s);
             if (m != null) {
@@ -654,16 +680,26 @@ public class Rust extends ASTVisitor {
         return false;
     }
 
+    boolean isStr(Expression e) {
+        return e.resolveTypeBinding().getQualifiedName().equals("java.lang.String");
+    }
+
     @Override
     public boolean visit(InfixExpression node) {
         String op = node.getOperator().toString();
         node.getLeftOperand().accept(this);
-        write(op);
+        if (op.equals("+") && isStr(node.getLeftOperand())) {
+            code.write(".clone()");
+        }
+        code.write(" %s ", op);
         node.getRightOperand().accept(this);
         if (node.hasExtendedOperands()) {
             for (Expression e : (List<Expression>) node.extendedOperands()) {
-                write(op);
                 e.accept(this);
+                if (op.equals("+") && isStr(e)) {
+                    code.write(".clone()");
+                }
+                code.write(" %s ", op);
             }
         }
         return false;
@@ -697,10 +733,26 @@ public class Rust extends ASTVisitor {
         return false;
     }
 
+
     @Override
     public boolean visit(ArrayCreation node) {
         if (node.getInitializer() != null) {
-            node.getInitializer().accept(this);
+            if (node.getType().getDimensions() == 1) {
+                var init = node.getInitializer();
+                var first = (Expression) init.expressions().get(0);
+                var firstType = first.resolveTypeBinding();
+                var type = node.getType().getElementType().resolveBinding();
+                if (type.equals(firstType)) {
+                    node.getInitializer().accept(this);
+                }
+                else {
+                    //implicit cast each element
+                    arrayInit(init, RustHelper.mapType(type));
+                }
+            }
+            else {
+                node.getInitializer().accept(this);
+            }
         }
         else {
             //new Type[d1][d2]
@@ -732,18 +784,24 @@ public class Rust extends ASTVisitor {
         makeArrayAlloc(type, dims, pos + 1);
     }
 
-    //{...}
-    @Override
-    public boolean visit(ArrayInitializer node) {
-        //throw new RuntimeException("ArrayInitializer");
+    void arrayInit(ArrayInitializer node, String cast) {
         code.write("vec![");
         var first = true;
         for (var v : (List<Expression>) node.expressions()) {
             if (!first) code.write(", ");
             v.accept(this);
+            if (cast != null) {
+                code.write(" as %s", cast);
+            }
             first = false;
         }
         code.write("]");
+    }
+
+    //{...}
+    @Override
+    public boolean visit(ArrayInitializer node) {
+        arrayInit(node, null);
         return false;
     }
 
@@ -826,7 +884,7 @@ public class Rust extends ASTVisitor {
             throw new RuntimeException("cic null binding");
         }
         if (node.getAnonymousClassDeclaration() == null) {
-            List<String> mapped = Mapper.instance.mapMethodRust(node.resolveConstructorBinding(), node.arguments(), null, this.binding);
+            List<String> mapped = Mapper.instance.mapMethod(node.resolveConstructorBinding(), node.arguments(), null, this.binding);
             if (mapped != null) {
                 code.write(mapped.get(mapped.size() - 1));
                 return false;
@@ -890,7 +948,7 @@ public class Rust extends ASTVisitor {
             public boolean visit(MethodInvocation node) {
                 if (node.getExpression() != null) {
                     var binding = node.resolveMethodBinding();
-                    List<String> a = Mapper.instance.mapMethodRust(binding, node.arguments(), node.getExpression(), Rust.this.binding);
+                    List<String> a = Mapper.instance.mapMethod(binding, node.arguments(), node.getExpression(), Rust.this.binding);
                     if (a != null && a.size() > 1) {
                         arr[0] = a;
                     }
@@ -912,16 +970,14 @@ public class Rust extends ASTVisitor {
             //throw new RuntimeException("inv null binding");
         }
         if (node.getExpression() != null) {
-            List<String> res = Mapper.instance.mapMethodRust(binding, node.arguments(), node.getExpression(), this.binding);
+            List<String> res = Mapper.instance.mapMethod(binding, node.arguments(), node.getExpression(), this.binding);
             if (res != null) {
                 code.write(res.get(res.size() - 1));
                 return false;
             }
         }
         String name = RustHelper.mapMethodName(binding);
-        //System.out.printf("rt of %s = %s other=%s\n", node, ret.getName(), org.getName());
-        boolean isStatic = Modifier.isStatic(binding.getModifiers());
-        if (isStatic) {
+        if (Modifier.isStatic(binding.getModifiers())) {
             ITypeBinding onType = binding.getDeclaringClass();
             code.write("%s::%s(", onType, name);
             args(node.arguments());

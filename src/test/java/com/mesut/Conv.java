@@ -150,9 +150,10 @@ public class Conv {
         Converter converter = new Converter("./asd/test/java", "./asd/test/rust", true);
         Mapper.instance.initMappers(true);
         //converter.addClasspath(rtJar);
-        converter.getFilter().addIncludeClass("mapper.ListTest");
-        converter.getFilter().addIncludeClass("mapper.SetTest");
-        //converter.getFilter().addIncludeClass("mapper.StringTest");
+//        converter.getFilter().addIncludeClass("mapper.ListTest");
+//        converter.getFilter().addIncludeClass("mapper.SetTest");
+//        converter.getFilter().addIncludeClass("mapper.StringTest");
+        converter.getFilter().addIncludeClass("mapper.MapTest");
         //converter.getFilter().addIncludeClass("mapper.IntegerTest");
         converter.convert();
     }

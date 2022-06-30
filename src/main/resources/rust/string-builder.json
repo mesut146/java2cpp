@@ -56,11 +56,19 @@
     },
     {
       "name": "charAt(int)",
-      "target": "$0.as_bytes()[$1] as char"
+      "target": "$0.chars().nth($1)"
     },
     {
       "name": "length()",
       "target": "$0.len()"
+    },
+    {
+      "name": "toString()",
+      "target": "$0"
+    },
+    {
+      "name": "setLength(int)",
+      "target": "$0.truncate($1)"
     }
   ]
 }

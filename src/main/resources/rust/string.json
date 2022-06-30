@@ -1,0 +1,75 @@
+{
+  "name": "java.lang.String",
+  "target": "String",
+  "methods": [
+    {
+      "name": "String()",
+      "target": "String::new()"
+    },
+    {
+      "name": "String(java.lang.String)",
+      "target": "String::from($1)"
+    },
+    {
+      "name": "String(byte[])",
+      "target": "unsafe{ String::from_utf8_lossy(mem::transmute($1.as_slice())).to_string() }",
+      "include": "use std::mem;"
+    },
+    {
+      "name": "String(char[])",
+      "target": "$1.iter().collect()"
+    },
+    {
+      "name": "getBytes()",
+      "target": "$0.as_bytes().iter().map(|&b|b as i8).collect::<Vec<_>>()"
+    },
+    {
+      "name": "capacity()",
+      "target": "$0.capacity()"
+    },
+    {
+      "name": "charAt(int)",
+      "target": "$0.chars().nth($1).unwrap() as u16"
+    },
+    {
+      "name": "length()",
+      "target": "$0.len() as i32"
+    },
+    {
+      "name": "toString()",
+      "target": "$0"
+    },
+    {
+      "name": "setLength(int)",
+      "target": "$0.truncate($1)"
+    },
+    {
+      "name": "substring(int)",
+      "target": "(&$0[$1..]).to_string()"
+    },
+    {
+      "name": "substring(int,int)",
+      "target": "(&$0[$1..$2]).to_string()"
+    },
+    {
+      "name": "indexOf(int)",
+      "target": "$0.chars().position(|c_|c_ == $1).map(|i_| i_ as i32).unwrap_or(-1)"
+    },
+    {
+      "name": "indexOf(java.lang.String)",
+      "target": "$0.find(&$1).map(|i_| i_ as i32).unwrap_or(-1)"
+    },
+    {
+      "name": "startsWith(java.lang.String)",
+      "target": "$0.starts_with(&$1)"
+    },
+    {
+      "name": "startsWith(java.lang.String,int)",
+      "target": "(&$0[$2]).starts_with(&$1)"
+    },
+    {
+      "name": "endsWith(java.lang.String)",
+      "target": "$0.ends_with(&$1)"
+    }
+  ]
+}

@@ -52,7 +52,7 @@ public class Mapper {
 
     public void initMappers(boolean rust) throws IOException {
         if (rust) {
-            String[] all = {"list.json", "set.json", "string-builder.json"};
+            String[] all = {"list.json", "set.json", "string-builder.json", "string.json", "map.json"};
             for (String mapper : all) {
                 addMapper(getClass().getResourceAsStream("/rust/" + mapper));
             }
@@ -75,21 +75,14 @@ public class Mapper {
         String target = cls.getString("target");
 
         ClassInfo info = new ClassInfo();
-        info.target = new CType(target);
-        boolean hadVar = false;
-        for (String name : cls.getString("name").split(",")) {
-            int pos = name.indexOf("<");
-            if (pos != -1) {
-                String real = name.substring(0, pos);
-                int end = name.indexOf(">");
-                if (!hadVar)
-                    info.typeVars.addAll(Arrays.asList(name.substring(pos + 1, end).split(",")));
-                classMap.put(real, info);
-                hadVar = true;
+        info.target = CType.parse(target);
+
+        for (String name : cls.getString("name").split(" ")) {
+            var type = JavaType.parse(name, info);
+            if (info.typeVars.isEmpty()) {
+                info.typeVars.addAll(type.typeVars);
             }
-            else {
-                classMap.put(name, info);
-            }
+            classMap.put(type.name, info);
         }
         String include = cls.optString("include", null);
         if (include != null) {
@@ -123,7 +116,7 @@ public class Mapper {
             methodInfo.warning = method.optString("warning", null);
             String inc = method.optString("include", null);
             if (inc != null) {
-                info.includes.addAll(Arrays.asList(inc.split(",")));
+                methodInfo.includes.addAll(Arrays.asList(inc.split(",")));
             }
             info.methods.add(methodInfo);
         }
@@ -136,16 +129,20 @@ public class Mapper {
         return visitor.code.toString();
     }
 
-    public List<String> mapMethodRust(IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc) {
+    public MethodInfo findInfo(IMethodBinding binding) {
         ClassInfo classInfo = classMap.get(binding.getDeclaringClass().getBinaryName());
         if (classInfo == null) return null;//no mapping for this type
-        MethodInfo info = findMethod(classInfo, binding);
+        return findMethod(classInfo, binding);
+    }
+
+    public List<String> mapMethod(IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc) {
+        MethodInfo info = findInfo(binding);
         if (info == null) {
             //no mapping
             Logger.log(String.format("missing mapper in '%s' method='%s'", cc, binding));
             return null;
         }
-        //replace
+        //count var appearance
         List<String> result = new ArrayList<>();
         int varCnt = 0;
         for (var line : info.target) {
@@ -168,7 +165,7 @@ public class Mapper {
         }
         for (var line : info.target) {
             for (int i = 0; i < args.size(); i++) {
-                line = line.replace("$" + (i + 1), args.get(i).toString());
+                line = line.replace("$" + (i + 1), toStr(args.get(i), cc));
             }
             line = line.replace("$0", scopeVar);
             result.add(line);
@@ -199,30 +196,31 @@ public class Mapper {
             JavaType res;
             int off;
             if (pos != -1) {
-                String real = name.substring(0, pos);
+                res = new JavaType(name.substring(0, pos));
                 int end = name.indexOf(">");
-                res = new JavaType(real);
                 res.typeVars.addAll(Arrays.asList(name.substring(pos + 1, end).split(",")));
-                off = end + 1;
-                while (off < name.length() && name.indexOf("[]", off) != -1) {
-                    off += 2;
-                    res.dims++;
-                }
             }
             else {
                 off = name.indexOf("[");
                 if (off != -1) {
                     res = new JavaType(name.substring(0, off));
-                    while (off < name.length() && name.indexOf("[]", off) != -1) {
-                        off += 2;
-                        res.dims++;
-                    }
                 }
                 else {
                     res = new JavaType(name);
                 }
             }
+            res.dims(name);
             return res;
+        }
+
+        void dims(String name) {
+            int off = name.indexOf("[");
+            if (off != -1) {
+                while (off < name.length() && name.indexOf("[]", off) != -1) {
+                    off += 2;
+                    dims++;
+                }
+            }
         }
     }
 
@@ -278,10 +276,16 @@ public class Mapper {
         return type;
     }
 
+    public ClassInfo findClass(ITypeBinding type) {
+        return classMap.get(type.getBinaryName());
+    }
+
     public CType mapType(ITypeBinding type) {
         if (classMap.containsKey(type.getBinaryName())) {
             ClassInfo info = classMap.get(type.getBinaryName());
             CType target = info.target.copy();
+            target.typeNames.clear();
+            //substitute type args
             for (int i = 0; i < info.typeVars.size(); i++) {
                 target.typeNames.add(new CType(type.getTypeArguments()[i].getName()));
             }
@@ -336,18 +340,19 @@ public class Mapper {
         return res;
     }
 
-    static class ClassInfo {
+    public static class ClassInfo {
         List<String> typeVars = new ArrayList<>();
         CType target;
-        List<String> includes = new ArrayList<>();
+        public List<String> includes = new ArrayList<>();
         List<MethodInfo> methods = new ArrayList<>();
     }
 
-    static class MethodInfo {
+    public static class MethodInfo {
         String name;
         List<String> target = new ArrayList<>();
         String warning;
         List<String> args = new ArrayList<>();
+        public List<String> includes = new ArrayList<>();
     }
 
     static class FieldInfo {

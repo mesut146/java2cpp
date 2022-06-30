@@ -22,6 +22,7 @@ public class CType extends CExpression {
     public boolean fromSource;
     public boolean mapped;
     public boolean ref;
+    public boolean isRef;
     public ITypeBinding binding;
 
     public CType() {
@@ -38,6 +39,29 @@ public class CType extends CExpression {
         }
     }
 
+    public static CType parse(String name) {
+        int pos = name.indexOf("<");
+        CType res;
+        boolean ref = false;
+        if (name.startsWith("&")) {
+            ref = true;
+            name = name.substring(1);
+        }
+        if (pos != -1) {
+            String real = name.substring(0, pos);
+            res = new CType(real);
+            int end = name.indexOf(">");
+            for (var arg : name.substring(pos + 1, end).split(",")) {
+                res.typeNames.add(CType.parse(arg));
+            }
+        }
+        else {
+            res = new CType(name);
+        }
+        res.isRef = ref;
+        return res;
+    }
+
     public CType(String type, boolean isTemplate) {
         this(type);
         this.isTemplate = isTemplate;
@@ -49,9 +73,6 @@ public class CType extends CExpression {
         return p;
     }
 
-    public boolean isSys() {
-        return equals(TypeHelper.getVectorType());
-    }
 
     String trim(String str) {
         if (str.contains("<")) {

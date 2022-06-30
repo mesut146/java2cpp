@@ -30,10 +30,11 @@ public class RustHelper {
     }
 
     public static String toRustType(String str) {
+        //rust char = u32
         if (str.equals("boolean")) return "bool";
         if (str.equals("byte")) return "i8";
         if (str.equals("short")) return "i16";
-        if (str.equals("char")) return "char";
+        if (str.equals("char")) return "u16";
         if (str.equals("int")) return "i32";
         if (str.equals("long")) return "i64";
         if (str.equals("float")) return "f32";
@@ -49,7 +50,25 @@ public class RustHelper {
             var arr = (ArrayType) type;
             return makeArray(arr.getElementType(), arr.getDimensions());
         }
+        var unboxed = unbox("java.lang." + type);
+        if (unboxed != null) {
+            return "Option<" + unboxed + ">";
+        }
         return type.toString();
+    }
+
+    static String unbox(String str) {
+        return switch (str) {
+            case "java.lang.Boolean" -> "bool";
+            case "java.lang.Byte" -> "i8";
+            case "java.lang.Character" -> "u16";
+            case "java.lang.Short" -> "i16";
+            case "java.lang.Integer" -> "i32";
+            case "java.lang.Long" -> "i64";
+            case "java.lang.Float" -> "f32";
+            case "java.lang.Double" -> "f64";
+            default -> null;
+        };
     }
 
     public static String mapType(ITypeBinding type) {
@@ -58,6 +77,10 @@ public class RustHelper {
         }
         if (type.isArray()) {
             return makeArray(type.getElementType(), type.getDimensions());
+        }
+        var unboxed = unbox(type.getBinaryName());
+        if (unboxed != null) {
+            return "Option<" + unboxed + ">";
         }
         return Mapper.instance.mapType(type).toString();
     }
