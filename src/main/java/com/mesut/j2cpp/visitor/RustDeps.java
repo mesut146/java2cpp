@@ -5,10 +5,9 @@ import org.eclipse.jdt.core.dom.*;
 import java.util.HashSet;
 import java.util.Set;
 
-//visit complete types and include them,others already forward declared
 public class RustDeps extends ASTVisitor {
     AbstractTypeDeclaration declaration;
-    Set<ITypeBinding> set = new HashSet();
+    Set<ITypeBinding> set = new HashSet<>();
 
     public RustDeps(AbstractTypeDeclaration decl) {
         this.declaration = decl;

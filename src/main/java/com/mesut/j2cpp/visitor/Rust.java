@@ -13,10 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @SuppressWarnings("unchecked")
 public class Rust extends ASTVisitor {
@@ -25,6 +22,7 @@ public class Rust extends ASTVisitor {
     CompilationUnit cu;
     public ITypeBinding binding;
     public Code code = new Code();
+    static String baseName = "_base";
 
     public Rust(Path dir, CompilationUnit cu) {
         this.dir = dir;
@@ -66,9 +64,6 @@ public class Rust extends ASTVisitor {
             for (var type : deps.set) {
                 if (type.isFromSource()) {
                     code.line("use crate::%s;\n", type.getQualifiedName().replace(".", "::"));
-                }
-                else {
-                    //todo
                 }
             }
             code.write("\n");
@@ -123,6 +118,9 @@ public class Rust extends ASTVisitor {
         }
         else {
             code.line("struct %s{\n", node.getName());
+            if (node.getSuperclassType() != null) {
+                code.line("pub %s: %s,\n", baseName, node.getSuperclassType().resolveBinding());
+            }
             for (var frag : fields) {
                 FieldDeclaration fd = (FieldDeclaration) frag.getParent();
                 ITypeBinding type = fd.getType().resolveBinding();
@@ -132,9 +130,34 @@ public class Rust extends ASTVisitor {
             }
             code.line("}\n");
             impl(node, fields);
+            //todo collect trait methods into separate impl block
             //writeDefault(node, fields);
         }
         return false;
+    }
+
+    //group methods by interfaces that overrides
+    Map<ITypeBinding, List<MethodDeclaration>> collectMethods(TypeDeclaration node) {
+        Map<ITypeBinding, List<MethodDeclaration>> map = new HashMap<>();
+        for (var method : node.getMethods()) {
+            var iface = isIfaceMethod(method.resolveBinding());
+            var key = iface == null ? binding : iface;
+            var list = map.getOrDefault(key, new ArrayList<>());
+            list.add(method);
+            map.put(key, list);
+        }
+        return map;
+    }
+
+    ITypeBinding isIfaceMethod(IMethodBinding methodBinding) {
+        for (var iface : binding.getInterfaces()) {
+            for (var ifaceMethod : iface.getDeclaredMethods()) {
+                if (methodBinding.overrides(ifaceMethod)) {
+                    return iface;
+                }
+            }
+        }
+        return null;
     }
 
     void trait(TypeDeclaration node) {
@@ -149,6 +172,7 @@ public class Rust extends ASTVisitor {
     }
 
     void impl(TypeDeclaration node, List<VariableDeclarationFragment> fields) {
+        var methods = collectMethods(node);
         code.line("impl %s{\n", node.getName());
         for (var frag : fields) {
             FieldDeclaration fd = (FieldDeclaration) frag.getParent();
@@ -159,12 +183,18 @@ public class Rust extends ASTVisitor {
                 code.write(";\n");
             }
         }
-        for (Object o : node.bodyDeclarations()) {
-            if (o instanceof MethodDeclaration) {
-                visit((MethodDeclaration) o);
-            }
+        for (MethodDeclaration md : methods.get(binding)) {
+            visit(md);
         }
         code.write("}\n");
+        for (var entry : methods.entrySet()) {
+            var iface = entry.getKey();
+            code.line("impl %s for %s{\n", iface, binding);
+            for (var method : entry.getValue()) {
+                visit(method);
+            }
+            code.line("}\n");
+        }
     }
 
     void statics(List<VariableDeclarationFragment> node) {
@@ -251,7 +281,6 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(Block n) {
-        //block = n;
         code.line("{\n");
         for (Statement s : (List<Statement>) n.statements()) {
             var m = needMultiLineMap(s);
@@ -269,9 +298,6 @@ public class Rust extends ASTVisitor {
 
     @Override
     public boolean visit(TypeDeclarationStatement node) {
-        /*TypeDeclaration declaration = (TypeDeclaration) node.getDeclaration();
-        DeclarationVisitor visitor = new DeclarationVisitor(this);
-        visitor.visit(declaration, null);*/
         throw new RuntimeException("TypeDeclarationStatement");
     }
 
@@ -471,8 +497,7 @@ public class Rust extends ASTVisitor {
     public boolean visit(DoStatement node) {
         code.line("loop");
         code.line("{\n");
-        if (node.getBody() instanceof Block) {
-            var block = (Block) node.getBody();
+        if (node.getBody() instanceof Block block) {
             for (var st : (List<Statement>) block.statements()) {
                 st.accept(this);
             }

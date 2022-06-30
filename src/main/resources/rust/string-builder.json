@@ -44,11 +44,11 @@
     },
     {
       "name": "insert(int,char)",
-      "target": "$0.insert($1)"
+      "target": "$0.insert($1, $2)"
     },
     {
       "name": "insert(int,String)",
-      "target": "$0.insert_str(&$1)"
+      "target": "$0.insert_str($1, &$2)"
     },
     {
       "name": "capacity()",
