@@ -1,0 +1,26 @@
+{
+  "name": "java.lang.StringBuilder,java.lang.StringBuffer",
+  "target": "CppHelper::StringBuilder",
+  "include": "CppHelper.h",
+  "methods": [
+    { "name": "StringBuilder()", "target": "new CppHelper::StringBuilder()", "external": true },
+    { "name": "StringBuilder(java.lang.String)", "target": "new CppHelper::StringBuilder(*$1)", "external": true },
+    { "name": "StringBuffer()", "target": "new CppHelper::StringBuilder()", "external": true },
+    { "name": "StringBuffer(java.lang.String)", "target": "new CppHelper::StringBuilder(*$1)", "external": true },
+    { "name": "append(java.lang.String)", "target": "append($1)" },
+    { "name": "append(java.lang.CharSequence)", "target": "append($1)" },
+    { "name": "append(java.lang.Object)", "target": "append($1)" },
+    { "name": "append(int)", "target": "append($1)" },
+    { "name": "append(long)", "target": "append($1)" },
+    { "name": "append(float)", "target": "append($1)" },
+    { "name": "append(double)", "target": "append($1)" },
+    { "name": "append(boolean)", "target": "append($1)" },
+    { "name": "append(char)", "target": "append($1)" },
+    { "name": "insert(int,java.lang.String)", "target": "insert($1, *$2)" },
+    { "name": "insert(int,int)", "target": "insert($1, $2)" },
+    { "name": "delete(int,int)", "target": "remove($1, $2)" },
+    { "name": "reverse()", "target": "reverse()" },
+    { "name": "length()", "target": "length()" },
+    { "name": "toString()", "target": "toString()" }
+  ]
+}

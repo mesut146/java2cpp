@@ -1285,6 +1285,7 @@ public class SourceVisitor extends ASTVisitor {
         }
 
         if (binding.isEnumConstant() || Modifier.isStatic(binding.getModifiers())) {
+            if (writeMappedField(binding)) return false;
             scope.accept(this);
             write("::%s", Mapper.instance.mapFieldName(node.getName().getIdentifier(), this.binding));
             return false;
@@ -1542,6 +1543,14 @@ public class SourceVisitor extends ASTVisitor {
     boolean isStr(Expression e) {
         ITypeBinding type = e.resolveTypeBinding();
         return type != null && type.getQualifiedName().equals("java.lang.String");
+    }
+
+    //mapped constant fields (e.g. Math.PI) emit their literal value
+    private boolean writeMappedField(IVariableBinding binding) {
+        String value = Mapper.instance.mapFieldValue(binding);
+        if (value == null) return false;
+        write(value);
+        return true;
     }
 
     private void concatPart(Expression e) {
@@ -1824,6 +1833,7 @@ public class SourceVisitor extends ASTVisitor {
         if (variableBinding.isField()) {
             name = Mapper.instance.mapFieldName(name.name, this.binding);
             if (isStatic) {
+                if (writeMappedField(variableBinding)) return false;
                 boolean asMethod = Config.static_field_cofui
                         && Modifier.isFinal(binding.getModifiers())
                         && !variableBinding.getType().isPrimitive()
@@ -1894,6 +1904,7 @@ public class SourceVisitor extends ASTVisitor {
 
         if (isStatic) {
             IVariableBinding variableBinding = (IVariableBinding) binding;
+            if (writeMappedField(variableBinding)) return false;
             CName mapped = Mapper.instance.mapFieldName(name, this.binding);
             if (Config.static_field_cofui && Modifier.isFinal(binding.getModifiers()) && !variableBinding.getType().isPrimitive()
                     && !variableBinding.isEnumConstant() && typeBinding.isFromSource()) {

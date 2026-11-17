@@ -3,13 +3,18 @@
 //helpers referenced by the bundled cpp mappers (String.format/replace/split, etc.)
 //header-only so generated sources only need this file on the include path
 
+#include <algorithm>
 #include <cctype>
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
+#include <cstdlib>
+#include <cmath>
+#include <cwctype>
 #include <functional>
 #include <initializer_list>
 #include <optional>
+#include <random>
 #include <type_traits>
 #include <memory>
 #include <stdexcept>
@@ -18,6 +23,71 @@
 #include <vector>
 
 namespace CppHelper {
+
+//java.util.Random / Math.random() backend
+inline std::mt19937_64 &rng() {
+    static std::mt19937_64 engine(std::random_device{}());
+    return engine;
+}
+inline double nextDouble() {
+    return std::generate_canonical<double, 53>(rng());
+}
+inline int nextInt() { return static_cast<int>(rng()()); }
+inline int nextInt(int bound) {
+    if (bound <= 0) return 0;
+    return static_cast<int>(rng()() % static_cast<unsigned long long>(bound));
+}
+inline long long nextLong() { return static_cast<long long>(rng()()); }
+inline bool nextBoolean() { return (rng()() & 1) != 0; }
+inline double nextGaussian() { return std::normal_distribution<double>(0.0, 1.0)(rng()); }
+class Random {
+public:
+    int nextInt() { return CppHelper::nextInt(); }
+    int nextInt(int bound) { return CppHelper::nextInt(bound); }
+    long long nextLong() { return CppHelper::nextLong(); }
+    double nextDouble() { return CppHelper::nextDouble(); }
+    bool nextBoolean() { return CppHelper::nextBoolean(); }
+};
+inline std::string *randomUUID() {
+    static const char *hex = "0123456789abcdef";
+    std::string s = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+    for (char &c : s) {
+        if (c == 'x') c = hex[nextInt(16)];
+        else if (c == 'y') c = hex[8 + nextInt(4)];
+    }
+    return new std::string(s);
+}
+
+template <typename T> int signum(T v) { return (v > 0) - (v < 0); }
+
+//boxed primitive toString()/valueOf() helpers
+inline std::string *charToString(wchar_t c) {
+    return new std::string(1, static_cast<char>(c));
+}
+inline int comparePrim(double a, double b) { return (a > b) - (a < b); }
+inline int comparePrim(int a, int b) { return (a > b) - (a < b); }
+inline int comparePrim(long long a, long long b) { return (a > b) - (a < b); }
+
+//java.util.Objects helpers (null-safe)
+template <typename T> bool objEquals(T *a, T *b) {
+    return a == b || (a && b && a->equals(b));
+}
+inline bool objEquals(std::string *a, std::string *b) {
+    return a == b || (a && b && *a == *b);
+}
+template <typename T> int objHash(T *p) { return p ? p->hashCode() : 0; }
+inline int objHash(std::string *p) { return p ? static_cast<int>(std::hash<std::string>{}(*p)) : 0; }
+template <typename T> std::string *objToString(T *p) {
+    return new std::string(p ? *p->toString() : std::string("null"));
+}
+inline std::string *objToString(std::string *p) {
+    return new std::string(p ? *p : std::string("null"));
+}
+
+//numeric parse helpers for the boxed primitive mappers
+inline double parseDouble(std::string *s) { return s ? std::strtod(s->c_str(), nullptr) : 0.0; }
+inline float parseFloat(std::string *s) { return s ? std::strtof(s->c_str(), nullptr) : 0.0f; }
+inline long long parseLong(std::string *s) { return s ? std::strtoll(s->c_str(), nullptr, 10) : 0; }
 
 //Java String helpers used by the bundled mapper
 inline std::string *join(std::string *delim, std::initializer_list<std::string *> parts) {
@@ -102,6 +172,34 @@ inline std::string toString(char c) { return std::string(1, c); }
 inline std::string toString(wchar_t c) { return std::string(1, static_cast<char>(c)); }
 template <typename T> std::string toString(T value) { return std::to_string(value); }
 } //namespace detail
+
+template <typename T> std::string *toStringPtr(T v) {
+    return new std::string(detail::toString(v));
+}
+
+//java.lang.StringBuilder / StringBuffer
+class StringBuilder {
+    std::string value;
+public:
+    StringBuilder() = default;
+    explicit StringBuilder(const std::string &s) : value(s) {}
+    template <typename T> StringBuilder *append(T v) {
+        value += detail::toString(v);
+        return this;
+    }
+    StringBuilder *append(const std::string &s) { value += s; return this; }
+    StringBuilder *insert(int pos, const std::string &s) {
+        value.insert(static_cast<std::size_t>(pos), s); return this;
+    }
+    StringBuilder *remove(int start, int end) {
+        value.erase(start, end - start); return this;
+    }
+    StringBuilder *reverse() {
+        std::reverse(value.begin(), value.end()); return this;
+    }
+    int length() { return static_cast<int>(value.size()); }
+    std::string *toString() { return new std::string(value); }
+};
 
 //value semantics for record components
 inline std::string valueToString(std::string *s) { return s ? *s : std::string("null"); }

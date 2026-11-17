@@ -63,6 +63,7 @@ public class LibHandler {
             return;
         }
         CClass cc = getClazz(binding.getDeclaringClass().getErasure());
+        if (cc == null) return;//mapped type has no stub class
         for (CField field : cc.fields) {
             if (field.name.name.equals(binding.getName())) {
                 return;

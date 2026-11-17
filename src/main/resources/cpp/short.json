@@ -1,0 +1,18 @@
+{
+  "name": "java.lang.Short",
+  "target": "char16_t",
+  "include": "CppHelper.h",
+  "fields": {
+    "MAX_VALUE": "32767",
+    "MIN_VALUE": "-32768"
+  },
+  "methods": [
+    { "name": "parseShort(java.lang.String)", "target": "static_cast<char16_t>(CppHelper::parseLong($1))", "external": true },
+    { "name": "valueOf(short)", "target": "$1", "external": true },
+    { "name": "valueOf(java.lang.String)", "target": "static_cast<char16_t>(CppHelper::parseLong($1))", "external": true },
+    { "name": "toString(short)", "target": "CppHelper::toStringPtr($1)", "external": true },
+    { "name": "compare(short,short)", "target": "CppHelper::comparePrim($1, $2)", "external": true },
+    { "name": "shortValue()", "target": "$0" },
+    { "name": "intValue()", "target": "static_cast<int>($0)", "external": true }
+  ]
+}

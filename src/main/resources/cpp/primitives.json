@@ -1,0 +1,22 @@
+{
+  "name": "java.lang.Character",
+  "target": "wchar_t",
+  "include": "CppHelper.h",
+  "fields": {
+    "MAX_VALUE": "65535",
+    "MIN_VALUE": "0"
+  },
+  "methods": [
+    { "name": "isUpperCase(char)", "target": "std::iswupper($1)", "external": true },
+    { "name": "isLowerCase(char)", "target": "std::iswlower($1)", "external": true },
+    { "name": "isDigit(char)", "target": "std::iswdigit($1)", "external": true },
+    { "name": "isLetter(char)", "target": "std::iswalpha($1)", "external": true },
+    { "name": "isLetterOrDigit(char)", "target": "std::iswalnum($1)", "external": true },
+    { "name": "isWhitespace(char)", "target": "std::iswspace($1)", "external": true },
+    { "name": "toUpperCase(char)", "target": "std::toupper($1)", "external": true },
+    { "name": "toLowerCase(char)", "target": "std::tolower($1)", "external": true },
+    { "name": "compare(char,char)", "target": "CppHelper::comparePrim($1, $2)", "external": true },
+    { "name": "toString(char)", "target": "CppHelper::charToString($1)", "external": true },
+    { "name": "valueOf(char)", "target": "$1", "external": true }
+  ]
+}

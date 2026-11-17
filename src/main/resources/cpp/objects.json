@@ -1,0 +1,13 @@
+{
+  "name": "java.util.Objects",
+  "include": "CppHelper.h",
+  "methods": [
+    { "name": "equals(java.lang.Object,java.lang.Object)", "target": "CppHelper::objEquals($1, $2)", "external": true },
+    { "name": "hashCode(java.lang.Object)", "target": "CppHelper::objHash($1)", "external": true },
+    { "name": "toString(java.lang.Object)", "target": "CppHelper::objToString($1)", "external": true },
+    { "name": "isNull(java.lang.Object)", "target": "($1 == nullptr)", "external": true },
+    { "name": "nonNull(java.lang.Object)", "target": "($1 != nullptr)", "external": true },
+    { "name": "requireNonNull(java.lang.Object)", "target": "$1", "external": true },
+    { "name": "requireNonNull(java.lang.Object,java.lang.String)", "target": "$1", "external": true }
+  ]
+}

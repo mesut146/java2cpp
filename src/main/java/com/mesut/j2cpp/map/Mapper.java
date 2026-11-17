@@ -12,6 +12,7 @@ import com.mesut.j2cpp.visitor.SourceVisitor;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Name;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -49,7 +50,9 @@ public class Mapper {
 
     public void initMappers() throws IOException {
         String[] all = {"list.json", "map.json", "set.json", "string.json", "stack.json",
-                "Boolean.json", "Integer.json", "sys.json", "arrays.json"};
+                "Boolean.json", "Integer.json", "sys.json", "arrays.json", "math.json",
+                "primitives.json", "double.json", "float.json", "long.json", "short.json",
+                "stringbuilder.json", "objects.json", "optional.json", "random.json", "uuid.json"};
         for (String mapper : all) {
             addMapper(getClass().getResourceAsStream("/cpp/" + mapper));
         }
@@ -90,6 +93,12 @@ public class Mapper {
         ClassInfo info = new ClassInfo();
         if (target != null) {
             info.target = CType.parse(target);
+        }
+        JSONObject fieldValues = cls.optJSONObject("fields");
+        if (fieldValues != null) {
+            for (String key : fieldValues.keySet()) {
+                info.fields.put(key, fieldValues.getString(key));
+            }
         }
 
         for (String name : splitNames(cls.getString("name"))) {
@@ -352,7 +361,7 @@ public class Mapper {
     }
 
     boolean isSame(JavaType t1, ITypeBinding t2) {
-        if (t1.isGeneric) return true;
+        if (t1.isGeneric || t2.isTypeVariable()) return true;
         if (t2.isPrimitive()) {
             return t1.name.equals(t2.getName());
         }
@@ -436,6 +445,15 @@ public class Mapper {
         return res;
     }
 
+    //constant fields that are initialized in a Java static initializer are plain
+    //declarations in stubs; mappers may supply their literal value instead
+    public String mapFieldValue(IVariableBinding binding) {
+        if (!Config.useMappers || binding == null || binding.getDeclaringClass() == null) return null;
+        ClassInfo info = classMap.get(binding.getDeclaringClass().getBinaryName());
+        if (info == null) return null;
+        return info.fields.get(binding.getName());
+    }
+
     public CName mapFieldName(String name, ITypeBinding cc) {
         String org = name;
         CName res;
@@ -460,6 +478,7 @@ public class Mapper {
         public CType target;
         public List<String> includes = new ArrayList<>();
         List<MethodInfo> methods = new ArrayList<>();
+        Map<String, String> fields = new HashMap<>();
     }
 
     public static class MethodInfo {

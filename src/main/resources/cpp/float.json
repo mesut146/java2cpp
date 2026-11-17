@@ -1,0 +1,23 @@
+{
+  "name": "java.lang.Float",
+  "target": "float",
+  "include": "CppHelper.h",
+  "fields": {
+    "MAX_VALUE": "3.402823466e+38F",
+    "MIN_VALUE": "1.4e-45F",
+    "POSITIVE_INFINITY": "INFINITY",
+    "NEGATIVE_INFINITY": "-INFINITY",
+    "NaN": "NAN"
+  },
+  "methods": [
+    { "name": "parseFloat(java.lang.String)", "target": "CppHelper::parseFloat($1)", "external": true },
+    { "name": "valueOf(float)", "target": "$1", "external": true },
+    { "name": "valueOf(java.lang.String)", "target": "CppHelper::parseFloat($1)", "external": true },
+    { "name": "toString(float)", "target": "CppHelper::toStringPtr($1)", "external": true },
+    { "name": "compare(float,float)", "target": "CppHelper::comparePrim($1, $2)", "external": true },
+    { "name": "isNaN(float)", "target": "std::isnan($1)", "external": true },
+    { "name": "isInfinite(float)", "target": "std::isinf($1)", "external": true },
+    { "name": "floatValue()", "target": "$0" },
+    { "name": "intValue()", "target": "static_cast<int>($0)", "external": true }
+  ]
+}

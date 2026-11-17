@@ -1,0 +1,9 @@
+{
+  "name": "java.util.UUID",
+  "target": "std::string",
+  "include": "CppHelper.h",
+  "methods": [
+    { "name": "randomUUID()", "target": "CppHelper::randomUUID()", "external": true },
+    { "name": "toString()", "target": "$0" }
+  ]
+}

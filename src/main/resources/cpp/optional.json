@@ -1,0 +1,12 @@
+{
+  "name": "java.util.Optional<T>",
+  "include": "<optional>",
+  "methods": [
+    { "name": "of(<T>)", "target": "new std::optional($1)", "external": true },
+    { "name": "isPresent()", "target": "has_value()" },
+    { "name": "isEmpty()", "target": "(!has_value())", "external": true },
+    { "name": "get()", "target": "value()" },
+    { "name": "orElse(<T>)", "target": "value_or($1)" },
+    { "name": "orElseThrow()", "target": "value()" }
+  ]
+}

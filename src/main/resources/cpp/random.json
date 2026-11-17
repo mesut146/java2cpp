@@ -1,0 +1,13 @@
+{
+  "name": "java.util.Random",
+  "target": "CppHelper::Random",
+  "include": "CppHelper.h",
+  "methods": [
+    { "name": "Random()", "target": "new CppHelper::Random()", "external": true },
+    { "name": "nextInt()", "target": "nextInt()" },
+    { "name": "nextInt(int)", "target": "nextInt($1)" },
+    { "name": "nextLong()", "target": "nextLong()" },
+    { "name": "nextDouble()", "target": "nextDouble()" },
+    { "name": "nextBoolean()", "target": "nextBoolean()" }
+  ]
+}

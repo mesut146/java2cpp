@@ -1,0 +1,19 @@
+{
+  "name": "java.lang.Long",
+  "target": "long",
+  "include": "CppHelper.h",
+  "fields": {
+    "MAX_VALUE": "9223372036854775807LL",
+    "MIN_VALUE": "-9223372036854775807LL - 1"
+  },
+  "methods": [
+    { "name": "parseLong(java.lang.String)", "target": "CppHelper::parseLong($1)", "external": true },
+    { "name": "valueOf(long)", "target": "$1", "external": true },
+    { "name": "valueOf(java.lang.String)", "target": "CppHelper::parseLong($1)", "external": true },
+    { "name": "toString(long)", "target": "CppHelper::toStringPtr($1)", "external": true },
+    { "name": "compare(long,long)", "target": "CppHelper::comparePrim($1, $2)", "external": true },
+    { "name": "hashCode(long)", "target": "CppHelper::hashValue($1)", "external": true },
+    { "name": "longValue()", "target": "$0" },
+    { "name": "intValue()", "target": "static_cast<int>($0)", "external": true }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "java.lang.Double",
+  "target": "double",
+  "include": "CppHelper.h",
+  "fields": {
+    "MAX_VALUE": "1.7976931348623157e308",
+    "MIN_VALUE": "4.9e-324",
+    "POSITIVE_INFINITY": "INFINITY",
+    "NEGATIVE_INFINITY": "-INFINITY",
+    "NaN": "NAN"
+  },
+  "methods": [
+    { "name": "parseDouble(java.lang.String)", "target": "CppHelper::parseDouble($1)", "external": true },
+    { "name": "valueOf(double)", "target": "$1", "external": true },
+    { "name": "valueOf(java.lang.String)", "target": "CppHelper::parseDouble($1)", "external": true },
+    { "name": "toString(double)", "target": "CppHelper::toStringPtr($1)", "external": true },
+    { "name": "compare(double,double)", "target": "CppHelper::comparePrim($1, $2)", "external": true },
+    { "name": "isNaN(double)", "target": "std::isnan($1)", "external": true },
+    { "name": "isInfinite(double)", "target": "std::isinf($1)", "external": true },
+    { "name": "doubleValue()", "target": "$0" },
+    { "name": "intValue()", "target": "static_cast<int>($0)", "external": true },
+    { "name": "hashCode(double)", "target": "CppHelper::hashValue($1)", "external": true }
+  ]
+}
