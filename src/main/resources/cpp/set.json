@@ -36,6 +36,31 @@
       "name": "toArray()",
       "target": "new std::vector<T>(${varName}->begin(), ${varName}->end())",
       "external": true
+    },
+    {
+      "name": "of(<T>)",
+      "target": "CppHelper::fromSet({$1})",
+      "external": true
+    },
+    {
+      "name": "of(<T>,<T>)",
+      "target": "CppHelper::fromSet({$1, $2})",
+      "external": true
+    },
+    {
+      "name": "of(<T>,<T>,<T>)",
+      "target": "CppHelper::fromSet({$1, $2, $3})",
+      "external": true
+    },
+    {
+      "name": "of(<T>,<T>,<T>,<T>)",
+      "target": "CppHelper::fromSet({$1, $2, $3, $4})",
+      "external": true
+    },
+    {
+      "name": "of(<T>,<T>,<T>,<T>,<T>)",
+      "target": "CppHelper::fromSet({$1, $2, $3, $4, $5})",
+      "external": true
     }
   ]
 }

@@ -73,6 +73,31 @@
       "name": "toArray(<T>[])",
       "target": "CppHelper::toArray(${varName})",
       "external": true
+    },
+    {
+      "name": "of(<T>)",
+      "target": "CppHelper::from({$1})",
+      "external": true
+    },
+    {
+      "name": "of(<T>,<T>)",
+      "target": "CppHelper::from({$1, $2})",
+      "external": true
+    },
+    {
+      "name": "of(<T>,<T>,<T>)",
+      "target": "CppHelper::from({$1, $2, $3})",
+      "external": true
+    },
+    {
+      "name": "of(<T>,<T>,<T>,<T>)",
+      "target": "CppHelper::from({$1, $2, $3, $4})",
+      "external": true
+    },
+    {
+      "name": "of(<T>,<T>,<T>,<T>,<T>)",
+      "target": "CppHelper::from({$1, $2, $3, $4, $5})",
+      "external": true
     }
   ]
 }

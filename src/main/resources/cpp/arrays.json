@@ -1,0 +1,30 @@
+{
+  "name": "java.util.Arrays<T>",
+  "methods": [
+    {
+      "name": "asList(<T>)",
+      "target": "CppHelper::from({$1})",
+      "external": true
+    },
+    {
+      "name": "asList(<T>,<T>)",
+      "target": "CppHelper::from({$1, $2})",
+      "external": true
+    },
+    {
+      "name": "asList(<T>,<T>,<T>)",
+      "target": "CppHelper::from({$1, $2, $3})",
+      "external": true
+    },
+    {
+      "name": "asList(<T>,<T>,<T>,<T>)",
+      "target": "CppHelper::from({$1, $2, $3, $4})",
+      "external": true
+    },
+    {
+      "name": "asList(<T>,<T>,<T>,<T>,<T>)",
+      "target": "CppHelper::from({$1, $2, $3, $4, $5})",
+      "external": true
+    }
+  ]
+}

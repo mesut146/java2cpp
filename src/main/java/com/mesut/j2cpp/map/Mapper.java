@@ -49,7 +49,7 @@ public class Mapper {
 
     public void initMappers() throws IOException {
         String[] all = {"list.json", "map.json", "set.json", "string.json", "stack.json",
-                "Boolean.json", "Integer.json", "sys.json"};
+                "Boolean.json", "Integer.json", "sys.json", "arrays.json"};
         for (String mapper : all) {
             addMapper(getClass().getResourceAsStream("/cpp/" + mapper));
         }
@@ -146,46 +146,54 @@ public class Mapper {
     }
 
     public MethodInfo findInfo(IMethodBinding binding) {
+        return findInfo(binding, binding.getParameterTypes().length);
+    }
+
+    public MethodInfo findInfo(IMethodBinding binding, int argCount) {
         if (!Config.useMappers) return null;
         ClassInfo classInfo = classMap.get(binding.getDeclaringClass().getBinaryName());
         if (classInfo == null) return null;//no mapping for this type
-        return findMethod(classInfo, binding);
+        return findMethod(classInfo, binding, argCount);
     }
 
     //a method can be declared on a supertype of the mapped class (e.g. Set.add)
     public MethodInfo findInfo(IMethodBinding binding, ITypeBinding receiver) {
-        if (!Config.useMappers) return null;
-        MethodInfo info = findInfo(binding);
-        if (info != null || receiver == null) return info;
-        return findInfoInHierarchy(binding, receiver, new HashSet<>());
+        return findInfo(binding, receiver, binding.getParameterTypes().length);
     }
 
-    private MethodInfo findInfoInHierarchy(IMethodBinding binding, ITypeBinding type, Set<ITypeBinding> seen) {
+    public MethodInfo findInfo(IMethodBinding binding, ITypeBinding receiver, int argCount) {
+        if (!Config.useMappers) return null;
+        MethodInfo info = findInfo(binding, argCount);
+        if (info != null || receiver == null) return info;
+        return findInfoInHierarchy(binding, receiver, new HashSet<>(), argCount);
+    }
+
+    private MethodInfo findInfoInHierarchy(IMethodBinding binding, ITypeBinding type, Set<ITypeBinding> seen, int argCount) {
         if (type == null || !seen.add(type)) return null;
         ClassInfo classInfo = classMap.get(type.getBinaryName());
         if (classInfo != null) {
-            MethodInfo info = findMethod(classInfo, binding);
+            MethodInfo info = findMethod(classInfo, binding, argCount);
             if (info != null) return info;
         }
-        MethodInfo info = findInfoInHierarchy(binding, type.getSuperclass(), seen);
+        MethodInfo info = findInfoInHierarchy(binding, type.getSuperclass(), seen, argCount);
         if (info != null) return info;
         for (ITypeBinding iface : type.getInterfaces()) {
-            info = findInfoInHierarchy(binding, iface, seen);
+            info = findInfoInHierarchy(binding, iface, seen, argCount);
             if (info != null) return info;
         }
         return null;
     }
 
     public List<String> mapMethod(IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc) {
-        return mapMethod(findInfo(binding), binding, args, scope, cc, null);
+        return mapMethod(findInfo(binding, args.size()), binding, args, scope, cc, null);
     }
 
     public List<String> mapMethod(IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc, ITypeBinding receiver) {
-        return mapMethod(findInfo(binding, receiver), binding, args, scope, cc, null);
+        return mapMethod(findInfo(binding, receiver, args.size()), binding, args, scope, cc, null);
     }
 
     public List<String> mapMethod(IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc, ITypeBinding receiver, Set<String> out) {
-        return mapMethod(findInfo(binding, receiver), binding, args, scope, cc, out);
+        return mapMethod(findInfo(binding, receiver, args.size()), binding, args, scope, cc, out);
     }
 
     private List<String> mapMethod(MethodInfo info, IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc, Set<String> out) {
@@ -311,16 +319,26 @@ public class Mapper {
         }
     }
 
-    MethodInfo findMethod(ClassInfo classInfo, IMethodBinding binding) {
+    MethodInfo findMethod(ClassInfo classInfo, IMethodBinding binding, int argCount) {
         IMethodBinding real = binding.getMethodDeclaration();
+        ITypeBinding[] params = real.getParameterTypes();
 
         for (MethodInfo info : classInfo.methods) {
             if (!info.name.equals(real.getName())) continue;
-            if (info.args.size() != binding.getParameterTypes().length) continue;
+            if (info.args.size() != argCount) continue;
             boolean found = true;
-            for (int i = 0; i < real.getParameterTypes().length; i++) {
+            for (int i = 0; i < info.args.size(); i++) {
                 var t1 = JavaType.parse(info.args.get(i), classInfo);
-                ITypeBinding t3 = real.getParameterTypes()[i];
+                ITypeBinding t3;
+                if (binding.isVarargs() && i >= params.length - 1) {
+                    //a mapper may spell the vararg as an array (Object[]) or as
+                    //repeated element parameters (T,T,T)
+                    t3 = t1.dims > 0 ? params[params.length - 1]
+                            : params[params.length - 1].getElementType();
+                }
+                else {
+                    t3 = params[i];
+                }
                 if (!isSame(t1, t3)) {
                     found = false;
                     break;

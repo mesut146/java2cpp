@@ -13,6 +13,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace CppHelper {
@@ -106,6 +107,12 @@ std::string *format(std::string *fmt, Args... args) {
 template <typename T>
 std::vector<T> *from(std::initializer_list<T> values) {
     return new std::vector<T>(values);
+}
+
+//Set.of(...) -> std::unordered_set
+template <typename T>
+std::unordered_set<T> *fromSet(std::initializer_list<T> values) {
+    return new std::unordered_set<T>(values);
 }
 
 //array creation with dimensions: new T[d1][d2]... -> arrays::makeN<T>(d1,d2...)
