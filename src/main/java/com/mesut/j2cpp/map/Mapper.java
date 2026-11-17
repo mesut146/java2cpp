@@ -52,7 +52,8 @@ public class Mapper {
         String[] all = {"list.json", "map.json", "set.json", "string.json", "stack.json",
                 "Boolean.json", "Integer.json", "sys.json", "arrays.json", "math.json",
                 "primitives.json", "double.json", "float.json", "long.json", "short.json",
-                "stringbuilder.json", "objects.json", "optional.json", "random.json", "uuid.json"};
+                "stringbuilder.json", "objects.json", "optional.json", "random.json", "uuid.json",
+                "printstream.json"};
         for (String mapper : all) {
             addMapper(getClass().getResourceAsStream("/cpp/" + mapper));
         }

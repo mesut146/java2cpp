@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <charconv>
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
@@ -13,6 +14,7 @@
 #include <cwctype>
 #include <functional>
 #include <initializer_list>
+#include <iostream>
 #include <optional>
 #include <random>
 #include <type_traits>
@@ -160,6 +162,7 @@ inline std::vector<std::string *> *lines(std::string *s) {
 }
 
 namespace detail {
+inline const char *arg(std::string *s) { return s ? s->c_str() : ""; }
 inline const char *arg(const std::string *s) { return s ? s->c_str() : ""; }
 inline const char *arg(const std::string &s) { return s.c_str(); }
 template <typename T> T arg(T value) { return value; }
@@ -170,6 +173,21 @@ inline std::string toString(const std::string &s) { return s; }
 inline std::string toString(const char *s) { return s ? std::string(s) : std::string(); }
 inline std::string toString(char c) { return std::string(1, c); }
 inline std::string toString(wchar_t c) { return std::string(1, static_cast<char>(c)); }
+template <typename T> std::string javaFloating(T v) {
+    char buf[64];
+    auto res = std::to_chars(buf, buf + sizeof(buf), v);
+    if (res.ec != std::errc()) return std::to_string(v);
+    std::string s(buf, res.ptr);
+    if (s.find_first_of(".eE") == std::string::npos) s += ".0";
+    return s;
+}
+inline std::string toString(double v) { return javaFloating(v); }
+inline std::string toString(float v) { return javaFloating(v); }
+inline std::string toString(bool b) { return b ? "true" : "false"; }
+inline std::string toString(std::nullptr_t) { return "null"; }
+template <typename T> std::string toString(T *p) {
+    return p ? *p->toString() : std::string("null");
+}
 template <typename T> std::string toString(T value) { return std::to_string(value); }
 } //namespace detail
 
@@ -263,12 +281,30 @@ std::string *concat(Args... args) {
 
 //String.format(String,Object[])
 template <typename... Args>
+//Java's %n is a platform newline, not C's write-count directive
+inline std::string *javaFormat(std::string *fmt) {
+    if (fmt == nullptr) return new std::string();
+    std::string out;
+    for (std::size_t i = 0; i < fmt->size(); ++i) {
+        if ((*fmt)[i] == '%' && i + 1 < fmt->size() && (*fmt)[i + 1] == 'n') {
+            out += '\n';
+            ++i;
+        }
+        else {
+            out += (*fmt)[i];
+        }
+    }
+    return new std::string(out);
+}
+
+template <typename... Args>
 std::string *format(std::string *fmt, Args... args) {
     if (fmt == nullptr) return new std::string();
-    int size = std::snprintf(nullptr, 0, fmt->c_str(), detail::arg(args)...) + 1;
+    std::string *pattern = javaFormat(fmt);
+    int size = std::snprintf(nullptr, 0, pattern->c_str(), detail::arg(args)...) + 1;
     if (size <= 0) throw std::runtime_error("CppHelper::format failed");
     std::unique_ptr<char[]> buf(new char[size]);
-    std::snprintf(buf.get(), size, fmt->c_str(), detail::arg(args)...);
+    std::snprintf(buf.get(), size, pattern->c_str(), detail::arg(args)...);
     return new std::string(buf.get(), buf.get() + size - 1);
 }
 
@@ -422,6 +458,44 @@ inline int numberOfLeadingZeros(int value) {
     unsigned int mask = 1u << 31;
     while ((v & mask) == 0) { ++count; mask >>= 1; }
     return count;
+}
+
+//java.lang.System.out / System.err
+class PrintStream {
+    std::ostream &stream;
+public:
+    explicit PrintStream(std::ostream &s) : stream(s) {}
+
+    template <typename T> PrintStream *print(T value) {
+        stream << detail::toString(value);
+        return this;
+    }
+    template <typename T> PrintStream *println(T value) {
+        stream << detail::toString(value) << '\n';
+        return this;
+    }
+    PrintStream *println() { stream << '\n'; return this; }
+    void flush() { stream.flush(); }
+
+    template <typename... Args>
+    PrintStream *printf(std::string *fmt, Args... args) {
+        stream << *CppHelper::format(fmt, args...);
+        return this;
+    }
+    template <typename... Args>
+    PrintStream *format(std::string *fmt, Args... args) {
+        stream << *CppHelper::format(fmt, args...);
+        return this;
+    }
+};
+
+inline PrintStream *javaOut() {
+    static PrintStream out(std::cout);
+    return &out;
+}
+inline PrintStream *javaErr() {
+    static PrintStream err(std::cerr);
+    return &err;
 }
 
 } //namespace CppHelper

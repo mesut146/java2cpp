@@ -27,6 +27,13 @@ public class IncludeList {
         }
     }
 
+    public void addAll(IncludeList other) {
+        if (other == null) return;
+        for (IncludeStmt stmt : other.list) {
+            add(stmt);
+        }
+    }
+
     public void add(String stmt) {
         add(new IncludeStmt(stmt));
     }

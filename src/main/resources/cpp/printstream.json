@@ -1,0 +1,33 @@
+{
+  "name": "java.io.PrintStream",
+  "target": "CppHelper::PrintStream",
+  "include": "CppHelper.h",
+  "methods": [
+    { "name": "println()", "target": "println()" },
+    { "name": "println(java.lang.String)", "target": "println($1)" },
+    { "name": "println(java.lang.Object)", "target": "println($1)" },
+    { "name": "println(int)", "target": "println($1)" },
+    { "name": "println(long)", "target": "println($1)" },
+    { "name": "println(float)", "target": "println($1)" },
+    { "name": "println(double)", "target": "println($1)" },
+    { "name": "println(boolean)", "target": "println($1)" },
+    { "name": "println(char)", "target": "println($1)" },
+    { "name": "println(char[])", "target": "println($1)" },
+    { "name": "print(java.lang.String)", "target": "print($1)" },
+    { "name": "print(java.lang.Object)", "target": "print($1)" },
+    { "name": "print(int)", "target": "print($1)" },
+    { "name": "print(long)", "target": "print($1)" },
+    { "name": "print(float)", "target": "print($1)" },
+    { "name": "print(double)", "target": "print($1)" },
+    { "name": "print(boolean)", "target": "print($1)" },
+    { "name": "print(char)", "target": "print($1)" },
+    { "name": "flush()", "target": "flush()" },
+    { "name": "printf(java.lang.String,java.lang.Object)", "target": "printf($1, $2)" },
+    { "name": "printf(java.lang.String,java.lang.Object,java.lang.Object)", "target": "printf($1, $2, $3)" },
+    { "name": "printf(java.lang.String,java.lang.Object,java.lang.Object,java.lang.Object)", "target": "printf($1, $2, $3, $4)" },
+    { "name": "printf(java.lang.String,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)", "target": "printf($1, $2, $3, $4, $5)" },
+    { "name": "format(java.lang.String,java.lang.Object)", "target": "format($1, $2)" },
+    { "name": "format(java.lang.String,java.lang.Object,java.lang.Object)", "target": "format($1, $2, $3)" },
+    { "name": "format(java.lang.String,java.lang.Object,java.lang.Object,java.lang.Object)", "target": "format($1, $2, $3, $4)" }
+  ]
+}

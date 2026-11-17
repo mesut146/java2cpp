@@ -81,6 +81,9 @@ public class CHeader extends CNode {
         StringBuilder sb = new StringBuilder();
         sb.append("#pragma once\n\n");
         sb.append("#include <string>\n#include <vector>\n#include <unordered_set>\n#include <unordered_map>\n");
+        if (cc != null) {
+            includes.addAll(cc.includes);
+        }
         sb.append(includes);
         sb.append("\n");
         if (forwardDeclarator != null) {
