@@ -3,6 +3,7 @@
 //helpers referenced by the bundled cpp mappers (String.format/replace/split, etc.)
 //header-only so generated sources only need this file on the include path
 
+#include <cctype>
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
@@ -17,6 +18,76 @@
 #include <vector>
 
 namespace CppHelper {
+
+//Java String helpers used by the bundled mapper
+inline std::string *join(std::string *delim, std::initializer_list<std::string *> parts) {
+    std::string out;
+    bool first = true;
+    for (std::string *p : parts) {
+        if (!first && delim) out += *delim;
+        first = false;
+        if (p) out += *p;
+    }
+    return new std::string(out);
+}
+
+inline std::string *join(std::string *delim, std::vector<std::string *> *parts) {
+    std::string out;
+    bool first = true;
+    if (parts) for (std::string *p : *parts) {
+        if (!first && delim) out += *delim;
+        first = false;
+        if (p) out += *p;
+    }
+    return new std::string(out);
+}
+
+inline std::string *repeat(std::string *s, int count) {
+    std::string out;
+    if (s) for (int i = 0; i < count; ++i) out += *s;
+    return new std::string(out);
+}
+
+inline std::string *strip(std::string *s) {
+    if (!s) return new std::string();
+    auto isSpace = [](unsigned char c) { return std::isspace(c) != 0; };
+    auto b = s->begin(), e = s->end();
+    while (b != e && isSpace(static_cast<unsigned char>(*b))) ++b;
+    while (e != b && isSpace(static_cast<unsigned char>(*(e - 1)))) --e;
+    return new std::string(b, e);
+}
+
+inline bool isBlank(std::string *s) {
+    if (!s) return true;
+    for (char c : *s) if (!std::isspace(static_cast<unsigned char>(c))) return false;
+    return true;
+}
+
+inline int compareIgnoreCase(std::string *a, std::string *b) {
+    std::string x = a ? *a : std::string(), y = b ? *b : std::string();
+    for (std::size_t i = 0; i < x.size() && i < y.size(); ++i) {
+        int d = std::tolower(static_cast<unsigned char>(x[i]))
+              - std::tolower(static_cast<unsigned char>(y[i]));
+        if (d != 0) return d;
+    }
+    return static_cast<int>(x.size()) - static_cast<int>(y.size());
+}
+
+inline std::vector<std::string *> *lines(std::string *s) {
+    auto result = new std::vector<std::string *>();
+    if (!s) return result;
+    std::size_t pos = 0;
+    while (pos <= s->size()) {
+        std::size_t end = s->find('\n', pos);
+        if (end == std::string::npos) end = s->size();
+        std::size_t len = end - pos;
+        if (len > 0 && (*s)[end - 1] == '\r') --len;
+        result->push_back(new std::string(*s, pos, len));
+        if (end == s->size()) break;
+        pos = end + 1;
+    }
+    return result;
+}
 
 namespace detail {
 inline const char *arg(const std::string *s) { return s ? s->c_str() : ""; }

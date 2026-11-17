@@ -1223,11 +1223,24 @@ public class SourceVisitor extends ASTVisitor {
                 else {
                     code.line("%s %s = ", code.ptr(type), frag.getName());
                 }
-                frag.getInitializer().accept(this);
+                emitInitializer(frag.getInitializer());
                 write(";");
             }
         }
         return false;
+    }
+
+    //a bare {..} initializer would be a std::initializer_list, not a vector
+    private void emitInitializer(Expression init) {
+        if (Config.useMappers && init instanceof ArrayInitializer) {
+            includes.add("CppHelper.h");
+            write("arrays::from(");
+            init.accept(this);
+            write(")");
+        }
+        else {
+            init.accept(this);
+        }
     }
 
     @Override
@@ -1244,7 +1257,7 @@ public class SourceVisitor extends ASTVisitor {
                 else {
                     code.line("%s %s = ", code.ptr(type), frag.getName());
                 }
-                frag.getInitializer().accept(this);
+                emitInitializer(frag.getInitializer());
                 write(";");
             }
         }

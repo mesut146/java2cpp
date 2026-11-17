@@ -1,7 +1,7 @@
 {
   "name": "java.util.List<T>,java.util.ArrayList<T>",
   "target": "std::vector",
-  "include": "CppHelper.h",
+  "include": "<algorithm>,CppHelper.h",
   "methods": [
     {
       "name": "add(<T>)",
@@ -97,6 +97,21 @@
     {
       "name": "of(<T>,<T>,<T>,<T>,<T>)",
       "target": "CppHelper::from({$1, $2, $3, $4, $5})",
+      "external": true
+    },
+    {
+      "name": "sort()",
+      "target": "std::sort(${varName}->begin(), ${varName}->end())",
+      "external": true
+    },
+    {
+      "name": "sort(java.util.Comparator)",
+      "target": "std::sort(${varName}->begin(), ${varName}->end())",
+      "external": true
+    },
+    {
+      "name": "subList(int,int)",
+      "target": "new std::vector(${varName}->begin() + $1, ${varName}->begin() + $2)",
       "external": true
     }
   ]

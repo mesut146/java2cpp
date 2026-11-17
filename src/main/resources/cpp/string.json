@@ -171,6 +171,56 @@
       "name": "valueOf(int)",
       "target": "new std::string(std::to_string($1))",
       "external": true
+    },
+    {
+      "name": "repeat(int)",
+      "target": "CppHelper::repeat($0, $1)",
+      "external": true
+    },
+    {
+      "name": "strip()",
+      "target": "CppHelper::strip($0)",
+      "external": true
+    },
+    {
+      "name": "isBlank()",
+      "target": "CppHelper::isBlank($0)",
+      "external": true
+    },
+    {
+      "name": "compareToIgnoreCase(java.lang.String)",
+      "target": "CppHelper::compareIgnoreCase($0, $1)",
+      "external": true
+    },
+    {
+      "name": "lines()",
+      "target": "CppHelper::lines($0)",
+      "external": true
+    },
+    {
+      "name": "join(java.lang.CharSequence,java.lang.Iterable)",
+      "target": "CppHelper::join($1, $2)",
+      "external": true
+    },
+    {
+      "name": "join(java.lang.CharSequence,java.lang.CharSequence[])",
+      "target": "CppHelper::join($1, $2)",
+      "external": true
+    },
+    {
+      "name": "join(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence)",
+      "target": "CppHelper::join($1, {$2, $3})",
+      "external": true
+    },
+    {
+      "name": "join(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence)",
+      "target": "CppHelper::join($1, {$2, $3, $4})",
+      "external": true
+    },
+    {
+      "name": "join(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence)",
+      "target": "CppHelper::join($1, {$2, $3, $4, $5})",
+      "external": true
     }
   ]
 }

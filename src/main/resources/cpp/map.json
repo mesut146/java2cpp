@@ -1,7 +1,7 @@
 {
   "name": "java.util.Map<K,V>,java.util.HashMap<K,V>",
   "target": "std::unordered_map",
-  "include": "<unordered_map>",
+  "include": "<algorithm>,<unordered_map>",
   "methods": [
     {
       "name": "put(<K>,<V>)",
@@ -39,6 +39,21 @@
                  "    keys->push_back(a.first);",
                  "  }"],
       "expr": "keys"
+    },
+    {
+      "name": "containsKey(<K>)",
+      "target": "(${varName}->find($1) != ${varName}->end())",
+      "external": true
+    },
+    {
+      "name": "containsValue(<V>)",
+      "target": "std::any_of(${varName}->begin(), ${varName}->end(), [&](const auto &kv){ return kv.second == $1; })",
+      "external": true
+    },
+    {
+      "name": "getOrDefault(<K>,<V>)",
+      "target": "(${varName}->find($1) != ${varName}->end() ? ${varName}->at($1) : $2)",
+      "external": true
     }
   ]
 }

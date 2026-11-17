@@ -1,5 +1,6 @@
 {
   "name": "java.util.Arrays<T>",
+  "include": "<algorithm>",
   "methods": [
     {
       "name": "asList(<T>)",
@@ -24,6 +25,31 @@
     {
       "name": "asList(<T>,<T>,<T>,<T>,<T>)",
       "target": "CppHelper::from({$1, $2, $3, $4, $5})",
+      "external": true
+    },
+    {
+      "name": "sort(<T>[])",
+      "target": "std::sort($1->begin(), $1->end())",
+      "external": true
+    },
+    {
+      "name": "sort(<T>[],int,int)",
+      "target": "std::sort($1->begin() + $2, $1->begin() + $3)",
+      "external": true
+    },
+    {
+      "name": "copyOf(<T>[],int)",
+      "target": "new std::vector($1->begin(), $1->begin() + $2)",
+      "external": true
+    },
+    {
+      "name": "fill(<T>[],<T>)",
+      "target": "std::fill($1->begin(), $1->end(), $2)",
+      "external": true
+    },
+    {
+      "name": "equals(<T>[],<T>[])",
+      "target": "(*$1 == *$2)",
       "external": true
     }
   ]

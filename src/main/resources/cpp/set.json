@@ -1,7 +1,7 @@
 {
   "name": "java.util.Set<T>,java.util.HashSet<T>",
   "target": "std::unordered_set",
-  "include": "<unordered_set>",
+  "include": "<algorithm>,<unordered_set>",
   "methods": [
     {
       "name": "add(<T>)",
@@ -60,6 +60,16 @@
     {
       "name": "of(<T>,<T>,<T>,<T>,<T>)",
       "target": "CppHelper::fromSet({$1, $2, $3, $4, $5})",
+      "external": true
+    },
+    {
+      "name": "retainAll(java.util.Collection)",
+      "target": "([&](){ for(auto it = ${varName}->begin(); it != ${varName}->end(); ){ if(std::find($1->begin(), $1->end(), *it) == $1->end()) it = ${varName}->erase(it); else ++it; } return ${varName}; })()",
+      "external": true
+    },
+    {
+      "name": "removeAll(java.util.Collection)",
+      "target": "([&](){ for(auto it = ${varName}->begin(); it != ${varName}->end(); ){ if(std::find($1->begin(), $1->end(), *it) != $1->end()) it = ${varName}->erase(it); else ++it; } return ${varName}; })()",
       "external": true
     }
   ]

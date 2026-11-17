@@ -84,7 +84,7 @@ The source path must be an existing directory; missing required arguments print 
 
 A mapper is a small JSON file describing a Java class, its C++ target, and method rewrites. Bundled mappers live in `src/main/resources/cpp/`.
 
-Enabled by default: `list`, `map`, `set`, `stack`, `string`, `Boolean`, `Integer`, `sys`.
+Enabled by default: `list`, `map`, `set`, `stack`, `string`, `arrays`, `Boolean`, `Integer`, `sys`. These cover the common collection/String APIs (`sort`, `subList`, `containsKey`, `getOrDefault`, `retainAll`, `Arrays.sort/copyOf/fill/equals`, `String.join/repeat/strip/isBlank/lines`, and static factories like `List.of`/`Arrays.asList`).
 
 Example mapper:
 
