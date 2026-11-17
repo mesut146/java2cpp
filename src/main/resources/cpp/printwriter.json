@@ -1,0 +1,16 @@
+{
+  "name": "java.io.PrintWriter",
+  "target": "CppHelper::PrintWriter",
+  "include": "CppHelper.h",
+  "methods": [
+    { "name": "PrintWriter(java.lang.String)", "target": "new CppHelper::PrintWriter($1)", "external": true },
+    { "name": "print(java.lang.String)", "target": "print($1)" },
+    { "name": "print(int)", "target": "print($1)" },
+    { "name": "println()", "target": "println()" },
+    { "name": "println(java.lang.String)", "target": "println($1)" },
+    { "name": "println(int)", "target": "println($1)" },
+    { "name": "println(boolean)", "target": "println($1)" },
+    { "name": "flush()", "target": "flush()" },
+    { "name": "close()", "target": "close()" }
+  ]
+}

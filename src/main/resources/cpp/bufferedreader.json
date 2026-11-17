@@ -1,0 +1,10 @@
+{
+  "name": "java.io.BufferedReader",
+  "target": "CppHelper::BufferedReader",
+  "include": "CppHelper.h",
+  "methods": [
+    { "name": "BufferedReader(java.io.Reader)", "target": "new CppHelper::BufferedReader($1)", "external": true },
+    { "name": "readLine()", "target": "readLine()" },
+    { "name": "close()", "target": "close()" }
+  ]
+}

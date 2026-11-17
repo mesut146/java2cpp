@@ -1,0 +1,10 @@
+{
+  "name": "java.io.FileReader",
+  "target": "CppHelper::FileReader",
+  "include": "CppHelper.h",
+  "methods": [
+    { "name": "FileReader(java.lang.String)", "target": "new CppHelper::FileReader($1)", "external": true },
+    { "name": "FileReader(java.io.File)", "target": "new CppHelper::FileReader(CppHelper::fsPathString($1))", "external": true },
+    { "name": "close()", "target": "close()" }
+  ]
+}

@@ -39,6 +39,7 @@ public class SourceVisitor extends ASTVisitor {
     Code code = new Code();
     int forVarCnt = 0;
     int anonyCnt = 0;
+    int resGuardCnt = 0;
     StringBuilder anonyDecls = new StringBuilder();
     //captured locals for the anonymous class currently being rendered
     Map<IVariableBinding, String> anonCaptures = new HashMap<>();
@@ -788,14 +789,34 @@ public class SourceVisitor extends ASTVisitor {
         return false;
     }
 
+    //declare try-with-resources values and close them on scope exit (also on exceptions)
+    private void emitResources(TryStatement node) {
+        if (node.resources().isEmpty()) return;
+        includes.add("CppHelper.h");
+        for (Object o : node.resources()) {
+            VariableDeclarationExpression res = (VariableDeclarationExpression) o;
+            res.accept(this);
+            for (Object f : res.fragments()) {
+                VariableDeclarationFragment frag = (VariableDeclarationFragment) f;
+                code.line("CppHelper::ScopeGuard _sg%d([&](){ %s->close(); });\n",
+                        resGuardCnt++, frag.getName());
+            }
+        }
+    }
+
     @Override
     public boolean visit(TryStatement node) {
-        if (!node.resources().isEmpty()) {
-            Logger.log(this.binding, "try-with-resources is not supported");
+        boolean hasResources = !node.resources().isEmpty();
+        if (hasResources) {
+            code.line("{\n");
         }
+        emitResources(node);
         Block finallyBody = node.getFinally();
         if (finallyBody == null) {
             emitTryCatch(node);
+            if (hasResources) {
+                code.line("}\n");
+            }
             return false;
         }
 
@@ -827,6 +848,9 @@ public class SourceVisitor extends ASTVisitor {
             finallyBody.accept(this);
             write("\nreturn std::nullopt;\n});\n");
             write("if (_tf.has_value()) return *_tf;\n}\n");
+        }
+        if (hasResources) {
+            code.line("}\n");
         }
         return false;
     }
