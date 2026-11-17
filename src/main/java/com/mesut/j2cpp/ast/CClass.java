@@ -118,6 +118,8 @@ public class CClass extends CStatement {
         printDecl(sb);
         sb.append("{\n");
         up();
+        sb.append(getIndent()).append("public:\n");
+        sb.append(getIndent()).append("virtual ~").append(name).append("() = default;\n");
         printFields(sb);
         printMethods(sb);
         sb.append("};//class ").append(name);

@@ -251,7 +251,7 @@ public class HeaderWriter {
     //canonical constructor and accessor methods
     public void visit(RecordDeclaration node) {
         code = new Code();
-        code.write("#pragma once\n\n#include <string>\n#include <vector>\n");
+        code.write("#pragma once\n\n#include <string>\n#include <vector>\n#include \"CppHelper.h\"\n");
         ITypeBinding binding = node.resolveBinding();
         nsBegin();
         code.line("class %s: public %s", cname(binding), TypeHelper.getObjectType());
@@ -289,6 +289,8 @@ public class HeaderWriter {
             code.write("%s %s() { return _%s; }\n", code.ptr(comp.getType().resolveBinding()),
                     comp.getName(), comp.getName());
         }
+        //synthesized Object methods (toString/equals/hashCode)
+        emitRecordObjectMethods(node, binding);
         //explicit methods declared in the record body
         for (Object o : node.bodyDeclarations()) {
             if (o instanceof MethodDeclaration) {
@@ -306,6 +308,57 @@ public class HeaderWriter {
             e.printStackTrace();
         }
         code = null;
+    }
+
+    //emit the three methods Java auto-generates for a record
+    private void emitRecordObjectMethods(RecordDeclaration node, ITypeBinding binding) {
+        List<SingleVariableDeclaration> comps = new ArrayList<>();
+        for (Object o : node.recordComponents()) comps.add((SingleVariableDeclaration) o);
+        String cls = cname(binding);
+
+        //toString: Class[field=value, ...]
+        code.write("std::string* toString() {\n");
+        StringBuilder fmt = new StringBuilder(cls).append("[");
+        for (int i = 0; i < comps.size(); i++) {
+            if (i > 0) fmt.append(", ");
+            fmt.append(comps.get(i).getName()).append("=%s");
+        }
+        fmt.append("]");
+        code.write("return CppHelper::format(new std::string(\"%s\")", fmt);
+        for (SingleVariableDeclaration c : comps) {
+            code.write(", CppHelper::valueToString(_%s)", c.getName());
+        }
+        code.write(");\n}\n");
+
+        //equals: same type and all components equal
+        code.write("bool equals(java::lang::Object* o) {\n");
+        if (comps.isEmpty()) {
+            code.write("return dynamic_cast<%s*>(o) != nullptr;\n}\n", cls);
+        }
+        else {
+            code.write("auto other = dynamic_cast<%s*>(o);\n", cls);
+            code.write("if (!other) return false;\n");
+            code.write("return ");
+            for (int i = 0; i < comps.size(); i++) {
+                if (i > 0) code.write(" && ");
+                code.write("CppHelper::eq(_%s, other->_%s)", comps.get(i).getName(), comps.get(i).getName());
+            }
+            code.write(";\n}\n");
+        }
+
+        //hashCode: Java-style 31*h + component hash
+        code.write("int hashCode() {\n");
+        if (comps.isEmpty()) {
+            code.write("return 1;\n}\n");
+        }
+        else {
+            code.write("return CppHelper::hashCombine(");
+            for (int i = 0; i < comps.size(); i++) {
+                if (i > 0) code.write(", ");
+                code.write("_%s", comps.get(i).getName());
+            }
+            code.write(");\n}\n");
+        }
     }
 
     private void visitBody(BodyDeclaration body, ITypeBinding cc) {

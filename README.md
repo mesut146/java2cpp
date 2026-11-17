@@ -21,7 +21,7 @@ The C++ generator emits C++ text straight into a `Code` buffer.
 - **Library headers** — referenced classes on the classpath get stub headers under `lib/` so you can implement the missing parts yourself.
 - **Inner, anonymous and local classes** — inner classes receive a reference to their enclosing instance; anonymous and local classes become generated structs in the `.cpp`. Effectively-final locals they capture are stored as fields and passed to the generated constructor; enclosing fields are reached via `_parent_ref`.
 - **Static blocks** — transformed into a static `si` / `si_init` method. Call it from your own entry point.
-- **Records, sealed classes and pattern switches** — records become value structs with accessors; sealed interfaces are plain interfaces; pattern switches become if/`dynamic_cast` chains.
+- **Records, sealed classes and pattern switches** — records become value structs with accessors plus auto-generated `toString`/`equals`/`hashCode`; sealed interfaces are plain interfaces; pattern switches become if/`dynamic_cast` chains.
 
 - **Constants** — `static final` primitives with a constant value become `constexpr`.
 - **try/catch/finally** — translated to C++ `try`/`catch` with `finally` modeled by `j2cpp::try_finally_value` / `try_finally_void`: `finally` runs on normal completion, early return and exceptions, and a `return`/`throw` in `finally` overrides the try result or pending exception.
@@ -176,4 +176,4 @@ Mappers are the default: Java runtime types become native C++ equivalents and `L
 
 - This is a syntactic transpiler: no garbage collection, reflection, threads, or full Java standard library is provided. Generated `lib/` stubs and `cppRt/` helpers cover only part of what real Java code needs.
 - Java generic type arguments are preserved in generated signatures and class templates, but method-level type variables are erased (as in Java bytecode), and some complex wildcard/capture cases degrade to `Object`.
-- Some Java constructs are only partially supported. `synchronized` is logged and approximated; `break` in a non-primitive switch is approximate; record `equals`/`hashCode`/`toString` are not generated. Check `log.txt` after conversion for warnings.
+- Some Java constructs are only partially supported. `synchronized` is logged and approximated; `break` in a non-primitive switch is approximate; `Object`-typed references don't dispatch to generated `equals`/`hashCode`/`toString` (the `Object` stub has no such virtuals); call them on the concrete type. Check `log.txt` after conversion for warnings.

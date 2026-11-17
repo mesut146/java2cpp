@@ -5,6 +5,8 @@
 
 #include <cstdio>
 #include <cstring>
+#include <cstdint>
+#include <functional>
 #include <initializer_list>
 #include <optional>
 #include <type_traits>
@@ -28,6 +30,57 @@ inline std::string toString(char c) { return std::string(1, c); }
 inline std::string toString(wchar_t c) { return std::string(1, static_cast<char>(c)); }
 template <typename T> std::string toString(T value) { return std::to_string(value); }
 } //namespace detail
+
+//value semantics for record components
+inline std::string valueToString(std::string *s) { return s ? *s : std::string("null"); }
+inline std::string valueToString(const std::string *s) { return s ? *s : std::string("null"); }
+inline std::string valueToString(bool b) { return b ? "true" : "false"; }
+template <typename T> std::string valueToString(T value) { return detail::toString(value); }
+//pointer to a generated object: call its toString()
+template <typename T> std::string valueToString(T *p) {
+    return p ? *p->toString() : std::string("null");
+}
+
+//value equality for record components
+inline bool eq(bool a, bool b) { return a == b; }
+inline bool eq(std::string *a, std::string *b) {
+    return a == b || (a && b && *a == *b);
+}
+inline bool eq(const std::string *a, const std::string *b) {
+    return a == b || (a && b && *a == *b);
+}
+template <typename T> bool eq(T a, T b) { return a == b; }
+template <typename T> bool eq(T *a, T *b) { return a == b || (a && b && a->equals(b)); }
+
+//hash of a single value
+inline int hashValue(bool b) { return b ? 1231 : 1237; }
+inline int hashValue(int v) { return v; }
+inline int hashValue(long v) { return static_cast<int>(v ^ (v >> 32)); }
+inline int hashValue(double v) {
+    uint64_t bits; std::memcpy(&bits, &v, sizeof(bits));
+    return static_cast<int>(bits ^ (bits >> 32));
+}
+inline int hashValue(float v) {
+    uint32_t bits; std::memcpy(&bits, &v, sizeof(bits));
+    return static_cast<int>(bits);
+}
+inline int hashValue(std::string *s) {
+    return s ? static_cast<int>(std::hash<std::string>{}(*s)) : 0;
+}
+inline int hashValue(const std::string *s) {
+    return s ? static_cast<int>(std::hash<std::string>{}(*s)) : 0;
+}
+template <typename T> int hashValue(T *p) { return p ? p->hashCode() : 0; }
+
+template <typename T> int hashCombine(T value) { return hashValue(value); }
+template <typename T, typename... Rest>
+int hashCombine(T first, Rest... rest) {
+    int r = hashValue(first);
+    using expander = int[];
+    (void)expander{0, (r = 31 * r + hashValue(rest), 0)...};
+    return r;
+}
+inline int hashCombine() { return 1; }
 
 //the "+" operator on Java strings
 template <typename... Args>
