@@ -82,7 +82,7 @@ public class Converter {
         parser.setStatementsRecovery(true);
 
         Map options = JavaCore.getOptions();
-        String ver = JavaCore.VERSION_13;
+        String ver = JavaCore.VERSION_17;
         options.put(JavaCore.COMPILER_COMPLIANCE, ver);
         options.put(JavaCore.COMPILER_SOURCE, ver);
         options.put(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, ver);

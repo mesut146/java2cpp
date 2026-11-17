@@ -871,14 +871,36 @@ public class SourceVisitor extends ASTVisitor {
         return false;
     }
 
+    boolean inSwitchExpr;
+    String switchExprType;
+
+    @Override
+    public boolean visit(SwitchExpression node) {
+        ITypeBinding type = node.resolveTypeBinding();
+        switchExprType = type == null ? "int" : code.ptr(type);
+        write("[&]() -> %s { switch(", switchExprType);
+        node.getExpression().accept(this);
+        write(") {\n");
+        for (Object o : node.statements()) {
+            Statement s = (Statement) o;
+            if (s instanceof SwitchCase) {
+                SwitchCase c = (SwitchCase) s;
+                if (c.isDefault()) code.line("default:");
+                else code.line("case %s:", caseExpr(c, node.getExpression().resolveTypeBinding()));
+            }
+            else {
+                s.accept(this);
+            }
+        }
+        code.line("} return {}; }()");
+        return false;
+    }
+
     @Override
     public boolean visit(YieldStatement node) {
-        Logger.log(this.binding, "switch expressions (yield) are not supported: " + node);
-        code.line("/* yield ");
-        if (node.getExpression() != null) {
-            node.getExpression().accept(this);
-        }
-        code.write(" */");
+        write("return ");
+        if (node.getExpression() != null) node.getExpression().accept(this);
+        write("; ");
         return false;
     }
 
@@ -891,6 +913,8 @@ public class SourceVisitor extends ASTVisitor {
             if (ct.startsWith("case ")) ct = ct.substring(5);
             if (ct.endsWith(":")) ct = ct.substring(0, ct.length() - 1);
         }
+        int arrow = ct.indexOf("->");
+        if (arrow >= 0) ct = ct.substring(0, arrow).trim();
         if (selector != null && selector.isEnum() && !ct.contains("::")) {
             ct = code.str(selector) + "::" + ct;
         }

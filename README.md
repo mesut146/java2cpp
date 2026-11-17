@@ -161,7 +161,7 @@ cppRt/                    # small hand-written helper files
 mvn test
 ```
 
-Tests under `src/test/java` exercise the CLI, helpers and sample conversions. `CppCompileTest` runs `g++ -fsyntax-only` over generated C++ — including every bundled sample source — and several behavior tests compile and **run** generated code to verify try/finally, switch, anonymous classes, inner-class parent references, String mapper operations, boxing/List/array behavior, static initializers (call `si()`), multi-catch/rethrow, anonymous/local classes capturing locals, and `assert`. All skip if `g++` is unavailable. Hand-written Java snippets live in `src/test/resources/samples/base/` and `samples/mapper/`; they are data files, not compiled tests, and are used by `ConversionTest` through the classpath.
+Tests under `src/test/java` exercise the CLI, helpers and sample conversions. `CppCompileTest` runs `g++ -fsyntax-only` over generated C++ — including every bundled sample source — and several behavior tests compile and **run** generated code to verify try/finally, switch, anonymous classes, inner-class parent references, String mapper operations, boxing/List/array behavior, static initializers (call `si()`), multi-catch/rethrow, anonymous/local classes capturing locals, `assert`, and switch expressions. All skip if `g++` is unavailable. Hand-written Java snippets live in `src/test/resources/samples/base/` and `samples/mapper/`; they are data files, not compiled tests, and are used by `ConversionTest` through the classpath.
 
 ## Runtime support
 
@@ -174,4 +174,4 @@ Mappers are the default: Java runtime types become native C++ equivalents and `L
 
 - This is a syntactic transpiler: no garbage collection, reflection, threads, or full Java standard library is provided. Generated `lib/` stubs and `cppRt/` helpers cover only part of what real Java code needs.
 - Java generic type arguments are preserved in generated signatures and class templates, but method-level type variables are erased (as in Java bytecode), and some complex wildcard/capture cases degrade to `Object`.
-- Some Java constructs are only partially supported. `synchronized` and switch expressions (`yield`) are logged and approximated; `break` in a non-primitive switch is approximate. Check `log.txt` after conversion for warnings.
+- Some Java constructs are only partially supported. `synchronized` is logged and approximated; `break` in a non-primitive switch is approximate. Check `log.txt` after conversion for warnings.
