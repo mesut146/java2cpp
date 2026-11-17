@@ -124,15 +124,8 @@ public class CType extends CExpression {
         if (isPrim() || type.equals("auto") || isTemplate) {
             return type;
         }
-        if (Config.normalizeTypes && scope != null) {
-            Set<Namespace> usings;
-            if (scope instanceof CHeader) {
-                usings = ((CHeader) scope).usings;
-            }
-            else {
-                usings = ((CSource) scope).usings;
-            }
-            return TypeHelper.normalizeType(this, usings).normal(scope);
+        if (Config.normalizeTypes && scope instanceof CHeader) {
+            return TypeHelper.normalizeType(this, ((CHeader) scope).usings).normal(scope);
         }
         return normal(scope);
     }

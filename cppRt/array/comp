@@ -1,6 +1,0 @@
-#!/bin/bash
-
-inc=/home/mesut/IdeaProjects/java2cpp/asd/array
-
-clear
-g++ -std=c++11 -o main.o -I{inc} main.cpp && ./main.o

@@ -1,15 +1,12 @@
 package com.mesut.j2cpp;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Config {
 
-    public static List<String> ignored = new ArrayList<>();
-
     public static boolean use_auto = true;
-    public static boolean use_boxing = true;
-    public static boolean full = true;
+
+    //translate java runtime types to native c++ equivalents (std::vector, std::string, ...)
+    //when false, java types are kept and library stubs are generated instead
+    public static boolean useMappers = true;
 
     public static boolean ns_type_nested = true;
     public static boolean ns_indent = false;
@@ -36,14 +33,11 @@ public class Config {
 
     //force all types inherit from java::lang::Object
     public static boolean baseClassObject = false;
-    public static boolean printDestructor = false;
 
     public static boolean ptr_parameter = true;
     public static boolean ptr_method = true;
     public static boolean ptr_field = true;
     public static boolean ptr_typeArg = true;
-    public static boolean ptr_varDecl = true;
-    public static boolean ptr_cast = true;
     //take outer ref as constructor arg otherwise create setter
     public static boolean outer_ref_cons_arg = false;
     //make all fields public
@@ -52,9 +46,6 @@ public class Config {
     public static boolean methods_public = true;
 
     public static String mainClass = null;
-
-    //use arr[idx] instead of vector.at(idx)
-    public static boolean array_access_bracket = false;
 
     //shrink types based on namespaces
     public static boolean normalizeTypes = true;
@@ -70,9 +61,4 @@ public class Config {
     public static String type_double = "double";
     public static String type_short = "char16_t";
     public static String type_boolean = "bool";
-
-    static {
-        ignored.add("java.lang.Throwable");
-    }
-
 }

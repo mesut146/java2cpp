@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.map;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.Util;
@@ -7,7 +8,7 @@ import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CName;
 import com.mesut.j2cpp.ast.CType;
-import com.mesut.j2cpp.visitor.Rust;
+import com.mesut.j2cpp.visitor.SourceVisitor;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -47,22 +48,10 @@ public class Mapper {
     }
 
     public void initMappers() throws IOException {
-        initMappers(false);
-    }
-
-    public void initMappers(boolean rust) throws IOException {
-        if (rust) {
-            String[] all = {"list.json", "set.json", "string-builder.json", "string.json", "map.json"};
-            for (String mapper : all) {
-                addMapper(getClass().getResourceAsStream("/rust/" + mapper));
-            }
-        }
-        else {
-            //String[] all = {"list.json", "map.json", "set.json", "string.json", "Boolean.json", "Integer.json"};
-            String[] all = {"list.json", "string.json", "Boolean.json"};
-            for (String mapper : all) {
-                addMapper(getClass().getResourceAsStream("/cpp/" + mapper));
-            }
+        String[] all = {"list.json", "map.json", "set.json", "string.json", "stack.json",
+                "Boolean.json", "Integer.json", "sys.json"};
+        for (String mapper : all) {
+            addMapper(getClass().getResourceAsStream("/cpp/" + mapper));
         }
     }
 
@@ -70,14 +59,40 @@ public class Mapper {
         addMapper(new FileInputStream(jsonPath));
     }
 
+    //names may be comma separated and may contain generics like Map<K,V>
+    static List<String> splitNames(String names) {
+        List<String> result = new ArrayList<>();
+        int depth = 0;
+        int start = 0;
+        for (int i = 0; i < names.length(); i++) {
+            char c = names.charAt(i);
+            if (c == '<') depth++;
+            else if (c == '>') depth--;
+            else if (c == ',' && depth == 0) {
+                result.add(names.substring(start, i).trim());
+                start = i + 1;
+            }
+        }
+        result.add(names.substring(start).trim());
+        return result;
+    }
+
+    public void collectIncludes(String binaryName, Set<String> out) {
+        if (!Config.useMappers) return;
+        ClassInfo info = classMap.get(binaryName);
+        if (info != null) out.addAll(info.includes);
+    }
+
     public void addMapper(InputStream is) throws IOException {
         JSONObject cls = new JSONObject(Util.read(is));
-        String target = cls.getString("target");
+        String target = cls.optString("target", null);
 
         ClassInfo info = new ClassInfo();
-        info.target = CType.parse(target);
+        if (target != null) {
+            info.target = CType.parse(target);
+        }
 
-        for (String name : cls.getString("name").split(" ")) {
+        for (String name : splitNames(cls.getString("name"))) {
             var type = JavaType.parse(name, info);
             if (info.typeVars.isEmpty()) {
                 info.typeVars.addAll(type.typeVars);
@@ -89,22 +104,14 @@ public class Mapper {
             info.includes.addAll(Arrays.asList(include.split(",")));
         }
 
-        if (cls.has("fields")) {
-            JSONArray farr = cls.getJSONArray("fields");
-            for (int i = 0; i < farr.length(); i++) {
-                JSONObject field = farr.getJSONObject(i);
-                FieldInfo fieldInfo = new FieldInfo();
-                fieldInfo.name = field.getString("name");
-                fieldInfo.target = field.getString("target");
-                fieldInfo.external = field.optBoolean("external", false);
-            }
-        }
-
         JSONArray methods = cls.getJSONArray("methods");
         for (int i = 0; i < methods.length(); i++) {
             JSONObject method = methods.getJSONObject(i);
             MethodInfo methodInfo = new MethodInfo();
+            methodInfo.owner = info;
             parseSignature(methodInfo, method.getString("name"));
+            methodInfo.external = method.optBoolean("external", false);
+            methodInfo.expr = method.optString("expr", null);
             if (method.get("target") instanceof JSONArray) {
                 for (Object o : method.getJSONArray("target")) {
                     methodInfo.target.add(o.toString());
@@ -123,57 +130,126 @@ public class Mapper {
     }
 
     String toStr(Expression expr, ITypeBinding binding) {
-        var visitor = new Rust(null, null);
-        visitor.binding = binding;
-        expr.accept(visitor);
-        return visitor.code.toString();
+        return toStr(expr, binding, null);
+    }
+
+    String toStr(Expression expr, ITypeBinding binding, Set<String> out) {
+        if (expr == null) return "";
+        return SourceVisitor.render(expr, binding, out);
     }
 
     public MethodInfo findInfo(IMethodBinding binding) {
+        if (!Config.useMappers) return null;
         ClassInfo classInfo = classMap.get(binding.getDeclaringClass().getBinaryName());
         if (classInfo == null) return null;//no mapping for this type
         return findMethod(classInfo, binding);
     }
 
-    public List<String> mapMethod(IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc) {
+    //a method can be declared on a supertype of the mapped class (e.g. Set.add)
+    public MethodInfo findInfo(IMethodBinding binding, ITypeBinding receiver) {
+        if (!Config.useMappers) return null;
         MethodInfo info = findInfo(binding);
+        if (info != null || receiver == null) return info;
+        return findInfoInHierarchy(binding, receiver, new HashSet<>());
+    }
+
+    private MethodInfo findInfoInHierarchy(IMethodBinding binding, ITypeBinding type, Set<ITypeBinding> seen) {
+        if (type == null || !seen.add(type)) return null;
+        ClassInfo classInfo = classMap.get(type.getBinaryName());
+        if (classInfo != null) {
+            MethodInfo info = findMethod(classInfo, binding);
+            if (info != null) return info;
+        }
+        MethodInfo info = findInfoInHierarchy(binding, type.getSuperclass(), seen);
+        if (info != null) return info;
+        for (ITypeBinding iface : type.getInterfaces()) {
+            info = findInfoInHierarchy(binding, iface, seen);
+            if (info != null) return info;
+        }
+        return null;
+    }
+
+    public List<String> mapMethod(IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc) {
+        return mapMethod(findInfo(binding), binding, args, scope, cc, null);
+    }
+
+    public List<String> mapMethod(IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc, ITypeBinding receiver) {
+        return mapMethod(findInfo(binding, receiver), binding, args, scope, cc, null);
+    }
+
+    public List<String> mapMethod(IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc, ITypeBinding receiver, Set<String> out) {
+        return mapMethod(findInfo(binding, receiver), binding, args, scope, cc, out);
+    }
+
+    private List<String> mapMethod(MethodInfo info, IMethodBinding binding, List<Expression> args, Expression scope, ITypeBinding cc, Set<String> out) {
         if (info == null) {
-            //no mapping
-            Logger.log(String.format("missing mapper in '%s' method='%s'", cc, binding));
+            if (Config.useMappers) {
+                Logger.log(String.format("missing mapper in '%s' method='%s'", cc, binding));
+            }
             return null;
+        }
+        if (out != null) {
+            if (info.owner != null) out.addAll(info.owner.includes);
+            out.addAll(info.includes);
         }
         //count var appearance
         List<String> result = new ArrayList<>();
         int varCnt = 0;
         for (var line : info.target) {
-            var pat = Pattern.compile("\\$0");
-            var m = pat.matcher(line);
+            var m = Pattern.compile(VAR_PATTERN).matcher(line);
             while (m.find()) {
                 varCnt++;
             }
         }
         String scopeVar = "";
-        if (!binding.isConstructor()) {
+        if (!binding.isConstructor() && scope != null) {
             //complex and multiple occurrence, declare as var
             if (!(scope instanceof Name) && varCnt > 1) {
                 scopeVar = "tmp_";
-                result.add(String.format("let %s = %s;", scopeVar, toStr(scope, cc)));
+                result.add(String.format("auto %s = %s;", scopeVar, toStr(scope, cc, out)));
             }
             else {
-                scopeVar = toStr(scope, cc);
+                scopeVar = toStr(scope, cc, out);
             }
         }
-        for (var line : info.target) {
-            for (int i = 0; i < args.size(); i++) {
-                line = line.replace("$" + (i + 1), toStr(args.get(i), cc));
+        if (info.expr != null) {
+            for (var line : info.target) {
+                result.add(substitute(line, args, cc, scopeVar, out));
             }
-            line = line.replace("$0", scopeVar);
-            result.add(line);
+            String expr = substitute(info.expr, args, cc, scopeVar, out);
+            result.add(prefixScope(info, info.expr, expr, scopeVar));
+        }
+        else {
+            for (int i = 0; i < info.target.size(); i++) {
+                String line = info.target.get(i);
+                String mapped = substitute(line, args, cc, scopeVar, out);
+                if (i == info.target.size() - 1) {
+                    mapped = prefixScope(info, line, mapped, scopeVar);
+                }
+                result.add(mapped);
+            }
         }
         if (info.warning != null) {
             Logger.log(cc, info.warning);
         }
         return result;
+    }
+
+    private static final String VAR_PATTERN = "\\$\\{varName\\}|\\$0";
+
+    private String substitute(String line, List<Expression> args, ITypeBinding cc, String scopeVar, Set<String> out) {
+        for (int i = 0; i < args.size(); i++) {
+            line = line.replace("$" + (i + 1), toStr(args.get(i), cc, out));
+        }
+        line = line.replace("${varName}", scopeVar);
+        return line.replace("$0", scopeVar);
+    }
+
+    //cpp targets without an explicit scope are member calls on the scope
+    private static String prefixScope(MethodInfo info, String original, String mapped, String scopeVar) {
+        if (info.external || info.expr != null || info.target.size() > 1 || scopeVar.isEmpty()) return mapped;
+        if (Pattern.compile(VAR_PATTERN).matcher(original).find()) return mapped;
+        return scopeVar + "->" + mapped;
     }
 
     static class JavaType {
@@ -187,8 +263,12 @@ public class Mapper {
         }
 
         public static JavaType parse(String name, ClassInfo classInfo) {
-            if (classInfo.typeVars.contains(name)) {
-                var res = new JavaType(name);
+            //mappers spell type variables as <T> or T
+            String simple = name.startsWith("<") && name.indexOf(">") != -1
+                    ? name.substring(1, name.indexOf(">")) : name;
+            simple = Util.trimSuffix(simple, "[]");
+            if (classInfo.typeVars.contains(simple)) {
+                var res = new JavaType(simple);
                 res.isGeneric = true;
                 return res;
             }
@@ -259,8 +339,10 @@ public class Mapper {
     }
 
     public CType mapType(CType type, CClass cc) {
+        if (!Config.useMappers) return type;
         if (classMap.containsKey(type.realName)) {
             ClassInfo info = classMap.get(type.realName);
+            if (info.target == null) return type;
             if (info.includes != null) {
                 if (cc != null)
                     for (String inc : info.includes) {
@@ -277,16 +359,20 @@ public class Mapper {
     }
 
     public ClassInfo findClass(ITypeBinding type) {
+        if (!Config.useMappers) return null;
         return classMap.get(type.getBinaryName());
     }
 
     public CType mapType(ITypeBinding type) {
+        if (!Config.useMappers) return new CType(type.getName());
         if (classMap.containsKey(type.getBinaryName())) {
             ClassInfo info = classMap.get(type.getBinaryName());
+            if (info.target == null) return new CType(type.getName());
             CType target = info.target.copy();
             target.typeNames.clear();
             //substitute type args
-            for (int i = 0; i < info.typeVars.size(); i++) {
+            int count = Math.min(info.typeVars.size(), type.getTypeArguments().length);
+            for (int i = 0; i < count; i++) {
                 target.typeNames.add(new CType(type.getTypeArguments()[i].getName()));
             }
             target.mapped = true;
@@ -300,6 +386,10 @@ public class Mapper {
             return map(name);
         }
         return name;
+    }
+
+    public String mapMethodName(String name) {
+        return mapParamName(name);
     }
 
     public CName mapFieldName(String name, CClass cc) {
@@ -342,7 +432,7 @@ public class Mapper {
 
     public static class ClassInfo {
         List<String> typeVars = new ArrayList<>();
-        CType target;
+        public CType target;
         public List<String> includes = new ArrayList<>();
         List<MethodInfo> methods = new ArrayList<>();
     }
@@ -353,11 +443,8 @@ public class Mapper {
         String warning;
         List<String> args = new ArrayList<>();
         public List<String> includes = new ArrayList<>();
-    }
-
-    static class FieldInfo {
-        String name;
-        boolean external = false;
-        String target;
+        public boolean external;
+        public String expr;
+        public ClassInfo owner;
     }
 }

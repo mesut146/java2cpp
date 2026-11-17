@@ -13,8 +13,8 @@
     <properties>
         <mainClass>com.mesut.j2cpp.Main</mainClass>
         <cmdClass>com.mesut.j2cpp.Cmd</cmdClass>
-        <maven.compiler.source>1.11</maven.compiler.source>
-        <maven.compiler.target>1.11</maven.compiler.target>
+        <maven.compiler.source>16</maven.compiler.source>
+        <maven.compiler.target>16</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -23,13 +23,13 @@
             <groupId>org.eclipse.jdt</groupId>
             <artifactId>org.eclipse.jdt.core</artifactId>
 <!--            <version>3.27.0</version>-->
-            <version>3.21.0</version>
+            <version>3.29.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20210307</version>
+            <version>20220320</version>
         </dependency>
 
         <dependency>
@@ -83,7 +83,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>${mainClass}}</mainClass>
+                    <mainClass>${mainClass}</mainClass>
                 </configuration>
             </plugin>
         </plugins>

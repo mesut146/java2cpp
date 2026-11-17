@@ -15,9 +15,9 @@ public class Cmd {
         }
         String srcDir = null;
         String destDir = null;
-        boolean rust = false;
         boolean stats = false;
         List<String> cp = new ArrayList<>();
+        List<String> mappers = new ArrayList<>();
 
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -26,60 +26,94 @@ public class Cmd {
                 case "--help":
                     usage();
                     return;
-                case "rust":
-                    rust = true;
-                    break;
                 case "-src":
                 case "-source":
-                    srcDir = args[++i];
+                    srcDir = value(args, i, arg);
+                    i++;
                     break;
                 case "-output":
                 case "-out":
-                    destDir = args[++i];
+                    destDir = value(args, i, arg);
+                    i++;
                     break;
                 case "-cp":
                 case "-classpath":
-                    cp.add(args[++i]);
+                    cp.add(value(args, i, arg));
+                    i++;
                     break;
                 case "-mapper":
-                    String path = args[++i];
-                    if (!new File(path).exists()) {
-                        File file = new File(srcDir, path);
-                        if (file.exists()) {
-                            path = file.getAbsolutePath();
-                        }
-                        else {
-                            throw new RuntimeException("mapper not found: " + path);
-                        }
-                    }
-                    Mapper.instance.addMapper(path);
+                    mappers.add(value(args, i, arg));
+                    i++;
                     break;
-                case "-stats": {
+                case "-stats":
                     stats = true;
                     break;
-                }
-            }
-            if (srcDir == null) {
-                System.out.println("enter source path");
-            }
-            if (destDir == null) {
-                System.out.println("enter output path");
-            }
-            Converter converter = new Converter(srcDir, destDir, rust);
-            if (cp.isEmpty()) {
-                System.out.println("converting without classpath");
-            }
-            else {
-                converter.classpath.addAll(cp);
-            }
-            Mapper.instance.initMappers(rust);
-            if (stats) {
-                converter.stats();
-            }
-            else {
-                converter.convert();
+                case "-no-mappers":
+                case "-nomap":
+                    Config.useMappers = false;
+                    break;
+                default:
+                    System.err.println("unknown option: " + arg);
+                    break;
             }
         }
+
+        if (srcDir == null) {
+            System.err.println("missing source path (-src)");
+        }
+        if (destDir == null) {
+            System.err.println("missing output path (-out)");
+        }
+        if (srcDir == null || destDir == null) {
+            usage();
+            return;
+        }
+        if (!new File(srcDir).isDirectory()) {
+            System.err.println("source path is not a directory: " + srcDir);
+            usage();
+            return;
+        }
+        //resolve after parsing so -mapper can appear before -src
+        if (Config.useMappers) {
+            for (String path : mappers) {
+                Mapper.instance.addMapper(findMapper(path, srcDir).getAbsolutePath());
+            }
+        }
+        else if (!mappers.isEmpty()) {
+            System.err.println("warning: -mapper ignored because mappers are disabled (-no-mappers)");
+        }
+
+        Converter converter = new Converter(srcDir, destDir);
+        if (cp.isEmpty()) {
+            System.out.println("converting without classpath");
+        }
+        else {
+            converter.classpath.addAll(cp);
+        }
+        if (Config.useMappers) {
+            Mapper.instance.initMappers();
+        }
+        if (stats) {
+            converter.stats();
+        }
+        else {
+            converter.convert();
+        }
+    }
+
+    private static String value(String[] args, int i, String option) {
+        if (i + 1 >= args.length) {
+            throw new IllegalArgumentException("missing value for " + option);
+        }
+        return args[i + 1];
+    }
+
+    private static File findMapper(String path, String srcDir) {
+        File file = new File(path);
+        if (file.exists()) return file;
+        File inSource = new File(srcDir, path);
+        if (inSource.exists()) return inSource;
+        throw new IllegalArgumentException("mapper not found: " + path);
     }
 
     static void usage() {
@@ -88,5 +122,8 @@ public class Cmd {
         System.out.println("-source, -src       source directory to be converted");
         System.out.println("-output, -out,      output directory to write c++ .h and .cpp files");
         System.out.println("-cp, --classpath    jar file or source directory for classpath, can be multiple");
+        System.out.println("-mapper <path>      additional mapper json, resolved relative to cwd or source dir");
+        System.out.println("-stats              collect statistics instead of converting");
+        System.out.println("-no-mappers         keep java types and generate library stubs instead");
     }
 }

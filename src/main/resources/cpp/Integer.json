@@ -1,14 +1,15 @@
 {
   "name": "java.lang.Integer",
   "target": "int",
+  "include": "<string>,<algorithm>,CppHelper.h",
   "methods": [
     {
       "name": "Integer(java.lang.String)",
       "external": true,
-      "target": "($1 == \"true\")"
+      "target": "std::stoi($1)"
     },
     {
-      "name": "Boolean(int)",
+      "name": "Integer(int)",
       "external": true,
       "target": "$1"
     },
@@ -20,7 +21,7 @@
     {
       "name": "parseInt(java.lang.String,int)",
       "external": true,
-      "target": "std::stoi($1,nullptr,$2)"
+      "target": "std::stoi($1, nullptr, $2)"
     },
     {
       "name": "valueOf(java.lang.String)",
@@ -35,30 +36,20 @@
     {
       "name": "compare(int,int)",
       "external": true,
-      "target": "($1 < $2) ? -1 : (($1 == $2) ? 0 : 1)"
-    },
-    {
-      "name": "toString(int)",
-      "target": "std::to_string($1)",
-      "external": true
+      "target": "(($1 < $2) ? -1 : (($1 == $2) ? 0 : 1))"
     },
     {
       "name": "toHexString(int)",
       "include": "<sstream>",
-      "target": "std::stringstream ss;\nss << std::hex << $1;\n",
+      "target": ["std::stringstream ss;", "ss << std::hex << $1;"],
       "expr": "ss.str()"
     },
     {
       "name": "toBinaryString(int)",
       "include": "<bitset>",
-      "target": "std::string binary = std::bitset<32>($1).to_string();\nbinary.erase(0, std::min(binary.find_first_not_of('0'), binary.size() - 1));",
+      "target": ["std::string binary = std::bitset<32>($1).to_string();",
+                 "binary.erase(0, std::min(binary.find_first_not_of('0'), binary.size() - 1));"],
       "expr": "binary"
-    },
-    {
-      "name": "ceil(int)",
-      "external": true,
-      "target": "ceil($1)",
-      "include": "<cmath>"
     },
     {
       "name": "max(int,int)",
@@ -73,32 +64,27 @@
     {
       "name": "rotateLeft(int,int)",
       "external": true,
-      "target": "(($1 << $2) | ($1 >>> -$2))"
+      "target": "CppHelper::rotateLeft($1, $2)"
     },
     {
       "name": "rotateRight(int,int)",
       "external": true,
-      "target": "(($1 >>> $2) | ($1 << -$2))"
+      "target": "CppHelper::rotateRight($1, $2)"
     },
     {
       "name": "signum(int)",
       "external": true,
-      "target": "(($1 >> 31) | (-$1 >>> 31))"
+      "target": "CppHelper::signum($1)"
     },
     {
       "name": "reverseBytes(int)",
       "external": true,
-      "target": "((($1>>>24))|(($1>>8)&0xFF00)|(($1<<8)&0xFF0000)|(($1 << 24)))"
+      "target": "CppHelper::reverseBytes($1)"
     },
     {
       "name": "bitCount(int)",
       "external": true,
-      "target": [
-        "int tmp",
-        "tmp = tmp - ((tmp >> 1) & 0x55555555);",
-        "tmp = (tmp & 0x33333333) + ((tmp >> 2) & 0x33333333);"
-      ],
-      "expr": "(((tmp + (tmp >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24"
+      "target": "CppHelper::bitCount($1)"
     },
     {
       "name": "numberOfTrailingZeros(int)",
@@ -109,18 +95,6 @@
       "name": "numberOfLeadingZeros(int)",
       "external": true,
       "target": "CppHelper::numberOfLeadingZeros($1)"
-    }
-  ],
-  "fields": [
-    {
-      "name": "MAX_VALUE",
-      "target": "INT32_MAX",
-      "external": true
-    },
-    {
-      "name": "MIN_VALUE",
-      "target": "INT32_MIN",
-      "external": true
     }
   ]
 }

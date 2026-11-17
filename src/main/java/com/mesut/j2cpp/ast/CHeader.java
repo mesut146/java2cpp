@@ -52,7 +52,7 @@ public class CHeader extends CNode {
             //append all cons
             for (CMethod method : cc.methods) {
                 //filter
-                if (method.isCons && method.thisCall == null) {
+                if (method.isCons) {
                     consList.add(method);
                 }
             }
@@ -80,6 +80,7 @@ public class CHeader extends CNode {
         handleFieldInits();
         StringBuilder sb = new StringBuilder();
         sb.append("#pragma once\n\n");
+        sb.append("#include <string>\n#include <vector>\n#include <unordered_set>\n#include <unordered_map>\n");
         sb.append(includes);
         sb.append("\n");
         if (forwardDeclarator != null) {

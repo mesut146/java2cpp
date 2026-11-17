@@ -9,6 +9,7 @@ import com.mesut.j2cpp.util.ForwardDeclarator;
 import com.mesut.j2cpp.visitor.PreVisitor;
 import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 
@@ -59,7 +60,7 @@ public class LibHandler {
         if (binding.getDeclaringClass() == null) {
             return;
         }
-        if (!binding.isField() || !binding.isEnumConstant() || binding.getDeclaringClass().isFromSource()) {
+        if (!binding.isField() || binding.getDeclaringClass().isFromSource()) {
             return;
         }
         CClass cc = getClazz(binding.getDeclaringClass().getErasure());
@@ -71,6 +72,7 @@ public class LibHandler {
         CField field = new CField();
         field.setName(CName.from(binding.getName()));
         field.setType(TypeVisitor.fromBinding(binding.getType(), cc));
+        field.setStatic(Modifier.isStatic(binding.getModifiers()));
 
         cc.addField(field);
     }

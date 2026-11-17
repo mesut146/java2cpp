@@ -3,7 +3,6 @@ package com.mesut.j2cpp;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CMethod;
-import com.mesut.j2cpp.ast.CSource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,13 +39,6 @@ public class Util {
         Files.createDirectories(path.getParent());
         Files.write(path, header.toString().getBytes());
     }
-
-    public static void writeSource(CSource source, Path dir) throws IOException {
-        Path path = Paths.get(dir.toString(), source.name);
-        Files.createDirectories(path.getParent());
-        Files.write(path, source.toString().getBytes());
-    }
-
 
     public static String read(InputStream is) throws IOException {
         StringBuilder sb = new StringBuilder();

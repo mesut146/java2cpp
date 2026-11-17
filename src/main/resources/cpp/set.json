@@ -1,5 +1,5 @@
 {
-  "name": "java.util.Set,java.util.HashSet",
+  "name": "java.util.Set<T>,java.util.HashSet<T>",
   "target": "std::unordered_set",
   "include": "<unordered_set>",
   "methods": [

@@ -14,7 +14,6 @@ public class Code {
     int level = 0;
     String indent = "";
     List<String> usings = new ArrayList<>();
-    boolean rust = false;
 
     void init() {
         indent = "";
@@ -38,16 +37,12 @@ public class Code {
     }
 
     String str(ITypeBinding b) {
-        if (rust) {
-            return mapType(b);
-        }
         if (b.getName().equals("void")) return "void";
         if (b.isTypeVariable()) {
             return TypeHelper.getObjectType().toString();
         }
 
         CType ct = TypeVisitor.fromBinding(b);
-        if (Config.full) ct.typeNames.clear();
         String s = ct.toString();
         for (String u : usings) {
             if (s.startsWith(u)) {
@@ -89,26 +84,18 @@ public class Code {
     }
 
     public String mapType(Type type) {
-        if (rust) {
-            return RustHelper.mapType(type);
-        }
-        else {
-            return type.toString();
-        }
+        return type.toString();
     }
 
     public String mapType(ITypeBinding type) {
-        if (rust) {
-            return RustHelper.mapType(type);
-        }
-        else {
-            return type.getName();
-        }
+        return type.getName();
     }
 
     public String ptr(ITypeBinding b) {
         String s = str(b);
-        if (!b.isPrimitive()) {
+        //a mapper may turn a wrapper such as Integer into a primitive
+        CType ct = TypeVisitor.fromBinding(b);
+        if (!b.isPrimitive() && !ct.isPrim() && !ct.isTemplate) {
             s = s + "*";
         }
         return s;

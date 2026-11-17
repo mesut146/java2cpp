@@ -13,7 +13,8 @@
     },
     {
       "name": "addAll(java.util.Collection)",
-      "target": "insert(${varName}->end(), $1->begin(), $1->end())"
+      "target": "${varName}->insert(${varName}->end(), $1->begin(), $1->end())",
+      "external": true
     },
     {
       "name": "addAll(int,java.util.Collection)",
@@ -30,11 +31,13 @@
     },
     {
       "name": "remove(int)",
-      "target": "erase(${varName}->begin() + $1)"
+      "target": "${varName}->erase(${varName}->begin() + $1)",
+      "external": true
     },
     {
       "name": "remove(<T>)",
-      "target": "erase(std::find(${varName}->begin(),${varName}->end(), $1));",
+      "target": "${varName}->erase(std::find(${varName}->begin(), ${varName}->end(), $1))",
+      "external": true,
       "include": "<algorithm>"
     },
     {
@@ -57,12 +60,18 @@
     },
     {
       "name": "contains(java.lang.Object)",
-      "target": "(${varName}->find($1) != ${varName}->end())",
-      "external": true
+      "target": "(std::find(${varName}->begin(), ${varName}->end(), $1) != ${varName}->end())",
+      "external": true,
+      "include": "<algorithm>"
     },
     {
       "name": "toArray()",
-      "target": "new std::vector<T>(${varName}->begin(), ${varName}->end())",
+      "target": "CppHelper::toArray(${varName})",
+      "external": true
+    },
+    {
+      "name": "toArray(<T>[])",
+      "target": "CppHelper::toArray(${varName})",
       "external": true
     }
   ]

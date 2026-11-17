@@ -17,8 +17,6 @@ public class CMethod extends ModifierNode {
     public boolean isPureVirtual = false;
     public boolean isOverride = false;
     public CClass parent;
-    public Call superCall;//super(args)
-    public Call thisCall;//this(args)
     public CBlockStatement body;
     public String bodyStr;
 
@@ -35,13 +33,9 @@ public class CMethod extends ModifierNode {
     }
 
     public String toString() {
-        getScope(template, body, thisCall, superCall);
+        getScope(template, body);
         getScope(params);
-        boolean source = scope instanceof CSource;
         StringBuilder sb = new StringBuilder();
-        if (!parent.template.isEmpty() && source) {
-            sb.append(parent.template).append("\n");
-        }
         if (!template.isEmpty()) {
             getScope(template);
             sb.append(template.toString()).append("\n");
@@ -50,52 +44,34 @@ public class CMethod extends ModifierNode {
             type = type.copy();
             type.setPointer(Config.ptr_method);
             getScope(type);
-            if (isStatic() && !source) {
+            if (isStatic()) {
                 sb.append("static ");
             }
-            if (isVirtual() && !source) {
+            if (isVirtual()) {
                 sb.append("virtual ");
             }
             sb.append(type);
             sb.append(" ");
-        }
-        if (!parent.isAnonymous && source) {
-            sb.append(parent.name);
-            if (!parent.template.isEmpty()) {
-                sb.append("<");
-                sb.append(PrintHelper.joinStr(parent.template.getNames(), ", "));
-                sb.append(">");
-            }
-            sb.append("::");
         }
         sb.append(name.name);
 
         //params
         sb.append("(").append(PrintHelper.joinStr(params, ", ")).append(")");
 
-        if (source) {
-            if (superCall != null) {
-                sb.append(" : ");
-                sb.append(superCall);
-            }
-            if (thisCall != null) {
-                if (superCall != null) {
-                    sb.append(", ");
-                }
-                else {
-                    sb.append(" : ");
-                }
-                sb.append(thisCall);
-            }
-            sb.append("\n").append(body);
+        if (isOverride) {
+            sb.append(" override");
+        }
+        if (isPureVirtual) {
+            sb.append(" = 0");
+        }
+        else if (parent != null && !parent.fromSource && is(VIRTUAL_NAME) && body == null) {
+            //library stub methods get an inline body so generated subclasses
+            //can call or inherit them without a separate definition
+            sb.append(" { ");
+            if (!type.isVoid()) sb.append("return {}; ");
+            sb.append("}");
         }
         else {
-            if (isOverride){
-                sb.append(" override");
-            }
-            if (isPureVirtual) {
-                sb.append(" = 0");
-            }
             sb.append(";");
         }
         return sb.toString();

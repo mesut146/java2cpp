@@ -1,11 +1,26 @@
 {
   "name": "java.lang.String",
   "target": "std::string",
-  "include": "<string>",
+  "include": "<string>,<cctype>,CppHelper.h",
   "methods": [
     {
+      "name": "String(java.lang.String)",
+      "target": "new std::string(*$1)",
+      "external": true
+    },
+    {
+      "name": "String(byte[])",
+      "target": "new std::string($1->begin(), $1->end())",
+      "external": true
+    },
+    {
+      "name": "String(char[])",
+      "target": "new std::string($1->begin(), $1->end())",
+      "external": true
+    },
+    {
       "name": "length()",
-      "target": "$0.size()"
+      "target": "$0->size()"
     },
     {
       "name": "substring(int)",
@@ -17,11 +32,11 @@
     },
     {
       "name": "indexOf(java.lang.String)",
-      "target": "find($1)"
+      "target": "find(*$1)"
     },
     {
       "name": "indexOf(java.lang.String,int)",
-      "target": "find($1, $2)"
+      "target": "find(*$1, $2)"
     },
     {
       "name": "indexOf(int)",
@@ -45,28 +60,30 @@
     },
     {
       "name": "hashCode()",
-      "target": "std::hash<std::string>($0)"
+      "target": "std::hash<std::string>()(*$0)"
     },
     {
       "name": "compareTo(java.lang.String)",
-      "target": "$0.compare(*$1)"
+      "target": "$0->compare(*$1)"
     },
     {
       "name": "charAt(int)",
-      "target": "$0.at($1)"
+      "target": "$0->at($1)"
     },
     {
-      "name": "contains(java.lang.String)",
-      "target": "($0->find($1) != std::string::npos)",
+      "name": "contains(java.lang.CharSequence)",
+      "target": "($0->find(*$1) != std::string::npos)",
       "external": true
     },
     {
       "name": "endsWith(java.lang.String)",
-      "target": "compare($0.size() - $1.size(), $1.size(), $1)"
+      "target": "CppHelper::endsWith($0, $1)",
+      "external": true
     },
     {
       "name": "startsWith(java.lang.String)",
-      "target": "$0.compare(0, $1->size(), *$1)"
+      "target": "CppHelper::startsWith($0, $1)",
+      "external": true
     },
     {
       "name": "toUpperCase()",
@@ -112,7 +129,7 @@
     },
     {
       "name": "equals(java.lang.Object)",
-      "target": "(*${varName} == $1)",
+      "target": "(*${varName} == *$1)",
       "external": true
     },
     {

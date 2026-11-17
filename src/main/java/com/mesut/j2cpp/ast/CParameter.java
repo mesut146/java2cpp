@@ -35,7 +35,7 @@ public class CParameter extends CNode {
         if (isVarArg) {
             sb.append("...");
         }
-        if (Config.printParamNames || scope instanceof CSource) {
+        if (Config.printParamNames) {
             sb.append(name);
         }
         return sb.toString();

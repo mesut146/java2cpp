@@ -41,8 +41,13 @@ public class PreVisitor {
     }
 
     public static CClass visitType(ITypeBinding binding, CClass outer) {
-        CClass cc = initType(binding, ClassMap.sourceMap.get(binding), outer);
+        return visitType(binding, ClassMap.sourceMap.get(binding), outer);
+    }
+
+    public static CClass visitType(ITypeBinding binding, CClass cc, CClass outer) {
+        cc = initType(binding, cc, outer);
         if (cc.initMembers) return cc;
+        cc.initMembers = true;
         //members
         for (IMethodBinding methodBinding : binding.getDeclaredMethods()) {
             visitMethod(methodBinding, cc);
@@ -53,7 +58,6 @@ public class PreVisitor {
         for (IVariableBinding field : binding.getDeclaredFields()) {
             visitField(field, cc);
         }
-        cc.initMembers = true;
         return cc;
     }
 
@@ -65,8 +69,10 @@ public class PreVisitor {
         List<CType> params = new ArrayList<>();
         for (ITypeBinding prm : binding.getParameterTypes()) {
             params.add(TypeVisitor.fromBinding(prm, cc));
+            LibHandler.instance.addType(prm);
         }
         CType type = TypeVisitor.fromBinding(binding.getReturnType());
+        LibHandler.instance.addType(binding.getReturnType());
         CMethod method = ClassMap.getAddedMethod(cc, binding, params, type);
         if (method != null) {
             return method;
@@ -80,7 +86,12 @@ public class PreVisitor {
         method.setStatic(Modifier.isStatic(binding.getModifiers()));
         method.setPublic(Modifier.isPublic(binding.getModifiers()));
         method.setNative(Modifier.isNative(binding.getModifiers()));
-        if (cc.isInterface || Modifier.isAbstract(binding.getModifiers())) {
+        if (!cc.fromSource && Modifier.isAbstract(binding.getModifiers())) {
+            //library stubs use concrete methods so generated subclasses can be instantiated
+            method.setPublic(true);
+            method.setVirtual(true);
+        }
+        else if (cc.isInterface || Modifier.isAbstract(binding.getModifiers())) {
             method.isPureVirtual = true;
             method.setPublic(true);
             method.setVirtual(true);
@@ -92,7 +103,7 @@ public class PreVisitor {
         for (ITypeBinding tp : binding.getTypeParameters()) {
             method.template.add(new CType(tp.getName(), true));
         }
-        if (!binding.isConstructor()){
+        if (!binding.isConstructor() && cc.fromSource){
             handleVirtual(binding, method);
         }
 
@@ -133,13 +144,16 @@ public class PreVisitor {
     public static CField visitField(IVariableBinding binding, CClass cc) {
         if (cc == null) return null;
         CType type = TypeVisitor.fromBinding(binding.getType(), cc);
+        LibHandler.instance.addType(binding.getType());
         CField field = ClassMap.getAddedField(cc, binding, type);
         if (field != null) {
             return field;
         }
         field = new CField();
         cc.addField(field);
-        if (Modifier.isStatic(binding.getModifiers()) && Modifier.isFinal(binding.getModifiers()) && binding.getType().isPrimitive()) {
+        boolean fromSource = binding.getDeclaringClass() != null && binding.getDeclaringClass().isFromSource();
+        if (fromSource && Modifier.isStatic(binding.getModifiers()) && Modifier.isFinal(binding.getModifiers())
+                && binding.getType().isPrimitive() && binding.getConstantValue() != null) {
             //constexpr
             field.set(ModifierNode.CONSTEXPR_NAME);
         }

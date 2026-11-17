@@ -1,0 +1,246 @@
+#pragma once
+
+//helpers referenced by the bundled cpp mappers (String.format/replace/split, etc.)
+//header-only so generated sources only need this file on the include path
+
+#include <cstdio>
+#include <cstring>
+#include <initializer_list>
+#include <optional>
+#include <type_traits>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+namespace CppHelper {
+
+namespace detail {
+inline const char *arg(const std::string *s) { return s ? s->c_str() : ""; }
+inline const char *arg(const std::string &s) { return s.c_str(); }
+template <typename T> T arg(T value) { return value; }
+
+inline std::string toString(std::string *s) { return s ? *s : std::string(); }
+inline std::string toString(const std::string *s) { return s ? *s : std::string(); }
+inline std::string toString(const std::string &s) { return s; }
+inline std::string toString(const char *s) { return s ? std::string(s) : std::string(); }
+inline std::string toString(char c) { return std::string(1, c); }
+inline std::string toString(wchar_t c) { return std::string(1, static_cast<char>(c)); }
+template <typename T> std::string toString(T value) { return std::to_string(value); }
+} //namespace detail
+
+//the "+" operator on Java strings
+template <typename... Args>
+std::string *concat(Args... args) {
+    std::string result;
+    using expander = int[];
+    (void)expander{0, (result += detail::toString(args), 0)...};
+    return new std::string(result);
+}
+
+//String.format(String,Object[])
+template <typename... Args>
+std::string *format(std::string *fmt, Args... args) {
+    if (fmt == nullptr) return new std::string();
+    int size = std::snprintf(nullptr, 0, fmt->c_str(), detail::arg(args)...) + 1;
+    if (size <= 0) throw std::runtime_error("CppHelper::format failed");
+    std::unique_ptr<char[]> buf(new char[size]);
+    std::snprintf(buf.get(), size, fmt->c_str(), detail::arg(args)...);
+    return new std::string(buf.get(), buf.get() + size - 1);
+}
+
+//array creation with an initializer list: new T[]{...}
+template <typename T>
+std::vector<T> *from(std::initializer_list<T> values) {
+    return new std::vector<T>(values);
+}
+
+//array creation with dimensions: new T[d1][d2]... -> arrays::makeN<T>(d1,d2...)
+//stored as nested vectors of pointers, matching the generator's array access
+template <typename T>
+std::vector<T> *make1(int d1) {
+    return new std::vector<T>(d1 > 0 ? static_cast<size_t>(d1) : 0);
+}
+
+template <typename T>
+std::vector<std::vector<T> *> *make2(int d1, int d2) {
+    auto outer = new std::vector<std::vector<T> *>(d1 > 0 ? static_cast<size_t>(d1) : 0);
+    for (int i = 0; i < d1; ++i) outer->at(i) = make1<T>(d2);
+    return outer;
+}
+
+template <typename T>
+std::vector<std::vector<std::vector<T> *> *> *make3(int d1, int d2, int d3) {
+    auto outer = new std::vector<std::vector<std::vector<T> *> *>(d1 > 0 ? static_cast<size_t>(d1) : 0);
+    for (int i = 0; i < d1; ++i) outer->at(i) = make2<T>(d2, d3);
+    return outer;
+}
+
+template <typename T>
+std::vector<std::vector<std::vector<std::vector<T> *> *> *> *make4(int d1, int d2, int d3, int d4) {
+    auto outer = new std::vector<std::vector<std::vector<std::vector<T> *> *> *>(d1 > 0 ? static_cast<size_t>(d1) : 0);
+    for (int i = 0; i < d1; ++i) outer->at(i) = make3<T>(d2, d3, d4);
+    return outer;
+}
+
+//List.toArray()
+template <typename T>
+std::vector<T> *toArray(std::vector<T *> *values) {
+    auto result = new std::vector<T>();
+    if (values != nullptr) {
+        for (T *value : *values) result->push_back(value ? *value : T());
+    }
+    return result;
+}
+
+//String.getBytes(String): encoding is accepted but not converted
+inline bool startsWith(std::string *s, std::string *prefix) {
+    if (s == nullptr || prefix == nullptr || prefix->size() > s->size()) return false;
+    return s->compare(0, prefix->size(), *prefix) == 0;
+}
+
+inline bool endsWith(std::string *s, std::string *suffix) {
+    if (s == nullptr || suffix == nullptr || suffix->size() > s->size()) return false;
+    return s->compare(s->size() - suffix->size(), suffix->size(), *suffix) == 0;
+}
+
+inline std::string *encode(std::string *s, std::string *encoding) {
+    (void)encoding;
+    return new std::string(s ? *s : std::string());
+}
+
+inline std::string *replace(std::string *s, std::string *from, std::string *to) {
+    if (s == nullptr) return new std::string();
+    if (from == nullptr || to == nullptr || from->empty()) return new std::string(*s);
+    std::string result = *s;
+    size_t pos = 0;
+    while ((pos = result.find(*from, pos)) != std::string::npos) {
+        result.replace(pos, from->size(), *to);
+        pos += to->size();
+    }
+    return new std::string(result);
+}
+
+//String.split(String)
+inline std::vector<std::string *> *split(std::string *s, std::string *sep) {
+    auto result = new std::vector<std::string *>();
+    if (s == nullptr) return result;
+    if (sep == nullptr || sep->empty()) {
+        result->push_back(new std::string(*s));
+        return result;
+    }
+    size_t start = 0;
+    while (true) {
+        size_t pos = s->find(*sep, start);
+        if (pos == std::string::npos) {
+            result->push_back(new std::string(s->substr(start)));
+            break;
+        }
+        result->push_back(new std::string(s->substr(start, pos - start)));
+        start = pos + sep->size();
+    }
+    return result;
+}
+
+//System.arraycopy
+template <typename T>
+void arraycopy(T *src, int srcPos, T *dest, int destPos, int length) {
+    if (src == nullptr || dest == nullptr || length <= 0) return;
+    std::memmove(dest + destPos, src + srcPos, static_cast<size_t>(length) * sizeof(T));
+}
+
+inline int rotateLeft(int value, int distance) {
+    unsigned int v = static_cast<unsigned int>(value);
+    int n = distance & 31;
+    if (n == 0) return value;
+    return static_cast<int>((v << n) | (v >> (32 - n)));
+}
+
+inline int rotateRight(int value, int distance) {
+    unsigned int v = static_cast<unsigned int>(value);
+    int n = distance & 31;
+    if (n == 0) return value;
+    return static_cast<int>((v >> n) | (v << (32 - n)));
+}
+
+inline int signum(int value) { return (value > 0) - (value < 0); }
+
+inline int reverseBytes(int value) {
+    unsigned int v = static_cast<unsigned int>(value);
+    return static_cast<int>(((v & 0x000000FFu) << 24) | ((v & 0x0000FF00u) << 8) |
+                            ((v & 0x00FF0000u) >> 8) | ((v & 0xFF000000u) >> 24));
+}
+
+inline int bitCount(int value) {
+    unsigned int v = static_cast<unsigned int>(value);
+    int count = 0;
+    for (; v != 0; v &= v - 1) ++count;
+    return count;
+}
+
+inline int numberOfTrailingZeros(int value) {
+    unsigned int v = static_cast<unsigned int>(value);
+    if (v == 0) return 32;
+    int count = 0;
+    while ((v & 1u) == 0) { v >>= 1; ++count; }
+    return count;
+}
+
+inline int numberOfLeadingZeros(int value) {
+    unsigned int v = static_cast<unsigned int>(value);
+    if (v == 0) return 32;
+    int count = 0;
+    unsigned int mask = 1u << 31;
+    while ((v & mask) == 0) { ++count; mask >>= 1; }
+    return count;
+}
+
+} //namespace CppHelper
+
+//older generated code refers to the array helpers as arrays::*
+namespace arrays = CppHelper;
+
+namespace j2cpp {
+
+//Execute try and finally with Java semantics: finally always runs, and a value
+//returned from finally overrides the try/catch result or any pending exception.
+//An exception thrown from finally replaces any pending exception.
+//
+//The generator passes the try/catch part and the finally part as lambdas that
+//return std::optional<R> (with R the method's return type). A Java `return X;`
+//becomes `return X;` inside the lambda (implicitly wrapped in the optional);
+//falling off the end becomes `return std::nullopt;`. An empty optional from the
+//try part means the try block completed normally without returning, so execution
+//continues after the try/finally.
+template <typename TryCode, typename FinallyCode>
+auto try_finally_value(TryCode&& tryCode, FinallyCode&& finallyCode) -> decltype(tryCode()) {
+    decltype(tryCode()) result;
+    try {
+        result = tryCode();
+    }
+    catch (...) {
+        auto fin = finallyCode();
+        if (fin.has_value()) return fin;
+        throw;
+    }
+    auto fin = finallyCode();
+    if (fin.has_value()) return fin;
+    return result;
+}
+
+//void version: the try lambda returns true if it executed a Java `return;`.
+template <typename TryCode, typename FinallyCode>
+bool try_finally_void(TryCode&& tryCode, FinallyCode&& finallyCode) {
+    bool returned = false;
+    try {
+        returned = tryCode();
+    }
+    catch (...) {
+        finallyCode();
+        throw;
+    }
+    finallyCode();
+    return returned;
+}
+
+} //namespace j2cpp

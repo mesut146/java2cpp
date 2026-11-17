@@ -1,5 +1,6 @@
 {
   "name": "java.lang.System",
+  "include": "CppHelper.h",
   "methods": [
     {
       "name": "arraycopy(java.lang.Object,int,java.lang.Object,int,int)",

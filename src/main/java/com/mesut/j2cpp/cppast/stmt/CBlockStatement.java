@@ -23,9 +23,7 @@ public class CBlockStatement extends CStatement {
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
         for (CStatement statement : statements) {
-            if (!(statement instanceof CEmptyStatement)) {
-                sb.append(PrintHelper.body(statement.toString(), "    "));
-            }
+            sb.append(PrintHelper.body(statement.toString(), "    "));
         }
         sb.append("}");
         return sb.toString();

@@ -235,15 +235,6 @@ public class CClass extends CStatement {
         }
     }
 
-    public void printDestructor() {
-        //todo
-        CMethod destructor = new CMethod();
-        destructor.parent = this;
-        destructor.name = new CName("~" + name);
-        destructor.setVirtual(true);
-        append("virtual ~").append(name).append("(){}");
-    }
-
     public CType getType() {
         if (type == null) {
             if (ns.isEmpty()) {

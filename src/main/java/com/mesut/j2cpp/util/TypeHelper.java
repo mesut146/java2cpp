@@ -30,7 +30,7 @@ public class TypeHelper {
     }
 
     public static String toCType(String ty) {
-        if ((Config.full || !Config.use_boxing) && prims.containsKey(ty)) {
+        if (prims.containsKey(ty)) {
             return prims.get(ty);
         }
         return ty;

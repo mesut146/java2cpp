@@ -17,14 +17,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings("unchecked")
 public class HeaderWriter {
 
     public List<CClass> classes = new ArrayList<>();
     public Namespace ns;
-    SourceVisitor2 sourceVisitor2;
+    SourceVisitor sourceVisitor;
     Code code;
     CompilationUnit cu;
     Path dir;
@@ -87,6 +89,8 @@ public class HeaderWriter {
         PackageDeclaration pd = cu.getPackage();
         if (pd == null) return;
         String s = pd.getName().toString();
+        //types in the current namespace should be printed without their prefix
+        code.usings.add(s.replace(".", "::"));
         if (Config.ns_type_nested) {
             for (String cur : s.split("\\.")) {
                 if (Config.ns_nested_indent) {
@@ -128,13 +132,65 @@ public class HeaderWriter {
         }
     }
 
+    private void addSourceInclude(ITypeBinding binding, Set<String> headers) {
+        if (binding == null) return;
+        if (binding.isArray()) {
+            addSourceInclude(binding.getElementType(), headers);
+            return;
+        }
+        if (binding.isPrimitive() || binding.isTypeVariable() || binding.isWildcardType()) return;
+        if (binding.isParameterizedType()) {
+            for (ITypeBinding arg : binding.getTypeArguments()) addSourceInclude(arg, headers);
+        }
+        if (binding.isFromSource() && binding.getBinaryName() != null) {
+            headers.add(binding.getBinaryName().replace("$", "_").replace(".", "/") + ".h");
+        }
+    }
+
+    private Set<String> sourceIncludes(ITypeBinding binding, List<BodyDeclaration> bodies) {
+        Set<String> headers = new LinkedHashSet<>();
+        addSourceInclude(binding.getSuperclass(), headers);
+        for (ITypeBinding iface : binding.getInterfaces()) addSourceInclude(iface, headers);
+        for (BodyDeclaration body : bodies) {
+            if (body instanceof FieldDeclaration) {
+                for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) ((FieldDeclaration) body).fragments()) {
+                    addSourceInclude(frag.resolveBinding().getType(), headers);
+                }
+            }
+            else if (body instanceof MethodDeclaration) {
+                MethodDeclaration method = (MethodDeclaration) body;
+                addSourceInclude(method.resolveBinding().getReturnType(), headers);
+                for (Object param : method.parameters()) {
+                    addSourceInclude(((SingleVariableDeclaration) param).getType().resolveBinding(), headers);
+                }
+            }
+        }
+        headers.remove(headerPath(binding).getFileName().toString());
+        headers.remove(cname(binding) + ".h");
+        return headers;
+    }
+
     public void visit(TypeDeclaration node) {
         code = new Code();
-        code.write("#pragma once\n\n");
+        code.write("#pragma once\n\n#include <string>\n#include <vector>\n");
+
+        ITypeBinding binding = node.resolveBinding();
+        for (String header : sourceIncludes(binding, (List<BodyDeclaration>) (List<?>) node.bodyDeclarations())) {
+            code.write("#include \"%s\"\n", header);
+        }
+        code.write("\n");
 
         nsBegin();
 
-        ITypeBinding binding = node.resolveBinding();
+        ITypeBinding[] params = binding.getTypeParameters();
+        if (params.length > 0) {
+            StringBuilder template = new StringBuilder("template <");
+            for (int i = 0; i < params.length; i++) {
+                if (i > 0) template.append(", ");
+                template.append("class ").append(params[i].getName());
+            }
+            code.line("%s>\n", template);
+        }
         code.line("class %s: ", cname(binding));
         if (node.getSuperclassType() != null) {
             code.write("public %s", binding.getSuperclass());
@@ -148,6 +204,8 @@ public class HeaderWriter {
         }
         code.write("{\n");
         code.line("public:\n");
+        //a polymorphic base is required for dynamic_cast on converted casts
+        code.line("virtual ~%s() = default;\n", cname(binding));
         code.up();
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, binding));
         //new DepVisitor(cc, node).handle();
@@ -219,14 +277,16 @@ public class HeaderWriter {
 
     public void visit(EnumDeclaration n) {
         code = new Code();
-        code.write("#pragma once\n\n");
+        code.write("#pragma once\n\n#include <string>\n");
 
-        code.line("class %s: public %s{\n", n.getName(), TypeHelper.getEnumType());
+        ITypeBinding binding = n.resolveBinding();
+        nsBegin();
+        //Object has a generated stub; java::lang::Enum does not
+        code.line("class %s: public %s{\n", cname(binding), TypeHelper.getObjectType());
         code.line("public:\n");
         code.up();
         //CBlockStatement block = initEnum(cc);
         int ordinal = 0;
-        ITypeBinding binding = n.resolveBinding();
 
         for (EnumConstantDeclaration cons : (List<EnumConstantDeclaration>) n.enumConstants()) {
             //constant.resolveVariable();
@@ -235,7 +295,6 @@ public class HeaderWriter {
                 //rhs.args = sourceVisitor.list(constant.arguments());
             }
             if (cons.getAnonymousClassDeclaration() != null) {
-                //CClassInstanceCreation creation = new AnonyHandler().handle(constant.getAnonymousClassDeclaration(), cc.getType(), cc, sourceVisitor);
                 //rhs.setType(creation.type);
             }
             ordinal++;
@@ -246,6 +305,7 @@ public class HeaderWriter {
         }
         code.down();
         code.line("};");
+        nsEnd();
         Path file = headerPath(binding);
         System.out.println("writing " + file);
         try {
@@ -271,17 +331,17 @@ public class HeaderWriter {
                     code.write("constexpr ");
                 }
             }
-            code.write("%s %s", code.ptr(type), frag.getName());
+            code.write("%s %s", code.ptr(type), Mapper.instance.mapFieldName(frag.getName().getIdentifier(), clazz));
             if (cof) {
                 code.write("();\n");
                 return;
             }
             if (coe || frag.getInitializer() != null && !Config.fields_in_constructors) {
-                sourceVisitor2 = new SourceVisitor2(null, null);
-                sourceVisitor2.binding = clazz;
-                frag.getInitializer().accept(sourceVisitor2);
-                code.write(" = %s;\n", sourceVisitor2.code.toString());
-                sourceVisitor2 = null;
+                sourceVisitor = new SourceVisitor(null, null);
+                sourceVisitor.binding = clazz;
+                frag.getInitializer().accept(sourceVisitor);
+                code.write(" = %s;\n", sourceVisitor.code.toString());
+                sourceVisitor = null;
             }
             else {
                 code.write(";\n");
@@ -290,17 +350,39 @@ public class HeaderWriter {
     }
 
     public void visit(MethodDeclaration node) {
-        if (Modifier.isStatic(node.getModifiers())) code.line("static ");
-        else code.line("");
         IMethodBinding binding = node.resolveBinding();
-        code.write("%s %s(", code.ptr(binding.getReturnType()), node.getName());
+        if (binding.isConstructor()) {
+            code.line("");
+        }
+        else if (Modifier.isStatic(node.getModifiers())) {
+            code.line("static ");
+        }
+        else {
+            code.line("");
+        }
+        boolean abstractMethod = binding.getDeclaringClass().isInterface() && !binding.isConstructor();
+        if (abstractMethod) {
+            code.write("virtual ");
+        }
+        if (!binding.isConstructor()) {
+            code.write("%s ", code.ptr(binding.getReturnType()));
+        }
+        String methodName = binding.isConstructor()
+                ? cname(binding.getDeclaringClass())
+                : Mapper.instance.mapMethodName(node.getName().getIdentifier());
+        code.write("%s(", methodName);
         for (int i = 0; i < node.parameters().size(); i++) {
             SingleVariableDeclaration param = (SingleVariableDeclaration) node.parameters().get(i);
 
-            code.write("%s %s", code.ptr(param.getType().resolveBinding()), param.getName().getIdentifier());
+            code.write("%s %s", code.ptr(param.getType().resolveBinding()), Mapper.instance.mapParamName(param.getName().getIdentifier()));
             if (i < node.parameters().size() - 1) code.write(", ");
         }
-        code.write(");\n");
+        if (abstractMethod) {
+            code.write(") = 0;\n");
+        }
+        else {
+            code.write(");\n");
+        }
     }
 
     //make main entry call this method
@@ -319,7 +401,7 @@ public class HeaderWriter {
         method.type = TypeHelper.getVoidType();
         method.setStatic(true);
 
-        //sourceVisitor2.binding = cc;
+        //sourceVisitor.binding = cc;
         //method.body = (CBlockStatement) sourceVisitor.visitExpr(node.getBody(), null);
 
         //main entry should call this
