@@ -237,14 +237,9 @@ public class Converter {
 
             SourceVisitor sv = new SourceVisitor(destSrc, cu);
             sv.all(relativePath);
+            String cppName = "src/" + relativePath.toString().replaceAll("\\.java$", ".cpp");
+            target.sourceFiles.add(cppName);
 
-            if (Config.common_forwards) {
-                //forwardHeader.forwardDeclarator.addAll(classes);
-                if (Config.include_common_forwards) {
-                    //source.includes.add(0, IncludeStmt.src(forwardHeader.getInclude()));
-                }
-            }
-            //target.sourceFiles.add(source.name);
             count++;
         } catch (Exception e) {
             System.err.println("cant convert " + path);
