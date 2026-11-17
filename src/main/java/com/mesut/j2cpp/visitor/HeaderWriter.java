@@ -491,7 +491,10 @@ public class HeaderWriter {
             code.line("");
         }
         boolean abstractMethod = binding.getDeclaringClass().isInterface() && !binding.isConstructor();
-        if (abstractMethod) {
+        CMethod cm = ClassMap.sourceMap.getMethod(binding);
+        boolean virtualMethod = !Modifier.isStatic(binding.getModifiers())
+                && cm != null && cm.isVirtual();
+        if (abstractMethod || virtualMethod) {
             code.write("virtual ");
         }
         if (!binding.isConstructor()) {
@@ -507,11 +510,15 @@ public class HeaderWriter {
             code.write("%s %s", code.ptr(param.getType().resolveBinding()), Mapper.instance.mapParamName(param.getName().getIdentifier()));
             if (i < node.parameters().size() - 1) code.write(", ");
         }
+        code.write(")");
+        if (cm != null && cm.isOverride && !Modifier.isStatic(binding.getModifiers())) {
+            code.write(" override");
+        }
         if (abstractMethod) {
-            code.write(") = 0;\n");
+            code.write(" = 0;\n");
         }
         else {
-            code.write(");\n");
+            code.write(";\n");
         }
     }
 

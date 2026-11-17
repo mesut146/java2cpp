@@ -112,29 +112,23 @@ public class PreVisitor {
     }
 
     private static void handleVirtual(IMethodBinding binding, CMethod method) {
-        //find super method and set virtual
+        //walk the whole superclass chain: an override may target a method declared
+        //several levels up, with intermediate classes not redeclaring it.
+        if (Modifier.isStatic(binding.getModifiers())) return;
         ITypeBinding superBinding = binding.getDeclaringClass().getSuperclass();
-        if (superBinding == null) return;
-        //todo may be deeper
-        for (IMethodBinding superMethod : superBinding.getDeclaredMethods()) {
-            if (binding.isSubsignature(superMethod)) {
-                method.isOverride = true;
-                ClassMap.sourceMap.getMethod(superMethod).setVirtual(true);
-                //System.out.println("virtual parent " + superBinding.getQualifiedName() + " " + binding.getName());
-                break;
+        boolean found = false;
+        while (superBinding != null) {
+            for (IMethodBinding superMethod : superBinding.getDeclaredMethods()) {
+                if (binding.isSubsignature(superMethod)) {
+                    found = true;
+                    ClassMap.sourceMap.getMethod(superMethod).setVirtual(true);
+                }
             }
+            superBinding = superBinding.getSuperclass();
         }
-    }
-    
-    CMethod findSuper(IMethodBinding method, ITypeBinding superBinding){
-        if(superBinding == null) return null;
-        for (IMethodBinding superMethod : superBinding.getDeclaredMethods()) {
-            if (method.isSubsignature(superMethod)) {
-                return ClassMap.sourceMap.getMethod(superMethod);
-            }
+        if (found) {
+            method.isOverride = true;
         }
-        ITypeBinding super2 = superBinding.getSuperclass();
-        return findSuper(method, super2);
     }
 
     //var binding to field

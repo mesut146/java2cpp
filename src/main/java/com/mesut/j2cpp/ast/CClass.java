@@ -144,24 +144,15 @@ public class CClass extends CStatement {
                 ? "return new std::string(\"java.lang.Object\");"
                 : "return nullptr;";
 
-        //if JDT already added one of these to the stub, make it virtual instead of emitting a duplicate
-        for (CMethod m : methods) {
-            if (m.name != null && (m.name.is("toString") || m.name.is("equals") || m.name.is("hashCode"))) {
-                m.setVirtual(true);
-                m.setPublic(true);
-            }
-        }
+        //JDT may have added copies of these when walking up from an overriding method.
+        //Drop them and emit controlled declarations with real default bodies.
+        methods.removeIf(m -> m.name != null
+                && (m.name.is("toString") || m.name.is("equals") || m.name.is("hashCode")));
 
-        if (methods.stream().noneMatch(m -> m.name != null && m.name.is("toString"))) {
-            sb.append(ind).append("virtual ").append(toStringRet)
-                    .append(" toString() { ").append(toStringBody).append(" }\n");
-        }
-        if (methods.stream().noneMatch(m -> m.name != null && m.name.is("equals"))) {
-            sb.append(ind).append("virtual bool equals(Object* o) { return this == o; }\n");
-        }
-        if (methods.stream().noneMatch(m -> m.name != null && m.name.is("hashCode"))) {
-            sb.append(ind).append("virtual int hashCode() { return 0; }\n");
-        }
+        sb.append(ind).append("virtual ").append(toStringRet)
+                .append(" toString() { ").append(toStringBody).append(" }\n");
+        sb.append(ind).append("virtual bool equals(Object* o) { return this == o; }\n");
+        sb.append(ind).append("virtual int hashCode() { return 0; }\n");
     }
 
     public void printDecl(StringBuilder sb) {
