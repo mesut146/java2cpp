@@ -3,7 +3,6 @@ package com.mesut.j2cpp.util;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.map.ClassMap;
-import com.mesut.j2cpp.visitor.TypeVisitor;
 import org.eclipse.jdt.core.dom.*;
 
 //visit complete types and include them,others already forward declared
@@ -25,8 +24,6 @@ public class DepVisitor extends ASTVisitor {
             Logger.logBinding(cc, expression);
             return;
         }
-        //todo prevent header types being included again
-        cc.addType(TypeVisitor.fromBinding(binding));
         ClassMap.sourceMap.init(binding);
     }
 

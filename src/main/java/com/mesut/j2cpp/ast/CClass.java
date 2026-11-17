@@ -10,9 +10,7 @@ import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CClass extends CStatement {
@@ -32,7 +30,6 @@ public class CClass extends CStatement {
     public CClass parent;//outer
     public CHeader header;
     public List<CStatement> consStatements = new ArrayList<>();
-    public Set<CType> types = new HashSet<>();
     public boolean initialized = false;
     public boolean initMembers = false;
     public boolean fromSource = true;
@@ -70,17 +67,6 @@ public class CClass extends CStatement {
 
     public String getAnonyName() {
         return name + "_" + anonyCount++;
-    }
-
-    //add reference type that this class use
-    public void addType(CType type) {
-        if (type == null) return;
-        if (type.isTemplate ||
-                type.equals(getType()) ||
-                type.isPrim() ||
-                type.isVoid() ||
-                type.mapped) return;
-        types.add(type);
     }
 
     public Template getTemplate() {
