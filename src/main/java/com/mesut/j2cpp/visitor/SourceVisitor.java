@@ -460,9 +460,17 @@ public class SourceVisitor extends ASTVisitor {
             if (o instanceof FieldDeclaration) {
                 FieldDeclaration fd = (FieldDeclaration) o;
                 ITypeBinding type = fd.getType().resolveBinding();
-                if (Modifier.isStatic(fd.getModifiers()) && !Modifier.isFinal(fd.getModifiers())) {
+                if (Modifier.isStatic(fd.getModifiers())) {
                     for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) fd.fragments()) {
-                        if (frag.getInitializer() != null) {
+                        if (frag.getInitializer() == null) continue;
+                        if (Modifier.isFinal(fd.getModifiers()) && !type.isPrimitive() && Config.static_field_cofui) {
+                            //header declares a cofui accessor; define it here with a lazy value
+                            code.write("%s %s::%s() { static %s v = ", code.ptr(type), this.binding,
+                                    frag.getName(), code.ptr(type));
+                            frag.getInitializer().accept(this);
+                            code.write("; return v; }\n");
+                        }
+                        else if (!Modifier.isFinal(fd.getModifiers())) {
                             code.write("%s %s::%s = ", code.ptr(type), this.binding, frag.getName());
                             frag.getInitializer().accept(this);
                             code.write(";\n");
@@ -694,6 +702,23 @@ public class SourceVisitor extends ASTVisitor {
             write("(unsigned " + type + ")" + left);
             write(" >> ");
             node.getRightHandSide().accept(this);
+        }
+        else if (node.getOperator().toString().equals("+=") && isStr(node.getLeftHandSide())) {
+            //String += is concatenation, but += on std::string* pointers is not valid C++
+            includes.add("CppHelper.h");
+            node.getLeftHandSide().accept(this);
+            write(" = ");
+            if (Config.useMappers) {
+                write("CppHelper::concat(");
+                node.getLeftHandSide().accept(this);
+                write(", ");
+                node.getRightHandSide().accept(this);
+                write(")");
+            }
+            else {
+                node.getLeftHandSide().accept(this);
+                concatPart(node.getRightHandSide());
+            }
         }
         else {
             node.getLeftHandSide().accept(this);
@@ -1786,12 +1811,12 @@ public class SourceVisitor extends ASTVisitor {
         if (variableBinding.isField()) {
             name = Mapper.instance.mapFieldName(name.name, this.binding);
             if (isStatic) {
-                if (variableBinding.isEnumConstant() || variableBinding.getType().isPrimitive()) {
-                    write("%s::%s", onType, name.toString());
-                }
-                else {
-                    write("%s::%s()", onType, name.toString());
-                }
+                boolean asMethod = Config.static_field_cofui
+                        && Modifier.isFinal(binding.getModifiers())
+                        && !variableBinding.getType().isPrimitive()
+                        && !variableBinding.isEnumConstant()
+                        && onType.isFromSource();
+                write("%s::%s%s", onType, name.toString(), asMethod ? "()" : "");
             }
             else {
                 if (this.binding.equals(onType)) {
