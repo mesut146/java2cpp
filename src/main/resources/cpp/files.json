@@ -1,0 +1,18 @@
+{
+  "name": "java.nio.file.Files",
+  "target": "std::filesystem::path",
+  "include": "<filesystem>,CppHelper.h",
+  "methods": [
+    { "name": "readString(java.nio.file.Path)", "target": "CppHelper::fsReadString($1)", "external": true },
+    { "name": "writeString(java.nio.file.Path,java.lang.CharSequence)", "target": "CppHelper::fsWriteString($1, $2)", "external": true },
+    { "name": "readAllLines(java.nio.file.Path)", "target": "CppHelper::fsReadAllLines($1)", "external": true },
+    { "name": "exists(java.nio.file.Path)", "target": "CppHelper::fsExists($1)", "external": true },
+    { "name": "isDirectory(java.nio.file.Path)", "target": "CppHelper::fsIsDirectory($1)", "external": true },
+    { "name": "isRegularFile(java.nio.file.Path)", "target": "CppHelper::fsIsRegularFile($1)", "external": true },
+    { "name": "size(java.nio.file.Path)", "target": "CppHelper::fsFileSize($1)", "external": true },
+    { "name": "createFile(java.nio.file.Path)", "target": "CppHelper::fsCreateFile($1)", "external": true },
+    { "name": "createDirectories(java.nio.file.Path)", "target": "CppHelper::fsCreateDir($1)", "external": true },
+    { "name": "delete(java.nio.file.Path)", "target": "CppHelper::fsRemove($1)", "external": true },
+    { "name": "deleteIfExists(java.nio.file.Path)", "target": "CppHelper::fsRemove($1)", "external": true }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "java.nio.file.Path,java.nio.file.Paths",
+  "target": "std::filesystem::path",
+  "include": "<filesystem>,CppHelper.h",
+  "methods": [
+    { "name": "of(java.lang.String)", "target": "CppHelper::fsPath($1)", "external": true },
+    { "name": "of(java.lang.String,java.lang.String)", "target": "CppHelper::fsPathPair($1, $2)", "external": true },
+    { "name": "get(java.lang.String)", "target": "CppHelper::fsPath($1)", "external": true },
+    { "name": "get(java.lang.String,java.lang.String)", "target": "CppHelper::fsPathPair($1, $2)", "external": true },
+    { "name": "toString()", "target": "CppHelper::fsPathString($0)", "external": true },
+    { "name": "getFileName()", "target": "CppHelper::fsFileName($0)", "external": true },
+    { "name": "getParent()", "target": "CppHelper::fsParent($0)", "external": true },
+    { "name": "toAbsolutePath()", "target": "CppHelper::fsAbsolute($0)", "external": true },
+    { "name": "toFile()", "target": "$0", "external": true }
+  ]
+}

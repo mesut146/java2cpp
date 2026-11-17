@@ -84,7 +84,7 @@ The source path must be an existing directory; missing required arguments print 
 
 A mapper is a small JSON file describing a Java class, its C++ target, and method rewrites. Bundled mappers live in `src/main/resources/cpp/`.
 
-Enabled by default: `list`, `map`, `set`, `stack`, `string`, `arrays`, `Boolean`, `Integer`, `sys`, `math`, `primitives`, `double`, `float`, `long`, `short`, `stringbuilder`, `objects`, `optional`, `random`, `uuid`. These cover the common collection/String APIs plus `Math`, boxed primitives, `StringBuilder`, `Objects`, `Optional`, `Random`, `UUID` and console I/O (`System.out`/`System.err` print to real C++ streams). Mappers may also supply constant field values (e.g. `Math.PI`, `System.out`).
+Enabled by default: `list`, `map`, `set`, `stack`, `string`, `arrays`, `Boolean`, `Integer`, `sys`, `math`, `primitives`, `double`, `float`, `long`, `short`, `stringbuilder`, `objects`, `optional`, `random`, `uuid`. These cover the common collection/String APIs plus `Math`, boxed primitives, `StringBuilder`, `Objects`, `Optional`, `Random`, `UUID`, console I/O (`System.out`/`System.err` print to real C++ streams), and filesystem APIs (`File`, `Path`, `Paths`, `Files` → `<filesystem>`). Mappers may also supply constant field values (e.g. `Math.PI`, `System.out`).
 
 Example mapper:
 

@@ -78,8 +78,11 @@ public class PreVisitor {
             return method;
         }
         method = new CMethod();
-        //method.name = new CName(binding.getName());
-        method.name = new CName(binding.getName());
+        //rename C++ keywords in generated declarations (call sites use mapMethodName too)
+        String mappedName = Mapper.instance.mapMethodName(binding.getName());
+        CName methodName = new CName(mappedName);
+        methodName.orgName = binding.getName();//keep lookup by the original Java name
+        method.name = methodName;
         method.type = type;
         method.isCons = binding.isConstructor();
 
