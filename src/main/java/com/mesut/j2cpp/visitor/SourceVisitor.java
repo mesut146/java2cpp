@@ -174,7 +174,7 @@ public class SourceVisitor extends ASTVisitor {
     private List<String> mapped(ClassInstanceCreation node) {
         if (!Config.useMappers) return null;
         IMethodBinding b = node.resolveConstructorBinding();
-        if (b == null) return null;
+        if (b == null || b.getDeclaringClass().isFromSource()) return null;
         if (mappedCalls.containsKey(node)) return mappedCalls.get(node);
         List<String> res = Mapper.instance.mapMethod(b, node.arguments(), null, this.binding, null, includes);
         mappedCalls.put(node, res);

@@ -161,7 +161,7 @@ cppRt/                    # small hand-written helper files
 mvn test
 ```
 
-Tests under `src/test/java` exercise the CLI, helpers and sample conversions. `CppCompileTest` runs `g++ -fsyntax-only` over generated C++ — including every bundled sample source — and several behavior tests compile and **run** generated code to verify try/finally, switch, anonymous classes, inner-class parent references and String mapper operations. All skip if `g++` is unavailable. Hand-written Java snippets live in `src/test/resources/samples/base/` and `samples/mapper/`; they are data files, not compiled tests, and are used by `ConversionTest` through the classpath.
+Tests under `src/test/java` exercise the CLI, helpers and sample conversions. `CppCompileTest` runs `g++ -fsyntax-only` over generated C++ — including every bundled sample source — and several behavior tests compile and **run** generated code to verify try/finally, switch, anonymous classes, inner-class parent references, String mapper operations, and boxing/List/array behavior. All skip if `g++` is unavailable. Hand-written Java snippets live in `src/test/resources/samples/base/` and `samples/mapper/`; they are data files, not compiled tests, and are used by `ConversionTest` through the classpath.
 
 ## Runtime support
 
