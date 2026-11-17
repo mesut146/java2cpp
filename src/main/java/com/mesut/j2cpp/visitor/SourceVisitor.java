@@ -822,23 +822,16 @@ public class SourceVisitor extends ASTVisitor {
         code.up();
         ITypeBinding bind = node.getExpression().resolveTypeBinding();
         String ve = "var" + (forVarCnt++);
-        if (node.getExpression() instanceof SimpleName) {
-            //todo only for other case
-            write("%s %s = ", code.ptr(bind), ve);
-            node.getExpression().accept(this);
-            code.write(";\n");
-        }
-        else {
-            write("%s %s = ", code.ptr(bind), ve);
-            node.getExpression().accept(this);
-            code.write(";\n");
-        }
-        code.line("for(");
+        //evaluate the array/iterable expression exactly once
+        write("%s %s = ", code.ptr(bind), ve);
+        node.getExpression().accept(this);
+        code.write(";\n");
+
         SingleVariableDeclaration v = node.getParameter();
         ITypeBinding type = v.getType().resolveBinding();
         if (bind.isArray()) {
             String i = "i_" + forVarCnt++;
-            code.write("int %s = 0;%s < %s->size();%s++){", i, i, ve, i);
+            code.line("for(int %s = 0; %s < %s->size(); %s++){", i, i, ve, i);
             code.up();
             code.line("%s %s = %s->at(%s);", code.ptr(type), v.getName().toString(), ve, i);
             bodyNoFirst(node.getBody());
@@ -846,17 +839,32 @@ public class SourceVisitor extends ASTVisitor {
             code.line("}");
         }
         else {
-            CType it = new CType("java::util::Iterator");
-            //it.typeArgs.add(type);
-            write("%s it = ", code.ptr(it));
-            node.getExpression().accept(this);
-            code.write(";\n");
-            code.write("it->hasNext();){\n");
-            code.up();
-            code.line("%s %s = (%s)it->next();\n", code.ptr(type), v.getName().toString(), type);
-            bodyNoFirst(node.getBody());
-            code.down();
-            code.line("}\n");
+            CType mapped = Mapper.instance.mapType(bind);
+            String container = mapped.type;
+            if (Config.useMappers && mapped.mapped
+                    && (container.equals("vector") || container.equals("unordered_set")
+                    || container.equals("set") || container.equals("list")
+                    || container.equals("deque"))) {
+                //mapped Java collections become C++ containers: iterate with begin()/end()
+                code.line("for(auto it = %s->begin(); it != %s->end(); ++it){", ve, ve);
+                code.up();
+                code.line("%s %s = *it;", code.ptr(type), v.getName().toString());
+                bodyNoFirst(node.getBody());
+                code.down();
+                code.line("}");
+            }
+            else {
+                //no mapper: use java.util.Iterator, still over the single-evaluation temp
+                code.line("for(");
+                CType it = new CType("java::util::Iterator");
+                write("%s it = %s;\n", code.ptr(it), ve);
+                code.write("it->hasNext();){\n");
+                code.up();
+                code.line("%s %s = (%s)it->next();\n", code.ptr(type), v.getName().toString(), type);
+                bodyNoFirst(node.getBody());
+                code.down();
+                code.line("}\n");
+            }
         }
         code.down();
         code.line("}");
