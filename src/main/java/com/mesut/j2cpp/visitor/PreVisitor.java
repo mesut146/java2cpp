@@ -156,9 +156,6 @@ public class PreVisitor {
         if (cc.isInterface) {
             field.setPublic(true);
         }
-        if (binding.isEnumConstant()) {
-            //todo
-        }
         return field;
     }
 

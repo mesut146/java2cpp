@@ -430,6 +430,37 @@ public class HeaderWriter {
             ordinal++;
         }
 
+        //per-constant data and the standard Enum accessors, unless the source declares them
+        Set<String> declared = new java.util.HashSet<>();
+        for (Object o : n.bodyDeclarations()) {
+            if (o instanceof MethodDeclaration) {
+                declared.add(((MethodDeclaration) o).getName().getIdentifier());
+            }
+            else if (o instanceof FieldDeclaration) {
+                for (Object frag : ((FieldDeclaration) o).fragments()) {
+                    declared.add(((VariableDeclarationFragment) frag).getName().getIdentifier());
+                }
+            }
+            else if (o instanceof EnumConstantDeclaration) {
+                declared.add(((EnumConstantDeclaration) o).getName().getIdentifier());
+            }
+        }
+        String cls = cname(binding);
+        code.line("int _ordinal;\n");
+        code.line("std::string* _name;\n");
+        if (!declared.contains("ordinal")) {
+            code.line("int ordinal() { return _ordinal; }\n");
+        }
+        if (!declared.contains("name")) {
+            code.line("std::string* name() { return _name; }\n");
+        }
+        if (!declared.contains("toString")) {
+            code.line("std::string* toString() { return _name; }\n");
+        }
+        if (!declared.contains("compareTo")) {
+            code.line("int compareTo(%s* other) { return _ordinal - other->_ordinal; }\n", cls);
+        }
+
         if (!n.bodyDeclarations().isEmpty()) {
             n.bodyDeclarations().forEach(p -> visitBody((BodyDeclaration) p, binding));
         }

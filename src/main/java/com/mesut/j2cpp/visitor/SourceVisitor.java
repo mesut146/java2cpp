@@ -372,10 +372,55 @@ public class SourceVisitor extends ASTVisitor {
         }
     }
 
+    //define enum constants and initialize them before main via a namespace-scope initializer
+    private void emitEnumStaticInit(EnumDeclaration node) {
+        ITypeBinding binding = node.resolveBinding();
+        if (binding == null || node.enumConstants().isEmpty()) return;
+        String cls = code.str(binding);
+        if (binding.getBinaryName() != null) {
+            includes.add(binding.getBinaryName().replace("$", "_").replace(".", "/") + ".h");
+        }
+        ITypeBinding saved = this.binding;
+        this.binding = binding;
+        code.line("//enum %s\n", cls);
+        for (Object o : node.enumConstants()) {
+            EnumConstantDeclaration c = (EnumConstantDeclaration) o;
+            code.line("%s* %s::%s = nullptr;\n", cls, cls, c.getName());
+        }
+        String init = cls + "_init_enum";
+        code.line("static bool %s() {\n", init);
+        code.up();
+        int ordinal = 0;
+        for (Object o : node.enumConstants()) {
+            EnumConstantDeclaration c = (EnumConstantDeclaration) o;
+            code.write("%s::%s = new %s(", cls, c.getName(), cls);
+            args((List<Expression>) c.arguments());
+            code.write(");\n");
+            code.line("%s::%s->_ordinal = %d;\n", cls, c.getName(), ordinal++);
+            code.line("%s::%s->_name = new std::string(\"%s\");\n", cls, c.getName(), c.getName());
+        }
+        code.line("    return true;\n}\n");
+        code.line("static bool %s_done = %s();\n", init, init);
+        this.binding = saved;
+    }
+
+    //constructors and methods declared in an enum body need out-of-line definitions too
+    private void emitEnumMembers(EnumDeclaration node) {
+        ITypeBinding saved = this.binding;
+        this.binding = node.resolveBinding();
+        for (Object o : node.bodyDeclarations()) {
+            if (o instanceof MethodDeclaration) {
+                visit((MethodDeclaration) o);
+            }
+        }
+        this.binding = saved;
+    }
+
     public void visit(AbstractTypeDeclaration decl) {
         //includes
         if (decl instanceof EnumDeclaration) {
-            //visit((EnumDeclaration) decl, null);
+            emitEnumStaticInit((EnumDeclaration) decl);
+            emitEnumMembers((EnumDeclaration) decl);
         }
         else if (decl instanceof AnnotationTypeDeclaration) {
             //visit((AnnotationTypeDeclaration) decl, null);
@@ -448,6 +493,10 @@ public class SourceVisitor extends ASTVisitor {
                 ITypeBinding savedOuter = this.binding;
                 visit((RecordDeclaration) o);
                 this.binding = savedOuter;
+            }
+            else if (o instanceof EnumDeclaration) {
+                emitEnumStaticInit((EnumDeclaration) o);
+                emitEnumMembers((EnumDeclaration) o);
             }
             else if (o instanceof Initializer && Modifier.isStatic(((Initializer) o).getModifiers())) {
                 code.write("void %s::si()", this.binding);
@@ -1737,7 +1786,7 @@ public class SourceVisitor extends ASTVisitor {
         if (variableBinding.isField()) {
             name = Mapper.instance.mapFieldName(name.name, this.binding);
             if (isStatic) {
-                if (variableBinding.getType().isPrimitive()) {
+                if (variableBinding.isEnumConstant() || variableBinding.getType().isPrimitive()) {
                     write("%s::%s", onType, name.toString());
                 }
                 else {
@@ -1809,7 +1858,7 @@ public class SourceVisitor extends ASTVisitor {
             IVariableBinding variableBinding = (IVariableBinding) binding;
             CName mapped = Mapper.instance.mapFieldName(name, this.binding);
             if (Config.static_field_cofui && Modifier.isFinal(binding.getModifiers()) && !variableBinding.getType().isPrimitive()
-                    && typeBinding.isFromSource()) {
+                    && !variableBinding.isEnumConstant() && typeBinding.isFromSource()) {
                 write("%s::%s()", typeBinding, mapped);
                 return false;
             }
