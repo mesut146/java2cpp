@@ -10,6 +10,10 @@ import com.mesut.j2cpp.cppast.stmt.CReturnStatement;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.TypeHelper;
+import org.eclipse.jdt.core.dom.RecordDeclaration;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.*;
 
 import java.io.IOException;
@@ -79,6 +83,9 @@ public class HeaderWriter {
         }
         else if (decl instanceof AnnotationTypeDeclaration) {
             //visit((AnnotationTypeDeclaration) decl, null);
+        }
+        else if (decl instanceof RecordDeclaration) {
+            visit((RecordDeclaration) decl);
         }
         else {
             visit((TypeDeclaration) decl);
@@ -229,6 +236,67 @@ public class HeaderWriter {
 
         nsEnd();
 
+        Path file = headerPath(binding);
+        System.out.println("writing " + file);
+        try {
+            Files.createDirectories(file.getParent());
+            Files.write(file, code.toString().getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        code = null;
+    }
+
+    //records are simple value types: emit fields for the components, a
+    //canonical constructor and accessor methods
+    public void visit(RecordDeclaration node) {
+        code = new Code();
+        code.write("#pragma once\n\n#include <string>\n#include <vector>\n");
+        ITypeBinding binding = node.resolveBinding();
+        nsBegin();
+        code.line("class %s: public %s", cname(binding), TypeHelper.getObjectType());
+        for (ITypeBinding iface : binding.getInterfaces()) {
+            code.write(", public %s", iface);
+        }
+        code.write("{\n");
+        code.line("public:\n");
+        code.line("virtual ~%s() = default;\n", cname(binding));
+        //components become fields (prefixed to avoid colliding with accessors)
+        for (Object o : node.recordComponents()) {
+            SingleVariableDeclaration comp = (SingleVariableDeclaration) o;
+            code.line("%s _%s;\n", code.ptr(comp.getType().resolveBinding()), comp.getName());
+        }
+        //canonical constructor
+        code.write("%s(", cname(binding));
+        for (int i = 0; i < node.recordComponents().size(); i++) {
+            if (i > 0) code.write(", ");
+            SingleVariableDeclaration comp = (SingleVariableDeclaration) node.recordComponents().get(i);
+            code.write("%s p%s", code.ptr(comp.getType().resolveBinding()), i);
+        }
+        code.write(")");
+        if (!node.recordComponents().isEmpty()) {
+            code.write(" : ");
+            for (int i = 0; i < node.recordComponents().size(); i++) {
+                if (i > 0) code.write(", ");
+                SingleVariableDeclaration comp = (SingleVariableDeclaration) node.recordComponents().get(i);
+                code.write("_%s(p%d)", comp.getName(), i);
+            }
+        }
+        code.write(" {}\n");
+        //accessors: componentName()
+        for (Object o : node.recordComponents()) {
+            SingleVariableDeclaration comp = (SingleVariableDeclaration) o;
+            code.write("%s %s() { return _%s; }\n", code.ptr(comp.getType().resolveBinding()),
+                    comp.getName(), comp.getName());
+        }
+        //explicit methods declared in the record body
+        for (Object o : node.bodyDeclarations()) {
+            if (o instanceof MethodDeclaration) {
+                visitBody((BodyDeclaration) o, binding);
+            }
+        }
+        code.line("};");
+        nsEnd();
         Path file = headerPath(binding);
         System.out.println("writing " + file);
         try {

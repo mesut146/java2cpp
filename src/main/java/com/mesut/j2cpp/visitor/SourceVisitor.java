@@ -44,6 +44,10 @@ public class SourceVisitor extends ASTVisitor {
     Map<IVariableBinding, String> anonCaptures = new HashMap<>();
     //local classes generated in this source, keyed by binary name
     Map<String, LocalClass> localClasses = new HashMap<>();
+    //record component names currently being generated (emitted as _name fields)
+    Set<String> recordComponents = new HashSet<>();
+    //pattern variable names to leave as-is
+    Map<String, String> patternCasts = new HashMap<>();
 
     static class LocalClass {
         final String name;
@@ -376,9 +380,31 @@ public class SourceVisitor extends ASTVisitor {
         else if (decl instanceof AnnotationTypeDeclaration) {
             //visit((AnnotationTypeDeclaration) decl, null);
         }
+        else if (decl instanceof RecordDeclaration) {
+            visit((RecordDeclaration) decl);
+        }
         else {
             visit((TypeDeclaration) decl, null);
         }
+    }
+
+    //record constructors/accessors are emitted inline in the header; only
+    //explicitly declared methods need their bodies emitted here
+    public boolean visit(RecordDeclaration rec) {
+        ITypeBinding savedBinding = binding;
+        binding = rec.resolveBinding();
+        recordComponents.clear();
+        for (Object o : rec.recordComponents()) {
+            recordComponents.add(((SingleVariableDeclaration) o).getName().getIdentifier());
+        }
+        for (Object o : rec.bodyDeclarations()) {
+            if (o instanceof MethodDeclaration && ((MethodDeclaration) o).getBody() != null) {
+                visit((MethodDeclaration) o);
+            }
+        }
+        recordComponents.clear();
+        binding = savedBinding;
+        return false;
     }
 
     public void visit(TypeDeclaration node, ITypeBinding outer) {
@@ -412,6 +438,15 @@ public class SourceVisitor extends ASTVisitor {
                 }
                 ITypeBinding savedOuter = this.binding;
                 visit((TypeDeclaration) o, savedOuter);
+                this.binding = savedOuter;
+            }
+            else if (o instanceof RecordDeclaration) {
+                ITypeBinding recType = ((RecordDeclaration) o).resolveBinding();
+                if (recType != null && recType.getBinaryName() != null) {
+                    includes.add(recType.getBinaryName().replace("$", "_").replace(".", "/") + ".h");
+                }
+                ITypeBinding savedOuter = this.binding;
+                visit((RecordDeclaration) o);
                 this.binding = savedOuter;
             }
             else if (o instanceof Initializer && Modifier.isStatic(((Initializer) o).getModifiers())) {
@@ -878,22 +913,96 @@ public class SourceVisitor extends ASTVisitor {
     public boolean visit(SwitchExpression node) {
         ITypeBinding type = node.resolveTypeBinding();
         switchExprType = type == null ? "int" : code.ptr(type);
-        write("[&]() -> %s { switch(", switchExprType);
-        node.getExpression().accept(this);
-        write(") {\n");
+        //detect type-pattern cases
+        List<TypePattern> patterns = new ArrayList<>();
         for (Object o : node.statements()) {
-            Statement s = (Statement) o;
-            if (s instanceof SwitchCase) {
-                SwitchCase c = (SwitchCase) s;
-                if (c.isDefault()) code.line("default:");
-                else code.line("case %s:", caseExpr(c, node.getExpression().resolveTypeBinding()));
-            }
-            else {
-                s.accept(this);
+            if (o instanceof SwitchCase) {
+                for (Object ex : ((SwitchCase) o).expressions()) {
+                    if (ex instanceof TypePattern) patterns.add((TypePattern) ex);
+                }
             }
         }
-        code.line("} return {}; }()");
+        write("[&]() -> %s {\n", switchExprType);
+        if (patterns.isEmpty()) {
+            //plain switch expression
+            write("switch(");
+            node.getExpression().accept(this);
+            write(") {\n");
+            for (Object o : node.statements()) {
+                Statement s = (Statement) o;
+                if (s instanceof SwitchCase) {
+                    SwitchCase c = (SwitchCase) s;
+                    if (c.isDefault()) code.line("default:");
+                    else code.line("case %s:", caseExpr(c, node.getExpression().resolveTypeBinding()));
+                }
+                else s.accept(this);
+            }
+            code.line("}");
+        }
+        else {
+            //type-pattern switch: emit if/else chain with dynamic_cast bindings
+            String sel = "sw" + forVarCnt++;
+            write("%s ", code.ptr(node.getExpression().resolveTypeBinding()));
+            write("%s = ", sel);
+            node.getExpression().accept(this);
+            write(";\n");
+            boolean first = true;
+            Map<String, String> savedCasts = new HashMap<>(patternCasts);
+            for (Object o : node.statements()) {
+                Statement st = (Statement) o;
+                if (!(st instanceof SwitchCase)) continue;
+                SwitchCase c = (SwitchCase) st;
+                if (c.isDefault()) {
+                    write("else { ");
+                    emitSwitchArms(node, c);
+                    write(" }\n");
+                    continue;
+                }
+                for (Object ex : c.expressions()) {
+                    if (ex instanceof TypePattern) {
+                        TypePattern tp = (TypePattern) ex;
+                        SingleVariableDeclaration var = tp.getPatternVariable();
+                        //JDT recovery leaves the pattern variable's binding unresolved;
+                        //the pattern's toString() is "Type varName"
+                        String patText = tp.toString().trim();
+                        int sp = patText.lastIndexOf(' ');
+                        String patType = sp > 0 ? patText.substring(0, sp) : patText;
+                        String varName = sp > 0 ? patText.substring(sp + 1) : "p";
+                        String ns = cu.getPackage() == null ? "" : cu.getPackage().getName().toString().replace(".", "::") + "::";
+                        String outer = this.binding == null ? "" : cnameOf(this.binding) + "_";
+                        String header = this.binding.getPackage() == null ? "" : this.binding.getPackage().getName().replace('.', '/') + "/";
+                        includes.add(header + outer + patType + ".h");
+                        write("%s (auto %s = dynamic_cast<%s%s%s*>(%s)) { ",
+                                first ? "if" : "else if", varName, ns, outer, patType, sel);
+                        patternCasts.put(varName, varName);
+                        first = false;
+                    }
+                }
+                emitSwitchArms(node, c);
+                write("}\n");
+            }
+            patternCasts.clear();
+            patternCasts.putAll(savedCasts);
+            write("return {}; ");
+        }
+        code.line("}()");
         return false;
+    }
+
+    //emit the statements belonging to a switch case arm (skip the case label)
+    private void emitSwitchArms(SwitchExpression sw, SwitchCase target) {
+        List<Statement> stmts = (List<Statement>) sw.statements();
+        int idx = stmts.indexOf(target);
+        for (int i = idx + 1; i < stmts.size() && !(stmts.get(i) instanceof SwitchCase); i++) {
+            Statement s = stmts.get(i);
+            if (s instanceof YieldStatement) {
+                write("return ");
+                Expression e = ((YieldStatement) s).getExpression();
+                if (e != null) e.accept(this);
+                write("; ");
+            }
+            else s.accept(this);
+        }
     }
 
     @Override
@@ -1095,11 +1204,6 @@ public class SourceVisitor extends ASTVisitor {
     @Override
     public boolean visit(ClassInstanceCreation node) {
         ITypeBinding binding = node.getType().resolveBinding();
-        if (binding != null && binding.getName().contains("Helper")) {
-            System.out.println("DEBUG CIC name=" + binding.getName() + " binary=" + binding.getBinaryName() + " key=" + binding.getKey());
-            IMethodBinding cb = node.resolveConstructorBinding();
-            if (cb != null) System.out.println("DEBUG CIC ctor params=" + cb.getParameterTypes().length + " declaring=" + cb.getDeclaringClass().getName());
-        }
         if (binding == null) {
             Logger.logBinding(this.binding, node.toString());
             write("new %s(", node.getType());
@@ -1594,6 +1698,14 @@ public class SourceVisitor extends ASTVisitor {
         String captured = anonCaptures.get(variableBinding);
         if (captured != null) {
             write(captured);
+            return false;
+        }
+        if (recordComponents.contains(node.getIdentifier()) && !variableBinding.isParameter()) {
+            write("_" + node.getIdentifier());
+            return false;
+        }
+        if (patternCasts.containsKey(node.getIdentifier())) {
+            write(node.getIdentifier());
             return false;
         }
         if (variableBinding.isParameter()) {
