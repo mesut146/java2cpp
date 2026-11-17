@@ -45,7 +45,7 @@ public class Code {
         CType ct = TypeVisitor.fromBinding(b);
         String s = ct.toString();
         for (String u : usings) {
-            if (s.startsWith(u)) {
+            if (s.startsWith(u + "::")) {
                 return s.substring(u.length() + 2);
             }
         }

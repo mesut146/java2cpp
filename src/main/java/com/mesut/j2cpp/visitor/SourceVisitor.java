@@ -296,6 +296,16 @@ public class SourceVisitor extends ASTVisitor {
             if (o instanceof MethodDeclaration) {
                 visit((MethodDeclaration) o);
             }
+            else if (o instanceof TypeDeclaration) {
+                //emit inner class method definitions in this source too
+                ITypeBinding nested = ((TypeDeclaration) o).resolveBinding();
+                if (nested != null && nested.getBinaryName() != null) {
+                    includes.add(nested.getBinaryName().replace("$", "_").replace(".", "/") + ".h");
+                }
+                ITypeBinding savedOuter = this.binding;
+                visit((TypeDeclaration) o, savedOuter);
+                this.binding = savedOuter;
+            }
         }
     }
 
@@ -315,7 +325,9 @@ public class SourceVisitor extends ASTVisitor {
             code.write("%s>\n", template);
         }
         if (b.isConstructor()) {
-            code.write("%s::%s(", this.binding, Mapper.instance.mapMethodName(b.getName()));
+            String cname = this.binding.getBinaryName().replace("$", "_");
+            cname = cname.substring(cname.lastIndexOf('.') + 1);
+            code.write("%s::%s(", this.binding, cname);
         }
         else {
             code.write("%s %s::%s(", code.ptr(b.getReturnType()), this.binding, Mapper.instance.mapMethodName(b.getName()));
@@ -326,6 +338,14 @@ public class SourceVisitor extends ASTVisitor {
             if (i < node.parameters().size() - 1) code.write(", ");
         }
         code.write(")");
+        if (b.isConstructor() && node.getBody() != null
+                && !node.getBody().statements().isEmpty()
+                && node.getBody().statements().get(0) instanceof SuperConstructorInvocation) {
+            SuperConstructorInvocation sup = (SuperConstructorInvocation) node.getBody().statements().get(0);
+            code.write(" : %s(", this.binding.getSuperclass());
+            args((List<Expression>) sup.arguments());
+            code.write(")");
+        }
         emitFallbackReturn = !b.isConstructor() && !b.getReturnType().getName().equals("void");
         currentMethodBody = node.getBody();
         node.getBody().accept(this);
@@ -895,6 +915,9 @@ public class SourceVisitor extends ASTVisitor {
             return false;
         }
         addLibInclude(binding);
+        if (binding.isFromSource() && binding.getBinaryName() != null) {
+            includes.add(binding.getBinaryName().replace("$", "_").replace(".", "/") + ".h");
+        }
         if (!binding.isFromSource() && Config.writeLibHeader && node.resolveConstructorBinding() != null) {
             LibHandler.instance.addMethod(node.resolveConstructorBinding());
         }
@@ -907,7 +930,7 @@ public class SourceVisitor extends ASTVisitor {
         if (node.getAnonymousClassDeclaration() == null) {
             write("new %s(", node.getType().resolveBinding());
             args(node.arguments());
-            if (inner && Config.outer_ref_cons_arg) {
+            if (inner) {
                 if (!node.arguments().isEmpty()) write(", ");
                 write("this");
             }
@@ -1206,6 +1229,13 @@ public class SourceVisitor extends ASTVisitor {
                     && !this.binding.equals(onType)) {
                 //dependent base members are not found by unqualified lookup in C++ templates
                 write("this->");
+            }
+            else if (!this.binding.equals(onType) && !this.binding.isSubTypeCompatible(onType)) {
+                //method of an enclosing class: qualify through the parent reference
+                CExpression ref = ref2(this.binding, onType);
+                if (ref != null) {
+                    write("%s->", ref);
+                }
             }
             else if (Config.qualifyBaseMethod && !this.binding.equals(onType) && this.binding.isSubTypeCompatible(onType) && !onType.isInterface()) {
                 //qualify super method,not needed but more precise

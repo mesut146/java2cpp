@@ -182,6 +182,13 @@ public class HeaderWriter {
 
         nsBegin();
 
+        ITypeBinding declaring = binding.getDeclaringClass();
+        if (declaring != null && declaring.isFromSource()
+                && !Modifier.isStatic(binding.getModifiers())) {
+            //forward declaration for the enclosing instance pointer
+            code.line("class %s;\n", cname(declaring));
+        }
+
         ITypeBinding[] params = binding.getTypeParameters();
         if (params.length > 0) {
             StringBuilder template = new StringBuilder("template <");
@@ -206,6 +213,14 @@ public class HeaderWriter {
         code.line("public:\n");
         //a polymorphic base is required for dynamic_cast on converted casts
         code.line("virtual ~%s() = default;\n", cname(binding));
+        //non-static inner classes need a reference to the enclosing instance
+        ITypeBinding outer = binding.getDeclaringClass();
+        if (outer != null && outer.isFromSource() && !Modifier.isStatic(binding.getModifiers())) {
+            code.line("%s* %s;\n", cname(outer), Config.parentName);
+            code.line("%s(%s* %s) : %s(%s) {}\n",
+                    cname(binding), cname(outer), Config.parentName,
+                    Config.parentName, Config.parentName);
+        }
         code.up();
         node.bodyDeclarations().forEach(body -> visitBody((BodyDeclaration) body, binding));
         //new DepVisitor(cc, node).handle();
