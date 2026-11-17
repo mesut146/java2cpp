@@ -19,7 +19,7 @@ The C++ generator emits C++ text straight into a `Code` buffer.
 
 - **Forward declarations** — a single `common.h` declares all source and library classes.
 - **Library headers** — referenced classes on the classpath get stub headers under `lib/` so you can implement the missing parts yourself.
-- **Inner and anonymous classes** — inner classes receive a reference to their enclosing instance; anonymous classes become generated subclasses. Self-contained method bodies are copied; methods that capture enclosing locals/fields are emitted as stubs with a warning in `log.txt`.
+- **Inner and anonymous classes** — inner classes receive a reference to their enclosing instance; anonymous classes become generated subclasses. Effectively-final locals they capture are stored as fields and passed to the generated constructor; enclosing fields are reached via `_parent_ref`.
 - **Static blocks** — transformed into a static `si` / `si_init` method. Call it from your own entry point.
 - **Constants** — `static final` primitives with a constant value become `constexpr`.
 - **try/catch/finally** — translated to C++ `try`/`catch` with `finally` modeled by `j2cpp::try_finally_value` / `try_finally_void`: `finally` runs on normal completion, early return and exceptions, and a `return`/`throw` in `finally` overrides the try result or pending exception.
@@ -161,7 +161,7 @@ cppRt/                    # small hand-written helper files
 mvn test
 ```
 
-Tests under `src/test/java` exercise the CLI, helpers and sample conversions. `CppCompileTest` runs `g++ -fsyntax-only` over generated C++ — including every bundled sample source — and several behavior tests compile and **run** generated code to verify try/finally, switch, anonymous classes, inner-class parent references, String mapper operations, boxing/List/array behavior, static initializers (call `si()`), and multi-catch/rethrow. All skip if `g++` is unavailable. Hand-written Java snippets live in `src/test/resources/samples/base/` and `samples/mapper/`; they are data files, not compiled tests, and are used by `ConversionTest` through the classpath.
+Tests under `src/test/java` exercise the CLI, helpers and sample conversions. `CppCompileTest` runs `g++ -fsyntax-only` over generated C++ — including every bundled sample source — and several behavior tests compile and **run** generated code to verify try/finally, switch, anonymous classes, inner-class parent references, String mapper operations, boxing/List/array behavior, static initializers (call `si()`), multi-catch/rethrow, anonymous classes capturing locals, and `assert`. All skip if `g++` is unavailable. Hand-written Java snippets live in `src/test/resources/samples/base/` and `samples/mapper/`; they are data files, not compiled tests, and are used by `ConversionTest` through the classpath.
 
 ## Runtime support
 
@@ -174,4 +174,4 @@ Mappers are the default: Java runtime types become native C++ equivalents and `L
 
 - This is a syntactic transpiler: no garbage collection, reflection, threads, or full Java standard library is provided. Generated `lib/` stubs and `cppRt/` helpers cover only part of what real Java code needs.
 - Java generic type arguments are preserved in generated signatures and class templates, but method-level type variables are erased (as in Java bytecode), and some complex wildcard/capture cases degrade to `Object`.
-- Some Java constructs are only partially supported. `assert`, `synchronized`, local classes and switch expressions are logged and approximated; `break` in a non-primitive switch is approximate. Anonymous-class methods that capture enclosing state are stubbed. Check `log.txt` after conversion for warnings.
+- Some Java constructs are only partially supported. `synchronized`, local classes and switch expressions (`yield`) are logged and approximated; `break` in a non-primitive switch is approximate. Check `log.txt` after conversion for warnings.

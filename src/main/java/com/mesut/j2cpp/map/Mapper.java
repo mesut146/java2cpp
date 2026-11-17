@@ -133,8 +133,15 @@ public class Mapper {
         return toStr(expr, binding, null);
     }
 
+    //current visitor, used to render mapped expressions so it sees context such
+    //as captured locals in anonymous classes
+    public Object renderer;
+
     String toStr(Expression expr, ITypeBinding binding, Set<String> out) {
         if (expr == null) return "";
+        if (renderer instanceof SourceVisitor) {
+            return ((SourceVisitor) renderer).renderExpr(expr, binding, out);
+        }
         return SourceVisitor.render(expr, binding, out);
     }
 

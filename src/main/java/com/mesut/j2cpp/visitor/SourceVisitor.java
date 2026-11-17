@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -39,6 +40,8 @@ public class SourceVisitor extends ASTVisitor {
     int forVarCnt = 0;
     int anonyCnt = 0;
     StringBuilder anonyDecls = new StringBuilder();
+    //captured locals for the anonymous class currently being rendered
+    Map<IVariableBinding, String> anonCaptures = new HashMap<>();
     //includes required by mapped methods, emitted before the generated body
     Set<String> includes = new LinkedHashSet<>();
     Set<String> selfHeaders = new LinkedHashSet<>();
@@ -48,6 +51,14 @@ public class SourceVisitor extends ASTVisitor {
     public SourceVisitor(Path dir, CompilationUnit cu) {
         this.dir = dir;
         this.cu = cu;
+        Mapper.instance.renderer = this;
+    }
+
+    static String cnameOf(ITypeBinding type) {
+        String binary = type.getBinaryName();
+        if (binary == null) return type.getName();
+        String name = binary.replace("$", "_");
+        return name.substring(name.lastIndexOf('.') + 1);
     }
 
     //render a single expression as c++ without a surrounding compilation unit
@@ -61,6 +72,21 @@ public class SourceVisitor extends ASTVisitor {
         expr.accept(visitor);
         if (includes != null) includes.addAll(visitor.includes);
         return visitor.code.toString();
+    }
+
+    //instance render: reuses this visitor's state (e.g. anonCaptures) so mapped
+    //method scopes/args resolve captured locals correctly
+    public String renderExpr(Expression expr, ITypeBinding binding, Set<String> includes) {
+        ITypeBinding savedBinding = this.binding;
+        Code savedCode = this.code;
+        this.binding = binding;
+        this.code = new Code();
+        expr.accept(this);
+        if (includes != null) includes.addAll(this.includes);
+        String result = this.code.toString();
+        this.code = savedCode;
+        this.binding = savedBinding;
+        return result;
     }
 
     private List<String> mapped(MethodInvocation node) {
@@ -94,36 +120,44 @@ public class SourceVisitor extends ASTVisitor {
         includes.add(header);
     }
 
-    //true if the method references a variable declared outside itself (a captured
-    //local or an enclosing field); such bodies cannot be copied into an anon subclass
-    private boolean referencesEnclosingState(MethodDeclaration md) {
+    //collect locals referenced in the anonymous class body that are declared
+    //outside it (Java effectively-final captures), in stable order
+    private List<IVariableBinding> collectCaptures(AnonymousClassDeclaration anon) {
         Set<IVariableBinding> local = new HashSet<>();
-        for (Object p : md.parameters()) {
-            IBinding b = ((SingleVariableDeclaration) p).resolveBinding();
-            if (b instanceof IVariableBinding) local.add((IVariableBinding) b);
+        for (Object o : anon.bodyDeclarations()) {
+            if (o instanceof MethodDeclaration) {
+                for (Object p : ((MethodDeclaration) o).parameters()) {
+                    IBinding b = ((SingleVariableDeclaration) p).resolveBinding();
+                    if (b instanceof IVariableBinding) local.add((IVariableBinding) b);
+                }
+            }
         }
-        md.accept(new ASTVisitor() {
+        anon.accept(new ASTVisitor() {
             @Override
             public boolean visit(VariableDeclarationFragment n) {
                 if (n.resolveBinding() instanceof IVariableBinding) local.add((IVariableBinding) n.resolveBinding());
                 return true;
             }
         });
-        final boolean[] found = {false};
-        md.accept(new ASTVisitor() {
+        List<IVariableBinding> captures = new ArrayList<>();
+        Set<IVariableBinding> seen = new HashSet<>();
+        anon.accept(new ASTVisitor() {
             @Override
             public boolean visit(SimpleName n) {
                 IBinding b = n.resolveBinding();
-                if (b instanceof IVariableBinding && !local.contains(b)) found[0] = true;
+                if (b instanceof IVariableBinding && !((IVariableBinding) b).isField()
+                        && !local.contains(b) && seen.add((IVariableBinding) b)) {
+                    captures.add((IVariableBinding) b);
+                }
                 return true;
             }
         });
-        return found[0];
+        return captures;
     }
 
     //render the method bodies declared inside an anonymous class as C++ method
-    //definitions on the generated subclass. Bodies that capture enclosing state
-    //are emitted as stubs with a warning instead.
+    //definitions on the generated subclass. Captured locals are rewritten to the
+    //corresponding generated fields (see anonCaptures).
     private String renderAnonyBody(AnonymousClassDeclaration anon, ITypeBinding base) {
         StringBuilder out = new StringBuilder();
         ITypeBinding savedBinding = binding;
@@ -142,20 +176,8 @@ public class SourceVisitor extends ASTVisitor {
             write("%s %s(", isVoid ? "void" : code.ptr(mb.getReturnType()),
                     Mapper.instance.mapMethodName(mb.getName()));
             write(")");
-            if (referencesEnclosingState(md)) {
-                Logger.log(this.binding, "anonymous method captures enclosing state; body replaced by stub: " + md.getName());
-                if (md.getBody() != null) write("{}");
-                else write("{}");
-                if (!isVoid) {
-                    write(" return {}; ");
-                }
-            }
-            else if (md.getBody() != null) {
-                md.getBody().accept(this);
-            }
-            else {
-                write("{}");
-            }
+            if (md.getBody() != null) md.getBody().accept(this);
+            else write("{}");
             write("\n");
             out.append(code.toString());
         }
@@ -330,9 +352,7 @@ public class SourceVisitor extends ASTVisitor {
             code.write("%s>\n", template);
         }
         if (b.isConstructor()) {
-            String cname = this.binding.getBinaryName().replace("$", "_");
-            cname = cname.substring(cname.lastIndexOf('.') + 1);
-            code.write("%s::%s(", this.binding, cname);
+            code.write("%s::%s(", this.binding, cnameOf(this.binding));
         }
         else {
             code.write("%s %s::%s(", code.ptr(b.getReturnType()), this.binding, Mapper.instance.mapMethodName(b.getName()));
@@ -394,8 +414,10 @@ public class SourceVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(AssertStatement node) {
-        Logger.log(this.binding, "assert is not supported: " + node);
-        code.line("/* assert " + node.getExpression() + " */");
+        includes.add("<cassert>");
+        code.line("assert(");
+        node.getExpression().accept(this);
+        code.write(");");
         return false;
     }
 
@@ -953,18 +975,63 @@ public class SourceVisitor extends ASTVisitor {
             String ns = cu.getPackage() == null ? "" : cu.getPackage().getName().toString().replace(".", "::");
             String baseType = code.str(binding);
             includes.add("<utility>");
+            //collect effectively-final locals captured by the anonymous body
+            List<IVariableBinding> captures = collectCaptures(node.getAnonymousClassDeclaration());
+            anonCaptures.clear();
+            for (int i = 0; i < captures.size(); i++) {
+                anonCaptures.put(captures.get(i), "_cap" + i);
+            }
             //render the anonymous class body's methods into the generated subclass
             String body = renderAnonyBody(node.getAnonymousClassDeclaration(), binding);
+            anonCaptures.clear();
+
+            //anon bodies may reference fields of the enclosing class via _parent_ref
+            boolean needsParent = body.contains(Config.parentName + "->");
+            String enclosing = this.binding == null ? null : cnameOf(this.binding);
             anonyDecls.append("namespace ").append(ns).append(" {\n");
-            anonyDecls.append("struct ").append(name).append(" : public ").append(baseType).append(" {\n")
-                    .append("    template <typename... Args> ").append(name)
-                    .append("(Args&&... args) : ").append(baseType)
-                    .append("(std::forward<Args>(args)...) {}\n")
-                    .append(body)
-                    .append("};\n");
+            if (needsParent && enclosing != null) {
+                anonyDecls.append("class ").append(enclosing).append(";\n");
+            }
+            anonyDecls.append("struct ").append(name).append(" : public ").append(baseType).append(" {\n");
+            for (int i = 0; i < captures.size(); i++) {
+                IVariableBinding cap = captures.get(i);
+                anonyDecls.append("    ").append(code.ptr(cap.getType())).append(" _cap").append(i).append(";\n");
+            }
+            if (needsParent && enclosing != null) {
+                anonyDecls.append("    ").append(enclosing).append("* ").append(Config.parentName).append(";\n");
+            }
+            anonyDecls.append("    template <typename... Args> ").append(name).append("(");
+            for (int i = 0; i < captures.size(); i++) {
+                if (i > 0) anonyDecls.append(", ");
+                anonyDecls.append(code.ptr(captures.get(i).getType())).append(" _cap").append(i);
+            }
+            if (needsParent && enclosing != null) {
+                if (!captures.isEmpty()) anonyDecls.append(", ");
+                anonyDecls.append(enclosing).append("* ").append(Config.parentName);
+            }
+            if (!captures.isEmpty() || needsParent) anonyDecls.append(", ");
+            anonyDecls.append("Args&&... args) : ").append(baseType)
+                    .append("(std::forward<Args>(args)...)");
+            for (int i = 0; i < captures.size(); i++) {
+                anonyDecls.append(", _cap").append(i).append("(_cap").append(i).append(")");
+            }
+            if (needsParent && enclosing != null) {
+                anonyDecls.append(", ").append(Config.parentName).append("(").append(Config.parentName).append(")");
+            }
+            anonyDecls.append(" {}\n").append(body).append("};\n");
             anonyDecls.append("}\n\n");
             Logger.log(this.binding, "anonymous class body generated as " + name);
             write("new %s(", name);
+            //pass captured values first, followed by base constructor arguments
+            for (int i = 0; i < captures.size(); i++) {
+                if (i > 0) write(", ");
+                write(captures.get(i).getName());
+            }
+            if (needsParent && enclosing != null) {
+                if (!captures.isEmpty()) write(", ");
+                write("this");
+            }
+            if ((!captures.isEmpty() || needsParent) && !node.arguments().isEmpty()) write(", ");
             args(node.arguments());
             write(")");
         }
@@ -1340,6 +1407,11 @@ public class SourceVisitor extends ASTVisitor {
         boolean isStatic = Modifier.isStatic(binding.getModifiers());
         IVariableBinding variableBinding = (IVariableBinding) binding;
         ITypeBinding onType = variableBinding.getDeclaringClass();
+        String captured = anonCaptures.get(variableBinding);
+        if (captured != null) {
+            write(captured);
+            return false;
+        }
         if (variableBinding.isParameter()) {
             write(Mapper.instance.mapParamName(node.getIdentifier()).toString());
             return false;
