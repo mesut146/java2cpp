@@ -54,7 +54,8 @@ public class Mapper {
                 "primitives.json", "double.json", "float.json", "long.json", "short.json",
                 "stringbuilder.json", "objects.json", "optional.json", "random.json", "uuid.json",
                 "printstream.json", "file.json", "path.json", "files.json",
-                "streams.json", "bufferedreader.json", "scanner.json", "printwriter.json"};
+                "streams.json", "bufferedreader.json", "scanner.json", "printwriter.json",
+                "throwable.json"};
         for (String mapper : all) {
             addMapper(getClass().getResourceAsStream("/cpp/" + mapper));
         }

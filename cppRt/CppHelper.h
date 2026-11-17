@@ -595,6 +595,38 @@ inline PrintStream *javaErr() {
     return &err;
 }
 
+//java.lang.Throwable / Exception backend
+class Throwable {
+    std::string message;
+    Throwable *cause;
+public:
+    explicit Throwable(std::string *m = nullptr)
+        : message(m ? *m : std::string()), cause(nullptr) {}
+    Throwable(std::string *m, Throwable *c)
+        : message(m ? *m : std::string()), cause(c) {}
+    Throwable(Throwable *other)
+        : message(other ? other->message : std::string()), cause(other ? other->cause : nullptr) {}
+    virtual ~Throwable() = default;
+
+    std::string *getMessage() { return new std::string(message); }
+    Throwable *getCause() { return cause; }
+    Throwable *initCause(Throwable *c) { cause = c; return this; }
+    void addSuppressed(Throwable *) {} //no stack-trace frames to suppress
+
+    std::string *toString() {
+        return new std::string(std::string("java.lang.Throwable: ") + message);
+    }
+    void printStackTrace() { printStackTrace(javaErr()); }
+    void printStackTrace(PrintStream *out) {
+        if (!out) return;
+        out->println(toString());
+        if (cause) {
+            out->println(new std::string("Caused by: "));
+            cause->printStackTrace(out);
+        }
+    }
+};
+
 //try-with-resources: call close() on scope exit, including during exception unwinding
 template <typename F>
 class ScopeGuard {

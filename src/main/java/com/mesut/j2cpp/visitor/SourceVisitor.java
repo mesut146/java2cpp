@@ -117,6 +117,14 @@ public class SourceVisitor extends ASTVisitor {
         //a type-qualified static call has no runtime receiver
         Expression mappedScope = isTypeExpression(scope) && Modifier.isStatic(b.getModifiers()) ? null : scope;
         List<String> res = Mapper.instance.mapMethod(b, node.arguments(), mappedScope, this.binding, receiver, includes);
+        //a catch variable is a C++ reference (not a pointer); mapper prefixes use ->
+        if (res != null && scope != null && catchName != null && catchName.equals(scope.toString())) {
+            String recv = scope.toString();
+            res = new ArrayList<>(res);
+            for (int i = 0; i < res.size(); i++) {
+                res.set(i, res.get(i).replace(recv + "->", recv + "."));
+            }
+        }
         mappedCalls.put(node, res);
         return res;
     }

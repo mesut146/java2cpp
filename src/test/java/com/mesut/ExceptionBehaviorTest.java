@@ -37,19 +37,11 @@ public class ExceptionBehaviorTest {
     private static final String MAIN =
             "#include \"common.h\"\n" +
             "#include \"e/Ex.h\"\n" +
-            "#include \"lib/java/io/Serializable.h\"\n" +
-            "#include \"lib/java/lang/Throwable.h\"\n" +
-            "#include \"lib/java/lang/Exception.h\"\n" +
-            "#include \"lib/java/lang/RuntimeException.h\"\n" +
-            "#include \"lib/java/lang/IllegalStateException.h\"\n" +
             "#include <cstdio>\n" +
-            "namespace java { namespace lang {\n" +
-            "IllegalStateException::IllegalStateException(std::string* s) {}\n" +
-            "}}\n" +
             "int main(){\n" +
             "    e::Ex::log=0; int a=e::Ex::test(0);\n" +
             "    e::Ex::log=0; int b=e::Ex::test(1);\n" +
-            "    bool caught=false; try { e::Ex::rethrow(); } catch (java::lang::IllegalStateException&) { caught=true; }\n" +
+            "    bool caught=false; try { e::Ex::rethrow(); } catch (CppHelper::Throwable&) { caught=true; }\n" +
             "    printf(\"a=%d b=%d log=%d caught=%d\\n\", a, b, e::Ex::log, caught);\n" +
             "    return (a==0 && b==10 && e::Ex::log==2 && caught) ? 0 : 1;\n" +
             "}\n";

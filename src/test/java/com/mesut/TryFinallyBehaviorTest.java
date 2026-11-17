@@ -32,13 +32,8 @@ public class TryFinallyBehaviorTest {
 
     private static final String MAIN =
             "#include \"common.h\"\n" +
-            "#include \"lib/java/io/Serializable.h\"\n" +
-            "#include \"lib/java/lang/Throwable.h\"\n" +
-            "#include \"lib/java/lang/Exception.h\"\n" +
-            "#include \"lib/java/lang/RuntimeException.h\"\n" +
             "#include \"t/F.h\"\n" +
             "#include <cstdio>\n" +
-            "namespace java { namespace lang { Throwable::Throwable() {} Exception::Exception() {} RuntimeException::RuntimeException(std::string*) {} }}\n" +
             "int main() {\n" +
             "    t::F f; int fails = 0;\n" +
             "    t::F::log=0; int a=f.normal();\n" +
@@ -48,7 +43,7 @@ public class TryFinallyBehaviorTest {
             "    t::F::log=0; int c=f.finallyWins();\n" +
             "    if(c!=2||t::F::log!=19) { printf(\"wins=%d log=%d\\n\", c, t::F::log); fails++; }\n" +
             "    t::F::log=0; bool caught=false;\n" +
-            "    try { f.throwing(); } catch (java::lang::RuntimeException&) { caught=true; }\n" +
+            "    try { f.throwing(); } catch (CppHelper::Throwable&) { caught=true; }\n" +
             "    if(!caught||t::F::log!=19) { printf(\"throwing caught=%d log=%d\\n\", caught, t::F::log); fails++; }\n" +
             "    t::F::log=0; int d=f.throwFinallyWins();\n" +
             "    if(d!=7||t::F::log!=19) { printf(\"throwWins=%d log=%d\\n\", d, t::F::log); fails++; }\n" +

@@ -1,6 +1,7 @@
 package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.IncludeStmt;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.expr.CInfixExpression;
 import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
@@ -184,6 +185,19 @@ public class HeaderWriter {
         ITypeBinding binding = node.resolveBinding();
         for (String header : sourceIncludes(binding, (List<BodyDeclaration>) (List<?>) node.bodyDeclarations())) {
             code.write("#include \"%s\"\n", header);
+        }
+        //mapped base types (e.g. Exception -> CppHelper::Throwable) need their headers too
+        Set<String> mappedIncludes = new LinkedHashSet<>();
+        if (binding.getSuperclass() != null && binding.getSuperclass().getBinaryName() != null) {
+            Mapper.instance.collectIncludes(binding.getSuperclass().getBinaryName(), mappedIncludes);
+        }
+        for (ITypeBinding iface : binding.getInterfaces()) {
+            if (iface.getBinaryName() != null) {
+                Mapper.instance.collectIncludes(iface.getBinaryName(), mappedIncludes);
+            }
+        }
+        for (String inc : mappedIncludes) {
+            code.write("%s\n", new IncludeStmt(inc));
         }
         code.write("\n");
 

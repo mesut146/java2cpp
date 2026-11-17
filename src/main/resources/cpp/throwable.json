@@ -1,0 +1,30 @@
+{
+  "name": "java.lang.Throwable,java.lang.Exception,java.lang.RuntimeException,java.lang.Error,java.lang.IllegalArgumentException,java.lang.IllegalStateException",
+  "target": "CppHelper::Throwable",
+  "include": "CppHelper.h",
+  "methods": [
+    { "name": "Throwable()", "target": "new CppHelper::Throwable()", "external": true },
+    { "name": "Throwable(java.lang.String)", "target": "new CppHelper::Throwable($1)", "external": true },
+    { "name": "Throwable(java.lang.String,java.lang.Throwable)", "target": "new CppHelper::Throwable($1, $2)", "external": true },
+    { "name": "Throwable(java.lang.Throwable)", "target": "new CppHelper::Throwable($1)", "external": true },
+    { "name": "Exception()", "target": "new CppHelper::Throwable()", "external": true },
+    { "name": "Exception(java.lang.String)", "target": "new CppHelper::Throwable($1)", "external": true },
+    { "name": "Exception(java.lang.String,java.lang.Throwable)", "target": "new CppHelper::Throwable($1, $2)", "external": true },
+    { "name": "Exception(java.lang.Throwable)", "target": "new CppHelper::Throwable($1)", "external": true },
+    { "name": "RuntimeException()", "target": "new CppHelper::Throwable()", "external": true },
+    { "name": "RuntimeException(java.lang.String)", "target": "new CppHelper::Throwable($1)", "external": true },
+    { "name": "RuntimeException(java.lang.Throwable)", "target": "new CppHelper::Throwable($1)", "external": true },
+    { "name": "Error()", "target": "new CppHelper::Throwable()", "external": true },
+    { "name": "Error(java.lang.String)", "target": "new CppHelper::Throwable($1)", "external": true },
+    { "name": "IllegalArgumentException(java.lang.String)", "target": "new CppHelper::Throwable($1)", "external": true },
+    { "name": "IllegalStateException(java.lang.String)", "target": "new CppHelper::Throwable($1)", "external": true },
+    { "name": "getMessage()", "target": "getMessage()" },
+    { "name": "getLocalizedMessage()", "target": "getMessage()" },
+    { "name": "getCause()", "target": "getCause()" },
+    { "name": "initCause(java.lang.Throwable)", "target": "initCause($1)" },
+    { "name": "addSuppressed(java.lang.Throwable)", "target": "addSuppressed($1)" },
+    { "name": "toString()", "target": "toString()" },
+    { "name": "printStackTrace()", "target": "printStackTrace()" },
+    { "name": "printStackTrace(java.io.PrintStream)", "target": "printStackTrace($1)" }
+  ]
+}
