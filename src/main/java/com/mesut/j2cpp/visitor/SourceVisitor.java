@@ -306,6 +306,11 @@ public class SourceVisitor extends ASTVisitor {
                 visit((TypeDeclaration) o, savedOuter);
                 this.binding = savedOuter;
             }
+            else if (o instanceof Initializer && Modifier.isStatic(((Initializer) o).getModifiers())) {
+                code.write("void %s::si()", this.binding);
+                ((Initializer) o).getBody().accept(this);
+                code.write("\n");
+            }
         }
     }
 

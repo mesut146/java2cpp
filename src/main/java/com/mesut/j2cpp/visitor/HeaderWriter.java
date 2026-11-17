@@ -248,7 +248,9 @@ public class HeaderWriter {
             visit((MethodDeclaration) body);
         }
         else if (body instanceof Initializer) {
-            //visit((Initializer) body, cc);
+            if (Modifier.isStatic(body.getModifiers())) {
+                code.line("static void si();\n");
+            }
         }
     }
 
