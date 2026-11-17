@@ -5,6 +5,7 @@ import com.mesut.j2cpp.IncludeList;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.cppast.CStatement;
 import com.mesut.j2cpp.map.ClassMap;
+import com.mesut.j2cpp.map.Mapper;
 import com.mesut.j2cpp.util.PrintHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 
@@ -120,10 +121,47 @@ public class CClass extends CStatement {
         up();
         sb.append(getIndent()).append("public:\n");
         sb.append(getIndent()).append("virtual ~").append(name).append("() = default;\n");
+        printObjectMethods(sb);
         printFields(sb);
         printMethods(sb);
         sb.append("};//class ").append(name);
         return sb.toString();
+    }
+
+    //java.lang.Object declares the three methods Java synthesizes/inherits everywhere.
+    //Emitting them as virtual on the stub lets generated subclasses override them and
+    //allows calls through Object* to dispatch to the concrete implementation.
+    private void printObjectMethods(StringBuilder sb) {
+        if (type == null || !"java.lang.Object".equals(type.realName)) return;
+        String ind = getIndent();
+
+        CType str = Mapper.instance.mapType(TypeHelper.getStringType(), this);
+        CType strPtr = str.copy();
+        strPtr.setPointer(Config.ptr_method);
+        strPtr.scope = scope;
+        String toStringRet = strPtr.toString();
+        String toStringBody = Config.useMappers
+                ? "return new std::string(\"java.lang.Object\");"
+                : "return nullptr;";
+
+        //if JDT already added one of these to the stub, make it virtual instead of emitting a duplicate
+        for (CMethod m : methods) {
+            if (m.name != null && (m.name.is("toString") || m.name.is("equals") || m.name.is("hashCode"))) {
+                m.setVirtual(true);
+                m.setPublic(true);
+            }
+        }
+
+        if (methods.stream().noneMatch(m -> m.name != null && m.name.is("toString"))) {
+            sb.append(ind).append("virtual ").append(toStringRet)
+                    .append(" toString() { ").append(toStringBody).append(" }\n");
+        }
+        if (methods.stream().noneMatch(m -> m.name != null && m.name.is("equals"))) {
+            sb.append(ind).append("virtual bool equals(Object* o) { return this == o; }\n");
+        }
+        if (methods.stream().noneMatch(m -> m.name != null && m.name.is("hashCode"))) {
+            sb.append(ind).append("virtual int hashCode() { return 0; }\n");
+        }
     }
 
     public void printDecl(StringBuilder sb) {

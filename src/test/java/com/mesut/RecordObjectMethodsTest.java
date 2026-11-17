@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /** Verifies the auto-generated toString/equals/hashCode on records. */
 public class RecordObjectMethodsTest {
@@ -33,11 +34,14 @@ public class RecordObjectMethodsTest {
             "    rp::R_Named n(new std::string(\"hi\"), &p);\n" +
             "    std::string ts = *p.toString();\n" +
             "    std::string nts = *n.toString();\n" +
-            "    printf(\"ts=%s eq=%d neq=%d h=%d n=%s\\n\", ts.c_str(), p.equals(&q), p.equals(&r), p.hashCode(), nts.c_str());\n" +
+            "    java::lang::Object* op = &p, *oq = &q, *oz = &r;\n" +
+            "    std::string vts = *op->toString();\n" +
+            "    printf(\"ts=%s eq=%d neq=%d h=%d n=%s vts=%s\\n\", ts.c_str(), p.equals(&q), p.equals(&r), p.hashCode(), nts.c_str(), vts.c_str());\n" +
             "    return (ts==\"R_Point[x=1, y=2]\" && p.equals(&q) && !p.equals(&r)\n" +
             "            && p.hashCode()==q.hashCode()\n" +
             "            && nts.find(\"name=hi\")!=std::string::npos\n" +
-            "            && nts.find(\"p=R_Point[x=1, y=2]\")!=std::string::npos) ? 0 : 1;\n" +
+            "            && nts.find(\"p=R_Point[x=1, y=2]\")!=std::string::npos\n" +
+            "            && vts==ts && op->equals(oq) && !op->equals(oz) && op->hashCode()==q.hashCode()) ? 0 : 1;\n" +
             "}\n";
 
     @Test
@@ -52,6 +56,15 @@ public class RecordObjectMethodsTest {
         Files.write(src.resolve("rp/R.java"), JAVA.getBytes(StandardCharsets.UTF_8));
         Path out = Files.createTempDirectory("j2cpp-rom-out");
         Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
+
+        String objectHeader = new String(Files.readAllBytes(
+                out.resolve("lib/java/lang/Object.h")), StandardCharsets.UTF_8);
+        assertTrue("Object stub missing virtual toString:\n" + objectHeader,
+                objectHeader.contains("virtual std::string* toString()"));
+        assertTrue("Object stub missing virtual equals:\n" + objectHeader,
+                objectHeader.contains("virtual bool equals(Object* o)"));
+        assertTrue("Object stub missing virtual hashCode:\n" + objectHeader,
+                objectHeader.contains("virtual int hashCode()"));
 
         Path main = out.resolve("main.cpp");
         Files.write(main, MAIN.getBytes(StandardCharsets.UTF_8));
