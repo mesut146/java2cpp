@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 
 public class Stats extends ASTVisitor {
     HashSet<String> types = new HashSet<>();
-    //Set<IMethodBinding> methods = new TreeSet<>(get());
     Map<IMethodBinding, Integer> map = new TreeMap<>(get());
 
     Comparator<IMethodBinding> get() {
@@ -42,10 +41,6 @@ public class Stats extends ASTVisitor {
             sb.append(String.format("%s.%s(%s) %s", clazz, method.getName(), params, map.get(method)));
             sb.append("\n");
         }
-//        for (var method : methods) {
-//            sb.append(String.format("%s.%s() %s", method.getDeclaringClass().getQualifiedName(), method.getName(), map.get(method)));
-//            sb.append("\n");
-//        }
         Files.writeString(file, sb);
     }
 
@@ -55,7 +50,6 @@ public class Stats extends ASTVisitor {
             var bind = node.resolveMethodBinding();
             if (!bind.getDeclaringClass().isFromSource()) {
                 map.put(bind, map.getOrDefault(bind, 0) + 1);
-                //methods.add(bind);
             }
         }
         return false;

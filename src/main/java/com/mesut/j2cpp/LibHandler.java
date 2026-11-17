@@ -13,7 +13,6 @@ import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 

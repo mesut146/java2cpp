@@ -115,9 +115,6 @@ public class PreVisitor {
         //find super method and set virtual
         ITypeBinding superBinding = binding.getDeclaringClass().getSuperclass();
         if (superBinding == null) return;
-        /*if (superBinding.equals(binding.getDeclaringClass())){
-            return;
-        }*/
         //todo may be deeper
         for (IMethodBinding superMethod : superBinding.getDeclaredMethods()) {
             if (binding.isSubsignature(superMethod)) {

@@ -86,19 +86,6 @@ public class TypeHelper {
             else {
                 return copied;
             }
-            /*if (ns.getAll().startsWith(typeNs.getAll())) {
-                String str = ns.getAll().substring(typeNs.getAll().length());
-                if (str.startsWith("::")) {
-                    str = str.substring(2);
-                }
-                if (str.isEmpty()) {
-                    copied.ns = null;
-                }
-                else {
-                    copied.ns = new Namespace(str);
-                }
-                return copied;
-            }*/
         }
         return copied;
     }

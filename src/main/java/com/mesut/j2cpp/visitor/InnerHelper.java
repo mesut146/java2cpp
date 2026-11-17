@@ -8,7 +8,6 @@ import com.mesut.j2cpp.cppast.expr.CThisExpression;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
 import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
 import com.mesut.j2cpp.cppast.stmt.CReturnStatement;
-import com.mesut.j2cpp.util.TypeHelper;
 
 public class InnerHelper {
     //create reference of outer instance

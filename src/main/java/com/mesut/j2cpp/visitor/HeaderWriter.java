@@ -370,18 +370,10 @@ public class HeaderWriter {
         code.line("class %s: public %s{\n", cname(binding), TypeHelper.getObjectType());
         code.line("public:\n");
         code.up();
-        //CBlockStatement block = initEnum(cc);
         int ordinal = 0;
 
         for (EnumConstantDeclaration cons : (List<EnumConstantDeclaration>) n.enumConstants()) {
-            //constant.resolveVariable();
             code.line("static %s %s;\n", code.ptr(binding), cons.getName());
-            if (!cons.arguments().isEmpty()) {
-                //rhs.args = sourceVisitor.list(constant.arguments());
-            }
-            if (cons.getAnonymousClassDeclaration() != null) {
-                //rhs.setType(creation.type);
-            }
             ordinal++;
         }
 
@@ -481,13 +473,10 @@ public class HeaderWriter {
     //static initializer
     public void visit(Initializer node, ITypeBinding cc) {
         CMethod method = new CMethod();
-        //cc.addMethod(method);
         method.name = CName.from(Config.static_init_name);
         method.type = TypeHelper.getVoidType();
         method.setStatic(true);
 
-        //sourceVisitor.binding = cc;
-        //method.body = (CBlockStatement) sourceVisitor.visitExpr(node.getBody(), null);
 
         //main entry should call this
         mainEntrySiCall(method);

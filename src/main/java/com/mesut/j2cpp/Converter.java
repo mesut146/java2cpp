@@ -2,11 +2,7 @@ package com.mesut.j2cpp;
 
 
 import com.mesut.j2cpp.ast.*;
-import com.mesut.j2cpp.cppast.expr.CAssignment;
-import com.mesut.j2cpp.cppast.expr.CFieldAccess;
-import com.mesut.j2cpp.cppast.expr.CThisExpression;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
-import com.mesut.j2cpp.cppast.stmt.CExpressionStatement;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.*;
 import com.mesut.j2cpp.visitor.*;

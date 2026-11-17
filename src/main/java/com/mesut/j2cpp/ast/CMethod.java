@@ -18,7 +18,6 @@ public class CMethod extends ModifierNode {
     public boolean isOverride = false;
     public CClass parent;
     public CBlockStatement body;
-    public String bodyStr;
 
     public void addParam(CParameter param) {
         params.add(param);

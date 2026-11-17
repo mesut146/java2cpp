@@ -8,7 +8,6 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class CType extends CExpression {
     public Namespace ns;
@@ -21,8 +20,6 @@ public class CType extends CExpression {
     public boolean isInner;
     public boolean fromSource;
     public boolean mapped;
-    public boolean ref;
-    public boolean isRef;
     public ITypeBinding binding;
 
     public CType() {
@@ -42,11 +39,6 @@ public class CType extends CExpression {
     public static CType parse(String name) {
         int pos = name.indexOf("<");
         CType res;
-        boolean ref = false;
-        if (name.startsWith("&")) {
-            ref = true;
-            name = name.substring(1);
-        }
         if (pos != -1) {
             String real = name.substring(0, pos);
             res = new CType(real);
@@ -58,7 +50,6 @@ public class CType extends CExpression {
         else {
             res = new CType(name);
         }
-        res.isRef = ref;
         return res;
     }
 
@@ -94,7 +85,6 @@ public class CType extends CExpression {
         copied.isTypeArg = isTypeArg;
         copied.fromSource = fromSource;
         copied.isInner = isInner;
-        copied.ref = ref;
         return copied;
     }
 
@@ -141,8 +131,7 @@ public class CType extends CExpression {
             setScope(scope, typeNames);
             sb.append("<").append(PrintHelper.joinStr(typeNames, ", ")).append(">");
         }
-        if (ref) sb.append("&");
-        else if (isPointer()) sb.append("*");
+        if (isPointer()) sb.append("*");
         return sb.toString();
     }
 

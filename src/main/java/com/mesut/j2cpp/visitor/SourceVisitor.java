@@ -1863,41 +1863,4 @@ public class SourceVisitor extends ASTVisitor {
         return ce;
     }
 
-        /*String getTargetType(Expression e){
-    	ASTNode p = e.getParent();
-    	if(p instanceof VariableDeclarationFragment){
-    		VariableDeclarationFragment f = (VariableDeclarationFragment)p;
-    		return f.resolveBinding().getType().getName();
-    	}
-    	else if(p instanceof Assignment){
-    		Assignment as = (Assignment)p;
-    		return as.getLeftHandSide().resolveTypeBinding().getName();
-    	}
-   	 else if(p instanceof MethodInvocation){
-   	 	MethodInvocation m=(MethodInvocation)p;
-    	}
-    	else if(p instanceof ClassInstanceCreation){
-			ClassInstanceCreation cic=(ClassInstanceCreation)p;
-			
-		}
-    	else if(p instanceof InfixExpression){
-    		Logger.log(this.binding, "infix expression used as a boxing conversion: " + p);
-			return toWrapper(e.resolveTypeBinding().getName());
-		}
-    	else if(p instanceof PrefixExpression){
-    		PrefixExpression pr = (PrefixExpression)p;
-    		return toWrapper(e.resolveTypeBinding().getName());
-		}
-		else if(p instanceof CastExpression){
-			CastExpression ce=(CastExpression)p;
-			return ce.getType().toString();
-		}
-    	else if(p instanceof ArrayAccess){
-    		return "int";
-    	}
-    	else if(p instanceof ArrayCreation){
-    		return "int";
-    	}
-		return null;
-	}*/
 }
