@@ -1205,8 +1205,17 @@ public class SourceVisitor extends ASTVisitor {
 
         scope.accept(this);
         write("->%s", Mapper.instance.mapFieldName(node.getName().getIdentifier(), this.binding));
-        //todo Main.this.field
         return false;
+    }
+
+    //q.new Inner() passes q as the enclosing instance; a bare new Inner() uses this
+    private void writeEnclosingInstance(ClassInstanceCreation node) {
+        if (node.getExpression() != null) {
+            node.getExpression().accept(this);
+        }
+        else {
+            write("this");
+        }
     }
 
     @Override
@@ -1244,7 +1253,7 @@ public class SourceVisitor extends ASTVisitor {
                 }
                 if (lc.needsParent) {
                     if (!lc.captures.isEmpty()) write(", ");
-                    write("this");
+                    writeEnclosingInstance(node);
                 }
                 if ((!lc.captures.isEmpty() || lc.needsParent) && !node.arguments().isEmpty()) write(", ");
                 args(node.arguments());
@@ -1255,7 +1264,7 @@ public class SourceVisitor extends ASTVisitor {
             args(node.arguments());
             if (inner) {
                 if (!node.arguments().isEmpty()) write(", ");
-                write("this");
+                writeEnclosingInstance(node);
             }
             write(")");
         }
@@ -1622,7 +1631,11 @@ public class SourceVisitor extends ASTVisitor {
                 write("::");
             }
             else {
+                //new Foo().bar() needs parentheses around the receiver in C++
+                boolean paren = scope instanceof ClassInstanceCreation;
+                if (paren) write("(");
                 scope.accept(this);
+                if (paren) write(")");
                 if (catchName != null && catchName.equals(scope.toString())) {
                     write(".");
                 }
