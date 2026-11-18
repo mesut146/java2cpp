@@ -499,7 +499,12 @@ public class HeaderWriter {
         boolean isStatic = Modifier.isStatic(node.getModifiers()) || clazz.isInterface();
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
             ITypeBinding type = frag.resolveBinding().getType();
-            boolean coe = isStatic && frag.getInitializer() != null && type.isPrimitive() && Modifier.isFinal(node.getModifiers());
+            //interface fields are implicitly final; a compile-time constant can
+            //be constexpr so uses in other translation units need no definition
+            IVariableBinding field = frag.resolveBinding();
+            boolean coe = isStatic && frag.getInitializer() != null && type.isPrimitive()
+                    && (Modifier.isFinal(node.getModifiers()) || clazz.isInterface())
+                    && field != null && field.getConstantValue() != null;
             boolean cof = isStatic && Config.static_field_cofui && Modifier.isFinal(node.getModifiers()) && !type.isPrimitive();
 
             code.line("");
@@ -567,9 +572,15 @@ public class HeaderWriter {
         else {
             code.line("");
         }
-        boolean abstractMethod = binding.getDeclaringClass().isInterface() && !binding.isConstructor();
+        boolean staticMethod = Modifier.isStatic(binding.getModifiers());
+        boolean privateMethod = Modifier.isPrivate(binding.getModifiers());
+        //only a declaration without a body is a pure virtual; Java interface
+        //default/static methods carry their implementation and stay callable
+        boolean abstractMethod = binding.getDeclaringClass().isInterface()
+                && !binding.isConstructor() && !staticMethod && !privateMethod
+                && node.getBody() == null;
         CMethod cm = ClassMap.sourceMap.getMethod(binding);
-        boolean virtualMethod = !Modifier.isStatic(binding.getModifiers())
+        boolean virtualMethod = !staticMethod && !privateMethod
                 && cm != null && cm.isVirtual();
         if (abstractMethod || virtualMethod) {
             code.write("virtual ");

@@ -110,10 +110,13 @@ public class PreVisitor {
         }
         else if (cc.isInterface || Modifier.isAbstract(binding.getModifiers())) {
             //in stub mode every method needs a definition, so interfaces become
-            //virtual methods with default bodies instead of pure virtual ones
-            method.isPureVirtual = Config.useMappers;
+            //virtual methods with default bodies instead of pure virtual ones.
+            //default/private interface methods have a Java body and must stay
+            //concrete so implementers can inherit or call them
+            boolean pure = Modifier.isAbstract(binding.getModifiers());
+            method.isPureVirtual = Config.useMappers && pure;
             method.setPublic(true);
-            method.setVirtual(true);
+            method.setVirtual(pure || !Modifier.isPrivate(binding.getModifiers()));
         }
 
         for (int i = 0; i < params.size(); i++) {
