@@ -632,7 +632,7 @@ public class SourceVisitor extends ASTVisitor {
                     continue;
                 }
                 includes.add("j2cpp_traits.h");
-                code.line("static_assert(j2cpp::wildcard_ok<%s, %s>::value, \"%s extends %s\");",
+                code.line("static_assert(::j2cpp::wildcard_ok<%s, %s>::value, \"%s extends %s\");",
                         currentWildcards.names.get(i), code.ptr(bound),
                         currentWildcards.names.get(i), bound.getQualifiedName());
             }
@@ -952,7 +952,7 @@ public class SourceVisitor extends ASTVisitor {
         ITypeBinding ret = currentMethod == null ? null : currentMethod.getReturnType();
         boolean isVoid = ret == null || ret.getName().equals("void");
         if (isVoid) {
-            write("if (j2cpp::try_finally_void(\n");
+            write("if (::j2cpp::try_finally_void(\n");
             write("[&]() -> bool {\n");
             //resources belong to the try part so their guards close before finally
             if (hasResources) {
@@ -968,7 +968,7 @@ public class SourceVisitor extends ASTVisitor {
         }
         else {
             String ortype = "std::optional<" + code.ptr(ret) + ">";
-            write("{\nauto _tf = j2cpp::try_finally_value(\n");
+            write("{\nauto _tf = ::j2cpp::try_finally_value(\n");
             write("[&]() -> %s {\n", ortype);
             //resources belong to the try part so their guards close before finally
             if (hasResources) {
@@ -1773,7 +1773,7 @@ public class SourceVisitor extends ASTVisitor {
                 //mapped wrappers are primitives, so Object needs a polymorphic box
                 includes.add("common.h");
                 code.note("primitive boxed for Object-typed target");
-                write("new j2cpp::Box<%s>(", code.ptr(et));
+                write("new ::j2cpp::Box<%s>(", code.ptr(et));
                 e.accept(this);
                 write(")");
                 return;
@@ -1792,7 +1792,7 @@ public class SourceVisitor extends ASTVisitor {
             //stubs have no constructors, so use the generated box in both modes
             includes.add("common.h");
             code.note("primitive boxed for Object-typed target");
-            write("new j2cpp::Box<%s>(", code.ptr(exprType));
+            write("new ::j2cpp::Box<%s>(", code.ptr(exprType));
             e.accept(this);
             write(")");
             return;
@@ -1839,9 +1839,23 @@ public class SourceVisitor extends ASTVisitor {
                 //wrap the trailing arguments into the array the callee expects
                 ITypeBinding element = paramTypes[i].getElementType();
                 write("new std::vector<%s>{", code.ptr(element));
+                boolean objectVarargs = element != null
+                        && "java.lang.Object".equals(element.getQualifiedName());
                 for (int j = fixed; j < list.size(); j++) {
                     if (j > fixed) write(", ");
-                    writeValue(list.get(j), element);
+                    ITypeBinding argType = list.get(j).resolveTypeBinding();
+                    if (objectVarargs && (argType == null
+                            || !"java.lang.Object".equals(argType.getQualifiedName()))) {
+                        //Java boxes each vararg element; C++ needs it explicit
+                        includes.add("common.h");
+                        code.note("argument boxed for Object varargs");
+                        write("::j2cpp::boxArg(");
+                        writeValue(list.get(j), element);
+                        write(")");
+                    }
+                    else {
+                        writeValue(list.get(j), element);
+                    }
                 }
                 write("}");
             }
@@ -2053,11 +2067,11 @@ public class SourceVisitor extends ASTVisitor {
         ITypeBinding from = operand.resolveTypeBinding();
         boolean fromMappedPrimitive = from != null && TypeVisitor.fromBinding(from).isPrim();
         if (Config.useMappers && !fromMappedPrimitive && TypeVisitor.fromBinding(type).isPrim()) {
-            //Integer -> int: the boxed value lives in j2cpp::Box (or is already
+            //Integer -> int: the boxed value lives in ::j2cpp::Box (or is already
             //a mapped primitive); emit an explicit unbox instead of a pointer cast
             includes.add("common.h");
-            code.note("cast to boxed primitive unboxed via j2cpp::unbox");
-            write("j2cpp::unbox<%s>(", code.ptr(type));
+            code.note("cast to boxed primitive unboxed via ::j2cpp::unbox");
+            write("::j2cpp::unbox<%s>(", code.ptr(type));
             operand.accept(this);
             write(")");
             return false;
@@ -2067,8 +2081,8 @@ public class SourceVisitor extends ASTVisitor {
             String prim = unboxedName(type.getName());
             if (prim != null) {
                 includes.add("common.h");
-                code.note("cast to boxed primitive unboxed via j2cpp::unbox");
-                write("j2cpp::unbox<%s>(", prim);
+                code.note("cast to boxed primitive unboxed via ::j2cpp::unbox");
+                write("::j2cpp::unbox<%s>(", prim);
                 operand.accept(this);
                 write(")");
                 return false;

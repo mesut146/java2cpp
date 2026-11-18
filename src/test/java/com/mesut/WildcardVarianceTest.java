@@ -52,7 +52,7 @@ public class WildcardVarianceTest {
 
         String cpp = CppTestSupport.generated(out, "src/g/G.cpp");
         assertTrue("wildcard bound not enforced:\n" + cpp, cpp.contains(
-                "static_assert(j2cpp::wildcard_ok<W0, CppHelper::Number*>::value"));
+                "static_assert(::j2cpp::wildcard_ok<W0, CppHelper::Number*>::value"));
 
         CppTestSupport.compile(out, compiler, "src/g/G.cpp", MAIN, "wv_test")
                 .assertOk("wildcard test");

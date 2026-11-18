@@ -65,9 +65,9 @@ public class BoxingTest {
         Path out = CppTestSupport.convert(JAVA, "b", "B", "box");
 
         String cpp = CppTestSupport.generated(out, "src/b/B.cpp");
-        CppTestSupport.assertContains(cpp, "new j2cpp::Box<int>(5)");
-        CppTestSupport.assertContains(cpp, "new j2cpp::Box<int>(i)");
-        CppTestSupport.assertContains(cpp, "new j2cpp::Box<bool>(true)");
+        CppTestSupport.assertContains(cpp, "new ::j2cpp::Box<int>(5)");
+        CppTestSupport.assertContains(cpp, "new ::j2cpp::Box<int>(i)");
+        CppTestSupport.assertContains(cpp, "new ::j2cpp::Box<bool>(true)");
         CppTestSupport.assertContains(cpp, "j2cpp::unbox<int>(o)");
         CppTestSupport.assertContains(cpp, "new CppHelper::Number(i)");
 

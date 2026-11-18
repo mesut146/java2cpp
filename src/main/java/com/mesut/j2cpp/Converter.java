@@ -216,6 +216,11 @@ public class Converter {
                             + "    Box<T> *b = dynamic_cast<Box<T> *>(o);\n"
                             + "    return b ? b->value : T();\n"
                             + "}\n"
+                            + "template <typename T> java::lang::Object *boxArg(T value) {\n"
+                            + "    return new Box<T>(value);\n"
+                            + "}\n"
+                            + "inline java::lang::Object *boxArg(java::lang::Object *o) { return o; }\n"
+                            + "inline java::lang::Object *boxArg(decltype(nullptr)) { return nullptr; }\n"
                             + "}\n";
                 }
             }
