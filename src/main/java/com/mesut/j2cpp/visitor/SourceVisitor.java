@@ -40,6 +40,9 @@ public class SourceVisitor extends ASTVisitor {
     int forVarCnt = 0;
     int anonyCnt = 0;
     int resGuardCnt = 0;
+    SwitchStatement switchNode;
+    String switchEndLabel;
+    boolean forInit;
     StringBuilder anonyDecls = new StringBuilder();
     //captured locals for the anonymous class currently being rendered
     Map<IVariableBinding, String> anonCaptures = new HashMap<>();
@@ -773,8 +776,31 @@ public class SourceVisitor extends ASTVisitor {
         return false;
     }
 
+    //when emitting a non-primitive switch, a break targeting it exits the dispatch
+    private boolean breakTargetsSwitch(BreakStatement node) {
+        if (switchNode == null) return false;
+        ASTNode cur = node.getParent();
+        while (cur != null) {
+            if (cur == switchNode) return true;
+            if (cur instanceof ForStatement || cur instanceof WhileStatement || cur instanceof DoStatement
+                    || cur instanceof EnhancedForStatement || cur instanceof SwitchStatement) {
+                return false;
+            }
+            cur = cur.getParent();
+        }
+        return false;
+    }
+
     @Override
     public boolean visit(BreakStatement node) {
+        if (node.getLabel() != null) {
+            code.line("goto %s;", node.getLabel().getIdentifier());
+            return false;
+        }
+        if (breakTargetsSwitch(node)) {
+            code.line("goto %s;", switchEndLabel);
+            return false;
+        }
         code.line("break");
         if (node.getLabel() != null) {
             write(" ");
@@ -944,14 +970,20 @@ public class SourceVisitor extends ASTVisitor {
     @Override
     public boolean visit(ForStatement node) {
         code.line("for(");
+        boolean savedForInit = forInit;
+        forInit = true;
         int i = 0;
         for (Expression init : (List<Expression>) node.initializers()) {
-            if (i > 0) write(", ");
+            if (i > 0) write(" ");
             init.accept(this);
             i++;
         }
+        forInit = savedForInit;
         code.write(";");
-        node.getExpression().accept(this);
+        if (node.getExpression() != null) {
+            node.getExpression().accept(this);
+        }
+        code.write(";");
         i = 0;
         for (Expression updater : (List<Expression>) node.updaters()) {
             if (i > 0) code.write(", ");
@@ -1171,12 +1203,17 @@ public class SourceVisitor extends ASTVisitor {
     //JDT recovery nodes stringify as MISSING; fall back to the case label's own
     //toString (e.g. "case 1:") and strip the keyword/colon
     private String caseExpr(SwitchCase c, ITypeBinding selector) {
-        String ct = c.getExpression().toString();
-        if ("MISSING".equals(ct)) {
+        Expression ex = c.getExpression();
+        String ct = ex == null ? "" : ex.toString();
+        if ("MISSING".equals(ct) || ct.isEmpty()) {
             ct = c.toString();
             if (ct.startsWith("case ")) ct = ct.substring(5);
             if (ct.endsWith(":")) ct = ct.substring(0, ct.length() - 1);
         }
+        return caseExpr(ct, selector);
+    }
+
+    private String caseExpr(String ct, ITypeBinding selector) {
         int arrow = ct.indexOf("->");
         if (arrow >= 0) ct = ct.substring(0, arrow).trim();
         if (selector != null && selector.isEnum() && !ct.contains("::")) {
@@ -1210,41 +1247,57 @@ public class SourceVisitor extends ASTVisitor {
             code.line("}");
             return false;
         }
-        //non-primitive selectors (String, enum) need value comparison; use an
-        //if/else chain with fall-through semantics approximated by break-free groups
-        Logger.log(this.binding, "switch on non-primitive selector is approximate: " + node.getExpression());
+        //non-primitive selectors (String, enum) need value comparison. Emit a
+        //goto-based dispatch so break and fall-through match Java semantics.
         String var = "sw" + forVarCnt++;
-        write("{ auto %s = ", var);
-        node.getExpression().accept(this);
-        write("; bool _matched = false;\n");
+        String end = var + "_end";
+        String labelBase = var + "_case_";
+        String lhs = (selector != null && selector.isEnum()) ? var : "*" + var;
         List<Statement> stmts = (List<Statement>) node.statements();
-        for (int i = 0; i < stmts.size(); i++) {
-            Statement s = stmts.get(i);
+        String defaultLabel = null;
+        int labelCnt = 0;
+        for (Statement s : stmts) {
             if (s instanceof SwitchCase) {
-                SwitchCase c = (SwitchCase) s;
-                if (c.getExpression() == null) {
-                    code.line("if (!_matched) {");
+                if (((SwitchCase) s).isDefault()) {
+                    defaultLabel = labelBase + labelCnt;
                 }
-                else {
-                    //enum constants are pointers; String values need dereferencing
-                    String lhs = (selector != null && selector.isEnum()) ? var : "*" + var;
-                    code.write("if (!_matched && %s == %s) {", lhs, caseExpr(c, selector));
-                }
-                code.up();
-                //emit statements until the next case label
-                while (i + 1 < stmts.size() && !(stmts.get(i + 1) instanceof SwitchCase)) {
-                    Statement body = stmts.get(++i);
-                    if (body instanceof BreakStatement) {
-                        Logger.log(this.binding, "break in switch is approximate: " + body);
-                        continue;
-                    }
-                    body.accept(this);
-                }
-                code.down();
-                code.line("}");
+                labelCnt++;
             }
         }
+        write("{ auto %s = ", var);
+        node.getExpression().accept(this);
+        write(";\n");
+        int dispatchIdx = 0;
+        for (Statement s : stmts) {
+            if (!(s instanceof SwitchCase)) continue;
+            SwitchCase c = (SwitchCase) s;
+            String label = labelBase + dispatchIdx++;
+            if (c.isDefault()) continue;
+            for (Object ex : c.expressions()) {
+                write("if (%s == %s) goto %s;\n", lhs,
+                        caseExpr(ex.toString(), selector), label);
+            }
+        }
+        write("goto %s;\n", defaultLabel != null ? defaultLabel : end);
+        SwitchStatement savedSwitch = switchNode;
+        String savedEnd = switchEndLabel;
+        switchNode = node;
+        switchEndLabel = end;
+        int caseIdx = 0;
+        for (int i = 0; i < stmts.size(); i++) {
+            Statement s = stmts.get(i);
+            if (!(s instanceof SwitchCase)) continue;
+            code.line("%s%d: {", labelBase, caseIdx++);
+            code.up();
+            while (i + 1 < stmts.size() && !(stmts.get(i + 1) instanceof SwitchCase)) {
+                stmts.get(++i).accept(this);
+            }
+            code.down();
             code.line("}");
+        }
+        switchNode = savedSwitch;
+        switchEndLabel = savedEnd;
+        code.line("%s: ;\n}", end);
         return false;
     }
 
@@ -1319,9 +1372,11 @@ public class SourceVisitor extends ASTVisitor {
     @Override
     public boolean visit(VariableDeclarationExpression node) {
         ITypeBinding type = node.getType().resolveBinding();
-        for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) node.fragments()) {
+        List<VariableDeclarationFragment> frags = (List<VariableDeclarationFragment>) node.fragments();
+        for (int idx = 0; idx < frags.size(); idx++) {
+            VariableDeclarationFragment frag = frags.get(idx);
             if (frag.getInitializer() == null) {
-                code.line("%s %s;", code.ptr(type), frag.getName());
+                code.line("%s %s%s", code.ptr(type), frag.getName(), forInit ? "" : ";");
             }
             else {
                 if (Config.use_auto && type.equals(frag.getInitializer().resolveTypeBinding())) {
@@ -1331,7 +1386,12 @@ public class SourceVisitor extends ASTVisitor {
                     code.line("%s %s = ", code.ptr(type), frag.getName());
                 }
                 emitInitializer(frag.getInitializer(), type);
-                write(";");
+                if (forInit) {
+                    if (idx < frags.size() - 1) write(", ");
+                }
+                else {
+                    write(";");
+                }
             }
         }
         return false;

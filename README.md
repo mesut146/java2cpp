@@ -176,4 +176,4 @@ Mappers are the default: Java runtime types become native C++ equivalents and `L
 
 - This is a syntactic transpiler: no garbage collection, reflection, threads, or full Java standard library is provided. Generated `lib/` stubs and `cppRt/` helpers cover only part of what real Java code needs.
 - Java generic type arguments are preserved in generated signatures and class templates, but method-level type variables are erased (as in Java bytecode), and some complex wildcard/capture cases degrade to `Object`.
-- Some Java constructs are only partially supported. `synchronized` is logged and approximated; `break` in a non-primitive switch is approximate. Check `log.txt` after conversion for warnings.
+- Some Java constructs are only partially supported. `synchronized` is logged and approximated. Check `log.txt` after conversion for warnings.
