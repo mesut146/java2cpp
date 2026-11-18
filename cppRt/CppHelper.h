@@ -7,6 +7,11 @@
 #include <cctype>
 #include <charconv>
 #include <cstdio>
+#include <cxxabi.h>
+#if __has_include(<execinfo.h>)
+#include <execinfo.h>
+#define J2CPP_HAS_BACKTRACE 1
+#endif
 #include <cstring>
 #include <cstdint>
 #include <cstdlib>
@@ -21,6 +26,7 @@
 #include <optional>
 #include <random>
 #include <type_traits>
+#include <typeinfo>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -596,9 +602,32 @@ inline PrintStream *javaErr() {
 }
 
 //java.lang.Throwable / Exception backend
+inline std::string demangledTypeName(const std::type_info &info) {
+    int status = 0;
+    char *raw = abi::__cxa_demangle(info.name(), nullptr, nullptr, &status);
+    std::string name(raw && status == 0 ? raw : info.name());
+    std::free(raw);
+    //e::E_Boom -> e.E$Boom
+    std::string out;
+    for (std::size_t i = 0; i < name.size(); ++i) {
+        if (name.compare(i, 2, "::") == 0) {
+            out += '.';
+            ++i;
+        }
+        else if (name[i] == '_') {
+            out += '$';
+        }
+        else {
+            out += name[i];
+        }
+    }
+    return out;
+}
+
 class Throwable {
     std::string message;
     Throwable *cause;
+    std::vector<std::string> suppressed;
 public:
     explicit Throwable(std::string *m = nullptr)
         : message(m ? *m : std::string()), cause(nullptr) {}
@@ -611,15 +640,30 @@ public:
     std::string *getMessage() { return new std::string(message); }
     Throwable *getCause() { return cause; }
     Throwable *initCause(Throwable *c) { cause = c; return this; }
-    void addSuppressed(Throwable *) {} //no stack-trace frames to suppress
+    void addSuppressed(Throwable *t) {
+        if (t) suppressed.push_back(*t->toString());
+    }
 
     std::string *toString() {
-        return new std::string(std::string("java.lang.Throwable: ") + message);
+        return new std::string(demangledTypeName(typeid(*this)) + ": " + message);
     }
     void printStackTrace() { printStackTrace(javaErr()); }
     void printStackTrace(PrintStream *out) {
         if (!out) return;
         out->println(toString());
+#ifdef J2CPP_HAS_BACKTRACE
+        void *frames[32];
+        int count = backtrace(frames, 32);
+        char **symbols = backtrace_symbols(frames, count);
+        for (int i = 1; i < count && i < 16; ++i) {
+            out->println(new std::string(std::string("\tat ")
+                    + (symbols ? symbols[i] : "?")));
+        }
+        std::free(symbols);
+#endif
+        for (const std::string &s : suppressed) {
+            out->println(new std::string("\tSuppressed: " + s));
+        }
         if (cause) {
             out->println(new std::string("Caused by: "));
             cause->printStackTrace(out);

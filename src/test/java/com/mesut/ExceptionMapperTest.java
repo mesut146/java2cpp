@@ -33,6 +33,7 @@ public class ExceptionMapperTest {
                         e.initCause(cause);
                         if ("cause".equals(e.getCause().getMessage())) r += 2;
                         if (e.toString().contains("bang")) r += 4;
+                        e.addSuppressed(new Boom("supp"));
                         e.printStackTrace();
                     }
                     try {
@@ -89,7 +90,9 @@ public class ExceptionMapperTest {
         String stderr = new String(run.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
         assertEquals("exit code\n" + stderr, 0, run.waitFor(60, TimeUnit.SECONDS) ? run.exitValue() : -1);
         assertEquals("stdout", "r=15\n", stdout);
-        assertTrue("stack trace missing:\n" + stderr, stderr.contains("java.lang.Throwable: bang"));
+        assertTrue("concrete class name missing:\n" + stderr, stderr.contains("E$Boom: bang"));
+        assertTrue("stack frames missing:\n" + stderr, stderr.contains("\tat "));
         assertTrue("cause missing:\n" + stderr, stderr.contains("Caused by:"));
+        assertTrue("suppressed missing:\n" + stderr, stderr.contains("Suppressed: e.E$Boom: supp"));
     }
 }
