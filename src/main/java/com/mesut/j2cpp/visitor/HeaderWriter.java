@@ -529,9 +529,24 @@ public class HeaderWriter {
 
     public void visit(MethodDeclaration node) {
         IMethodBinding binding = node.resolveBinding();
-        String erasure = TypeHelper.erasureNote(binding);
-        if (erasure != null) {
-            code.noteLine(erasure);
+        List<ITypeBinding> methodParams = TypeHelper.methodTypeParams(binding, binding.getDeclaringClass());
+        boolean oldKeep = TypeVisitor.keepTypeVars;
+        Set<String> oldVars = TypeVisitor.activeTypeVars;
+        TypeVisitor.activeTypeVars = new java.util.HashSet<>();
+        TypeVisitor.keepTypeVars = !methodParams.isEmpty() && Config.useMappers;
+        for (ITypeBinding p : methodParams) {
+            TypeVisitor.activeTypeVars.add(p.getName());
+        }
+        String methodTemplate = TypeHelper.templateLine(methodParams);
+        if (methodTemplate != null) {
+            code.noteLine("method type parameters kept as C++ template: " + methodTemplate);
+            code.write("%s\n", methodTemplate);
+        }
+        else {
+            String erasure = TypeHelper.erasureNote(binding);
+            if (erasure != null) {
+                code.noteLine(erasure);
+            }
         }
         if (binding.isConstructor()) {
             code.line("");
@@ -572,6 +587,8 @@ public class HeaderWriter {
         else {
             code.write(";\n");
         }
+        TypeVisitor.keepTypeVars = oldKeep;
+        TypeVisitor.activeTypeVars = oldVars;
     }
 
     //make main entry call this method

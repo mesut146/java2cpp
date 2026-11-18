@@ -534,12 +534,24 @@ public class SourceVisitor extends ASTVisitor {
         if (node.getBody() == null) return false;
         IMethodBinding b = node.resolveBinding();
         currentMethod = b;
-        String erasure = TypeHelper.erasureNote(b);
-        if (erasure != null) {
-            code.noteLine(erasure);
+        List<ITypeBinding> methodParams = TypeHelper.methodTypeParams(b, this.binding);
+        boolean oldKeep = TypeVisitor.keepTypeVars;
+        Set<String> oldVars = TypeVisitor.activeTypeVars;
+        TypeVisitor.activeTypeVars = new HashSet<>();
+        TypeVisitor.keepTypeVars = !methodParams.isEmpty() && Config.useMappers;
+        for (ITypeBinding p : methodParams) {
+            TypeVisitor.activeTypeVars.add(p.getName());
         }
-        //method type variables are erased in the signature, so only class parameters
-        //can appear on the out-of-line template definition
+        if (methodParams.isEmpty()) {
+            String erasure = TypeHelper.erasureNote(b);
+            if (erasure != null) {
+                code.noteLine(erasure);
+            }
+        }
+        else {
+            code.noteLine("method type parameters kept as C++ template: " + TypeHelper.templateLine(methodParams));
+        }
+        //class template parameters first, then the method's own parameters
         ITypeBinding[] classParams = this.binding == null ? new ITypeBinding[0] : this.binding.getTypeParameters();
         if (classParams.length > 0) {
             StringBuilder template = new StringBuilder("template <");
@@ -548,6 +560,10 @@ public class SourceVisitor extends ASTVisitor {
                 template.append("class ").append(classParams[i].getName());
             }
             code.write("%s>\n", template);
+        }
+        String methodTemplate = TypeHelper.templateLine(methodParams);
+        if (methodTemplate != null) {
+            code.write("%s\n", methodTemplate);
         }
         if (b.isConstructor()) {
             code.write("%s::%s(", this.binding, cnameOf(this.binding));
@@ -575,6 +591,8 @@ public class SourceVisitor extends ASTVisitor {
         emitFallbackReturn = false;
         currentMethodBody = null;
         code.write("\n");
+        TypeVisitor.keepTypeVars = oldKeep;
+        TypeVisitor.activeTypeVars = oldVars;
         return false;
     }
 
@@ -1894,18 +1912,10 @@ public class SourceVisitor extends ASTVisitor {
         addLibInclude(binding.getDeclaringClass());
         ITypeBinding ret = binding.getReturnType();
         ITypeBinding org = binding.getMethodDeclaration().getReturnType();
-        boolean needCast = !org.equals(ret) && (org.isWildcardType() || org.isTypeVariable());
-        boolean castEmitted = false;
-        if (needCast) {
-            CType mappedRet = Mapper.instance.mapType(TypeVisitor.fromBinding(ret), null);
-            if (!mappedRet.isPrim() && !mappedRet.isVoid()) {
-                write("dynamic_cast<%s>(", code.ptr(ret));
-                castEmitted = true;
-            }
-            else {
-                //Java would checkcast and unbox here; a C++ cast to a primitive is invalid
-                code.note("generic return cast to primitive omitted (Java checkcast/unboxing)");
-            }
+        //a generic return type is resolved by C++ template deduction or erasure;
+        //an explicit cast is neither needed nor valid in the generated code
+        if (!org.equals(ret) && (org.isWildcardType() || org.isTypeVariable())) {
+            code.note("generic return type resolved by template deduction/erasure");
         }
         boolean isStatic = Modifier.isStatic(binding.getModifiers());
         if (node.getExpression() == null) {
@@ -1965,9 +1975,6 @@ public class SourceVisitor extends ASTVisitor {
             write("(");
             args(node.arguments(), binding.getParameterTypes());
             write(")");
-        }
-        if (castEmitted) {
-            code.write(")");
         }
         return false;
     }

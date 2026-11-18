@@ -175,5 +175,5 @@ Mappers are the default: Java runtime types become native C++ equivalents and `L
 ## Limitations
 
 - This is a syntactic transpiler: no garbage collection, reflection, threads, or full Java standard library is provided. Generated `lib/` stubs and `cppRt/` helpers cover only part of what real Java code needs.
-- Java generic type arguments are preserved in generated signatures and class templates, but method-level type variables are erased to their leftmost bound (as in Java bytecode). Every such rewrite is marked with a `/* j2cpp: ... */` comment in the generated C++ and recorded in `log.txt`. Complex wildcard/capture cases degrade to `Object`; generic call sites still need method templates for full fidelity.
+- Java generic type arguments are preserved in generated signatures and class templates, but method-level type variables become C++ method templates (`template <class T>`) so `T` is deduced at call sites; types that cannot be templated fall back to erasure at the leftmost bound. Every such rewrite is marked with a `/* j2cpp: ... */` comment in the generated C++ and recorded in `log.txt`. Complex wildcard/capture cases still degrade to `Object`.
 - Some Java constructs are only partially supported. `synchronized` is logged and approximated. Check `log.txt` after conversion for warnings.

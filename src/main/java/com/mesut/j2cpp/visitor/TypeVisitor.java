@@ -12,10 +12,16 @@ import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 //visit types and ensures type is included
 public class TypeVisitor {
+
+    //set while emitting a templated method so its <T> is kept instead of erased
+    public static boolean keepTypeVars = false;
+    public static Set<String> activeTypeVars = new HashSet<>();
 
     //raw erasure of a type variable / wildcard: leftmost bound without type args
     public static CType erasedType(ITypeBinding binding) {
@@ -55,8 +61,9 @@ public class TypeVisitor {
 
         CType type;
         if (binding.isTypeVariable()) {//<T>
-            if (!Config.useMappers || binding.getDeclaringMethod() == null) {
-                //class type parameter (or stub mode): keep it as a C++ template parameter
+            if (!Config.useMappers || binding.getDeclaringMethod() == null
+                    || (keepTypeVars && activeTypeVars.contains(binding.getName()))) {
+                //class type parameter, stub mode, or an in-scope method template
                 CType t = new CType(binding.getName());
                 t.isTemplate = true;
                 t.isPointer = false;

@@ -36,21 +36,24 @@ public class GenericErasureTest {
         Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
 
         String header = new String(Files.readAllBytes(out.resolve("g/G.h")), StandardCharsets.UTF_8);
-        assertTrue("unbounded variable should erase to Object:\n" + header,
-                header.contains("static java::lang::Object* identity(java::lang::Object* x)"));
-        assertTrue("bounded variable should erase to its bound:\n" + header,
-                header.contains("static java::lang::Comparable* max(java::lang::Comparable* a, java::lang::Comparable* b)"));
-        assertTrue("erasure note missing in header:\n" + header,
-                header.contains("/* j2cpp: method type parameters erased: <T> -> java.lang.Comparable */"));
+        assertTrue("method template missing in header:\n" + header,
+                header.contains("template <class T>"));
+        assertTrue("type variable not preserved:\n" + header,
+                header.contains("static T identity(T x)") && header.contains("static T max(T a, T b)"));
+        assertTrue("template note missing in header:\n" + header,
+                header.contains("method type parameters kept as C++ template"));
 
         String cpp = new String(Files.readAllBytes(out.resolve("src/g/G.cpp")), StandardCharsets.UTF_8);
-        assertTrue("erasure note missing in source:\n" + cpp, cpp.contains("/* j2cpp: method type parameters erased"));
-        assertTrue("primitive cast note missing:\n" + cpp,
-                cpp.contains("generic return cast to primitive omitted"));
+        assertTrue("template definition missing:\n" + cpp,
+                cpp.contains("template <class T>\nT G::identity(T x)"));
+        assertTrue("template note missing in source:\n" + cpp,
+                cpp.contains("method type parameters kept as C++ template"));
+        assertTrue("call-site note missing:\n" + cpp,
+                cpp.contains("generic return type resolved by template deduction/erasure"));
         assertFalse("invalid dynamic_cast still emitted:\n" + cpp, cpp.contains("dynamic_cast<int>"));
 
         String log = new String(Files.readAllBytes(out.resolve("log.txt")), StandardCharsets.UTF_8);
-        assertTrue("erasure not logged:\n" + log, log.contains("method type parameters erased: <T> -> java.lang.Comparable"));
-        assertTrue("cast omission not logged:\n" + log, log.contains("generic return cast to primitive omitted"));
+        assertTrue("template not logged:\n" + log, log.contains("method type parameters kept as C++ template"));
+        assertTrue("call-site rewrite not logged:\n" + log, log.contains("generic return type resolved"));
     }
 }

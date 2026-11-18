@@ -43,7 +43,8 @@ public class Code {
             if (!Config.useMappers) {
                 return TypeHelper.getObjectType().toString();
             }
-            if (b.getDeclaringMethod() == null) {
+            if (b.getDeclaringMethod() == null
+                    || (TypeVisitor.keepTypeVars && TypeVisitor.activeTypeVars.contains(b.getName()))) {
                 return b.getName();
             }
             return TypeVisitor.erasedType(b).toString();

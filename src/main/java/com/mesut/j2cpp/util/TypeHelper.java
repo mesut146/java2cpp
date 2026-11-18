@@ -7,8 +7,10 @@ import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class TypeHelper {
@@ -24,6 +26,33 @@ public class TypeHelper {
         prims.put("double", Config.type_double);
         prims.put("long", Config.type_long);
         prims.put("boolean", Config.type_boolean);
+    }
+
+    //method type parameters that do not shadow the enclosing class's parameters
+    public static List<ITypeBinding> methodTypeParams(IMethodBinding method, ITypeBinding declaringClass) {
+        List<String> classNames = new ArrayList<>();
+        if (declaringClass != null) {
+            for (ITypeBinding p : declaringClass.getTypeParameters()) {
+                classNames.add(p.getName());
+            }
+        }
+        List<ITypeBinding> result = new ArrayList<>();
+        for (ITypeBinding p : method.getTypeParameters()) {
+            if (!classNames.contains(p.getName())) {
+                result.add(p);
+            }
+        }
+        return result;
+    }
+
+    public static String templateLine(List<ITypeBinding> params) {
+        if (params.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder("template <");
+        for (int i = 0; i < params.size(); i++) {
+            if (i > 0) sb.append(", ");
+            sb.append("class ").append(params.get(i).getName());
+        }
+        return sb.append(">").toString();
     }
 
     //describe how Java type parameters were erased in the generated signature
