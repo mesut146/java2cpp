@@ -73,6 +73,9 @@ public class ExceptionMapperTest {
         String header = new String(Files.readAllBytes(out.resolve("e/E_Boom.h")), StandardCharsets.UTF_8);
         assertTrue("exception base not mapped:\n" + header,
                 header.contains("public CppHelper::Throwable"));
+        String cpp = new String(Files.readAllBytes(out.resolve("src/e/E.cpp")), StandardCharsets.UTF_8);
+        assertTrue("throw still allocates:\n" + cpp, cpp.contains("throw E_Boom("));
+        assertTrue("mapped throw still allocates:\n" + cpp, cpp.contains("throw CppHelper::Throwable("));
 
         Path main = out.resolve("main.cpp");
         Files.write(main, MAIN.getBytes(StandardCharsets.UTF_8));

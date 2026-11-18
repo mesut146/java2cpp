@@ -602,11 +602,30 @@ inline PrintStream *javaErr() {
 }
 
 //java.lang.Throwable / Exception backend
-inline std::string demangledTypeName(const std::type_info &info) {
+inline std::string demangleMangled(const char *mangled) {
     int status = 0;
-    char *raw = abi::__cxa_demangle(info.name(), nullptr, nullptr, &status);
-    std::string name(raw && status == 0 ? raw : info.name());
+    char *raw = abi::__cxa_demangle(mangled, nullptr, nullptr, &status);
+    std::string name(raw && status == 0 ? raw : mangled);
     std::free(raw);
+    return name;
+}
+
+//backtrace_symbols produces "binary(_Z...+0x..) [0x..]"; demangle the symbol
+inline std::string demangleFrame(const std::string &frame) {
+    std::size_t open = frame.find('(');
+    if (open == std::string::npos) return frame;
+    std::size_t plus = frame.find('+', open);
+    std::size_t close = frame.find(')', open);
+    if (plus == std::string::npos || close == std::string::npos || plus > close) return frame;
+    std::string sym = frame.substr(open + 1, plus - open - 1);
+    if (sym.empty()) return frame;
+    std::string dem = demangleMangled(sym.c_str());
+    if (dem.size() > 100) dem = dem.substr(0, 97) + "...";
+    return frame.substr(0, open + 1) + dem + frame.substr(plus);
+}
+
+inline std::string demangledTypeName(const std::type_info &info) {
+    std::string name = demangleMangled(info.name());
     //e::E_Boom -> e.E$Boom
     std::string out;
     for (std::size_t i = 0; i < name.size(); ++i) {
@@ -657,7 +676,7 @@ public:
         char **symbols = backtrace_symbols(frames, count);
         for (int i = 1; i < count && i < 16; ++i) {
             out->println(new std::string(std::string("\tat ")
-                    + (symbols ? symbols[i] : "?")));
+                    + (symbols ? demangleFrame(symbols[i]) : "?")));
         }
         std::free(symbols);
 #endif

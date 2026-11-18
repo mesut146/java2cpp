@@ -43,6 +43,7 @@ public class SourceVisitor extends ASTVisitor {
     SwitchStatement switchNode;
     String switchEndLabel;
     boolean forInit;
+    boolean throwDirect;
     StringBuilder anonyDecls = new StringBuilder();
     //captured locals for the anonymous class currently being rendered
     Map<IVariableBinding, String> anonCaptures = new HashMap<>();
@@ -839,11 +840,11 @@ public class SourceVisitor extends ASTVisitor {
     public boolean visit(ThrowStatement node) {
         code.line("throw ");
         Expression e = node.getExpression();
-        //convert heap allocation into stack allocation
+        //throw a temporary directly; the old *(new X(...)) leaked the allocation
         if (e instanceof ClassInstanceCreation) {
-            code.write("*(");
+            throwDirect = true;
             e.accept(this);
-            code.write(")");
+            throwDirect = false;
         }
         else
             //if throwing custom exception
@@ -1441,10 +1442,12 @@ public class SourceVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(ClassInstanceCreation node) {
+        boolean direct = throwDirect;
+        throwDirect = false;//nested new expressions are unaffected
         ITypeBinding binding = node.getType().resolveBinding();
         if (binding == null) {
             Logger.logBinding(this.binding, node.toString());
-            write("new %s(", node.getType());
+            write(direct ? "%s(" : "new %s(", node.getType());
             args(node.arguments());
             write(")");
             return false;
@@ -1458,6 +1461,15 @@ public class SourceVisitor extends ASTVisitor {
         }
         List<String> mapped = mapped(node);
         if (mapped != null) {
+            if (direct) {
+                //mapper targets may start with new; a throw needs a temporary
+                mapped = new ArrayList<>(mapped);
+                int last = mapped.size() - 1;
+                String line = mapped.get(last);
+                if (line.startsWith("new ")) {
+                    mapped.set(last, line.substring(4));
+                }
+            }
             emit(node, mapped);
             return false;
         }
@@ -1467,7 +1479,7 @@ public class SourceVisitor extends ASTVisitor {
             if (lc != null) {
                 //local class: pass captured values (and enclosing instance) to the generated struct
                 includes.remove(binding.getBinaryName().replace("$", "_").replace(".", "/") + ".h");
-                write("new %s(", lc.name);
+                write(direct ? "%s(" : "new %s(", lc.name);
                 for (int i = 0; i < lc.captures.size(); i++) {
                     if (i > 0) write(", ");
                     write(lc.captures.get(i).getName());
@@ -1481,7 +1493,7 @@ public class SourceVisitor extends ASTVisitor {
                 write(")");
                 return false;
             }
-            write("new %s(", node.getType().resolveBinding());
+            write(direct ? "%s(" : "new %s(", node.getType().resolveBinding());
             args(node.arguments());
             if (inner) {
                 if (!node.arguments().isEmpty()) write(", ");
@@ -1547,7 +1559,7 @@ public class SourceVisitor extends ASTVisitor {
             anonyDecls.append(" {}\n").append(body).append("};\n");
             anonyDecls.append("}\n\n");
             Logger.log(this.binding, "anonymous class body generated as " + name);
-            write("new %s(", name);
+            write(direct ? "%s(" : "new %s(", name);
             //pass captured values first, followed by base constructor arguments
             for (int i = 0; i < captures.size(); i++) {
                 if (i > 0) write(", ");
