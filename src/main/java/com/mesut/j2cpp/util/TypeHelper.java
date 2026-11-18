@@ -45,6 +45,16 @@ public class TypeHelper {
         return result;
     }
 
+    public static String templateLineForNames(List<String> names) {
+        if (names.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder("template <");
+        for (int i = 0; i < names.size(); i++) {
+            if (i > 0) sb.append(", ");
+            sb.append("class ").append(names.get(i));
+        }
+        return sb.append(">").toString();
+    }
+
     public static String templateLine(List<ITypeBinding> params) {
         if (params.isEmpty()) return null;
         StringBuilder sb = new StringBuilder("template <");

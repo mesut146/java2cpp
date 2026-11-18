@@ -530,6 +530,10 @@ public class HeaderWriter {
     public void visit(MethodDeclaration node) {
         IMethodBinding binding = node.resolveBinding();
         List<ITypeBinding> methodParams = TypeHelper.methodTypeParams(binding, binding.getDeclaringClass());
+        TypeVisitor.Wildcards wildcards = new TypeVisitor.Wildcards();
+        for (Object o : node.parameters()) {
+            TypeVisitor.collectWildcards(((SingleVariableDeclaration) o).getType().resolveBinding(), wildcards);
+        }
         boolean oldKeep = TypeVisitor.keepTypeVars;
         Set<String> oldVars = TypeVisitor.activeTypeVars;
         TypeVisitor.activeTypeVars = new java.util.HashSet<>();
@@ -537,9 +541,15 @@ public class HeaderWriter {
         for (ITypeBinding p : methodParams) {
             TypeVisitor.activeTypeVars.add(p.getName());
         }
-        String methodTemplate = TypeHelper.templateLine(methodParams);
+        List<String> templateNames = new ArrayList<>();
+        for (ITypeBinding p : methodParams) templateNames.add(p.getName());
+        templateNames.addAll(wildcards.names);
+        String methodTemplate = TypeHelper.templateLineForNames(templateNames);
         if (methodTemplate != null) {
-            code.noteLine("method type parameters kept as C++ template: " + methodTemplate);
+            String note = wildcards.isEmpty()
+                    ? "method type parameters kept as C++ template: " + methodTemplate
+                    : "wildcard type arguments templated: " + wildcards.describe();
+            code.noteLine(note);
             code.write("%s\n", methodTemplate);
         }
         else {
@@ -574,7 +584,10 @@ public class HeaderWriter {
         for (int i = 0; i < node.parameters().size(); i++) {
             SingleVariableDeclaration param = (SingleVariableDeclaration) node.parameters().get(i);
 
-            code.write("%s %s", code.ptr(param.getType().resolveBinding()), Mapper.instance.mapParamName(param.getName().getIdentifier()));
+            ITypeBinding ptype = param.getType().resolveBinding();
+            String rendered = wildcards.isEmpty() ? code.ptr(ptype)
+                    : code.ptrSmart(TypeVisitor.fromBinding(ptype, null, wildcards));
+            code.write("%s %s", rendered, Mapper.instance.mapParamName(param.getName().getIdentifier()));
             if (i < node.parameters().size() - 1) code.write(", ");
         }
         code.write(")");

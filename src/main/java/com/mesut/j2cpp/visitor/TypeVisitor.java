@@ -12,6 +12,7 @@ import com.mesut.j2cpp.util.ArrayHelper;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +23,83 @@ public class TypeVisitor {
     //set while emitting a templated method so its <T> is kept instead of erased
     public static boolean keepTypeVars = false;
     public static Set<String> activeTypeVars = new HashSet<>();
+
+    //collects wildcard type arguments in method signatures and gives each a
+    //generated template parameter name so C++ can deduce the actual element type
+    public static class Wildcards {
+        public final List<ITypeBinding> bindings = new ArrayList<>();
+        public final List<String> names = new ArrayList<>();
+
+        public String nameFor(ITypeBinding binding) {
+            int idx = bindings.indexOf(binding);
+            if (idx < 0) {
+                idx = bindings.size();
+                bindings.add(binding);
+                names.add("W" + idx);
+            }
+            return names.get(idx);
+        }
+
+        public boolean isEmpty() {
+            return bindings.isEmpty();
+        }
+
+        public String describe() {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < bindings.size(); i++) {
+                if (i > 0) sb.append(", ");
+                ITypeBinding bound = bindings.get(i).getBound();
+                sb.append(names.get(i)).append(" extends ")
+                        .append(bound == null ? "java.lang.Object" : bound.getQualifiedName());
+            }
+            return sb.toString();
+        }
+    }
+
+    public static void collectWildcards(ITypeBinding type, Wildcards wildcards) {
+        if (type == null) return;
+        if (type.isArray()) {
+            collectWildcards(type.getElementType(), wildcards);
+            return;
+        }
+        if (type.isParameterizedType()) {
+            for (ITypeBinding arg : type.getTypeArguments()) {
+                if (arg.isWildcardType()) {
+                    wildcards.nameFor(arg);
+                }
+                else {
+                    collectWildcards(arg, wildcards);
+                }
+            }
+        }
+    }
+
+    //like fromBinding but renders wildcard arguments as generated template names
+    public static CType fromBinding(ITypeBinding binding, CClass cc, Wildcards wildcards) {
+        if (wildcards == null || wildcards.isEmpty()) {
+            return fromBinding(binding, cc);
+        }
+        if (binding.isArray()) {
+            return ArrayHelper.makeArrayType(fromBinding(binding.getElementType(), cc, wildcards),
+                    binding.getDimensions());
+        }
+        if (binding.isWildcardType()) {
+            String name = wildcards.nameFor(binding);
+            CType t = new CType(name);
+            t.isTemplate = true;
+            t.isPointer = false;
+            return t;
+        }
+        if (binding.isParameterizedType()) {
+            CType raw = fromBinding(binding.getErasure(), cc);
+            raw.typeNames.clear();
+            for (ITypeBinding arg : binding.getTypeArguments()) {
+                raw.typeNames.add(fromBinding(arg, cc, wildcards));
+            }
+            return raw;
+        }
+        return fromBinding(binding, cc);
+    }
 
     //raw erasure of a type variable / wildcard: leftmost bound without type args
     public static CType erasedType(ITypeBinding binding) {

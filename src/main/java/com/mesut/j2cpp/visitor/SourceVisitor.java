@@ -535,6 +535,10 @@ public class SourceVisitor extends ASTVisitor {
         IMethodBinding b = node.resolveBinding();
         currentMethod = b;
         List<ITypeBinding> methodParams = TypeHelper.methodTypeParams(b, this.binding);
+        TypeVisitor.Wildcards wildcards = new TypeVisitor.Wildcards();
+        for (Object o : node.parameters()) {
+            TypeVisitor.collectWildcards(((SingleVariableDeclaration) o).getType().resolveBinding(), wildcards);
+        }
         boolean oldKeep = TypeVisitor.keepTypeVars;
         Set<String> oldVars = TypeVisitor.activeTypeVars;
         TypeVisitor.activeTypeVars = new HashSet<>();
@@ -542,14 +546,17 @@ public class SourceVisitor extends ASTVisitor {
         for (ITypeBinding p : methodParams) {
             TypeVisitor.activeTypeVars.add(p.getName());
         }
-        if (methodParams.isEmpty()) {
+        if (!wildcards.isEmpty()) {
+            code.noteLine("wildcard type arguments templated: " + wildcards.describe());
+        }
+        else if (!methodParams.isEmpty()) {
+            code.noteLine("method type parameters kept as C++ template: " + TypeHelper.templateLine(methodParams));
+        }
+        else {
             String erasure = TypeHelper.erasureNote(b);
             if (erasure != null) {
                 code.noteLine(erasure);
             }
-        }
-        else {
-            code.noteLine("method type parameters kept as C++ template: " + TypeHelper.templateLine(methodParams));
         }
         //class template parameters first, then the method's own parameters
         ITypeBinding[] classParams = this.binding == null ? new ITypeBinding[0] : this.binding.getTypeParameters();
@@ -561,7 +568,10 @@ public class SourceVisitor extends ASTVisitor {
             }
             code.write("%s>\n", template);
         }
-        String methodTemplate = TypeHelper.templateLine(methodParams);
+        List<String> allNames = new ArrayList<>();
+        for (ITypeBinding p : methodParams) allNames.add(p.getName());
+        allNames.addAll(wildcards.names);
+        String methodTemplate = TypeHelper.templateLineForNames(allNames);
         if (methodTemplate != null) {
             code.write("%s\n", methodTemplate);
         }
@@ -573,7 +583,10 @@ public class SourceVisitor extends ASTVisitor {
         }
         for (int i = 0; i < node.parameters().size(); i++) {
             SingleVariableDeclaration param = (SingleVariableDeclaration) node.parameters().get(i);
-            code.write("%s %s", code.ptr(param.getType().resolveBinding()), Mapper.instance.mapParamName(param.getName().getIdentifier()));
+            ITypeBinding ptype = param.getType().resolveBinding();
+            String rendered = wildcards.isEmpty() ? code.ptr(ptype)
+                    : code.ptrSmart(TypeVisitor.fromBinding(ptype, null, wildcards));
+            code.write("%s %s", rendered, Mapper.instance.mapParamName(param.getName().getIdentifier()));
             if (i < node.parameters().size() - 1) code.write(", ");
         }
         code.write(")");
@@ -1024,8 +1037,9 @@ public class SourceVisitor extends ASTVisitor {
         code.up();
         ITypeBinding bind = node.getExpression().resolveTypeBinding();
         String ve = "var" + (forVarCnt++);
-        //evaluate the array/iterable expression exactly once
-        write("%s %s = ", code.ptr(bind), ve);
+        //evaluate the array/iterable expression exactly once; auto keeps
+        //template/wildcard element types intact
+        write("auto %s = ", ve);
         node.getExpression().accept(this);
         code.write(";\n");
 

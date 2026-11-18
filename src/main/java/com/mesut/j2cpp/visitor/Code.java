@@ -130,6 +130,15 @@ public class Code {
         return s;
     }
 
+    //pointer unless the type is primitive/void or a template parameter
+    public String ptrSmart(CType b) {
+        String s = b.toString();
+        if (!b.isPrim() && !b.isVoid() && !b.isTemplate) {
+            s = s + "*";
+        }
+        return s;
+    }
+
     public String toString() {
         return sb.toString();
     }
