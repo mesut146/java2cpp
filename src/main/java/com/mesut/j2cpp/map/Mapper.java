@@ -400,6 +400,10 @@ public class Mapper {
         return classMap.get(type.getBinaryName());
     }
 
+    public static int typeVarCount(ClassInfo info) {
+        return info == null ? 0 : info.typeVars.size();
+    }
+
     public CType mapType(ITypeBinding type) {
         if (!Config.useMappers) return new CType(type.getName());
         if (classMap.containsKey(type.getBinaryName())) {

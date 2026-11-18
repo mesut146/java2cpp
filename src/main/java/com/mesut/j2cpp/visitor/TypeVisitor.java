@@ -173,8 +173,20 @@ public class TypeVisitor {
             type.realName = name;
             type.binding = binding;
             if (binding.isGenericType()) {
-                for (ITypeBinding prm : binding.getTypeParameters()) {
-                    type.typeNames.add(fromBinding(prm));
+                if (!binding.isFromSource()) {
+                    //binary APIs often use raw generic types (e.g. JDT's
+                    //List-returning methods). Java erasure makes their element
+                    //type Object; use that so the C++ template is well-formed
+                    for (int i = 0; i < binding.getTypeParameters().length; i++) {
+                        CType object = TypeHelper.getObjectType();
+                        object.isTypeArg = true;
+                        type.typeNames.add(object);
+                    }
+                }
+                else {
+                    for (ITypeBinding prm : binding.getTypeParameters()) {
+                        type.typeNames.add(fromBinding(prm));
+                    }
                 }
             }
             else if (binding.isParameterizedType()) {
@@ -182,6 +194,26 @@ public class TypeVisitor {
                     CType tpp = fromBinding0(tp, cc);
                     tpp.isTypeArg = true;
                     type.typeNames.add(tpp);
+                }
+            }
+            if (type.typeNames.isEmpty() && !binding.isFromSource()) {
+                //some JDT bindings expose a raw mapped type without reporting
+                //it as generic (e.g. legacy List-returning APIs)
+                Mapper.ClassInfo info = Mapper.instance.findClass(binding);
+                int arity = Math.max(binding.getTypeParameters().length, Mapper.typeVarCount(info));
+                boolean templateTarget = info == null || info.target == null
+                        || info.target.type.equals("vector")
+                        || info.target.type.equals("unordered_map")
+                        || info.target.type.equals("optional")
+                        || info.target.type.equals("set")
+                        || info.target.type.equals("list")
+                        || info.target.type.equals("deque");
+                if (arity > 0 && templateTarget) {
+                    for (int i = 0; i < arity; i++) {
+                        CType object = TypeHelper.getObjectType();
+                        object.isTypeArg = true;
+                        type.typeNames.add(object);
+                    }
                 }
             }
             type.fromSource = binding.isFromSource();
