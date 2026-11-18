@@ -1,7 +1,12 @@
 package base;
 
 
-public class SuperTest {
+class SuperBase {
+    void basePrint() {
+    }
+}
+
+public class SuperTest extends SuperBase {
 
     int val;
 
@@ -9,6 +14,12 @@ public class SuperTest {
     }
 
     void m11() {
+    }
+
+    class qualifiedInner {
+        void call() {
+            SuperTest.super.basePrint();
+        }
     }
 
     static class inner extends SuperTest {

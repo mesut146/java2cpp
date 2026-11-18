@@ -15,7 +15,6 @@ class type3 extends type2{}
 
 public class Generic<T, V> extends type1<T> {
 
-    //<class T,class V,class X>
     public <X> void meth(T param, X other) {
         type1<T> obj = new type1<>();//auto type substition
         obj.add(param, other);
@@ -32,5 +31,9 @@ public class Generic<T, V> extends type1<T> {
 
     void wild2(List<? extends type2> list) {
         type2 t2 = list.get(0);
+    }
+
+    void unbounded(List<?> list) {
+        Object o = list.get(0);
     }
 }

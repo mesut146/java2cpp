@@ -5,10 +5,12 @@ import java.util.*;
 public class Box{
 
   Boolean box(){
-    Integer i = 5;
+    Object o = 5;
+    Integer j = (Integer) o;
+    int x = j;
     List<Integer> l=new ArrayList<>();
     l.add(6);
-    return true;
+    return x == 5;
   }
 
   boolean unbox(Integer i, Boolean b){

@@ -8,4 +8,7 @@ public class Prims{
     short myShort = Short.MAX_VALUE;
     double myDouble;
 
+    static final int JAN = 1;
+    static final int FEB = 2;
+    static final int MAR = 3;
 }

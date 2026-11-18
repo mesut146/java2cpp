@@ -14,7 +14,6 @@ public class ListTest {
         boolean has = list.contains("hello");
         int idx = list.indexOf("hello");
         boolean rem = list.remove("hello");
-        //String[] arr = (String[]) list.toArray();
         String[] arr2 = list.toArray(new String[0]);
     }
 

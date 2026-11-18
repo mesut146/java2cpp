@@ -1,6 +1,6 @@
 package base;
 
-class Test {
+class StringTest {
 
     void make() {
         String s = "asd " + 'c';

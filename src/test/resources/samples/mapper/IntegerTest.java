@@ -1,4 +1,6 @@
-class Test {
+package mapper;
+
+public class IntegerTest {
     void a() {
         String hex = Integer.toHexString(127);
         String str = Integer.toString(127);

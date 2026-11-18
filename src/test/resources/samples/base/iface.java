@@ -6,6 +6,13 @@ public interface iface extends base {
 
     void asd();
 
+    default String name() {
+        return "iface:" + x;
+    }
+
+    static iface create() {
+        return new test();
+    }
 }
 
 interface base {
