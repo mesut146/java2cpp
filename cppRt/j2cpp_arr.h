@@ -48,6 +48,19 @@ std::vector<std::vector<std::vector<std::vector<T> *> *> *> *make4(int d1, int d
     return outer;
 }
 
+//Arrays.copyOfRange(int[], from, to): pads with default values when needed
+template <typename T>
+std::vector<T> *copyOfRange(std::vector<T> *values, int from, int to) {
+    auto result = new std::vector<T>();
+    if (from >= to) return result;
+    int size = values == nullptr ? 0 : static_cast<int>(values->size());
+    for (int i = from; i < to; ++i) {
+        if (i >= 0 && i < size && values != nullptr) result->push_back(values->at(i));
+        else result->push_back(T());
+    }
+    return result;
+}
+
 //List.toArray()
 template <typename T>
 std::vector<T> *toArray(std::vector<T *> *values) {

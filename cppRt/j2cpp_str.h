@@ -208,8 +208,9 @@ inline std::string *replace(std::string *s, std::string *from, std::string *to) 
     return new std::string(result);
 }
 
-//String.split(String)
-inline std::vector<std::string *> *split(std::string *s, std::string *sep) {
+//String.split(String, int): positive limits keep at most that many pieces,
+//zero drops trailing empty strings, negative keeps them
+inline std::vector<std::string *> *split(std::string *s, std::string *sep, int limit) {
     auto result = new std::vector<std::string *>();
     if (s == nullptr) return result;
     if (sep == nullptr || sep->empty()) {
@@ -218,15 +219,24 @@ inline std::vector<std::string *> *split(std::string *s, std::string *sep) {
     }
     size_t start = 0;
     while (true) {
-        size_t pos = s->find(*sep, start);
+        size_t pos = (limit > 0 && result->size() == static_cast<size_t>(limit) - 1)
+                ? std::string::npos : s->find(*sep, start);
         if (pos == std::string::npos) {
-            result->push_back(new std::string(s->substr(start)));
+            std::string last = s->substr(start);
+            if (limit != 0 || !last.empty() || result->empty()) {
+                result->push_back(new std::string(last));
+            }
             break;
         }
         result->push_back(new std::string(s->substr(start, pos - start)));
         start = pos + sep->size();
     }
     return result;
+}
+
+//String.split(String)
+inline std::vector<std::string *> *split(std::string *s, std::string *sep) {
+    return split(s, sep, 0);
 }
 
 } //namespace CppHelper

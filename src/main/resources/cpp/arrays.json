@@ -43,6 +43,11 @@
       "external": true
     },
     {
+      "name": "copyOfRange(<T>[],int,int)",
+      "target": "CppHelper::copyOfRange($1, $2, $3)",
+      "external": true
+    },
+    {
       "name": "fill(<T>[],<T>)",
       "target": "std::fill($1->begin(), $1->end(), $2)",
       "external": true

@@ -3,6 +3,7 @@
   "include": "<optional>",
   "methods": [
     { "name": "of(<T>)", "target": "new std::optional($1)", "external": true },
+    { "name": "ofNullable(<T>)", "target": "new std::optional<decltype($1)>($1)", "external": true },
     { "name": "isPresent()", "target": "has_value()" },
     { "name": "isEmpty()", "target": "(!has_value())", "external": true },
     { "name": "get()", "target": "value()" },

@@ -168,8 +168,33 @@
       "external": true
     },
     {
+      "name": "split(java.lang.String,int)",
+      "target": "CppHelper::split(${varName}, $1, $2)",
+      "external": true
+    },
+    {
       "name": "valueOf(int)",
       "target": "new std::string(std::to_string($1))",
+      "external": true
+    },
+    {
+      "name": "valueOf(boolean)",
+      "target": "new std::string($1 ? \"true\" : \"false\")",
+      "external": true
+    },
+    {
+      "name": "valueOf(long)",
+      "target": "new std::string(std::to_string($1))",
+      "external": true
+    },
+    {
+      "name": "valueOf(float)",
+      "target": "CppHelper::toStringPtr($1)",
+      "external": true
+    },
+    {
+      "name": "valueOf(double)",
+      "target": "CppHelper::toStringPtr($1)",
       "external": true
     },
     {
