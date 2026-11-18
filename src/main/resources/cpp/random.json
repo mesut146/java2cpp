@@ -1,7 +1,7 @@
 {
   "name": "java.util.Random",
   "target": "CppHelper::Random",
-  "include": "CppHelper.h",
+  "include": "j2cpp_rand.h",
   "methods": [
     { "name": "Random()", "target": "new CppHelper::Random()", "external": true },
     { "name": "nextInt()", "target": "nextInt()" },

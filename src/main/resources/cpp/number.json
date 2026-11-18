@@ -1,7 +1,7 @@
 {
   "name": "java.lang.Number",
   "target": "CppHelper::Number",
-  "include": "CppHelper.h",
+  "include": "j2cpp_num.h",
   "methods": [
     { "name": "intValue()", "target": "intValue()" },
     { "name": "longValue()", "target": "longValue()" },

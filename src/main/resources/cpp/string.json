@@ -1,7 +1,7 @@
 {
   "name": "java.lang.String",
   "target": "std::string",
-  "include": "<string>,<cctype>,CppHelper.h",
+  "include": "<string>,<cctype>,j2cpp_str.h",
   "methods": [
     {
       "name": "String(java.lang.String)",

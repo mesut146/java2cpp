@@ -1,7 +1,7 @@
 {
   "name": "java.lang.Long",
   "target": "long",
-  "include": "CppHelper.h",
+  "include": "j2cpp_num.h,j2cpp_obj.h",
   "fields": {
     "MAX_VALUE": "9223372036854775807LL",
     "MIN_VALUE": "-9223372036854775807LL - 1"

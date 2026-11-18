@@ -98,7 +98,7 @@ public class CmdTest {
         String cpp = new String(Files.readAllBytes(out.resolve("src/demo/MappedCalls.cpp")), StandardCharsets.UTF_8);
         assertTrue("add() was not mapped: " + cpp, cpp.contains("xs->push_back(1)"));
         assertTrue("size() was not mapped: " + cpp, cpp.contains("xs->size()"));
-        assertTrue("mapper include missing: " + cpp, cpp.contains("#include \"CppHelper.h\""));
+        assertTrue("mapper include missing: " + cpp, cpp.contains("#include \"j2cpp_str.h\""));
         int preamble = cpp.indexOf("std::string *tmp");
         assertTrue("multi-line mapping missing: " + cpp, preamble >= 0);
         assertTrue("multi-line mapping emitted twice: " + cpp,

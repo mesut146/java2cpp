@@ -1,7 +1,7 @@
 {
   "name": "java.nio.file.Path,java.nio.file.Paths",
   "target": "std::filesystem::path",
-  "include": "<filesystem>,CppHelper.h",
+  "include": "<filesystem>,j2cpp_fs.h",
   "methods": [
     { "name": "of(java.lang.String)", "target": "CppHelper::fsPath($1)", "external": true },
     { "name": "of(java.lang.String,java.lang.String)", "target": "CppHelper::fsPathPair($1, $2)", "external": true },

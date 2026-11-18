@@ -265,7 +265,7 @@ public class HeaderWriter {
     //canonical constructor and accessor methods
     public void visit(RecordDeclaration node) {
         code = new Code();
-        code.write("#pragma once\n\n#include <string>\n#include <vector>\n#include \"CppHelper.h\"\n");
+        code.write("#pragma once\n\n#include <string>\n#include <vector>\n#include \"j2cpp_obj.h\"\n");
         ITypeBinding binding = node.resolveBinding();
         nsBegin();
         code.line("class %s: public %s", cname(binding), TypeHelper.getObjectType());

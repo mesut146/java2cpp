@@ -1,7 +1,7 @@
 {
   "name": "java.lang.Character",
   "target": "wchar_t",
-  "include": "CppHelper.h",
+  "include": "<cwctype>,j2cpp_num.h",
   "fields": {
     "MAX_VALUE": "65535",
     "MIN_VALUE": "0"

@@ -1,7 +1,7 @@
 {
   "name": "java.lang.Double",
   "target": "double",
-  "include": "CppHelper.h",
+  "include": "j2cpp_num.h,j2cpp_obj.h",
   "fields": {
     "MAX_VALUE": "1.7976931348623157e308",
     "MIN_VALUE": "4.9e-324",

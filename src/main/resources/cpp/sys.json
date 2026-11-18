@@ -1,6 +1,6 @@
 {
   "name": "java.lang.System",
-  "include": "CppHelper.h",
+  "include": "j2cpp_io.h,j2cpp_arr.h",
   "fields": {
     "out": "CppHelper::javaOut()",
     "err": "CppHelper::javaErr()"

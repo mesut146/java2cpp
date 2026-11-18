@@ -1,7 +1,7 @@
 {
   "name": "java.nio.file.Files",
   "target": "std::filesystem::path",
-  "include": "<filesystem>,CppHelper.h",
+  "include": "<filesystem>,j2cpp_fs.h",
   "methods": [
     { "name": "readString(java.nio.file.Path)", "target": "CppHelper::fsReadString($1)", "external": true },
     { "name": "writeString(java.nio.file.Path,java.lang.CharSequence)", "target": "CppHelper::fsWriteString($1, $2)", "external": true },

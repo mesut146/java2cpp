@@ -1,7 +1,7 @@
 {
   "name": "java.lang.StringBuilder,java.lang.StringBuffer",
   "target": "CppHelper::StringBuilder",
-  "include": "CppHelper.h",
+  "include": "j2cpp_str.h",
   "methods": [
     { "name": "StringBuilder()", "target": "new CppHelper::StringBuilder()", "external": true },
     { "name": "StringBuilder(java.lang.String)", "target": "new CppHelper::StringBuilder(*$1)", "external": true },

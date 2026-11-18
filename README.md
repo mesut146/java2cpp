@@ -92,7 +92,7 @@ Example mapper:
 {
   "name": "java.util.List<T>,java.util.ArrayList<T>",
   "target": "std::vector",
-  "include": "CppHelper.h",
+  "include": "j2cpp_arr.h",
   "methods": [
     { "name": "add(<T>)", "target": "push_back($1)" },
     { "name": "get(int)", "target": "at($1)" },
@@ -169,7 +169,20 @@ Tests under `src/test/java` exercise the CLI, helpers and sample conversions. `C
 
 Mappers are the default: Java runtime types become native C++ equivalents and `LibHandler` generates stub headers under `lib/` for anything unmapped, including `lib/lib_common.h` (referenced by the generated `common.h`). Use `-no-mappers` (or `Config.useMappers = false`) to keep Java types and target that stub-based workflow; generated sources still compile with `g++`.
 
-- `cppRt/CppHelper.h` — implements the functions the generator and bundled mappers emit (`make1`–`make4`/`from` for arrays, `format`, `concat`, `toArray`, `replace`, `split`, `encode`, `arraycopy`, bit/integer helpers, and the `try_finally_*` helpers). Add `cppRt/` to your include path.
+- `cppRt/j2cpp_*.h` — domain-specific runtime helpers; add `cppRt/` to your include path:
+
+  | Header | Provides |
+  | --- | --- |
+  | `j2cpp_str.h` | `format`, `concat`, `StringBuilder`, `split`/`replace`/`join`, string conversions |
+  | `j2cpp_num.h` | boxed primitive helpers, `Number`, `boxNumber` |
+  | `j2cpp_obj.h` | `Objects` helpers, record `equals`/`hashCode`/`toString` helpers |
+  | `j2cpp_rand.h` | `Random`, `Math.random`, `UUID` |
+  | `j2cpp_arr.h` | `make1`–`make4`/`from`, `toArray`, `arraycopy`, bit/integer helpers, `arrays::` alias |
+  | `j2cpp_fs.h` | `File`/`Path`/`Files` via `<filesystem>` |
+  | `j2cpp_io.h` | `System.out`/`err`, readers, scanner, writers |
+  | `j2cpp_ex.h` | `Throwable`, stack traces, `ScopeGuard` |
+  | `j2cpp_ctrl.h` | `try_finally_value` / `try_finally_void` |
+  | `CppHelper.h` | compatibility umbrella including all of the above |
 - Generated `.cpp` files include `common.h`, the mapper-required headers, and their own header, so they compile standalone against the generated `lib/` stubs when `cppRt/` is on the include path.
 
 ## Limitations

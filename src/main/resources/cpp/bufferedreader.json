@@ -1,7 +1,7 @@
 {
   "name": "java.io.BufferedReader",
   "target": "CppHelper::BufferedReader",
-  "include": "CppHelper.h",
+  "include": "j2cpp_io.h",
   "methods": [
     { "name": "BufferedReader(java.io.Reader)", "target": "new CppHelper::BufferedReader($1)", "external": true },
     { "name": "readLine()", "target": "readLine()" },

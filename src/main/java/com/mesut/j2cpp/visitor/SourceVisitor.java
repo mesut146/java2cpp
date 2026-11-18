@@ -789,7 +789,7 @@ public class SourceVisitor extends ASTVisitor {
         }
         else if (node.getOperator().toString().equals("+=") && isStr(node.getLeftHandSide())) {
             //String += is concatenation, but += on std::string* pointers is not valid C++
-            includes.add("CppHelper.h");
+            includes.add("j2cpp_str.h");
             node.getLeftHandSide().accept(this);
             write(" = ");
             if (Config.useMappers) {
@@ -898,7 +898,7 @@ public class SourceVisitor extends ASTVisitor {
     //declare try-with-resources values and close them on scope exit (also on exceptions)
     private void emitResources(TryStatement node) {
         if (node.resources().isEmpty()) return;
-        includes.add("CppHelper.h");
+        includes.add("j2cpp_ex.h");
         for (Object o : node.resources()) {
             VariableDeclarationExpression res = (VariableDeclarationExpression) o;
             res.accept(this);
@@ -930,7 +930,7 @@ public class SourceVisitor extends ASTVisitor {
         //try result. The try/catch and finally parts are passed as lambdas that
         //return std::optional<R> (or bool for void); an empty optional means the
         //try completed normally without returning.
-        includes.add("CppHelper.h");
+        includes.add("j2cpp_ctrl.h");
         ITypeBinding ret = currentMethod == null ? null : currentMethod.getReturnType();
         boolean isVoid = ret == null || ret.getName().equals("void");
         if (isVoid) {
@@ -1037,7 +1037,7 @@ public class SourceVisitor extends ASTVisitor {
         if (Config.useMappers) {
             if ("java.lang.Number".equals(target.getQualifiedName())) {
                 //the element type may be a wildcard/template parameter, so box generically
-                includes.add("CppHelper.h");
+                includes.add("j2cpp_num.h");
                 return "CppHelper::boxNumber(" + raw + ")";
             }
             return raw;
@@ -1422,7 +1422,7 @@ public class SourceVisitor extends ASTVisitor {
     //a bare {..} initializer would be a std::initializer_list, not a vector
     private void emitInitializer(Expression init, ITypeBinding target) {
         if (Config.useMappers && init instanceof ArrayInitializer) {
-            includes.add("CppHelper.h");
+            includes.add("j2cpp_arr.h");
             write("arrays::from(");
             init.accept(this);
             write(")");
@@ -1684,7 +1684,7 @@ public class SourceVisitor extends ASTVisitor {
             if (et != null && et.isPrimitive() && target != null
                     && "java.lang.Number".equals(target.getQualifiedName())) {
                 //box a mapped primitive when the target is java.lang.Number
-                includes.add("CppHelper.h");
+                includes.add("j2cpp_num.h");
                 write("new CppHelper::Number(");
                 e.accept(this);
                 write(")");
@@ -1772,6 +1772,7 @@ public class SourceVisitor extends ASTVisitor {
         //if either side is a string, the whole expression is string concatenation
         if (op.equals("+") && (isStr(node.getLeftOperand()) || isStr(node.getRightOperand()))) {
             if (Config.useMappers) {
+                includes.add("j2cpp_str.h");
                 code.write("CppHelper::concat(");
                 node.getLeftOperand().accept(this);
                 code.write(", ");
@@ -1881,7 +1882,7 @@ public class SourceVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(ArrayCreation node) {
-        includes.add("CppHelper.h");
+        includes.add("j2cpp_arr.h");
         if (node.getInitializer() != null) {
             write("arrays::from(");
             node.getInitializer().accept(this);

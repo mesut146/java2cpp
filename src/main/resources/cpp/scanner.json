@@ -1,7 +1,7 @@
 {
   "name": "java.util.Scanner",
   "target": "CppHelper::Scanner",
-  "include": "CppHelper.h",
+  "include": "j2cpp_io.h,j2cpp_fs.h",
   "methods": [
     { "name": "Scanner(java.lang.String)", "target": "new CppHelper::Scanner($1)", "external": true },
     { "name": "Scanner(java.io.File)", "target": "new CppHelper::Scanner(new CppHelper::FileReader(CppHelper::fsPathString($1)))", "external": true },

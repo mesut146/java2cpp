@@ -1,7 +1,7 @@
 {
   "name": "java.lang.Short",
   "target": "char16_t",
-  "include": "CppHelper.h",
+  "include": "j2cpp_num.h",
   "fields": {
     "MAX_VALUE": "32767",
     "MIN_VALUE": "-32768"

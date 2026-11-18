@@ -1,7 +1,7 @@
 {
   "name": "java.io.PrintStream",
   "target": "CppHelper::PrintStream",
-  "include": "CppHelper.h",
+  "include": "j2cpp_io.h",
   "methods": [
     { "name": "println()", "target": "println()" },
     { "name": "println(java.lang.String)", "target": "println($1)" },

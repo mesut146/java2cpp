@@ -1,7 +1,7 @@
 {
   "name": "java.util.Set<T>,java.util.HashSet<T>",
   "target": "std::unordered_set",
-  "include": "<algorithm>,<unordered_set>",
+  "include": "<algorithm>,<unordered_set>,j2cpp_arr.h",
   "methods": [
     {
       "name": "add(<T>)",

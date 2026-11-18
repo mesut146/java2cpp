@@ -1,6 +1,6 @@
 {
   "name": "java.lang.Math",
-  "include": "<cmath>,CppHelper.h",
+  "include": "<cmath>,j2cpp_rand.h,j2cpp_arr.h",
   "fields": {
     "PI": "3.141592653589793",
     "E": "2.718281828459045",

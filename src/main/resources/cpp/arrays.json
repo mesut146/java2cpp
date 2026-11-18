@@ -1,6 +1,6 @@
 {
   "name": "java.util.Arrays<T>",
-  "include": "<algorithm>",
+  "include": "<algorithm>,j2cpp_arr.h",
   "methods": [
     {
       "name": "asList(<T>)",

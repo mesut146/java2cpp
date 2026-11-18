@@ -1,7 +1,7 @@
 {
   "name": "java.lang.Throwable,java.lang.Exception,java.lang.RuntimeException,java.lang.Error,java.lang.IllegalArgumentException,java.lang.IllegalStateException",
   "target": "CppHelper::Throwable",
-  "include": "CppHelper.h",
+  "include": "j2cpp_ex.h",
   "methods": [
     { "name": "Throwable()", "target": "new CppHelper::Throwable()", "external": true },
     { "name": "Throwable(java.lang.String)", "target": "new CppHelper::Throwable($1)", "external": true },

@@ -1,7 +1,7 @@
 {
   "name": "java.lang.Integer",
   "target": "int",
-  "include": "<string>,<algorithm>,CppHelper.h",
+  "include": "<string>,<algorithm>,j2cpp_arr.h",
   "methods": [
     {
       "name": "Integer(java.lang.String)",

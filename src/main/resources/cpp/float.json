@@ -1,7 +1,7 @@
 {
   "name": "java.lang.Float",
   "target": "float",
-  "include": "CppHelper.h",
+  "include": "j2cpp_num.h",
   "fields": {
     "MAX_VALUE": "3.402823466e+38F",
     "MIN_VALUE": "1.4e-45F",

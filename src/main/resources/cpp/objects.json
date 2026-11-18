@@ -1,6 +1,6 @@
 {
   "name": "java.util.Objects",
-  "include": "CppHelper.h",
+  "include": "j2cpp_obj.h",
   "methods": [
     { "name": "equals(java.lang.Object,java.lang.Object)", "target": "CppHelper::objEquals($1, $2)", "external": true },
     { "name": "hashCode(java.lang.Object)", "target": "CppHelper::objHash($1)", "external": true },
