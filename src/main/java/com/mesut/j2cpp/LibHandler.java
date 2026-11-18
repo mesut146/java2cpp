@@ -69,11 +69,31 @@ public class LibHandler {
             case "java.lang.Double": prim = "double"; valueMethod = "doubleValue"; break;
             default: return;
         }
+        //the JDK stubs only carry a value field for Integer; add one where needed
+        boolean hasField = false;
+        for (CField f : cc.fields) {
+            if (f.name != null && f.name.is("value")) hasField = true;
+        }
+        if (!hasField) {
+            cc.addField(new CField(new CType(prim), new CName("value")));
+        }
         boolean hasCons = false, hasValue = false;
         for (CMethod m : cc.methods) {
-            if (m.isCons && m.params.size() == 1 && m.params.get(0).type != null
-                    && m.params.get(0).type.type.equals(prim)) hasCons = true;
-            if (m.name != null && m.name.is(valueMethod)) hasValue = true;
+            if (m.isCons && m.params.size() == 1 && primitiveParam(m, prim)) {
+                hasCons = true;
+                m.inlineBody = ": value(" + m.params.get(0).name.name + ") {}";
+            }
+            if (m.name != null && m.name.is(valueMethod)) {
+                hasValue = true;
+                m.inlineBody = "{ return value; }";
+            }
+            if (m.name != null && m.name.is("hashCode") && !m.isStatic()) {
+                m.inlineBody = "{ return (int)value; }";
+            }
+            if (m.name != null && m.name.is("valueOf") && m.params.size() == 1
+                    && primitiveParam(m, prim)) {
+                m.inlineBody = "{ return new " + cc.name + "(" + m.params.get(0).name.name + "); }";
+            }
         }
         if (!hasCons) {
             CMethod cons = new CMethod();
@@ -81,6 +101,7 @@ public class LibHandler {
             cons.name = new CName(cc.name);
             cons.setPublic(true);
             cons.addParam(new CParameter(new CType(prim), new CName("v")));
+            cons.inlineBody = ": value(v) {}";
             cc.addMethod(cons);
         }
         if (!hasValue) {
@@ -88,8 +109,14 @@ public class LibHandler {
             value.name = new CName(valueMethod);
             value.type = new CType(prim);
             value.setPublic(true);
+            value.inlineBody = "{ return value; }";
             cc.addMethod(value);
         }
+    }
+
+    private static boolean primitiveParam(CMethod method, String prim) {
+        CType type = method.params.get(0).type;
+        return type != null && type.type.equals(prim);
     }
 
     public void addMethod(IMethodBinding binding) {

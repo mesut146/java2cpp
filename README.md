@@ -169,7 +169,7 @@ Tests under `src/test/java` exercise the CLI, helpers and sample conversions. `C
 
 ## Runtime support
 
-Mappers are the default: Java runtime types become native C++ equivalents and `LibHandler` generates stub headers under `lib/` for anything unmapped, including `lib/lib_common.h` (referenced by the generated `common.h`). Use `-no-mappers` (or `Config.useMappers = false`) to keep Java types and target that stub-based workflow; generated sources still compile with `g++`.
+Mappers are the default: Java runtime types become native C++ equivalents and `LibHandler` generates stub headers under `lib/` for anything unmapped, including `lib/lib_common.h` (referenced by the generated `common.h`). Use `-no-mappers` (or `Config.useMappers = false`) to keep Java types and target that stub-based workflow; generated sources still compile with `g++`. Stub methods are emitted header-only with default bodies; boxed primitives (`Integer`, `Boolean`, …) additionally store their constructor argument and implement their value/hash/`valueOf` methods, so simple stub-mode programs can link and run.
 
 - `cppRt/j2cpp_*.h` — domain-specific runtime helpers; add `cppRt/` to your include path:
 

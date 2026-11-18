@@ -1,6 +1,7 @@
 package com.mesut;
 
 import com.mesut.j2cpp.Cmd;
+import com.mesut.j2cpp.Config;
 import org.junit.Assume;
 
 import java.io.IOException;
@@ -49,12 +50,33 @@ final class CppTestSupport {
 
     /** Write a single Java source into a temp tree and convert it with mappers. */
     public static Path convert(String java, String pkg, String cls, String prefix) throws IOException {
+        return convert(java, pkg, cls, prefix, true);
+    }
+
+    /** Convert with -no-mappers to exercise the generated stub headers. */
+    public static Path convertNoMappers(String java, String pkg, String cls, String prefix)
+            throws IOException {
+        return convert(java, pkg, cls, prefix, false);
+    }
+
+    private static Path convert(String java, String pkg, String cls, String prefix,
+                                boolean useMappers) throws IOException {
         Path src = Files.createTempDirectory("j2cpp-" + prefix + "-src");
         Path dir = src.resolve(pkg);
         Files.createDirectories(dir);
         Files.write(dir.resolve(cls + ".java"), java.getBytes(StandardCharsets.UTF_8));
         Path out = Files.createTempDirectory("j2cpp-" + prefix + "-out");
-        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
+        String[] args = useMappers
+                ? new String[]{"-src", src.toString(), "-out", out.toString()}
+                : new String[]{"-src", src.toString(), "-out", out.toString(), "-no-mappers"};
+        boolean old = Config.useMappers;
+        try {
+            Config.useMappers = useMappers;
+            Cmd.main(args);
+        }
+        finally {
+            Config.useMappers = old;
+        }
         return out;
     }
 

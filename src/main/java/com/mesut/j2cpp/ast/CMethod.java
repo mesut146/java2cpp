@@ -18,6 +18,8 @@ public class CMethod extends ModifierNode {
     public boolean isOverride = false;
     public CClass parent;
     public CBlockStatement body;
+    //explicit inline body for generated stubs (full text after the signature)
+    public String inlineBody = null;
 
     public void addParam(CParameter param) {
         params.add(param);
@@ -63,13 +65,17 @@ public class CMethod extends ModifierNode {
         if (isPureVirtual && !isStatic()) {
             sb.append(" = 0;");
         }
-        else if (parent != null && !parent.fromSource && is(VIRTUAL_NAME) && !isStatic()
-                && template.isEmpty() && body == null) {
-            //library stub methods get an inline body so generated subclasses
-            //can call or inherit them without a separate definition
-            sb.append(" { ");
-            if (!type.isVoid()) sb.append("return {}; ");
-            sb.append("}");
+        else if (parent != null && !parent.fromSource && template.isEmpty() && body == null) {
+            //library stubs are header-only: give every declaration a definition
+            //so generated code can link without hand-written implementations
+            if (inlineBody != null) {
+                sb.append(" ").append(inlineBody);
+            }
+            else {
+                sb.append(" { ");
+                if (!isCons && type != null && !type.isVoid()) sb.append("return {}; ");
+                sb.append("}");
+            }
         }
         else {
             sb.append(";");
