@@ -1,13 +1,11 @@
 package com.mesut;
 
 import com.mesut.j2cpp.Cmd;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -19,18 +17,8 @@ import static org.junit.Assert.assertTrue;
  */
 public class CppCompileTest {
 
-    private Path compiler() {
-        return Arrays.stream(System.getenv("PATH").split(":"))
-                .map(Path::of)
-                .map(dir -> dir.resolve("g++"))
-                .filter(Files::isExecutable)
-                .findFirst()
-                .orElse(null);
-    }
-
     private Path generateAndCompile(String className, String source) throws Exception {
-        Path compiler = compiler();
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
 
         Path src = Files.createTempDirectory("j2cpp-compile-src");
         Files.createDirectories(src.resolve("demo"));
@@ -93,8 +81,7 @@ public class CppCompileTest {
 
     @Test
     public void genericSampleCompiles() throws Exception {
-        Path compiler = compiler();
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
 
         Path out = convertSamples();
         Path header = out.resolve("base/Generic.h");
@@ -109,8 +96,7 @@ public class CppCompileTest {
 
     @Test
     public void arrayCreationCompiles() throws Exception {
-        Path compiler = compiler();
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
 
         Path src = Files.createTempDirectory("j2cpp-arr-src");
         Files.createDirectories(src.resolve("p"));
@@ -134,8 +120,7 @@ public class CppCompileTest {
 
     @Test
     public void listMapperSampleCompiles() throws Exception {
-        Path compiler = compiler();
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
 
         Path out = convertSamples();
         Path generated = out.resolve("src/mapper/ListTest.cpp");
@@ -147,8 +132,7 @@ public class CppCompileTest {
 
     @Test
     public void renamedIdentifiersAndConstructorsCompile() throws Exception {
-        Path compiler = compiler();
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
 
         Path out = convertSamples();
         String renamerHeader = new String(Files.readAllBytes(out.resolve("base/Renamer.h")), StandardCharsets.UTF_8);
@@ -162,8 +146,7 @@ public class CppCompileTest {
 
     @Test
     public void nestedTypeHeadersCompile() throws Exception {
-        Path compiler = compiler();
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
 
         Path out = convertSamples();
         String castHeader = new String(Files.readAllBytes(out.resolve("base/Cast.h")), StandardCharsets.UTF_8);
@@ -177,8 +160,7 @@ public class CppCompileTest {
 
     @Test
     public void allSampleSourcesCompile() throws Exception {
-        Path compiler = compiler();
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
 
         Path root = Path.of("src/test/resources/samples").toAbsolutePath();
         Path out = convertSamples();
@@ -198,8 +180,7 @@ public class CppCompileTest {
 
     @Test
     public void integerMapperSampleCompiles() throws Exception {
-        Path compiler = compiler();
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
 
         Path out = convertSamples();
         Path generated = out.resolve("src/mapper/IntegerTest.cpp");

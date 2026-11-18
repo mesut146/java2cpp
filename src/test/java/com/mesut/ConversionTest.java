@@ -1,6 +1,5 @@
 package com.mesut;
 
-import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.Converter;
 import com.mesut.j2cpp.map.Mapper;
 import org.junit.Test;

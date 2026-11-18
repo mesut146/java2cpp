@@ -1,16 +1,8 @@
 package com.mesut;
 
-import com.mesut.j2cpp.Cmd;
-import org.junit.Assume;
 import org.junit.Test;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Verifies that generated try/finally has Java semantics by compiling and running
@@ -54,32 +46,11 @@ public class TryFinallyBehaviorTest {
 
     @Test
     public void finallySemantics() throws Exception {
-        Path compiler = Arrays.stream(System.getenv("PATH").split(":"))
-                .map(Path::of).map(d -> d.resolve("g++")).filter(Files::isExecutable)
-                .findFirst().orElse(null);
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
+        Path out = CppTestSupport.convert(JAVA, "t", "F", "fin");
 
-        Path src = Files.createTempDirectory("j2cpp-fin-src");
-        Files.createDirectories(src.resolve("t"));
-        Files.write(src.resolve("t/F.java"), JAVA.getBytes(StandardCharsets.UTF_8));
-        Path out = Files.createTempDirectory("j2cpp-fin-out");
-        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
-
-        Path main = out.resolve("main.cpp");
-        Files.write(main, MAIN.getBytes(StandardCharsets.UTF_8));
-        Path exe = out.resolve("fin_test");
-        ProcessBuilder compile = new ProcessBuilder(compiler.toString(), "-std=c++17",
-                "-I" + Path.of("cppRt").toAbsolutePath(), "-I" + out,
-                out.resolve("src/t/F.cpp").toString(), main.toString(), "-o", exe.toString())
-                .redirectErrorStream(true);
-        Process compileProcess = compile.start();
-        String compileLog = new String(compileProcess.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        int compileExit = compileProcess.waitFor(60, TimeUnit.SECONDS) ? compileProcess.exitValue() : -1;
-        assertEquals("compile failed:\n" + compileLog, 0, compileExit);
-
-        Process run = new ProcessBuilder(exe.toString()).redirectErrorStream(true).start();
-        String log = new String(run.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        int exit = run.waitFor(60, TimeUnit.SECONDS) ? run.exitValue() : -1;
-        assertEquals("compile failed:\n" + compileLog + "\nrun output:\n" + log, 0, exit);
+        CppTestSupport.compile(out, compiler, "src/t/F.cpp", MAIN, "fin_test")
+                .assertOk("try/finally test");
+        CppTestSupport.runMerged(out.resolve("fin_test")).assertOk("try/finally test");
     }
 }

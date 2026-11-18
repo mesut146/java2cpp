@@ -1,16 +1,11 @@
 package com.mesut;
 
-import com.mesut.j2cpp.Cmd;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -60,16 +55,9 @@ public class InterfaceBehaviorTest {
 
     @Test
     public void defaultStaticMethodsAndConstantsWork() throws Exception {
-        Path compiler = Arrays.stream(System.getenv("PATH").split(":"))
-                .map(Path::of).map(d -> d.resolve("g++")).filter(Files::isExecutable)
-                .findFirst().orElse(null);
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
 
-        Path src = Files.createTempDirectory("j2cpp-iface-src");
-        Files.createDirectories(src.resolve("i"));
-        Files.write(src.resolve("i/I.java"), JAVA.getBytes(StandardCharsets.UTF_8));
-        Path out = Files.createTempDirectory("j2cpp-iface-out");
-        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
+        Path out = CppTestSupport.convert(JAVA, "i", "I", "iface");
 
         String header = new String(Files.readAllBytes(out.resolve("i/Greeter.h")), StandardCharsets.UTF_8);
         assertTrue("abstract method should stay pure virtual:\n" + header,
@@ -85,19 +73,8 @@ public class InterfaceBehaviorTest {
         assertTrue("interface constant should be constexpr:\n" + header,
                 header.contains("static constexpr int BONUS = 10"));
 
-        Path main = out.resolve("main.cpp");
-        Files.write(main, MAIN.getBytes(StandardCharsets.UTF_8));
-        Path exe = out.resolve("iface_test");
-        Process cp = new ProcessBuilder(compiler.toString(), "-std=c++17",
-                "-I" + Path.of("cppRt").toAbsolutePath(), "-I" + out,
-                out.resolve("src/i/I.cpp").toString(), main.toString(), "-o", exe.toString())
-                .redirectErrorStream(true).start();
-        String compileLog = new String(cp.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        assertEquals("compile/link failed:\n" + compileLog, 0,
-                cp.waitFor(60, TimeUnit.SECONDS) ? cp.exitValue() : -1);
-
-        Process run = new ProcessBuilder(exe.toString()).redirectErrorStream(true).start();
-        String log = new String(run.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        assertEquals("run output:\n" + log, 0, run.waitFor(60, TimeUnit.SECONDS) ? run.exitValue() : -1);
+        CppTestSupport.compile(out, compiler, "src/i/I.cpp", MAIN, "iface_test")
+                .assertOk("iface");
+        CppTestSupport.runMerged(out.resolve("iface_test")).assertOk("iface");
     }
 }

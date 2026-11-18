@@ -18,13 +18,11 @@ public class CMakeBuildTest {
 
     @Test
     public void generatedCmakeProjectBuilds() throws Exception {
-        Path compiler = Arrays.stream(System.getenv("PATH").split(":"))
-                .map(Path::of).map(d -> d.resolve("g++")).filter(Files::isExecutable)
-                .findFirst().orElse(null);
+        Path compiler = CppTestSupport.compiler();
         Path cmake = Arrays.stream(System.getenv("PATH").split(":"))
                 .map(Path::of).map(d -> d.resolve("cmake")).filter(Files::isExecutable)
                 .findFirst().orElse(null);
-        Assume.assumeTrue("g++/cmake not available", compiler != null && cmake != null);
+        Assume.assumeTrue("cmake not available", cmake != null);
 
         Path src = Path.of("src/test/resources/samples").toAbsolutePath();
         Path out = Files.createTempDirectory("j2cpp-cmake-out");

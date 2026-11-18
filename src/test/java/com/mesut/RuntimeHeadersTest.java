@@ -1,7 +1,6 @@
 package com.mesut;
 
 import com.mesut.j2cpp.Cmd;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -9,10 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -23,31 +20,16 @@ public class RuntimeHeadersTest {
             "j2cpp_str.h", "j2cpp_num.h", "j2cpp_obj.h", "j2cpp_rand.h", "j2cpp_arr.h",
             "j2cpp_fs.h", "j2cpp_io.h", "j2cpp_ex.h", "j2cpp_ctrl.h", "j2cpp_traits.h", "CppHelper.h");
 
-    private static Path compiler() {
-        return Arrays.stream(System.getenv("PATH").split(":"))
-                .map(Path::of).map(d -> d.resolve("g++")).filter(Files::isExecutable)
-                .findFirst().orElse(null);
-    }
-
-    private static void compile(Path compiler, Path source, String label) throws Exception {
-        Process cp = new ProcessBuilder(compiler.toString(), "-std=c++17", "-fsyntax-only",
-                "-I" + Path.of("cppRt").toAbsolutePath(), source.toString())
-                .redirectErrorStream(true).start();
-        String log = new String(cp.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        assertEquals(label + " did not compile:\n" + log, 0,
-                cp.waitFor(60, TimeUnit.SECONDS) ? cp.exitValue() : -1);
-    }
-
     @Test
     public void eachHeaderCompilesStandalone() throws Exception {
-        Path compiler = compiler();
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
         Path dir = Files.createTempDirectory("j2cpp-headers");
         for (String name : HEADERS) {
             Path src = dir.resolve(name + ".cpp");
             Files.write(src, ("#include \"" + name + "\"\nint main() { return 0; }\n")
                     .getBytes(StandardCharsets.UTF_8));
-            compile(compiler, src, name);
+            CppTestSupport.RunResult result = CppTestSupport.compileOnly(dir, compiler, List.of(src));
+            org.junit.Assert.assertEquals(name + " did not compile:\n" + result.output, 0, result.exit);
         }
     }
 

@@ -1,17 +1,9 @@
 package com.mesut;
 
-import com.mesut.j2cpp.Cmd;
-import org.junit.Assume;
 import org.junit.Test;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /** Implicit Java boxing/unboxing in Object-typed positions. */
 public class BoxingTest {
@@ -43,44 +35,58 @@ public class BoxingTest {
             }
             """;
 
+    private static final String BOX_JAVA =
+            "package b;\n" +
+            "import java.util.List;\n" +
+            "import java.util.ArrayList;\n" +
+            "public class Box {\n" +
+            "    public int test() {\n" +
+            "        Integer boxed = Integer.valueOf(7);\n" +
+            "        int unboxed = boxed;\n" +
+            "        List<Integer> xs = new ArrayList<>();\n" +
+            "        xs.add(3);\n" +
+            "        xs.add(5);\n" +
+            "        int sum = xs.get(0) + xs.get(1);\n" +
+            "        int[] arr = new int[3];\n" +
+            "        arr[0] = 10; arr[1] = 20; arr[2] = 30;\n" +
+            "        return unboxed * 1000 + sum * 100 + arr[1] + arr.length;\n" +
+            "    }\n" +
+            "}\n";
+
+    private static final String BOX_MAIN =
+            "#include \"common.h\"\n" +
+            "#include \"b/Box.h\"\n" +
+            "#include <cstdio>\n" +
+            "int main(){ b::Box o; int r=o.test(); printf(\"r=%d\\n\", r); return r==7823?0:1; }\n";
+
     @Test
     public void primitivesBoxToObjectAndCastBack() throws Exception {
-        Path compiler = Arrays.stream(System.getenv("PATH").split(":"))
-                .map(Path::of).map(d -> d.resolve("g++")).filter(Files::isExecutable)
-                .findFirst().orElse(null);
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
+        Path out = CppTestSupport.convert(JAVA, "b", "B", "box");
 
-        Path src = Files.createTempDirectory("j2cpp-box-src");
-        Files.createDirectories(src.resolve("b"));
-        Files.write(src.resolve("b/B.java"), JAVA.getBytes(StandardCharsets.UTF_8));
-        Path out = Files.createTempDirectory("j2cpp-box-out");
-        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
+        String cpp = CppTestSupport.generated(out, "src/b/B.cpp");
+        CppTestSupport.assertContains(cpp, "new j2cpp::Box<int>(5)");
+        CppTestSupport.assertContains(cpp, "new j2cpp::Box<int>(i)");
+        CppTestSupport.assertContains(cpp, "new j2cpp::Box<bool>(true)");
+        CppTestSupport.assertContains(cpp, "j2cpp::unbox<int>(o)");
+        CppTestSupport.assertContains(cpp, "new CppHelper::Number(i)");
 
-        String cpp = new String(Files.readAllBytes(out.resolve("src/b/B.cpp")), StandardCharsets.UTF_8);
-        assertTrue("primitive not boxed:\n" + cpp, cpp.contains("new j2cpp::Box<int>(5)"));
-        assertTrue("mapped wrapper variable not boxed:\n" + cpp,
-                cpp.contains("new j2cpp::Box<int>(i)"));
-        assertTrue("boolean not boxed:\n" + cpp, cpp.contains("new j2cpp::Box<bool>(true)"));
-        assertTrue("cast not unboxed:\n" + cpp, cpp.contains("j2cpp::unbox<int>(o)"));
-        assertTrue("Number boxing missing:\n" + cpp, cpp.contains("new CppHelper::Number(i)"));
+        String log = CppTestSupport.log(out);
+        CppTestSupport.assertContains(log, "primitive boxed for Object-typed target");
+        CppTestSupport.assertContains(log, "cast to boxed primitive unboxed");
 
-        String log = new String(Files.readAllBytes(out.resolve("log.txt")), StandardCharsets.UTF_8);
-        assertTrue("boxing not logged:\n" + log, log.contains("primitive boxed for Object-typed target"));
-        assertTrue("unboxing not logged:\n" + log, log.contains("cast to boxed primitive unboxed"));
+        CppTestSupport.compile(out, compiler, "src/b/B.cpp", MAIN, "box_test")
+                .assertOk("boxing test");
+        CppTestSupport.runMerged(out.resolve("box_test")).assertOk("boxing test");
+    }
 
-        Path main = out.resolve("main.cpp");
-        Files.write(main, MAIN.getBytes(StandardCharsets.UTF_8));
-        Path exe = out.resolve("box_test");
-        Process cp = new ProcessBuilder(compiler.toString(), "-std=c++17",
-                "-I" + Path.of("cppRt").toAbsolutePath(), "-I" + out,
-                out.resolve("src/b/B.cpp").toString(), main.toString(), "-o", exe.toString())
-                .redirectErrorStream(true).start();
-        String compileLog = new String(cp.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        assertEquals("compile/link failed:\n" + compileLog, 0,
-                cp.waitFor(60, TimeUnit.SECONDS) ? cp.exitValue() : -1);
+    @Test
+    public void boxedIntegersListsAndArraysBehave() throws Exception {
+        Path compiler = CppTestSupport.compiler();
+        Path out = CppTestSupport.convert(BOX_JAVA, "b", "Box", "box-runtime");
 
-        Process run = new ProcessBuilder(exe.toString()).redirectErrorStream(true).start();
-        String runLog = new String(run.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        assertEquals("run output:\n" + runLog, 0, run.waitFor(60, TimeUnit.SECONDS) ? run.exitValue() : -1);
+        CppTestSupport.compile(out, compiler, "src/b/Box.cpp", BOX_MAIN, "box2_test")
+                .assertOk("boxing/array test");
+        CppTestSupport.runMerged(out.resolve("box2_test")).assertOk("boxing/array test");
     }
 }

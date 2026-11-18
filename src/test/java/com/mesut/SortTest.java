@@ -1,14 +1,12 @@
 package com.mesut;
 
 import com.mesut.j2cpp.ast.CClass;
-import com.mesut.j2cpp.ast.CHeader;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.util.BaseClassSorter;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Stack;
 
 public class SortTest {
 

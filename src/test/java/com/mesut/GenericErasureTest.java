@@ -1,10 +1,7 @@
 package com.mesut;
 
-import com.mesut.j2cpp.Cmd;
 import org.junit.Test;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.Assert.assertFalse;
@@ -29,13 +26,9 @@ public class GenericErasureTest {
 
     @Test
     public void erasureIsAnnotatedAndLogged() throws Exception {
-        Path src = Files.createTempDirectory("j2cpp-erasure-src");
-        Files.createDirectories(src.resolve("g"));
-        Files.write(src.resolve("g/G.java"), JAVA.getBytes(StandardCharsets.UTF_8));
-        Path out = Files.createTempDirectory("j2cpp-erasure-out");
-        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
+        Path out = CppTestSupport.convert(JAVA, "g", "G", "erasure");
 
-        String header = new String(Files.readAllBytes(out.resolve("g/G.h")), StandardCharsets.UTF_8);
+        String header = CppTestSupport.generated(out, "g/G.h");
         assertTrue("method template missing in header:\n" + header,
                 header.contains("template <class T>"));
         assertTrue("type variable not preserved:\n" + header,
@@ -43,7 +36,7 @@ public class GenericErasureTest {
         assertTrue("template note missing in header:\n" + header,
                 header.contains("method type parameters kept as C++ template"));
 
-        String cpp = new String(Files.readAllBytes(out.resolve("src/g/G.cpp")), StandardCharsets.UTF_8);
+        String cpp = CppTestSupport.generated(out, "src/g/G.cpp");
         assertTrue("template definition missing:\n" + cpp,
                 cpp.contains("template <class T>\nT G::identity(T x)"));
         assertTrue("template note missing in source:\n" + cpp,
@@ -52,7 +45,7 @@ public class GenericErasureTest {
                 cpp.contains("generic return type resolved by template deduction/erasure"));
         assertFalse("invalid dynamic_cast still emitted:\n" + cpp, cpp.contains("dynamic_cast<int>"));
 
-        String log = new String(Files.readAllBytes(out.resolve("log.txt")), StandardCharsets.UTF_8);
+        String log = CppTestSupport.log(out);
         assertTrue("template not logged:\n" + log, log.contains("method type parameters kept as C++ template"));
         assertTrue("call-site rewrite not logged:\n" + log, log.contains("generic return type resolved"));
     }

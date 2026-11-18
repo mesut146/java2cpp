@@ -1,16 +1,11 @@
 package com.mesut;
 
-import com.mesut.j2cpp.Cmd;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /** Tier 3b: java.io.File / Path / Files map to std::filesystem and really touch disk. */
@@ -67,19 +62,12 @@ public class FileSystemMapperTest {
 
     @Test
     public void fileSystemMappings() throws Exception {
-        Path compiler = Arrays.stream(System.getenv("PATH").split(":"))
-                .map(Path::of).map(d -> d.resolve("g++")).filter(Files::isExecutable)
-                .findFirst().orElse(null);
-        Assume.assumeTrue("g++ is not available", compiler != null);
+        Path compiler = CppTestSupport.compiler();
 
         Path base = Files.createTempDirectory("j2cpp-fs-base");
         String java = JAVA_TEMPLATE.replace("__BASE__", base.toString());
 
-        Path src = Files.createTempDirectory("j2cpp-fs-src");
-        Files.createDirectories(src.resolve("io"));
-        Files.write(src.resolve("io/I.java"), java.getBytes(StandardCharsets.UTF_8));
-        Path out = Files.createTempDirectory("j2cpp-fs-out");
-        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
+        Path out = CppTestSupport.convert(java, "io", "I", "fs");
 
         String gen = new String(Files.readAllBytes(out.resolve("src/io/I.cpp")), StandardCharsets.UTF_8);
         assertTrue("File not mapped:\n" + gen, gen.contains("CppHelper::fsPath("));
@@ -88,19 +76,8 @@ public class FileSystemMapperTest {
         assertTrue("File.renameTo not mapped:\n" + gen, gen.contains("CppHelper::fsRename("));
         assertTrue("listFiles not mapped:\n" + gen, gen.contains("CppHelper::fsList("));
 
-        Path main = out.resolve("main.cpp");
-        Files.write(main, MAIN.getBytes(StandardCharsets.UTF_8));
-        Path exe = out.resolve("fs_test");
-        Process cp = new ProcessBuilder(compiler.toString(), "-std=c++17",
-                "-I" + Path.of("cppRt").toAbsolutePath(), "-I" + out,
-                out.resolve("src/io/I.cpp").toString(), main.toString(), "-o", exe.toString())
-                .redirectErrorStream(true).start();
-        String compileLog = new String(cp.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        assertEquals("compile/link failed:\n" + compileLog, 0,
-                cp.waitFor(60, TimeUnit.SECONDS) ? cp.exitValue() : -1);
-
-        Process run = new ProcessBuilder(exe.toString()).redirectErrorStream(true).start();
-        String log = new String(run.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        assertEquals("run output:\n" + log, 0, run.waitFor(60, TimeUnit.SECONDS) ? run.exitValue() : -1);
+        CppTestSupport.compile(out, compiler, "src/io/I.cpp", MAIN, "fs_test")
+                .assertOk("fs");
+        CppTestSupport.runMerged(out.resolve("fs_test")).assertOk("fs");
     }
 }
