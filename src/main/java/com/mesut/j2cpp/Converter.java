@@ -169,6 +169,21 @@ public class Converter {
                 //source classes inherit from Object, which needs a complete type
                 if (Config.writeLibHeader) {
                     forwardHeader.includes.add("lib/java/lang/Object.h");
+                    //mapped boxed types are primitives in C++, so Object-typed
+                    //positions need a real polymorphic holder for the value
+                    forwardHeader.extra =
+                            "//implicit Java boxing for Object-typed positions\n"
+                            + "namespace j2cpp {\n"
+                            + "template <typename T> class Box : public java::lang::Object {\n"
+                            + "public:\n"
+                            + "    T value;\n"
+                            + "    explicit Box(T v) : value(v) {}\n"
+                            + "};\n"
+                            + "template <typename T> T unbox(java::lang::Object *o) {\n"
+                            + "    Box<T> *b = dynamic_cast<Box<T> *>(o);\n"
+                            + "    return b ? b->value : T();\n"
+                            + "}\n"
+                            + "}\n";
                 }
             }
             System.out.println("wrote " + forwardHeader.getInclude());

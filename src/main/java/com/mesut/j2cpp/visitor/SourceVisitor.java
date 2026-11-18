@@ -1677,15 +1677,56 @@ public class SourceVisitor extends ASTVisitor {
         }
     }
 
-    //in stub mode Java boxing/unboxing must be emitted explicitly
+    private static String unboxedName(String wrapper) {
+        switch (wrapper) {
+            case "Boolean": return "boolean";
+            case "Byte": return "byte";
+            case "Character": return "char";
+            case "Short": return "short";
+            case "Integer": return "int";
+            case "Long": return "long";
+            case "Float": return "float";
+            case "Double": return "double";
+            default: return null;
+        }
+    }
+
+    //a wrapper reference used where a primitive is required (e.g. arithmetic)
+    private void acceptOperand(Expression e) {
+        //CastExpression already emits its own unboxing in visit(CastExpression)
+        if (!Config.useMappers && e != null && !(e instanceof CastExpression) && e.resolveUnboxing()) {
+            ITypeBinding boxed = e.resolveTypeBinding();
+            String prim = boxed == null ? null : unboxedName(boxed.getName());
+            if (prim != null) {
+                e.accept(this);
+                write("->%sValue()", prim);
+                return;
+            }
+        }
+        e.accept(this);
+    }
+
+    //Java boxing/unboxing is implicit; make it explicit in the generated C++
     private void writeValue(Expression e, ITypeBinding target) {
         if (Config.useMappers) {
             ITypeBinding et = e == null ? null : e.resolveTypeBinding();
-            if (et != null && et.isPrimitive() && target != null
+            //a mapped wrapper (Integer -> int) behaves like a primitive here
+            boolean prim = et != null && (et.isPrimitive() || TypeVisitor.fromBinding(et).isPrim());
+            if (prim && target != null
                     && "java.lang.Number".equals(target.getQualifiedName())) {
                 //box a mapped primitive when the target is java.lang.Number
                 includes.add("j2cpp_num.h");
                 write("new CppHelper::Number(");
+                e.accept(this);
+                write(")");
+                return;
+            }
+            if (prim && target != null
+                    && "java.lang.Object".equals(target.getQualifiedName())) {
+                //mapped wrappers are primitives, so Object needs a polymorphic box
+                includes.add("common.h");
+                code.note("primitive boxed for Object-typed target");
+                write("new j2cpp::Box<%s>(", code.ptr(et));
                 e.accept(this);
                 write(")");
                 return;
@@ -1698,6 +1739,17 @@ public class SourceVisitor extends ASTVisitor {
             return;
         }
         ITypeBinding exprType = e.resolveTypeBinding();
+        if (exprType != null && exprType.isPrimitive()
+                && "java.lang.Object".equals(target.getQualifiedName())) {
+            //a primitive assigned to Object needs a polymorphic holder; wrapper
+            //stubs have no constructors, so use the generated box in both modes
+            includes.add("common.h");
+            code.note("primitive boxed for Object-typed target");
+            write("new j2cpp::Box<%s>(", code.ptr(exprType));
+            e.accept(this);
+            write(")");
+            return;
+        }
         //a generic parameter (e.g. List.add(E)) gives a type variable; infer the
         //wrapper from the primitive expression being passed
         if (exprType != null && exprType.isPrimitive() && target.isTypeVariable()) {
@@ -1796,19 +1848,19 @@ public class SourceVisitor extends ASTVisitor {
         if (node.getOperator().toString().equals(">>>")) {
             CType type = TypeVisitor.fromBinding(node.getLeftOperand().resolveTypeBinding());
             write("(unsigned int)");
-            node.getLeftOperand().accept(this);
+            acceptOperand(node.getLeftOperand());
             write(">>");
-            node.getRightOperand().accept(this);
+            acceptOperand(node.getRightOperand());
             return false;
         }
 
-        node.getLeftOperand().accept(this);
+        acceptOperand(node.getLeftOperand());
         write(op);
-        node.getRightOperand().accept(this);
+        acceptOperand(node.getRightOperand());
         if (node.hasExtendedOperands()) {
             for (Expression e : (List<Expression>) node.extendedOperands()) {
                 write(op);
-                e.accept(this);
+                acceptOperand(e);
             }
         }
         return false;
@@ -1916,7 +1968,38 @@ public class SourceVisitor extends ASTVisitor {
     @Override
     public boolean visit(CastExpression node) {
         ITypeBinding type = node.getType().resolveBinding();
-        if (TypeHelper.canCast(node.getExpression(), node.getExpression().resolveTypeBinding(), type)) {
+        Expression operand = node.getExpression();
+        ITypeBinding from = operand.resolveTypeBinding();
+        boolean fromMappedPrimitive = from != null && TypeVisitor.fromBinding(from).isPrim();
+        if (Config.useMappers && !fromMappedPrimitive && TypeVisitor.fromBinding(type).isPrim()) {
+            //Integer -> int: the boxed value lives in j2cpp::Box (or is already
+            //a mapped primitive); emit an explicit unbox instead of a pointer cast
+            includes.add("common.h");
+            code.note("cast to boxed primitive unboxed via j2cpp::unbox");
+            write("j2cpp::unbox<%s>(", code.ptr(type));
+            operand.accept(this);
+            write(")");
+            return false;
+        }
+        if (!Config.useMappers && node.resolveUnboxing() && from != null && !from.isPrimitive()) {
+            //a wrapper cast immediately unboxed, e.g. (Integer)object + 1
+            String prim = unboxedName(type.getName());
+            if (prim != null) {
+                includes.add("common.h");
+                code.note("cast to boxed primitive unboxed via j2cpp::unbox");
+                write("j2cpp::unbox<%s>(", prim);
+                operand.accept(this);
+                write(")");
+                return false;
+            }
+        }
+        if (!Config.useMappers && type.isPrimitive() && from != null && !from.isPrimitive()) {
+            //unboxing cast in stub mode: Integer* -> int
+            operand.accept(this);
+            write("->%sValue()", type.getName());
+            return false;
+        }
+        if (TypeHelper.canCast(node.getExpression(), from, type)) {
             //System.out.println("static "+clazz.getType());
             //static cast
             write("(%s)", code.ptr(type));

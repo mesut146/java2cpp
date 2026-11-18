@@ -23,6 +23,7 @@ The C++ generator emits C++ text straight into a `Code` buffer.
 - **Static blocks** — transformed into a static `si` / `si_init` method. Call it from your own entry point.
 - **Records, sealed classes and pattern switches** — records become value structs with accessors plus auto-generated `toString`/`equals`/`hashCode`; sealed interfaces are plain interfaces; pattern switches become if/`dynamic_cast` chains.
 
+- **Boxing** — primitives assigned to `Object` are wrapped in a generated polymorphic `j2cpp::Box<T>` (defined in `common.h`), and casts back to wrapper types unbox with `j2cpp::unbox<T>`. Mapped `Number` targets use `CppHelper::Number`. Both rewrites are annotated and logged.
 - **Interfaces** — become abstract C++ classes with public virtual bases and `= 0` for abstract declarations; default methods stay concrete (and overridable), static/private methods are never virtual, and interface constants become `constexpr`. `implements` and interface casts use ordinary C++ inheritance and `dynamic_cast`.
 - **Constants** — `static final` primitives with a constant value become `constexpr`.
 - **try/catch/finally** — translated to C++ `try`/`catch` with `finally` modeled by `j2cpp::try_finally_value` / `try_finally_void`: `finally` runs on normal completion, early return and exceptions, and a `return`/`throw` in `finally` overrides the try result or pending exception. With try-with-resources, resources close before `finally` runs, including on exceptions.

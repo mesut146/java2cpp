@@ -20,6 +20,8 @@ public class CHeader extends CNode {
     public Set<Namespace> usings = new HashSet<>();
     public IncludeList includes = new IncludeList();
     public ForwardDeclarator forwardDeclarator;
+    //extra C++ emitted after the forward declarations (e.g. boxing helpers)
+    public String extra = null;
     boolean handledFieldInits = false;
 
     public CHeader(String path) {
@@ -89,6 +91,9 @@ public class CHeader extends CNode {
         if (forwardDeclarator != null) {
             sb.append(forwardDeclarator);
             sb.append("\n");
+        }
+        if (extra != null) {
+            sb.append(extra).append("\n");
         }
 
         if (ns != null && !ns.getAll().equals("")) {
