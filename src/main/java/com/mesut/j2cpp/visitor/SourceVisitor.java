@@ -534,6 +534,10 @@ public class SourceVisitor extends ASTVisitor {
         if (node.getBody() == null) return false;
         IMethodBinding b = node.resolveBinding();
         currentMethod = b;
+        String erasure = TypeHelper.erasureNote(b);
+        if (erasure != null) {
+            code.noteLine(erasure);
+        }
         //method type variables are erased in the signature, so only class parameters
         //can appear on the out-of-line template definition
         ITypeBinding[] classParams = this.binding == null ? new ITypeBinding[0] : this.binding.getTypeParameters();
@@ -1891,9 +1895,17 @@ public class SourceVisitor extends ASTVisitor {
         ITypeBinding ret = binding.getReturnType();
         ITypeBinding org = binding.getMethodDeclaration().getReturnType();
         boolean needCast = !org.equals(ret) && (org.isWildcardType() || org.isTypeVariable());
+        boolean castEmitted = false;
         if (needCast) {
-            //cast
-            write("dynamic_cast<%s>(", code.ptr(ret));
+            CType mappedRet = Mapper.instance.mapType(TypeVisitor.fromBinding(ret), null);
+            if (!mappedRet.isPrim() && !mappedRet.isVoid()) {
+                write("dynamic_cast<%s>(", code.ptr(ret));
+                castEmitted = true;
+            }
+            else {
+                //Java would checkcast and unbox here; a C++ cast to a primitive is invalid
+                code.note("generic return cast to primitive omitted (Java checkcast/unboxing)");
+            }
         }
         boolean isStatic = Modifier.isStatic(binding.getModifiers());
         if (node.getExpression() == null) {
@@ -1954,7 +1966,7 @@ public class SourceVisitor extends ASTVisitor {
             args(node.arguments(), binding.getParameterTypes());
             write(")");
         }
-        if (needCast) {
+        if (castEmitted) {
             code.write(")");
         }
         return false;

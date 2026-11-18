@@ -529,6 +529,10 @@ public class HeaderWriter {
 
     public void visit(MethodDeclaration node) {
         IMethodBinding binding = node.resolveBinding();
+        String erasure = TypeHelper.erasureNote(binding);
+        if (erasure != null) {
+            code.noteLine(erasure);
+        }
         if (binding.isConstructor()) {
             code.line("");
         }

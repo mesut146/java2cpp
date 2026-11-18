@@ -17,6 +17,20 @@ import java.util.List;
 //visit types and ensures type is included
 public class TypeVisitor {
 
+    //raw erasure of a type variable / wildcard: leftmost bound without type args
+    public static CType erasedType(ITypeBinding binding) {
+        ITypeBinding erasure = binding == null ? null : binding.getErasure();
+        if (erasure == null || erasure.isTypeVariable() || erasure.isWildcardType()) {
+            return TypeHelper.getObjectType();
+        }
+        String name = getBinaryName(erasure);
+        CType raw = new CType(name);
+        raw.realName = name;
+        raw.binding = erasure;
+        raw.fromSource = erasure.isFromSource();
+        return raw;
+    }
+
     public static CType fromBinding(ITypeBinding binding) {
         return fromBinding(binding, null);
     }
@@ -30,28 +44,28 @@ public class TypeVisitor {
             return ArrayHelper.makeArrayType(fromBinding0(binding.getElementType(), cc), binding.getDimensions());
         }
         if (binding.isWildcardType()) {
-            if (binding.getBound() == null) {
-                return TypeHelper.getObjectType();
-            }
-            return fromBinding0(binding.getBound(), cc);
+            return Mapper.instance.mapType(erasedType(binding), cc);
         }
         if (binding.isPrimitive()) {
             return new CType(TypeHelper.toCType(binding.getName()));
         }
         if (binding.isCapture()) {
-            ITypeBinding[] arr = binding.getTypeBounds();
-            if (arr.length == 1) {
-                return fromBinding(arr[0]);
-            }
-            return TypeHelper.getObjectType();
+            return Mapper.instance.mapType(erasedType(binding), cc);
         }
 
         CType type;
         if (binding.isTypeVariable()) {//<T>
-            type = new CType(binding.getName());
-            type.isTemplate = true;
-            type.isPointer = false;
-            return type;
+            if (!Config.useMappers || binding.getDeclaringMethod() == null) {
+                //class type parameter (or stub mode): keep it as a C++ template parameter
+                CType t = new CType(binding.getName());
+                t.isTemplate = true;
+                t.isPointer = false;
+                return t;
+            }
+            //method type parameter: Java erases it to its leftmost bound. Use a
+            //raw type; expanding the bound's type arguments would recurse forever
+            //for self-referential bounds such as <T extends Comparable<T>>.
+            return Mapper.instance.mapType(erasedType(binding), cc);
         }
         else {
             String name = getBinaryName(binding);

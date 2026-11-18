@@ -4,6 +4,7 @@ import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.ast.Namespace;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.HashMap;
@@ -23,6 +24,20 @@ public class TypeHelper {
         prims.put("double", Config.type_double);
         prims.put("long", Config.type_long);
         prims.put("boolean", Config.type_boolean);
+    }
+
+    //describe how Java type parameters were erased in the generated signature
+    public static String erasureNote(IMethodBinding method) {
+        ITypeBinding[] vars = method.getTypeParameters();
+        if (vars.length == 0) return null;
+        StringBuilder sb = new StringBuilder("method type parameters erased: ");
+        for (int i = 0; i < vars.length; i++) {
+            if (i > 0) sb.append(", ");
+            ITypeBinding erased = vars[i].getErasure();
+            sb.append("<").append(vars[i].getName()).append("> -> ")
+                    .append(erased == null ? "java.lang.Object" : erased.getQualifiedName());
+        }
+        return sb.toString();
     }
 
     public static boolean isPrim(String ty) {

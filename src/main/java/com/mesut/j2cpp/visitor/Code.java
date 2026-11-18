@@ -1,5 +1,7 @@
 package com.mesut.j2cpp.visitor;
 
+import com.mesut.j2cpp.Config;
+import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.util.TypeHelper;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -38,7 +40,13 @@ public class Code {
     String str(ITypeBinding b) {
         if (b.getName().equals("void")) return "void";
         if (b.isTypeVariable()) {
-            return TypeHelper.getObjectType().toString();
+            if (!Config.useMappers) {
+                return TypeHelper.getObjectType().toString();
+            }
+            if (b.getDeclaringMethod() == null) {
+                return b.getName();
+            }
+            return TypeVisitor.erasedType(b).toString();
         }
 
         CType ct = TypeVisitor.fromBinding(b);
@@ -68,6 +76,21 @@ public class Code {
             return String.format(s, args);
         }
         return s;
+    }
+
+    //mark a place where generated C++ intentionally differs from the Java source
+    public void note(String message) {
+        sb.append("/* j2cpp: ").append(safe(message)).append(" */ ");
+        Logger.log(message);
+    }
+
+    public void noteLine(String message) {
+        sb.append(indent).append("/* j2cpp: ").append(safe(message)).append(" */\n");
+        Logger.log(message);
+    }
+
+    private static String safe(String message) {
+        return message.replace("*/", "* /").replace('\n', ' ');
     }
 
     public void write(String s, Object... args) {
