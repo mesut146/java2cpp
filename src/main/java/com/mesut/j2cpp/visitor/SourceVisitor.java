@@ -1031,6 +1031,26 @@ public class SourceVisitor extends ASTVisitor {
         return false;
     }
 
+    //box a primitive element when the loop variable needs a reference type
+    private String boxedElement(String raw, ITypeBinding target, boolean elemPrimitive) {
+        if (target == null || target.isPrimitive()) return raw;
+        if (Config.useMappers) {
+            if ("java.lang.Number".equals(target.getQualifiedName())) {
+                //the element type may be a wildcard/template parameter, so box generically
+                includes.add("CppHelper.h");
+                return "CppHelper::boxNumber(" + raw + ")";
+            }
+            return raw;
+        }
+        if (!elemPrimitive) return raw;
+        String wrapper = wrapperName(target.getName());
+        if (wrapper != null) {
+            includes.add("lib/java/lang/" + wrapper + ".h");
+            return "new java::lang::" + wrapper + "(" + raw + ")";
+        }
+        return raw;
+    }
+
     @Override
     public boolean visit(EnhancedForStatement node) {
         code.line("{");
@@ -1045,11 +1065,16 @@ public class SourceVisitor extends ASTVisitor {
 
         SingleVariableDeclaration v = node.getParameter();
         ITypeBinding type = v.getType().resolveBinding();
+        ITypeBinding elem = bind.isArray() ? bind.getElementType()
+                : (bind.getTypeArguments().length > 0 ? bind.getTypeArguments()[0] : null);
+        boolean elemPrimitive = elem != null && (elem.isPrimitive()
+                || (Config.useMappers && Mapper.instance.mapType(elem).isPrim()));
         if (bind.isArray()) {
             String i = "i_" + forVarCnt++;
             code.line("for(int %s = 0; %s < %s->size(); %s++){", i, i, ve, i);
             code.up();
-            code.line("%s %s = %s->at(%s);", code.ptr(type), v.getName().toString(), ve, i);
+            code.line("%s %s = %s;", code.ptr(type), v.getName().toString(),
+                    boxedElement(ve + "->at(" + i + ")", type, elemPrimitive));
             bodyNoFirst(node.getBody());
             code.down();
             code.line("}");
@@ -1064,7 +1089,8 @@ public class SourceVisitor extends ASTVisitor {
                 //mapped Java collections become C++ containers: iterate with begin()/end()
                 code.line("for(auto it = %s->begin(); it != %s->end(); ++it){", ve, ve);
                 code.up();
-                code.line("%s %s = *it;", code.ptr(type), v.getName().toString());
+                code.line("%s %s = %s;", code.ptr(type), v.getName().toString(),
+                        boxedElement("*it", type, elemPrimitive));
                 bodyNoFirst(node.getBody());
                 code.down();
                 code.line("}");
@@ -1653,7 +1679,21 @@ public class SourceVisitor extends ASTVisitor {
 
     //in stub mode Java boxing/unboxing must be emitted explicitly
     private void writeValue(Expression e, ITypeBinding target) {
-        if (Config.useMappers || e == null || target == null) {
+        if (Config.useMappers) {
+            ITypeBinding et = e == null ? null : e.resolveTypeBinding();
+            if (et != null && et.isPrimitive() && target != null
+                    && "java.lang.Number".equals(target.getQualifiedName())) {
+                //box a mapped primitive when the target is java.lang.Number
+                includes.add("CppHelper.h");
+                write("new CppHelper::Number(");
+                e.accept(this);
+                write(")");
+                return;
+            }
+            if (e != null) e.accept(this);
+            return;
+        }
+        if (e == null || target == null) {
             if (e != null) e.accept(this);
             return;
         }

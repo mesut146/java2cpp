@@ -1,0 +1,15 @@
+{
+  "name": "java.lang.Number",
+  "target": "CppHelper::Number",
+  "include": "CppHelper.h",
+  "methods": [
+    { "name": "intValue()", "target": "intValue()" },
+    { "name": "longValue()", "target": "longValue()" },
+    { "name": "floatValue()", "target": "floatValue()" },
+    { "name": "doubleValue()", "target": "doubleValue()" },
+    { "name": "shortValue()", "target": "shortValue()" },
+    { "name": "byteValue()", "target": "byteValue()" },
+    { "name": "toString()", "target": "toString()" },
+    { "name": "hashCode()", "target": "hashCode()" }
+  ]
+}
