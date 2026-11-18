@@ -31,11 +31,12 @@ public class CMakeBuildTest {
         String cmakeLists = new String(Files.readAllBytes(out.resolve("CMakeLists.txt")), StandardCharsets.UTF_8);
         assertTrue("no sources in CMakeLists:\n" + cmakeLists, cmakeLists.contains("src/base/Box.cpp"));
         assertTrue("library target missing:\n" + cmakeLists, cmakeLists.contains("add_library(mylib STATIC"));
+        assertTrue("runtime include dir missing:\n" + cmakeLists, cmakeLists.contains("cppRt"));
+        assertTrue("runtime headers not copied", Files.isRegularFile(out.resolve("cppRt/j2cpp_str.h")));
 
         Path build = Files.createDirectories(out.resolve("build"));
         Process cfg = new ProcessBuilder(cmake.toString(), "..",
-                "-DCMAKE_CXX_COMPILER=" + compiler,
-                "-DCMAKE_CXX_FLAGS=-I" + Path.of("cppRt").toAbsolutePath())
+                "-DCMAKE_CXX_COMPILER=" + compiler)
                 .directory(build.toFile()).redirectErrorStream(true).start();
         String cfgLog = new String(cfg.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         assertEquals("cmake configure failed:\n" + cfgLog, 0,

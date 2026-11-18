@@ -185,7 +185,7 @@ Mappers are the default: Java runtime types become native C++ equivalents and `L
   | `j2cpp_ex.h` | `Throwable`, stack traces, `ScopeGuard` |
   | `j2cpp_ctrl.h` | `try_finally_value` / `try_finally_void` |
   | `CppHelper.h` | compatibility umbrella including all of the above |
-- Generated `.cpp` files include `common.h`, the mapper-required headers, and their own header, so they compile standalone against the generated `lib/` stubs when `cppRt/` is on the include path.
+- Generated `.cpp` files include `common.h`, the mapper-required headers, and their own header, so they compile standalone against the generated `lib/` stubs. The converter copies the `cppRt/` headers into the output directory and adds that directory to the generated `CMakeLists.txt`, so `cmake .. && cmake --build .` works without extra include flags.
 
 ## Limitations
 

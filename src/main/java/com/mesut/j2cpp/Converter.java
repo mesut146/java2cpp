@@ -14,6 +14,7 @@ import org.eclipse.jdt.core.dom.FileASTRequestor;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -94,6 +95,37 @@ public class Converter {
         target.addInclude(destDir.toString());
         target.addInclude(headerDir.toString());
         target.addInclude("lib");
+        //runtime headers are copied next to the generated sources
+        target.addInclude("cppRt");
+    }
+
+    //the generated project should build without external include paths
+    private static final String[] RUNTIME_HEADERS = {
+            "CppHelper.h", "j2cpp_str.h", "j2cpp_num.h", "j2cpp_obj.h", "j2cpp_rand.h",
+            "j2cpp_arr.h", "j2cpp_fs.h", "j2cpp_io.h", "j2cpp_ex.h", "j2cpp_ctrl.h",
+            "j2cpp_traits.h"
+    };
+
+    private void copyRuntimeHeaders() throws IOException {
+        Path runtimeDir = destDir.resolve("cppRt");
+        Files.createDirectories(runtimeDir);
+        for (String name : RUNTIME_HEADERS) {
+            Path copy = runtimeDir.resolve(name);
+            try (InputStream in = Converter.class.getClassLoader()
+                    .getResourceAsStream("cppRt/" + name)) {
+                if (in != null) {
+                    Files.copy(in, copy, StandardCopyOption.REPLACE_EXISTING);
+                    continue;
+                }
+            }
+            Path local = Path.of("cppRt", name);
+            if (Files.isRegularFile(local)) {
+                Files.copy(local, copy, StandardCopyOption.REPLACE_EXISTING);
+            }
+            else {
+                Logger.log("runtime header not found: " + name);
+            }
+        }
     }
 
     public void stats() {
@@ -125,6 +157,7 @@ public class Converter {
             Files.createDirectories(destSrc);
             headerDir = Config.separateInclude ? destDir.resolve("include") : destDir;
             Files.createDirectories(headerDir);
+            copyRuntimeHeaders();
             initCmake();
             initMain();
             preVisitDir();
