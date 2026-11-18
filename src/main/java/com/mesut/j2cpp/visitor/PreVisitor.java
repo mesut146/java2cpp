@@ -9,7 +9,9 @@ import com.mesut.j2cpp.util.DepVisitor;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 //parses all sources and generates classMap
 public class PreVisitor {
@@ -21,8 +23,16 @@ public class PreVisitor {
         cc.isPublic = Modifier.isPublic(binding.getModifiers());
         cc.isInner = outer != null;
         cc.fromSource = binding.isFromSource();
+        //inner generic types can report the enclosing class's parameter twice;
+        //duplicate template parameter names are invalid C++
+        Set<String> templateNames = new HashSet<>();
+        for (CType existing : cc.template.getNames()) {
+            templateNames.add(existing.getName());
+        }
         for (ITypeBinding tp : binding.getTypeParameters()) {
-            cc.template.add(new CType(tp.getName(), true));
+            if (templateNames.add(tp.getName())) {
+                cc.template.add(new CType(tp.getName(), true));
+            }
         }
         if (binding.getSuperclass() != null) {
             if (!binding.isEnum()) {

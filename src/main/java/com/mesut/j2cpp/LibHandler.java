@@ -18,6 +18,10 @@ import org.eclipse.jdt.core.dom.IVariableBinding;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class LibHandler {
     public static LibHandler instance = new LibHandler();
@@ -41,6 +45,12 @@ public class LibHandler {
             addType(binding.getElementType());
             return;
         }
+        //nested generic arguments (e.g. Optional<DynamicConstantDesc<Boolean>>)
+        //only need a forward declaration; initializing their full hierarchy here
+        //would duplicate bases and recurse through self-referential bounds
+        for (ITypeBinding arg : binding.getTypeArguments()) {
+            registerTypeArg(arg);
+        }
         binding = binding.getErasure();
         CClass cc = ClassMap.sourceMap.get(binding);
         if (cc != null) {
@@ -49,8 +59,39 @@ public class LibHandler {
                 ensureWrapperMembers(binding, cc);
             }
         }
-        for (ITypeBinding arg : binding.getTypeArguments()) {
-            addType(arg);
+    }
+
+    private void registerTypeArg(ITypeBinding binding) {
+        if (binding == null || binding.isPrimitive() || binding.isTypeVariable()
+                || binding.isWildcardType() || binding.isCapture()) {
+            return;
+        }
+        if (binding.isArray()) {
+            registerTypeArg(binding.getElementType());
+            return;
+        }
+        ITypeBinding[] args = binding.getTypeArguments();
+        ITypeBinding erasure = binding.getErasure();
+        CClass cc = ClassMap.sourceMap.get(erasure);
+        //a generic type used with arguments must be forward-declared as a
+        //template; inner generic types may repeat the enclosing class's
+        //parameter, so collapse duplicate names in an existing template too
+        if (cc != null) {
+            Set<String> names = new LinkedHashSet<>();
+            List<CType> unique = new ArrayList<>();
+            for (CType t : cc.template.getNames()) {
+                if (names.add(t.getName())) unique.add(t);
+            }
+            cc.template.names.clear();
+            cc.template.names.addAll(unique);
+            if (cc.template.isEmpty()) {
+                for (ITypeBinding tp : erasure.getTypeParameters()) {
+                    if (names.add(tp.getName())) cc.template.add(new CType(tp.getName(), true));
+                }
+            }
+        }
+        for (ITypeBinding arg : args) {
+            registerTypeArg(arg);
         }
     }
 
