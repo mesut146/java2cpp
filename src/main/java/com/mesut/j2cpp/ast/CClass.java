@@ -79,7 +79,9 @@ public class CClass extends CStatement {
 
     public void setSuper(CType type) {
         if (type.equals(TypeHelper.getObjectType())) {
-            if (Config.baseClassObject) {
+            //without mappers every class needs Object as its C++ base so Java
+            //values can be passed where Object is expected
+            if (Config.baseClassObject || !Config.useMappers) {
                 superClass = type;
             }
         }

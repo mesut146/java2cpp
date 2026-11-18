@@ -460,16 +460,19 @@ public class HeaderWriter {
             }
         }
         String cls = cname(binding);
+        CType str = Mapper.instance.mapType(TypeHelper.getStringType(), null);
+        CType strPtr = str.copy();
+        strPtr.setPointer(Config.ptr_method);
         code.line("int _ordinal;\n");
-        code.line("std::string* _name;\n");
+        code.line("%s _name;\n", strPtr);
         if (!declared.contains("ordinal")) {
             code.line("int ordinal() { return _ordinal; }\n");
         }
         if (!declared.contains("name")) {
-            code.line("std::string* name() { return _name; }\n");
+            code.line("%s name() { return _name; }\n", strPtr);
         }
         if (!declared.contains("toString")) {
-            code.line("std::string* toString() { return _name; }\n");
+            code.line("%s toString() { return _name; }\n", strPtr);
         }
         if (!declared.contains("compareTo")) {
             code.line("int compareTo(%s* other) { return _ordinal - other->_ordinal; }\n", cls);

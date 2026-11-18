@@ -3,7 +3,10 @@ package com.mesut.j2cpp;
 import com.mesut.j2cpp.ast.CClass;
 import com.mesut.j2cpp.ast.CField;
 import com.mesut.j2cpp.ast.CHeader;
+import com.mesut.j2cpp.ast.CMethod;
 import com.mesut.j2cpp.ast.CName;
+import com.mesut.j2cpp.ast.CParameter;
+import com.mesut.j2cpp.ast.CType;
 import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.ForwardDeclarator;
 import com.mesut.j2cpp.visitor.PreVisitor;
@@ -33,10 +36,59 @@ public class LibHandler {
     }
 
     public void addType(ITypeBinding binding) {
+        if (binding == null) return;
+        if (binding.isArray()) {
+            addType(binding.getElementType());
+            return;
+        }
         binding = binding.getErasure();
         CClass cc = ClassMap.sourceMap.get(binding);
         if (cc != null) {
             PreVisitor.initType(binding, cc, null);
+            if (!Config.useMappers) {
+                ensureWrapperMembers(binding, cc);
+            }
+        }
+        for (ITypeBinding arg : binding.getTypeArguments()) {
+            addType(arg);
+        }
+    }
+
+    //without a classpath JDT may see boxed primitives as empty stubs; add the
+    //constructor and unboxing method the generated code needs
+    private void ensureWrapperMembers(ITypeBinding binding, CClass cc) {
+        String prim, valueMethod;
+        switch (binding.getQualifiedName()) {
+            case "java.lang.Boolean": prim = "bool"; valueMethod = "booleanValue"; break;
+            case "java.lang.Byte": prim = "char"; valueMethod = "byteValue"; break;
+            case "java.lang.Character": prim = "wchar_t"; valueMethod = "charValue"; break;
+            case "java.lang.Short": prim = "char16_t"; valueMethod = "shortValue"; break;
+            case "java.lang.Integer": prim = "int"; valueMethod = "intValue"; break;
+            case "java.lang.Long": prim = "long"; valueMethod = "longValue"; break;
+            case "java.lang.Float": prim = "float"; valueMethod = "floatValue"; break;
+            case "java.lang.Double": prim = "double"; valueMethod = "doubleValue"; break;
+            default: return;
+        }
+        boolean hasCons = false, hasValue = false;
+        for (CMethod m : cc.methods) {
+            if (m.isCons && m.params.size() == 1 && m.params.get(0).type != null
+                    && m.params.get(0).type.type.equals(prim)) hasCons = true;
+            if (m.name != null && m.name.is(valueMethod)) hasValue = true;
+        }
+        if (!hasCons) {
+            CMethod cons = new CMethod();
+            cons.isCons = true;
+            cons.name = new CName(cc.name);
+            cons.setPublic(true);
+            cons.addParam(new CParameter(new CType(prim), new CName("v")));
+            cc.addMethod(cons);
+        }
+        if (!hasValue) {
+            CMethod value = new CMethod();
+            value.name = new CName(valueMethod);
+            value.type = new CType(prim);
+            value.setPublic(true);
+            cc.addMethod(value);
         }
     }
 
@@ -71,6 +123,8 @@ public class LibHandler {
         }
         CField field = new CField();
         field.setName(CName.from(binding.getName()));
+        //register the field's type so stubs and forward declarations are generated for it
+        addType(binding.getType());
         field.setType(TypeVisitor.fromBinding(binding.getType(), cc));
         field.setStatic(Modifier.isStatic(binding.getModifiers()));
 

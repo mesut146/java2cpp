@@ -406,7 +406,10 @@ public class SourceVisitor extends ASTVisitor {
             args((List<Expression>) c.arguments());
             code.write(");\n");
             code.line("%s::%s->_ordinal = %d;\n", cls, c.getName(), ordinal++);
-            code.line("%s::%s->_name = new std::string(\"%s\");\n", cls, c.getName(), c.getName());
+            String nameInit = Config.useMappers
+                    ? "new std::string(\"" + c.getName() + "\")"
+                    : "new java::lang::String(" + wcharVector("\"" + c.getName() + "\"") + ")";
+            code.line("%s::%s->_name = %s;\n", cls, c.getName(), nameInit);
         }
         code.line("    return true;\n}\n");
         code.line("static bool %s_done = %s();\n", init, init);
@@ -659,11 +662,40 @@ public class SourceVisitor extends ASTVisitor {
         return false;
     }
 
+    //turn a Java string literal into new std::vector<wchar_t>{L'x', ...}
+    private String wcharVector(String literal) {
+        StringBuilder sb = new StringBuilder("new std::vector<wchar_t>{");
+        int end = literal.length() - 1;
+        for (int i = 1; i < end; ) {
+            char c = literal.charAt(i);
+            String part;
+            if (c == '\\') {
+                int len = (i + 1 < end && literal.charAt(i + 1) == 'u') ? 6 : 2;
+                part = literal.substring(i, Math.min(i + len, end));
+                i += len;
+            }
+            else {
+                part = String.valueOf(c);
+                i++;
+            }
+            if (part.equals("'")) part = "\\'";
+            sb.append("L'").append(part).append("', ");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
     @Override
     public boolean visit(StringLiteral node) {
         CType type = Mapper.instance.mapType(TypeHelper.getStringType(), null);
         if (type.mapped) {
             Mapper.instance.collectIncludes("java.lang.String", includes);
+        }
+        else {
+            addLibInclude(node.resolveTypeBinding());
+            //stub String has a char[] constructor, not one taking const char*
+            write("new %s(%s)", type, wcharVector(node.getEscapedValue()));
+            return false;
         }
         write("new %s(%s)", type, node.getEscapedValue());
         return false;
@@ -677,6 +709,10 @@ public class SourceVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(CharacterLiteral node) {
+        //Java chars become wchar_t in stub mode; C++'L' prefix keeps that type
+        if (!Config.useMappers && !Config.type_char.equals("char")) {
+            write("L");
+        }
         write(node.getEscapedValue());
         //literal.charValue = node.charValue();
         return false;
@@ -767,7 +803,7 @@ public class SourceVisitor extends ASTVisitor {
         }
         code.line("return ");
         if (node.getExpression() != null) {
-            node.getExpression().accept(this);
+            writeValue(node.getExpression(), currentMethod == null ? null : currentMethod.getReturnType());
         }
         code.write(";");
         return false;
@@ -1255,7 +1291,7 @@ public class SourceVisitor extends ASTVisitor {
                 else {
                     code.line("%s %s = ", code.ptr(type), frag.getName());
                 }
-                emitInitializer(frag.getInitializer());
+                emitInitializer(frag.getInitializer(), type);
                 write(";");
             }
         }
@@ -1263,7 +1299,7 @@ public class SourceVisitor extends ASTVisitor {
     }
 
     //a bare {..} initializer would be a std::initializer_list, not a vector
-    private void emitInitializer(Expression init) {
+    private void emitInitializer(Expression init, ITypeBinding target) {
         if (Config.useMappers && init instanceof ArrayInitializer) {
             includes.add("CppHelper.h");
             write("arrays::from(");
@@ -1271,7 +1307,7 @@ public class SourceVisitor extends ASTVisitor {
             write(")");
         }
         else {
-            init.accept(this);
+            writeValue(init, target);
         }
     }
 
@@ -1289,7 +1325,7 @@ public class SourceVisitor extends ASTVisitor {
                 else {
                     code.line("%s %s = ", code.ptr(type), frag.getName());
                 }
-                emitInitializer(frag.getInitializer());
+                emitInitializer(frag.getInitializer(), type);
                 write(";");
             }
         }
@@ -1485,8 +1521,60 @@ public class SourceVisitor extends ASTVisitor {
     }
 
     void args(List<Expression> list) {
+        args(list, null);
+    }
+
+    private static String wrapperName(String primitive) {
+        switch (primitive) {
+            case "boolean": return "Boolean";
+            case "byte": return "Byte";
+            case "char": return "Character";
+            case "short": return "Short";
+            case "int": return "Integer";
+            case "long": return "Long";
+            case "float": return "Float";
+            case "double": return "Double";
+            default: return null;
+        }
+    }
+
+    //in stub mode Java boxing/unboxing must be emitted explicitly
+    private void writeValue(Expression e, ITypeBinding target) {
+        if (Config.useMappers || e == null || target == null) {
+            if (e != null) e.accept(this);
+            return;
+        }
+        ITypeBinding exprType = e.resolveTypeBinding();
+        //a generic parameter (e.g. List.add(E)) gives a type variable; infer the
+        //wrapper from the primitive expression being passed
+        if (exprType != null && exprType.isPrimitive() && target.isTypeVariable()) {
+            String wrapper = wrapperName(exprType.getName());
+            if (wrapper != null) {
+                includes.add("lib/java/lang/" + wrapper + ".h");
+                write("new java::lang::%s(", wrapper);
+                e.accept(this);
+                write(")");
+                return;
+            }
+        }
+        if (exprType != null && exprType.isPrimitive() && !target.isPrimitive()) {
+            addLibInclude(target);
+            write("new %s(", target);
+            e.accept(this);
+            write(")");
+        }
+        else if (exprType != null && !exprType.isPrimitive() && target.isPrimitive()) {
+            e.accept(this);
+            write("->%sValue()", target.getName());
+        }
+        else {
+            e.accept(this);
+        }
+    }
+
+    void args(List<Expression> list, ITypeBinding[] paramTypes) {
         for (int i = 0; i < list.size(); i++) {
-            list.get(i).accept(this);
+            writeValue(list.get(i), paramTypes != null && i < paramTypes.length ? paramTypes[i] : null);
             if (i < list.size() - 1) write(", ");
         }
     }
@@ -1543,7 +1631,7 @@ public class SourceVisitor extends ASTVisitor {
             }
             else {
                 //without mappers Java strings remain objects with a concat method
-                node.getLeftOperand().accept(this);
+                writeReceiver(node.getLeftOperand());
                 concatPart(node.getRightOperand());
                 for (Expression e : (List<Expression>) node.extendedOperands()) {
                     concatPart(e);
@@ -1583,6 +1671,15 @@ public class SourceVisitor extends ASTVisitor {
         if (value == null) return false;
         write(value);
         return true;
+    }
+
+    //a new-expression receiver needs parentheses before -> or . in C++
+    private void writeReceiver(Expression e) {
+        boolean paren = e instanceof ClassInstanceCreation
+                || (!Config.useMappers && e instanceof StringLiteral);
+        if (paren) write("(");
+        e.accept(this);
+        if (paren) write(")");
     }
 
     private void concatPart(Expression e) {
@@ -1749,7 +1846,7 @@ public class SourceVisitor extends ASTVisitor {
             }
             write(Mapper.instance.mapMethodName(node.getName().getIdentifier()));
             write("(");
-            args(node.arguments());
+            args(node.arguments(), binding.getParameterTypes());
             write(")");
         }
         else {
@@ -1760,7 +1857,8 @@ public class SourceVisitor extends ASTVisitor {
             }
             else {
                 //new Foo().bar() needs parentheses around the receiver in C++
-                boolean paren = scope instanceof ClassInstanceCreation;
+                boolean paren = scope instanceof ClassInstanceCreation
+                        || (!Config.useMappers && scope instanceof StringLiteral);
                 if (paren) write("(");
                 scope.accept(this);
                 if (paren) write(")");
@@ -1776,7 +1874,7 @@ public class SourceVisitor extends ASTVisitor {
             }
             write(Mapper.instance.mapMethodName(node.getName().getIdentifier()));
             write("(");
-            args(node.arguments());
+            args(node.arguments(), binding.getParameterTypes());
             write(")");
         }
         if (needCast) {

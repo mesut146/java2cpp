@@ -46,7 +46,7 @@ public class CMethod extends ModifierNode {
             if (isStatic()) {
                 sb.append("static ");
             }
-            if (isVirtual()) {
+            if (isVirtual() && !isStatic() && template.isEmpty()) {
                 sb.append("virtual ");
             }
             sb.append(type);
@@ -60,10 +60,11 @@ public class CMethod extends ModifierNode {
         if (isOverride) {
             sb.append(" override");
         }
-        if (isPureVirtual) {
-            sb.append(" = 0");
+        if (isPureVirtual && !isStatic()) {
+            sb.append(" = 0;");
         }
-        else if (parent != null && !parent.fromSource && is(VIRTUAL_NAME) && body == null) {
+        else if (parent != null && !parent.fromSource && is(VIRTUAL_NAME) && !isStatic()
+                && template.isEmpty() && body == null) {
             //library stub methods get an inline body so generated subclasses
             //can call or inherit them without a separate definition
             sb.append(" { ");

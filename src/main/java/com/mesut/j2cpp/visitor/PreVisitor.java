@@ -1,5 +1,6 @@
 package com.mesut.j2cpp.visitor;
 
+import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.LibHandler;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.map.ClassMap;
@@ -30,6 +31,9 @@ public class PreVisitor {
             }
         }
         for (ITypeBinding iface : binding.getInterfaces()) {
+            //skip interfaces already inherited through the superclass: C++ has no
+            //Java-style interface deduplication and would make the base ambiguous
+            if (inHierarchy(binding.getSuperclass(), iface)) continue;
             cc.ifaces.add(TypeVisitor.fromBinding(iface));
             LibHandler.instance.addType(iface);
         }
@@ -38,6 +42,16 @@ public class PreVisitor {
         }
         cc.initialized = true;
         return cc;
+    }
+
+    private static boolean inHierarchy(ITypeBinding type, ITypeBinding target) {
+        if (type == null) return false;
+        if (type.isEqualTo(target)) return true;
+        if (inHierarchy(type.getSuperclass(), target)) return true;
+        for (ITypeBinding iface : type.getInterfaces()) {
+            if (inHierarchy(iface, target)) return true;
+        }
+        return false;
     }
 
     public static CClass visitType(ITypeBinding binding, CClass outer) {
@@ -95,7 +109,9 @@ public class PreVisitor {
             method.setVirtual(true);
         }
         else if (cc.isInterface || Modifier.isAbstract(binding.getModifiers())) {
-            method.isPureVirtual = true;
+            //in stub mode every method needs a definition, so interfaces become
+            //virtual methods with default bodies instead of pure virtual ones
+            method.isPureVirtual = Config.useMappers;
             method.setPublic(true);
             method.setVirtual(true);
         }
@@ -104,7 +120,16 @@ public class PreVisitor {
             method.addParam(new CParameter(params.get(i), new CName("p" + i)));
         }
         for (ITypeBinding tp : binding.getTypeParameters()) {
-            method.template.add(new CType(tp.getName(), true));
+            boolean shadow = false;
+            for (CType classTp : cc.template.getNames()) {
+                if (classTp.getName().equals(tp.getName())) {
+                    shadow = true;
+                    break;
+                }
+            }
+            if (!shadow) {
+                method.template.add(new CType(tp.getName(), true));
+            }
         }
         if (!binding.isConstructor() && cc.fromSource){
             handleVirtual(binding, method);

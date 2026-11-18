@@ -74,7 +74,7 @@ public class CmdTest {
         }
         String cpp = new String(Files.readAllBytes(out.resolve("src/demo/Raw.cpp")), StandardCharsets.UTF_8);
         assertTrue("types were mapped: " + cpp, cpp.contains("java::util::List"));
-        assertTrue("calls were mapped: " + cpp, cpp.contains("xs->add(1)"));
+        assertTrue("boxing missing: " + cpp, cpp.contains("xs->add(new java::lang::Integer(1))"));
         assertTrue("unexpected mapper include: " + cpp, !cpp.contains("CppHelper.h"));
     }
 

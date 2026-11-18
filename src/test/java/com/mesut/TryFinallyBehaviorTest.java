@@ -32,6 +32,7 @@ public class TryFinallyBehaviorTest {
 
     private static final String MAIN =
             "#include \"common.h\"\n" +
+            "#include \"CppHelper.h\"\n" +
             "#include \"t/F.h\"\n" +
             "#include <cstdio>\n" +
             "int main() {\n" +

@@ -167,7 +167,7 @@ Tests under `src/test/java` exercise the CLI, helpers and sample conversions. `C
 
 ## Runtime support
 
-Mappers are the default: Java runtime types become native C++ equivalents and `LibHandler` generates stub headers under `lib/` for anything unmapped, including `lib/lib_common.h` (referenced by the generated `common.h`). Use `-no-mappers` (or `Config.useMappers = false`) to keep Java types and target that stub-based, legacy workflow.
+Mappers are the default: Java runtime types become native C++ equivalents and `LibHandler` generates stub headers under `lib/` for anything unmapped, including `lib/lib_common.h` (referenced by the generated `common.h`). Use `-no-mappers` (or `Config.useMappers = false`) to keep Java types and target that stub-based workflow; generated sources still compile with `g++`.
 
 - `cppRt/CppHelper.h` — implements the functions the generator and bundled mappers emit (`make1`–`make4`/`from` for arrays, `format`, `concat`, `toArray`, `replace`, `split`, `encode`, `arraycopy`, bit/integer helpers, and the `try_finally_*` helpers). Add `cppRt/` to your include path.
 - Generated `.cpp` files include `common.h`, the mapper-required headers, and their own header, so they compile standalone against the generated `lib/` stubs when `cppRt/` is on the include path.

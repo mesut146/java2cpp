@@ -37,6 +37,7 @@ public class ExceptionBehaviorTest {
     private static final String MAIN =
             "#include \"common.h\"\n" +
             "#include \"e/Ex.h\"\n" +
+            "#include \"CppHelper.h\"\n" +
             "#include <cstdio>\n" +
             "int main(){\n" +
             "    e::Ex::log=0; int a=e::Ex::test(0);\n" +
