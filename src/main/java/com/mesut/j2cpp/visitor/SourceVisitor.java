@@ -1648,12 +1648,33 @@ public class SourceVisitor extends ASTVisitor {
         return false;
     }
 
+    //Outer.this / Outer.super refer to an enclosing instance through _parent_ref
+    private CExpression qualifiedRef(ITypeBinding qualifier) {
+        if (qualifier == null) return null;
+        if (qualifier.equals(binding)) return new CName("this");
+        return ref2(binding, qualifier);
+    }
+
     @Override
     public boolean visit(SuperMethodInvocation node) {
-        if (node.getQualifier() != null) {
-            Logger.log(this.binding, "qualified super method invocation is not supported: " + node);
+        ITypeBinding qualifier = node.getQualifier() == null ? null : node.getQualifier().resolveTypeBinding();
+        ITypeBinding on = qualifier == null ? binding : qualifier;
+        ITypeBinding superBinding = on == null ? null : on.getSuperclass();
+        if (superBinding == null) {
+            Logger.log(this.binding, "super method invocation has no superclass: " + node);
         }
-        code.write("%s::%s(", binding.getSuperclass(), Mapper.instance.mapMethodName(node.getName().getIdentifier()));
+        CType superType = superBinding == null ? TypeHelper.getObjectType()
+                : TypeVisitor.fromBinding(superBinding);
+        if (qualifier != null) {
+            CExpression ref = qualifiedRef(qualifier);
+            if (ref == null) {
+                Logger.log(this.binding, "qualified super method invocation is not supported: " + node);
+            }
+            else {
+                code.write("%s->", ref);
+            }
+        }
+        code.write("%s::%s(", superType, Mapper.instance.mapMethodName(node.getName().getIdentifier()));
         args(node.arguments());
         write(")");
         return false;
@@ -1790,8 +1811,8 @@ public class SourceVisitor extends ASTVisitor {
             code.write("this");
         }
         else {
-            ITypeBinding binding = node.getQualifier().resolveTypeBinding();
-            CExpression r = ref2(this.binding, binding);
+            ITypeBinding qualifier = node.getQualifier().resolveTypeBinding();
+            CExpression r = qualifiedRef(qualifier);
             if (r != null) {
                 code.write(r.toString());
             }
@@ -1811,10 +1832,24 @@ public class SourceVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(SuperFieldAccess node) {
-        if (node.getQualifier() != null) {
-            Logger.log(this.binding, "qualified super field access is not supported: " + node);
+        ITypeBinding qualifier = node.getQualifier() == null ? null : node.getQualifier().resolveTypeBinding();
+        ITypeBinding on = qualifier == null ? binding : qualifier;
+        ITypeBinding superBinding = on == null ? null : on.getSuperclass();
+        if (superBinding == null) {
+            Logger.log(this.binding, "super field access has no superclass: " + node);
         }
-        code.write("%s::%s", binding.getSuperclass(), node.getName());
+        CType superType = superBinding == null ? TypeHelper.getObjectType()
+                : TypeVisitor.fromBinding(superBinding);
+        if (qualifier != null) {
+            CExpression ref = qualifiedRef(qualifier);
+            if (ref == null) {
+                Logger.log(this.binding, "qualified super field access is not supported: " + node);
+            }
+            else {
+                code.write("%s->", ref);
+            }
+        }
+        code.write("%s::%s", superType, node.getName());
         return false;
     }
 

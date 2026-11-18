@@ -19,7 +19,7 @@ The C++ generator emits C++ text straight into a `Code` buffer.
 
 - **Forward declarations** — a single `common.h` declares all source and library classes.
 - **Library headers** — referenced classes on the classpath get stub headers under `lib/` so you can implement the missing parts yourself.
-- **Inner, anonymous and local classes** — inner classes receive a reference to their enclosing instance; anonymous and local classes become generated structs in the `.cpp`. Effectively-final locals they capture are stored as fields and passed to the generated constructor; enclosing fields are reached via `_parent_ref`.
+- **Inner, anonymous and local classes** — inner classes receive a reference to their enclosing instance; anonymous and local classes become generated structs in the `.cpp`. Effectively-final locals they capture are stored as fields and passed to the generated constructor; enclosing fields are reached via `_parent_ref`, including qualified `Outer.this`, `Outer.super.method()` and `Outer.super.field`.
 - **Static blocks** — transformed into a static `si` / `si_init` method. Call it from your own entry point.
 - **Records, sealed classes and pattern switches** — records become value structs with accessors plus auto-generated `toString`/`equals`/`hashCode`; sealed interfaces are plain interfaces; pattern switches become if/`dynamic_cast` chains.
 
