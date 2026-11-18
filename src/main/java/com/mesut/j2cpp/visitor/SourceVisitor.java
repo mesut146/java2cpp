@@ -585,7 +585,8 @@ public class SourceVisitor extends ASTVisitor {
         }
         for (int i = 0; i < node.parameters().size(); i++) {
             SingleVariableDeclaration param = (SingleVariableDeclaration) node.parameters().get(i);
-            ITypeBinding ptype = param.getType().resolveBinding();
+            ITypeBinding ptype = param.isVarargs() ? b.getParameterTypes()[i]
+                    : param.getType().resolveBinding();
             String rendered = wildcards.isEmpty() ? code.ptr(ptype)
                     : code.ptrSmart(TypeVisitor.fromBinding(ptype, null, wildcards));
             code.write("%s %s", rendered, Mapper.instance.mapParamName(param.getName().getIdentifier()));
@@ -1082,6 +1083,14 @@ public class SourceVisitor extends ASTVisitor {
 
         SingleVariableDeclaration v = node.getParameter();
         ITypeBinding type = v.getType().resolveBinding();
+        if (bind == null || type == null) {
+            //without a classpath JDT cannot resolve some iterable types
+            Logger.log(this.binding, "enhanced-for type is unresolved: " + node);
+            code.noteLine("enhanced-for type unresolved; loop omitted");
+            code.down();
+            code.line("}");
+            return false;
+        }
         ITypeBinding elem = bind.isArray() ? bind.getElementType()
                 : (bind.getTypeArguments().length > 0 ? bind.getTypeArguments()[0] : null);
         boolean elemPrimitive = elem != null && (elem.isPrimitive()
@@ -1816,9 +1825,29 @@ public class SourceVisitor extends ASTVisitor {
     }
 
     void args(List<Expression> list, ITypeBinding[] paramTypes) {
-        for (int i = 0; i < list.size(); i++) {
-            writeValue(list.get(i), paramTypes != null && i < paramTypes.length ? paramTypes[i] : null);
-            if (i < list.size() - 1) write(", ");
+        int last = paramTypes == null ? -1 : paramTypes.length - 1;
+        boolean directArray = last >= 0 && list.size() == paramTypes.length
+                && paramTypes[last].isArray()
+                && list.get(last).resolveTypeBinding() != null
+                && list.get(last).resolveTypeBinding().isArray();
+        boolean varargs = last >= 0 && paramTypes[last].isArray() && !directArray;
+        int fixed = varargs ? last : (paramTypes == null ? list.size() : paramTypes.length);
+        int count = varargs ? fixed + 1 : fixed;
+        for (int i = 0; i < count; i++) {
+            if (i > 0) write(", ");
+            if (varargs && i == fixed) {
+                //wrap the trailing arguments into the array the callee expects
+                ITypeBinding element = paramTypes[i].getElementType();
+                write("new std::vector<%s>{", code.ptr(element));
+                for (int j = fixed; j < list.size(); j++) {
+                    if (j > fixed) write(", ");
+                    writeValue(list.get(j), element);
+                }
+                write("}");
+            }
+            else {
+                writeValue(list.get(i), paramTypes != null && i < paramTypes.length ? paramTypes[i] : null);
+            }
         }
     }
 

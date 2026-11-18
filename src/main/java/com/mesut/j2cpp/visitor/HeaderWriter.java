@@ -140,6 +140,21 @@ public class HeaderWriter {
         }
     }
 
+    private void collectMappedIncludes(ITypeBinding binding, Set<String> includes) {
+        if (binding == null || binding.isPrimitive() || binding.isTypeVariable()
+                || binding.isWildcardType()) return;
+        if (binding.isArray()) {
+            collectMappedIncludes(binding.getElementType(), includes);
+            return;
+        }
+        if (binding.isParameterizedType()) {
+            for (ITypeBinding arg : binding.getTypeArguments()) collectMappedIncludes(arg, includes);
+        }
+        if (binding.getBinaryName() != null) {
+            Mapper.instance.collectIncludes(binding.getBinaryName(), includes);
+        }
+    }
+
     private void addSourceInclude(ITypeBinding binding, Set<String> headers) {
         if (binding == null) return;
         if (binding.isArray()) {
@@ -150,32 +165,65 @@ public class HeaderWriter {
         if (binding.isParameterizedType()) {
             for (ITypeBinding arg : binding.getTypeArguments()) addSourceInclude(arg, headers);
         }
-        if (binding.isFromSource() && binding.getBinaryName() != null) {
-            headers.add(binding.getBinaryName().replace("$", "_").replace(".", "/") + ".h");
+        String name = binding.getBinaryName();
+        if (name == null) return;
+        if (binding.isFromSource()) {
+            headers.add(name.replace("$", "_").replace(".", "/") + ".h");
+        }
+        else if (Config.writeLibHeader) {
+            //a classpath type that is not mapped gets a generated stub header
+            Mapper.ClassInfo mapped = Mapper.instance.findClass(binding);
+            if (mapped == null || mapped.target == null) {
+                headers.add("lib/" + name.replace("$", "_").replace(".", "/") + ".h");
+            }
         }
     }
 
+    //base classes need a complete type; other source types used in fields and
+    //signatures are always pointers, so a forward declaration is enough (and
+    //including them back creates circular headers)
     private Set<String> sourceIncludes(ITypeBinding binding, List<BodyDeclaration> bodies) {
         Set<String> headers = new LinkedHashSet<>();
         addSourceInclude(binding.getSuperclass(), headers);
         for (ITypeBinding iface : binding.getInterfaces()) addSourceInclude(iface, headers);
+        headers.remove(headerPath(binding).getFileName().toString());
+        headers.remove(cname(binding) + ".h");
+        return headers;
+    }
+
+    private void addSourceForward(ITypeBinding binding, Set<String> names) {
+        if (binding == null || binding.isPrimitive() || binding.isTypeVariable()
+                || binding.isWildcardType()) return;
+        if (binding.isArray()) {
+            addSourceForward(binding.getElementType(), names);
+            return;
+        }
+        if (binding.isParameterizedType()) {
+            for (ITypeBinding arg : binding.getTypeArguments()) addSourceForward(arg, names);
+        }
+        if (binding.isFromSource() && binding.getBinaryName() != null) {
+            names.add(cname(binding.getErasure()));
+        }
+    }
+
+    private Set<String> sourceForwards(ITypeBinding binding, List<BodyDeclaration> bodies) {
+        Set<String> names = new LinkedHashSet<>();
         for (BodyDeclaration body : bodies) {
             if (body instanceof FieldDeclaration) {
                 for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) ((FieldDeclaration) body).fragments()) {
-                    addSourceInclude(frag.resolveBinding().getType(), headers);
+                    addSourceForward(frag.resolveBinding().getType(), names);
                 }
             }
             else if (body instanceof MethodDeclaration) {
                 MethodDeclaration method = (MethodDeclaration) body;
-                addSourceInclude(method.resolveBinding().getReturnType(), headers);
+                addSourceForward(method.resolveBinding().getReturnType(), names);
                 for (Object param : method.parameters()) {
-                    addSourceInclude(((SingleVariableDeclaration) param).getType().resolveBinding(), headers);
+                    addSourceForward(((SingleVariableDeclaration) param).getType().resolveBinding(), names);
                 }
             }
         }
-        headers.remove(headerPath(binding).getFileName().toString());
-        headers.remove(cname(binding) + ".h");
-        return headers;
+        names.remove(cname(binding));
+        return names;
     }
 
     public void visit(TypeDeclaration node) {
@@ -186,14 +234,22 @@ public class HeaderWriter {
         for (String header : sourceIncludes(binding, (List<BodyDeclaration>) (List<?>) node.bodyDeclarations())) {
             code.write("#include \"%s\"\n", header);
         }
-        //mapped base types (e.g. Exception -> CppHelper::Throwable) need their headers too
+        //mapped types used in the header need their runtime headers too
         Set<String> mappedIncludes = new LinkedHashSet<>();
-        if (binding.getSuperclass() != null && binding.getSuperclass().getBinaryName() != null) {
-            Mapper.instance.collectIncludes(binding.getSuperclass().getBinaryName(), mappedIncludes);
-        }
-        for (ITypeBinding iface : binding.getInterfaces()) {
-            if (iface.getBinaryName() != null) {
-                Mapper.instance.collectIncludes(iface.getBinaryName(), mappedIncludes);
+        collectMappedIncludes(binding.getSuperclass(), mappedIncludes);
+        for (ITypeBinding iface : binding.getInterfaces()) collectMappedIncludes(iface, mappedIncludes);
+        for (BodyDeclaration body : (List<BodyDeclaration>) (List<?>) node.bodyDeclarations()) {
+            if (body instanceof FieldDeclaration) {
+                for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) ((FieldDeclaration) body).fragments()) {
+                    collectMappedIncludes(frag.resolveBinding().getType(), mappedIncludes);
+                }
+            }
+            else if (body instanceof MethodDeclaration) {
+                MethodDeclaration method = (MethodDeclaration) body;
+                collectMappedIncludes(method.resolveBinding().getReturnType(), mappedIncludes);
+                for (Object param : method.parameters()) {
+                    collectMappedIncludes(((SingleVariableDeclaration) param).getType().resolveBinding(), mappedIncludes);
+                }
             }
         }
         for (String inc : mappedIncludes) {
@@ -202,6 +258,11 @@ public class HeaderWriter {
         code.write("\n");
 
         nsBegin();
+
+        for (String forward : sourceForwards(binding,
+                (List<BodyDeclaration>) (List<?>) node.bodyDeclarations())) {
+            code.line("class %s;\n", forward);
+        }
 
         ITypeBinding declaring = binding.getDeclaringClass();
         if (declaring != null && declaring.isFromSource()
@@ -267,6 +328,9 @@ public class HeaderWriter {
         code = new Code();
         code.write("#pragma once\n\n#include <string>\n#include <vector>\n#include \"j2cpp_obj.h\"\n");
         ITypeBinding binding = node.resolveBinding();
+        Set<String> baseHeaders = new LinkedHashSet<>();
+        for (ITypeBinding iface : binding.getInterfaces()) addSourceInclude(iface, baseHeaders);
+        for (String header : baseHeaders) code.write("#include \"%s\"\n", header);
         nsBegin();
         code.line("class %s: public %s", cname(binding), TypeHelper.getObjectType());
         for (ITypeBinding iface : binding.getInterfaces()) {
@@ -595,7 +659,10 @@ public class HeaderWriter {
         for (int i = 0; i < node.parameters().size(); i++) {
             SingleVariableDeclaration param = (SingleVariableDeclaration) node.parameters().get(i);
 
-            ITypeBinding ptype = param.getType().resolveBinding();
+            //JDT's AST type for a varargs parameter is the element type; the
+            //method binding carries the real array type used by the signature
+            ITypeBinding ptype = param.isVarargs() ? binding.getParameterTypes()[i]
+                    : param.getType().resolveBinding();
             String rendered = wildcards.isEmpty() ? code.ptr(ptype)
                     : code.ptrSmart(TypeVisitor.fromBinding(ptype, null, wildcards));
             code.write("%s %s", rendered, Mapper.instance.mapParamName(param.getName().getIdentifier()));

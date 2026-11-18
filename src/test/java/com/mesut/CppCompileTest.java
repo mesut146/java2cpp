@@ -151,7 +151,8 @@ public class CppCompileTest {
         Path out = convertSamples();
         String castHeader = new String(Files.readAllBytes(out.resolve("base/Cast.h")), StandardCharsets.UTF_8);
         String enumHeader = new String(Files.readAllBytes(out.resolve("base/Enum1.h")), StandardCharsets.UTF_8);
-        assertTrue("inner class not included: " + castHeader, castHeader.contains("#include \"base/Cast_Derived.h\""));
+        assertTrue("inner class not forward declared: " + castHeader,
+                castHeader.contains("class Cast_Derived;"));
         assertTrue("enum outside its namespace: " + enumHeader, enumHeader.contains("namespace base"));
         for (String name : new String[]{"Enum1", "SwitchTest", "iface", "Inner1", "Inner2Test"}) {
             compile(compiler, out, out.resolve("src/base/" + name + ".cpp"));

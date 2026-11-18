@@ -59,6 +59,19 @@ final class CppTestSupport {
         return convert(java, pkg, cls, prefix, false);
     }
 
+    /** Convert a source that depends on a compiled classpath jar or directory. */
+    public static Path convertWithClasspath(String java, String pkg, String cls, String prefix,
+                                            Path classpath) throws IOException {
+        Path src = Files.createTempDirectory("j2cpp-" + prefix + "-src");
+        Path dir = src.resolve(pkg);
+        Files.createDirectories(dir);
+        Files.write(dir.resolve(cls + ".java"), java.getBytes(StandardCharsets.UTF_8));
+        Path out = Files.createTempDirectory("j2cpp-" + prefix + "-out");
+        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString(),
+                "-cp", classpath.toString()});
+        return out;
+    }
+
     private static Path convert(String java, String pkg, String cls, String prefix,
                                 boolean useMappers) throws IOException {
         Path src = Files.createTempDirectory("j2cpp-" + prefix + "-src");
