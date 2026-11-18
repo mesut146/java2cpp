@@ -21,7 +21,7 @@ public class RuntimeHeadersTest {
 
     private static final List<String> HEADERS = Arrays.asList(
             "j2cpp_str.h", "j2cpp_num.h", "j2cpp_obj.h", "j2cpp_rand.h", "j2cpp_arr.h",
-            "j2cpp_fs.h", "j2cpp_io.h", "j2cpp_ex.h", "j2cpp_ctrl.h", "CppHelper.h");
+            "j2cpp_fs.h", "j2cpp_io.h", "j2cpp_ex.h", "j2cpp_ctrl.h", "j2cpp_traits.h", "CppHelper.h");
 
     private static Path compiler() {
         return Arrays.stream(System.getenv("PATH").split(":"))

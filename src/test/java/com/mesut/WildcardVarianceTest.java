@@ -65,6 +65,10 @@ public class WildcardVarianceTest {
         String log = new String(Files.readAllBytes(out.resolve("log.txt")), StandardCharsets.UTF_8);
         assertTrue("wildcard not logged:\n" + log, log.contains("W0 extends java.lang.Number"));
 
+        String cpp = new String(Files.readAllBytes(out.resolve("src/g/G.cpp")), StandardCharsets.UTF_8);
+        assertTrue("wildcard bound not enforced:\n" + cpp, cpp.contains(
+                "static_assert(j2cpp::wildcard_ok<W0, CppHelper::Number*>::value"));
+
         Path main = out.resolve("main.cpp");
         Files.write(main, MAIN.getBytes(StandardCharsets.UTF_8));
         Path exe = out.resolve("wv_test");
@@ -79,5 +83,41 @@ public class WildcardVarianceTest {
         Process run = new ProcessBuilder(exe.toString()).redirectErrorStream(true).start();
         String runLog = new String(run.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         assertEquals("run output:\n" + runLog, 0, run.waitFor(60, TimeUnit.SECONDS) ? run.exitValue() : -1);
+    }
+
+    @Test
+    public void wildcardBoundRejectsWrongElementType() throws Exception {
+        Path compiler = Arrays.stream(System.getenv("PATH").split(":"))
+                .map(Path::of).map(d -> d.resolve("g++")).filter(Files::isExecutable)
+                .findFirst().orElse(null);
+        Assume.assumeTrue("g++ is not available", compiler != null);
+
+        String invalid = """
+                package g;
+                import java.util.*;
+                public class G {
+                    public static int count(List<? extends Number> xs) { return xs.size(); }
+                    public static int main(String[] a) {
+                        List<String> l = new ArrayList<String>();
+                        l.add("x");
+                        return count(l);
+                    }
+                }
+                """;
+        Path src = Files.createTempDirectory("j2cpp-wv-neg-src");
+        Files.createDirectories(src.resolve("g"));
+        Files.write(src.resolve("g/G.java"), invalid.getBytes(StandardCharsets.UTF_8));
+        Path out = Files.createTempDirectory("j2cpp-wv-neg-out");
+        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
+
+        Process cp = new ProcessBuilder(compiler.toString(), "-std=c++17", "-fsyntax-only",
+                "-I" + Path.of("cppRt").toAbsolutePath(), "-I" + out,
+                out.resolve("src/g/G.cpp").toString())
+                .redirectErrorStream(true).start();
+        String log = new String(cp.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertTrue("expected the wildcard bound check to fail:\n" + log,
+                cp.waitFor(60, TimeUnit.SECONDS) && cp.exitValue() != 0);
+        assertTrue("static assertion message missing:\n" + log,
+                log.contains("static assertion failed: W0 extends java.lang.Number"));
     }
 }

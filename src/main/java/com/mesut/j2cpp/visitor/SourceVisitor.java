@@ -69,6 +69,8 @@ public class SourceVisitor extends ASTVisitor {
     Set<String> selfHeaders = new LinkedHashSet<>();
     Set<ASTNode> preambleEmitted = new LinkedHashSet<>();
     Map<ASTNode, List<String>> mappedCalls = new HashMap<>();
+    //wildcards of the method currently being emitted, for bound checks in its body
+    private TypeVisitor.Wildcards currentWildcards;
 
     public SourceVisitor(Path dir, CompilationUnit cu) {
         this.dir = dir;
@@ -600,7 +602,9 @@ public class SourceVisitor extends ASTVisitor {
         }
         emitFallbackReturn = !b.isConstructor() && !b.getReturnType().getName().equals("void");
         currentMethodBody = node.getBody();
+        currentWildcards = wildcards;
         node.getBody().accept(this);
+        currentWildcards = null;
         emitFallbackReturn = false;
         currentMethodBody = null;
         code.write("\n");
@@ -619,6 +623,19 @@ public class SourceVisitor extends ASTVisitor {
         //block = n;
         code.line("{\n");
         code.up();
+        if (n == currentMethodBody && currentWildcards != null) {
+            for (int i = 0; i < currentWildcards.names.size(); i++) {
+                ITypeBinding bound = currentWildcards.bound(i);
+                if (bound == null || !currentWildcards.isUpper(i)
+                        || "java.lang.Object".equals(bound.getQualifiedName())) {
+                    continue;
+                }
+                includes.add("j2cpp_traits.h");
+                code.line("static_assert(j2cpp::wildcard_ok<%s, %s>::value, \"%s extends %s\");",
+                        currentWildcards.names.get(i), code.ptr(bound),
+                        currentWildcards.names.get(i), bound.getQualifiedName());
+            }
+        }
         for (Statement s : (List<Statement>) n.statements()) {
             emitPreamble(s);
             s.accept(this);

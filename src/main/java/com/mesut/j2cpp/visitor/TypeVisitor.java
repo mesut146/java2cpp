@@ -40,6 +40,14 @@ public class TypeVisitor {
             return names.get(idx);
         }
 
+        public ITypeBinding bound(int i) {
+            return bindings.get(i).getBound();
+        }
+
+        public boolean isUpper(int i) {
+            return bindings.get(i).isUpperbound();
+        }
+
         public boolean isEmpty() {
             return bindings.isEmpty();
         }

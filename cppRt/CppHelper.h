@@ -12,3 +12,4 @@
 #include "j2cpp_io.h"
 #include "j2cpp_ex.h"
 #include "j2cpp_ctrl.h"
+#include "j2cpp_traits.h"
