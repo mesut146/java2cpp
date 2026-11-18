@@ -851,12 +851,12 @@ public class SourceVisitor extends ASTVisitor {
     @Override
     public boolean visit(TryStatement node) {
         boolean hasResources = !node.resources().isEmpty();
-        if (hasResources) {
-            code.line("{\n");
-        }
-        emitResources(node);
         Block finallyBody = node.getFinally();
         if (finallyBody == null) {
+            if (hasResources) {
+                code.line("{\n");
+                emitResources(node);
+            }
             emitTryCatch(node);
             if (hasResources) {
                 code.line("}\n");
@@ -874,6 +874,10 @@ public class SourceVisitor extends ASTVisitor {
         if (isVoid) {
             write("if (j2cpp::try_finally_void(\n");
             write("[&]() -> bool {\n");
+            //resources belong to the try part so their guards close before finally
+            if (hasResources) {
+                emitResources(node);
+            }
             tryLambdaVoidMethod = true;
             emitTryCatch(node);
             tryLambdaVoidMethod = false;
@@ -886,15 +890,16 @@ public class SourceVisitor extends ASTVisitor {
             String ortype = "std::optional<" + code.ptr(ret) + ">";
             write("{\nauto _tf = j2cpp::try_finally_value(\n");
             write("[&]() -> %s {\n", ortype);
+            //resources belong to the try part so their guards close before finally
+            if (hasResources) {
+                emitResources(node);
+            }
             emitTryCatch(node);
             write("\nreturn std::nullopt;\n},\n");
             write("[&]() -> %s {\n", ortype);
             finallyBody.accept(this);
             write("\nreturn std::nullopt;\n});\n");
             write("if (_tf.has_value()) return *_tf;\n}\n");
-        }
-        if (hasResources) {
-            code.line("}\n");
         }
         return false;
     }
