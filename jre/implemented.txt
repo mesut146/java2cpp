@@ -13,6 +13,12 @@ java.lang.StringBuilder
 java.lang.StringBuffer
 java.lang.Math
 java.lang.System
+java.lang.Throwable
+java.lang.Exception
+java.lang.RuntimeException
+java.lang.IllegalArgumentException
+java.lang.IllegalStateException
+java.lang.Error
 java.io.PrintStream
 java.util.List
 java.util.ArrayList
