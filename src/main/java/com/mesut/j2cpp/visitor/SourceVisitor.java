@@ -346,7 +346,36 @@ public class SourceVisitor extends ASTVisitor {
         });
     }
 
+    //source classes used only inside method bodies still need their headers
+    private void collectSourceTypeIncludes() {
+        cu.accept(new ASTVisitor() {
+            private void add(IBinding binding) {
+                if (!(binding instanceof ITypeBinding)) return;
+                ITypeBinding type = (ITypeBinding) binding;
+                if (!type.isFromSource() || type.isTypeVariable() || type.isCapture()
+                        || type.isWildcardType()) return;
+                String name = type.getErasure().getBinaryName();
+                if (name == null || name.contains("(")) return;
+                String header = name.replace("$", "_").replace(".", "/") + ".h";
+                if (!selfHeaders.contains(header)) includes.add(header);
+            }
+
+            @Override
+            public boolean visit(SimpleName node) {
+                add(node.resolveBinding());
+                return true;
+            }
+
+            @Override
+            public boolean visit(QualifiedName node) {
+                add(node.resolveBinding());
+                return true;
+            }
+        });
+    }
+
     public void all(Path rel) {
+        collectSourceTypeIncludes();
         //each source needs its own declarations to compile standalone
         for (Object o : cu.types()) {
             ITypeBinding type = ((AbstractTypeDeclaration) o).resolveBinding();
