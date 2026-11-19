@@ -30,6 +30,9 @@ public:
         for (E existing : values_) if (same(existing, value)) return true;
         return false;
     }
+    E get(int index) override {
+        return (index >= 0 && index < static_cast<int>(values_.size())) ? values_[index] : E();
+    }
     int size() override { return static_cast<int>(values_.size()); }
     bool isEmpty() override { return values_.empty(); }
     void clear() override { values_.clear(); }

@@ -21,6 +21,7 @@ java.lang.IllegalStateException
 java.lang.Error
 java.io.PrintStream
 java.util.List
+java.util.Iterator
 java.util.ArrayList
 java.util.Set
 java.util.HashSet

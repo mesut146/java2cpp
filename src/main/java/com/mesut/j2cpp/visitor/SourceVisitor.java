@@ -866,7 +866,7 @@ public class SourceVisitor extends ASTVisitor {
         else {
             node.getLeftHandSide().accept(this);
             write(node.getOperator().toString());
-            node.getRightHandSide().accept(this);
+            acceptOperand(node.getRightHandSide());
         }
         return false;
     }
@@ -1169,7 +1169,8 @@ public class SourceVisitor extends ASTVisitor {
                 write("%s it = %s;\n", code.ptr(it), ve);
                 code.write("it->hasNext();){\n");
                 code.up();
-                code.line("%s %s = (%s)it->next();\n", code.ptr(type), v.getName().toString(), type);
+                code.line("%s %s = dynamic_cast<%s>(it->next());\n",
+                        code.ptr(type), v.getName().toString(), code.ptr(type));
                 bodyNoFirst(node.getBody());
                 code.down();
                 code.line("}\n");
