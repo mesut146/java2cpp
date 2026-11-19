@@ -2,6 +2,7 @@ package com.mesut.j2cpp.ast;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.cppast.stmt.CBlockStatement;
+import com.mesut.j2cpp.map.ClassMap;
 import com.mesut.j2cpp.util.PrintHelper;
 
 import java.util.ArrayList;
@@ -20,6 +21,20 @@ public class CMethod extends ModifierNode {
     public CBlockStatement body;
     //explicit inline body for generated stubs (full text after the signature)
     public String inlineBody = null;
+
+    private String baseInitializer() {
+        if (parent == null || parent.superClass == null) return "";
+        CClass base = ClassMap.sourceMap.get(parent.superClass);
+        if (base == null) return "";
+        CMethod baseCons = base.firstConstructor();
+        if (baseCons == null) return "";
+        StringBuilder sb = new StringBuilder(" : ").append(parent.superClass).append("(");
+        for (int i = 0; i < baseCons.params.size(); i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(i < params.size() ? params.get(i).name.name : "{}");
+        }
+        return sb.append(")").toString();
+    }
 
     public void addParam(CParameter param) {
         params.add(param);
@@ -71,9 +86,12 @@ public class CMethod extends ModifierNode {
             if (inlineBody != null) {
                 sb.append(" ").append(inlineBody);
             }
+            else if (isCons) {
+                sb.append(baseInitializer()).append(" {}");
+            }
             else {
                 sb.append(" { ");
-                if (!isCons && type != null && !type.isVoid()) sb.append("return {}; ");
+                if (type != null && !type.isVoid()) sb.append("return {}; ");
                 sb.append("}");
             }
         }

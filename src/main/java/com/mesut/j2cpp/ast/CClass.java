@@ -36,6 +36,7 @@ public class CClass extends CStatement {
     public IncludeList includes = new IncludeList();
     CType type;
     int anonyCount = 0;
+    private boolean stubConstructorsReady = false;
 
     public CClass() {
         if (Config.baseClassObject) {
@@ -101,8 +102,45 @@ public class CClass extends CStatement {
         return sb.toString();
     }
 
+    CMethod firstConstructor() {
+        for (CMethod method : methods) {
+            if (method.isCons) return method;
+        }
+        return null;
+    }
+
+    //stub hierarchies often declare only parameterized constructors; make sure
+    //each class has a constructor forwarding the base constructor's arguments
+    private void ensureStubConstructors() {
+        if (stubConstructorsReady || fromSource || superClass == null) return;
+        stubConstructorsReady = true;
+        CClass base = ClassMap.sourceMap.get(superClass);
+        if (base == null) return;
+        base.ensureStubConstructors();
+        CMethod baseCons = base.firstConstructor();
+        if (baseCons == null) {
+            //the base's constructors were not discovered from the classpath;
+            //give it a default one so derived stubs have something to call
+            baseCons = new CMethod();
+            baseCons.isCons = true;
+            baseCons.name = new CName(base.name);
+            baseCons.setPublic(true);
+            base.addMethod(baseCons);
+        }
+        if (firstConstructor() != null) return;
+        CMethod cons = new CMethod();
+        cons.isCons = true;
+        cons.name = new CName(name);
+        cons.setPublic(true);
+        for (CParameter param : baseCons.params) {
+            cons.addParam(new CParameter(param.type, param.name));
+        }
+        addMethod(cons);
+    }
+
     @Override
     public String toString() {
+        ensureStubConstructors();
         StringBuilder sb = new StringBuilder();
         printDecl(sb);
         sb.append("{\n");
