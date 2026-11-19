@@ -17,7 +17,8 @@ public final class JreRuntime {
             "java/lang/Object.h", "java/lang/Number.h", "java/lang/Integer.h",
             "java/lang/Boolean.h", "java/lang/String.h", "java/lang/System.h",
             "java/io/PrintStream.h",
-            "java/util/List.h", "java/util/ArrayList.h"
+            "java/util/List.h", "java/util/ArrayList.h",
+            "java/util/Map.h", "java/util/HashMap.h"
     };
 
     private static final Set<String> IMPLEMENTED = new LinkedHashSet<>();
