@@ -191,7 +191,7 @@ public class HeaderWriter {
         return headers;
     }
 
-    private void addSourceForward(ITypeBinding binding, Set<String> names) {
+    private void addSourceForward(ITypeBinding binding, Set<ITypeBinding> names) {
         if (binding == null || binding.isPrimitive() || binding.isTypeVariable()
                 || binding.isWildcardType()) return;
         if (binding.isArray()) {
@@ -202,12 +202,12 @@ public class HeaderWriter {
             for (ITypeBinding arg : binding.getTypeArguments()) addSourceForward(arg, names);
         }
         if (binding.isFromSource() && binding.getBinaryName() != null) {
-            names.add(cname(binding.getErasure()));
+            names.add(binding.getErasure());
         }
     }
 
-    private Set<String> sourceForwards(ITypeBinding binding, List<BodyDeclaration> bodies) {
-        Set<String> names = new LinkedHashSet<>();
+    private Set<ITypeBinding> sourceForwards(ITypeBinding binding, List<BodyDeclaration> bodies) {
+        Set<ITypeBinding> names = new LinkedHashSet<>();
         for (BodyDeclaration body : bodies) {
             if (body instanceof FieldDeclaration) {
                 for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) ((FieldDeclaration) body).fragments()) {
@@ -222,7 +222,7 @@ public class HeaderWriter {
                 }
             }
         }
-        names.remove(cname(binding));
+        names.remove(binding.getErasure());
         return names;
     }
 
@@ -257,12 +257,19 @@ public class HeaderWriter {
         }
         code.write("\n");
 
-        nsBegin();
-
-        for (String forward : sourceForwards(binding,
+        //forward declarations go at global scope so cross-package types are
+        //declared in their own namespace, not the namespace of this header
+        for (ITypeBinding forward : sourceForwards(binding,
                 (List<BodyDeclaration>) (List<?>) node.bodyDeclarations())) {
-            code.line("class %s;\n", forward);
+            CType ct = TypeVisitor.fromBinding(forward);
+            String ns = ct.ns == null ? null : ct.ns.getAll();
+            if (ns != null && !ns.isEmpty()) code.write("namespace %s {\n", ns);
+            code.write("class %s;\n", cname(forward));
+            if (ns != null && !ns.isEmpty()) code.write("}\n");
         }
+        code.write("\n");
+
+        nsBegin();
 
         ITypeBinding declaring = binding.getDeclaringClass();
         if (declaring != null && declaring.isFromSource()
