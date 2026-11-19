@@ -38,19 +38,19 @@ public class StubWrapperTest {
         Path compiler = CppTestSupport.compiler();
         Path out = CppTestSupport.convertNoMappers(JAVA, "i", "I", "stub-wrapper");
 
-        String header = CppTestSupport.generated(out, "lib/java/lang/Integer.h");
+        String header = CppTestSupport.generated(out, "jre/java/lang/Integer.h");
         assertTrue("constructor does not store the value:\n" + header,
-                header.contains("Integer(int v) : value(v) {}"));
+                header.contains("explicit Integer(int v) : value_(v) {}"));
         assertTrue("unboxing method missing:\n" + header,
-                header.contains("int intValue() { return value; }"));
+                header.contains("int intValue() override { return value_; }"));
         assertTrue("valueOf does not use the constructor:\n" + header,
-                header.contains("static Integer* valueOf(int p0) { return new Integer(p0); }"));
+                header.contains("static Integer* valueOf(int v) { return new Integer(v); }"));
 
-        String boolHeader = CppTestSupport.generated(out, "lib/java/lang/Boolean.h");
+        String boolHeader = CppTestSupport.generated(out, "jre/java/lang/Boolean.h");
         assertTrue("Boolean constructor does not store the value:\n" + boolHeader,
-                boolHeader.contains("Boolean(bool v) : value(v) {}"));
+                boolHeader.contains("explicit Boolean(bool v) : value_(v) {}"));
         assertTrue("Boolean unboxing method missing:\n" + boolHeader,
-                boolHeader.contains("bool booleanValue() { return value; }"));
+                boolHeader.contains("bool booleanValue() { return value_; }"));
 
         String forwards = CppTestSupport.generated(out, "lib/lib_common.h");
         assertTrue("nested generic type not forward declared:\n" + forwards,

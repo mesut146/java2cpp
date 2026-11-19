@@ -97,6 +97,7 @@ public class Converter {
         target.addInclude("lib");
         //runtime headers are copied next to the generated sources
         target.addInclude("cppRt");
+        target.addInclude("jre");
     }
 
     //the generated project should build without external include paths
@@ -158,6 +159,7 @@ public class Converter {
             headerDir = Config.separateInclude ? destDir.resolve("include") : destDir;
             Files.createDirectories(headerDir);
             copyRuntimeHeaders();
+            JreRuntime.copyTo(destDir);
             initCmake();
             initMain();
             preVisitDir();
@@ -201,7 +203,9 @@ public class Converter {
                 forwardHeader.includes.add("lib/lib_common.h");
                 //source classes inherit from Object, which needs a complete type
                 if (Config.writeLibHeader) {
-                    forwardHeader.includes.add("lib/java/lang/Object.h");
+                    forwardHeader.includes.add(JreRuntime.isImplemented("java.lang.Object")
+                            ? JreRuntime.headerPath("java.lang.Object")
+                            : "lib/java/lang/Object.h");
                     //mapped boxed types are primitives in C++, so Object-typed
                     //positions need a real polymorphic holder for the value
                     forwardHeader.extra =

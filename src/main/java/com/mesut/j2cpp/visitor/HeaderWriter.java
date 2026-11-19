@@ -2,6 +2,7 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.IncludeStmt;
+import com.mesut.j2cpp.JreRuntime;
 import com.mesut.j2cpp.ast.*;
 import com.mesut.j2cpp.cppast.expr.CInfixExpression;
 import com.mesut.j2cpp.cppast.expr.CMethodInvocation;
@@ -174,7 +175,9 @@ public class HeaderWriter {
             //a classpath type that is not mapped gets a generated stub header
             Mapper.ClassInfo mapped = Mapper.instance.findClass(binding);
             if (mapped == null || mapped.target == null) {
-                headers.add("lib/" + name.replace("$", "_").replace(".", "/") + ".h");
+                headers.add(JreRuntime.isImplemented(name)
+                        ? JreRuntime.headerPath(name)
+                        : "lib/" + name.replace("$", "_").replace(".", "/") + ".h");
             }
         }
     }
@@ -182,10 +185,44 @@ public class HeaderWriter {
     //base classes need a complete type; other source types used in fields and
     //signatures are always pointers, so a forward declaration is enough (and
     //including them back creates circular headers)
+    private void addSignatureInclude(ITypeBinding binding, Set<String> headers) {
+        if (binding == null || binding.isPrimitive() || binding.isTypeVariable()
+                || binding.isWildcardType()) return;
+        if (binding.isArray()) {
+            addSignatureInclude(binding.getElementType(), headers);
+            return;
+        }
+        if (binding.isParameterizedType()) {
+            for (ITypeBinding arg : binding.getTypeArguments()) addSignatureInclude(arg, headers);
+        }
+        if (binding.isFromSource() || !Config.writeLibHeader) return;
+        String name = binding.getBinaryName();
+        if (name == null) return;
+        Mapper.ClassInfo mapped = Mapper.instance.findClass(binding);
+        if (mapped != null && mapped.target != null) return;
+        headers.add(JreRuntime.isImplemented(name)
+                ? JreRuntime.headerPath(name)
+                : "lib/" + name.replace("$", "_").replace(".", "/") + ".h");
+    }
+
     private Set<String> sourceIncludes(ITypeBinding binding, List<BodyDeclaration> bodies) {
         Set<String> headers = new LinkedHashSet<>();
         addSourceInclude(binding.getSuperclass(), headers);
         for (ITypeBinding iface : binding.getInterfaces()) addSourceInclude(iface, headers);
+        for (BodyDeclaration body : bodies) {
+            if (body instanceof FieldDeclaration) {
+                for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>) ((FieldDeclaration) body).fragments()) {
+                    addSignatureInclude(frag.resolveBinding().getType(), headers);
+                }
+            }
+            else if (body instanceof MethodDeclaration) {
+                MethodDeclaration method = (MethodDeclaration) body;
+                addSignatureInclude(method.resolveBinding().getReturnType(), headers);
+                for (Object param : method.parameters()) {
+                    addSignatureInclude(((SingleVariableDeclaration) param).getType().resolveBinding(), headers);
+                }
+            }
+        }
         headers.remove(headerPath(binding).getFileName().toString());
         headers.remove(cname(binding) + ".h");
         return headers;

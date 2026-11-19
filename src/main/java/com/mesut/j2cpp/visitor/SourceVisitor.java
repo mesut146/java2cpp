@@ -2,6 +2,7 @@ package com.mesut.j2cpp.visitor;
 
 import com.mesut.j2cpp.Config;
 import com.mesut.j2cpp.IncludeStmt;
+import com.mesut.j2cpp.JreRuntime;
 import com.mesut.j2cpp.LibHandler;
 import com.mesut.j2cpp.Logger;
 import com.mesut.j2cpp.ast.CName;
@@ -142,7 +143,9 @@ public class SourceVisitor extends ASTVisitor {
         //a mapper without a target (e.g. System) still needs its stub header
         Mapper.ClassInfo mapped = Mapper.instance.findClass(type);
         if (mapped != null && mapped.target != null) return;
-        String header = "lib/" + name.replace("$", "_").replace(".", "/") + ".h";
+        String header = JreRuntime.isImplemented(name)
+                ? JreRuntime.headerPath(name)
+                : "lib/" + name.replace("$", "_").replace(".", "/") + ".h";
         if (includes.contains(header)) return;
         //make sure the stub and its bases are generated, and include bases first
         ITypeBinding parent = type.getSuperclass();
@@ -352,10 +355,13 @@ public class SourceVisitor extends ASTVisitor {
             private void add(IBinding binding) {
                 if (!(binding instanceof ITypeBinding)) return;
                 ITypeBinding type = (ITypeBinding) binding;
-                if (!type.isFromSource() || type.isTypeVariable() || type.isCapture()
-                        || type.isWildcardType()) return;
+                if (type.isTypeVariable() || type.isCapture() || type.isWildcardType()) return;
                 String name = type.getErasure().getBinaryName();
                 if (name == null || name.contains("(")) return;
+                if (!type.isFromSource()) {
+                    if (JreRuntime.isImplemented(name)) includes.add(JreRuntime.headerPath(name));
+                    return;
+                }
                 String header = name.replace("$", "_").replace(".", "/") + ".h";
                 if (!selfHeaders.contains(header)) includes.add(header);
             }
@@ -368,6 +374,12 @@ public class SourceVisitor extends ASTVisitor {
 
             @Override
             public boolean visit(QualifiedName node) {
+                add(node.resolveBinding());
+                return true;
+            }
+
+            @Override
+            public boolean visit(SimpleType node) {
                 add(node.resolveBinding());
                 return true;
             }

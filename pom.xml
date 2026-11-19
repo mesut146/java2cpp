@@ -53,6 +53,14 @@
                     <include>*.h</include>
                 </includes>
             </resource>
+            <resource>
+                <directory>jre</directory>
+                <targetPath>jre</targetPath>
+                <includes>
+                    <include>implemented.txt</include>
+                    <include>**/*.h</include>
+                </includes>
+            </resource>
         </resources>
         <plugins>
             <plugin>

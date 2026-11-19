@@ -18,6 +18,7 @@ import org.eclipse.jdt.core.dom.IVariableBinding;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -199,11 +200,25 @@ public class LibHandler {
         cc.addField(field);
     }
 
+    private void collectJreIncludes(CType type, Set<String> out) {
+        if (type == null) return;
+        if (JreRuntime.isImplemented(type.realName)) out.add(JreRuntime.headerPath(type.realName));
+        for (CType arg : type.typeNames) collectJreIncludes(arg, out);
+    }
+
     public void writeAll(Path dir) {
         forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
         for (CClass cc : ClassMap.sourceMap.map.values()) {
             if (cc.fromSource) continue;
+            if (JreRuntime.isImplemented(cc.getType().realName)) continue;
             CHeader header = new CHeader(cc.getHeaderPath());
+            Set<String> jreHeaders = new LinkedHashSet<>();
+            for (CField field : cc.fields) collectJreIncludes(field.type, jreHeaders);
+            for (CMethod method : cc.methods) {
+                collectJreIncludes(method.type, jreHeaders);
+                for (CParameter param : method.params) collectJreIncludes(param.type, jreHeaders);
+            }
+            for (String include : jreHeaders) header.includes.add(include);
             header.setNs(cc.getType().ns);
             header.setClass(cc);
             try {
