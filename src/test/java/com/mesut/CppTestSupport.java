@@ -39,13 +39,33 @@ final class CppTestSupport {
         }
     }
 
-    /** Find g++ or skip the test. */
+    private static Path cachedCompiler;
+
+    /** Find g++ (wrapped with ccache when available) or skip the test. */
     public static Path compiler() {
         Path compiler = Arrays.stream(System.getenv("PATH").split(":"))
                 .map(Path::of).map(d -> d.resolve("g++")).filter(Files::isExecutable)
                 .findFirst().orElse(null);
         Assume.assumeTrue("g++ is not available", compiler != null);
-        return compiler;
+        if (System.getenv("J2CPP_NO_CCACHE") != null) return compiler;
+        if (cachedCompiler != null) return cachedCompiler;
+        Path ccache = Arrays.stream(System.getenv("PATH").split(":"))
+                .map(Path::of).map(d -> d.resolve("ccache")).filter(Files::isExecutable)
+                .findFirst().orElse(null);
+        if (ccache == null) return compiler;
+        try {
+            Path dir = Files.createTempDirectory("j2cpp-ccache");
+            Path wrapper = dir.resolve("g++");
+            Files.write(wrapper, ("#!/bin/sh\nexport CCACHE_NOHASHDIR=1\n"
+                    + "exec " + ccache + " " + compiler + " \"$@\"\n")
+                    .getBytes(StandardCharsets.UTF_8));
+            wrapper.toFile().setExecutable(true);
+            cachedCompiler = wrapper;
+            return cachedCompiler;
+        }
+        catch (IOException e) {
+            return compiler;
+        }
     }
 
     /** Write a single Java source into a temp tree and convert it with mappers. */
@@ -123,7 +143,9 @@ final class CppTestSupport {
         Path exe = out.resolve(exeName);
         command.add("-o");
         command.add(exe.toString());
-        Process cp = new ProcessBuilder(command).redirectErrorStream(true).start();
+        ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+        builder.environment().put("CCACHE_BASEDIR", out.toString());
+        Process cp = builder.start();
         String log = new String(cp.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         int exit = cp.waitFor(60, TimeUnit.SECONDS) ? cp.exitValue() : -1;
         assertEquals("compile/link failed:\n" + log, 0, exit);
@@ -149,7 +171,9 @@ final class CppTestSupport {
         for (Path source : sources) {
             command.add(source.toString());
         }
-        Process cp = new ProcessBuilder(command).redirectErrorStream(true).start();
+        ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+        builder.environment().put("CCACHE_BASEDIR", out.toString());
+        Process cp = builder.start();
         String log = new String(cp.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         return new RunResult(cp.waitFor(60, TimeUnit.SECONDS) ? cp.exitValue() : -1, log, log, "");
     }

@@ -7,7 +7,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertFalse;
@@ -24,13 +29,26 @@ public class RuntimeHeadersTest {
     public void eachHeaderCompilesStandalone() throws Exception {
         Path compiler = CppTestSupport.compiler();
         Path dir = Files.createTempDirectory("j2cpp-headers");
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        ConcurrentLinkedQueue<Throwable> errors = new ConcurrentLinkedQueue<>();
+        List<Future<?>> futures = new ArrayList<>();
         for (String name : HEADERS) {
             Path src = dir.resolve(name + ".cpp");
             Files.write(src, ("#include \"" + name + "\"\nint main() { return 0; }\n")
                     .getBytes(StandardCharsets.UTF_8));
-            CppTestSupport.RunResult result = CppTestSupport.compileOnly(dir, compiler, List.of(src));
-            org.junit.Assert.assertEquals(name + " did not compile:\n" + result.output, 0, result.exit);
+            futures.add(pool.submit(() -> {
+                try {
+                    CppTestSupport.RunResult result = CppTestSupport.compileOnly(dir, compiler, List.of(src));
+                    org.junit.Assert.assertEquals(name + " did not compile:\n" + result.output, 0, result.exit);
+                }
+                catch (Throwable t) {
+                    errors.add(t);
+                }
+            }));
         }
+        for (Future<?> future : futures) future.get();
+        pool.shutdown();
+        assertTrue("parallel header compile failures: " + errors.toString(), errors.isEmpty());
     }
 
     @Test

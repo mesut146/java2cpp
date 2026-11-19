@@ -42,8 +42,10 @@ public class CMakeBuildTest {
         assertEquals("cmake configure failed:\n" + cfgLog, 0,
                 cfg.waitFor(120, TimeUnit.SECONDS) ? cfg.exitValue() : -1);
 
-        Process b = new ProcessBuilder(cmake.toString(), "--build", ".")
-                .directory(build.toFile()).redirectErrorStream(true).start();
+        ProcessBuilder buildBuilder = new ProcessBuilder(cmake.toString(), "--build", ".", "-j2")
+                .directory(build.toFile()).redirectErrorStream(true);
+        buildBuilder.environment().put("CCACHE_BASEDIR", out.toString());
+        Process b = buildBuilder.start();
         String bLog = new String(b.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         assertEquals("cmake build failed:\n" + bLog, 0,
                 b.waitFor(180, TimeUnit.SECONDS) ? b.exitValue() : -1);

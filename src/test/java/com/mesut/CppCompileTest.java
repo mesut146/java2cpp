@@ -6,6 +6,12 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -16,6 +22,8 @@ import static org.junit.Assert.assertTrue;
  * the runtime helper header are wired up correctly.
  */
 public class CppCompileTest {
+
+    private static Path cachedSamples;
 
     private Path generateAndCompile(String className, String source) throws Exception {
         Path compiler = CppTestSupport.compiler();
@@ -32,11 +40,12 @@ public class CppCompileTest {
     }
 
     private void compile(Path compiler, Path out, Path generated) throws Exception {
-        Process process = new ProcessBuilder(
+        ProcessBuilder builder = new ProcessBuilder(
                 compiler.toString(), "-std=c++17", "-fsyntax-only",
                 "-I" + Path.of("cppRt").toAbsolutePath(), "-I" + out, generated.toString())
-                .redirectErrorStream(true)
-                .start();
+                .redirectErrorStream(true);
+        builder.environment().put("CCACHE_BASEDIR", out.toString());
+        Process process = builder.start();
         String log = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         assertEquals("generated C++ did not compile:\n" + log,
                 0, process.waitFor(60, TimeUnit.SECONDS) ? process.exitValue() : -1);
@@ -72,11 +81,14 @@ public class CppCompileTest {
         assertTrue("static call was not mapped: " + cpp, cpp.contains("CppHelper::format"));
     }
 
-    private Path convertSamples() throws Exception {
-        Path src = Path.of("src/test/resources/samples").toAbsolutePath();
-        Path out = Files.createTempDirectory("j2cpp-samples-out");
-        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
-        return out;
+    private static synchronized Path convertSamples() throws Exception {
+        if (cachedSamples == null) {
+            Path src = Path.of("src/test/resources/samples").toAbsolutePath();
+            Path out = Files.createTempDirectory("j2cpp-samples-out");
+            Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
+            cachedSamples = out;
+        }
+        return cachedSamples;
     }
 
     @Test
@@ -172,11 +184,30 @@ public class CppCompileTest {
                 assertTrue("no C++ output generated for " + rel, Files.exists(cpp));
             }
         }
+        List<Path> cppFiles;
         try (var files = Files.walk(out.resolve("src"))) {
-            for (Path source : files.filter(p -> p.toString().endsWith(".cpp")).sorted().toArray(Path[]::new)) {
-                compile(compiler, out, source);
-            }
+            cppFiles = files.filter(p -> p.toString().endsWith(".cpp")).sorted().toList();
         }
+        compileParallel(compiler, out, cppFiles);
+    }
+
+    private void compileParallel(Path compiler, Path out, List<Path> sources) throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        ConcurrentLinkedQueue<Throwable> errors = new ConcurrentLinkedQueue<>();
+        List<Future<?>> futures = new ArrayList<>();
+        for (Path source : sources) {
+            futures.add(pool.submit(() -> {
+                try {
+                    compile(compiler, out, source);
+                }
+                catch (Throwable t) {
+                    errors.add(t);
+                }
+            }));
+        }
+        for (Future<?> future : futures) future.get();
+        pool.shutdown();
+        assertTrue("parallel compile failures: " + errors.toString(), errors.isEmpty());
     }
 
     @Test
