@@ -4,16 +4,18 @@
 #include "common.h"
 #include "jre/java/lang/Object.h"
 #include "jre/java/util/Iterator.h"
+#include "jre/java/util/Collection.h"
 
 namespace java{
 namespace util{
 
 template <typename E>
-class List : public Iterator {
+class List : public Collection<E>, public Iterator {
     size_t cursor_ = 0;
 public:
     virtual bool add(E value) = 0;
     virtual void add(int index, E value) = 0;
+    virtual bool addAll(Collection<E>* values) = 0;
     virtual int size() = 0;
     virtual bool isEmpty() = 0;
     virtual E get(int index) = 0;

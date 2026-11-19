@@ -24,7 +24,7 @@ public final class JreRuntime {
             "java/lang/IllegalStateException.h", "java/lang/Error.h",
             "java/io/PrintStream.h", "java/io/File.h",
             "java/nio/file/Path.h", "java/nio/file/Paths.h", "java/nio/file/Files.h",
-            "java/util/List.h", "java/util/ArrayList.h", "java/util/Iterator.h", "java/util/Set.h",
+            "java/util/Collection.h", "java/util/List.h", "java/util/ArrayList.h", "java/util/Iterator.h", "java/util/Set.h",
             "java/util/HashSet.h", "java/util/Map.h", "java/util/HashMap.h",
             "java/util/Arrays.h", "java/util/Objects.h", "java/util/Optional.h",
             "java/util/Random.h", "java/util/UUID.h"

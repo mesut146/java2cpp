@@ -269,6 +269,27 @@ public:
     static String* valueOf(Object* o) {
         return o ? new String(o->toString()) : new String(new std::string("null"));
     }
+    static String* format(String* pattern, std::vector<Object*>* args) {
+        std::string out;
+        std::string pat = pattern ? *pattern->utf8() : std::string();
+        size_t index = 0;
+        for (size_t i = 0; i < pat.size(); ++i) {
+            if (pat[i] != '%' || i + 1 >= pat.size()) { out += pat[i]; continue; }
+            char spec = pat[++i];
+            if (spec == '%') { out += '%'; continue; }
+            if (spec == 'n') { out += '\n'; continue; }
+            std::string value;
+            if (args && index < args->size()) {
+                Object* arg = args->at(index++);
+                String* s = dynamic_cast<String*>(arg);
+                value = s ? *s->utf8() : (arg ? *arg->toString()->utf8() : "null");
+            }
+            else value = "null";
+            if (spec == 's' || spec == 'd' || spec == 'f' || spec == 'c') out += value;
+            else { out += '%'; out += spec; }
+        }
+        return new String(new std::string(out));
+    }
 
 private:
     static std::u16string lower(const std::u16string& s) {

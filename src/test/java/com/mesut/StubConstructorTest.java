@@ -65,6 +65,7 @@ public class StubConstructorTest {
         Path out = CppTestSupport.convertWithClasspath(JAVA, "use", "U", "stubctor", jar);
 
         String stub = CppTestSupport.generated(out, "lib/lib/Child.h");
+        CppTestSupport.assertContains(stub, "#include \"lib/lib/Base.h\"");
         CppTestSupport.assertContains(stub, "Child(int p0) : Base() {}");
 
         CppTestSupport.compile(out, compiler, "src/use/U.cpp", MAIN, "stubctor_test")

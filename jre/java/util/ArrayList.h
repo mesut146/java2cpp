@@ -18,6 +18,13 @@ public:
         if (index > static_cast<int>(values_.size())) index = static_cast<int>(values_.size());
         values_.insert(values_.begin() + index, value);
     }
+    bool addAll(Collection<E>* values) override {
+        //JRE collections expose toList(); generated stubs may expose size/get
+        if (!values) return false;
+        int n = values->size();
+        for (int i = 0; i < n; ++i) add(values->get(i));
+        return n > 0;
+    }
     int size() override { return static_cast<int>(values_.size()); }
     bool isEmpty() override { return values_.empty(); }
     E get(int index) override {

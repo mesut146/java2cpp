@@ -18,8 +18,9 @@ import org.eclipse.jdt.core.dom.IVariableBinding;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.LinkedHashSet;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -200,6 +201,21 @@ public class LibHandler {
         cc.addField(field);
     }
 
+    private void collectBaseIncludes(CClass cc, Set<String> out) {
+        List<CType> bases = new ArrayList<>();
+        if (cc.superClass != null) bases.add(cc.superClass);
+        bases.addAll(cc.ifaces);
+        for (CType base : bases) {
+            if (base == null) continue;
+            if (JreRuntime.isImplemented(base.realName)) {
+                out.add(JreRuntime.headerPath(base.realName));
+                continue;
+            }
+            String path = IncludeList.getHeaderPath(base);
+            if (path != null) out.add("lib/" + path);
+        }
+    }
+
     private void collectJreIncludes(CType type, Set<String> out) {
         if (type == null) return;
         if (JreRuntime.isImplemented(type.realName)) out.add(JreRuntime.headerPath(type.realName));
@@ -216,6 +232,7 @@ public class LibHandler {
             if (headerPath == null) continue;
             CHeader header = new CHeader(headerPath);
             Set<String> jreHeaders = new LinkedHashSet<>();
+            collectBaseIncludes(cc, jreHeaders);
             for (CField field : cc.fields) collectJreIncludes(field.type, jreHeaders);
             for (CMethod method : cc.methods) {
                 collectJreIncludes(method.type, jreHeaders);

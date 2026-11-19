@@ -24,6 +24,7 @@ java.io.File
 java.nio.file.Path
 java.nio.file.Paths
 java.nio.file.Files
+java.util.Collection
 java.util.List
 java.util.Iterator
 java.util.ArrayList
