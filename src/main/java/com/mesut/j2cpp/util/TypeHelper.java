@@ -180,6 +180,7 @@ public class TypeHelper {
     }
 
     public static boolean canCast(Expression e, ITypeBinding expr, ITypeBinding type) {
+        if (expr == null) return true;
         if (expr.equals(type)) return true;
         if (type.isPrimitive()) {
             return expr.isPrimitive() || e.resolveBoxing() || e.resolveUnboxing();

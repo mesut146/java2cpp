@@ -15,6 +15,7 @@ public class IncludeList {
 
     public static String getHeaderPath(CType type) {
         ITypeBinding binding = BindingMap.get(type);
+        if (binding == null || binding.getBinaryName() == null) return null;
         return binding.getBinaryName()
                 .replace("$", "_")
                 .replace(".", "/") +

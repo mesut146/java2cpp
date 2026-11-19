@@ -210,8 +210,11 @@ public class LibHandler {
         forwardHeader.forwardDeclarator = new ForwardDeclarator(ClassMap.sourceMap);
         for (CClass cc : ClassMap.sourceMap.map.values()) {
             if (cc.fromSource) continue;
+            if (cc.getType() == null || cc.getType().realName == null) continue;
             if (JreRuntime.isImplemented(cc.getType().realName)) continue;
-            CHeader header = new CHeader(cc.getHeaderPath());
+            String headerPath = cc.getHeaderPath();
+            if (headerPath == null) continue;
+            CHeader header = new CHeader(headerPath);
             Set<String> jreHeaders = new LinkedHashSet<>();
             for (CField field : cc.fields) collectJreIncludes(field.type, jreHeaders);
             for (CMethod method : cc.methods) {

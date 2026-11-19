@@ -2107,6 +2107,13 @@ public class SourceVisitor extends ASTVisitor {
         ITypeBinding type = node.getType().resolveBinding();
         Expression operand = node.getExpression();
         ITypeBinding from = operand.resolveTypeBinding();
+        if (type == null) {
+            //classpath unresolved cast: emit the operand and let the note explain
+            Logger.logBinding(this.binding, node.toString());
+            code.note("cast type unresolved");
+            operand.accept(this);
+            return false;
+        }
         boolean fromMappedPrimitive = from != null && TypeVisitor.fromBinding(from).isPrim();
         if (Config.useMappers && !fromMappedPrimitive && TypeVisitor.fromBinding(type).isPrim()) {
             //Integer -> int: the boxed value lives in ::j2cpp::Box (or is already

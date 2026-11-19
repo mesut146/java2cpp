@@ -38,4 +38,25 @@ public class NoClasspathGuardTest {
         String log = CppTestSupport.log(out);
         assertTrue("unresolved loop not logged:\n" + log, log.contains("enhanced-for type is unresolved"));
     }
+
+    @Test
+    public void unresolvedCastDoesNotCrash() throws Exception {
+        String source = """
+                package np;
+                public class C {
+                    void f(Object o) {
+                        Object x = (Missing) o;
+                    }
+                }
+                """;
+        Path src = Files.createTempDirectory("j2cpp-nocp-cast-src");
+        Files.createDirectories(src.resolve("np"));
+        Files.write(src.resolve("np/C.java"), source.getBytes(StandardCharsets.UTF_8));
+        Path out = Files.createTempDirectory("j2cpp-nocp-cast-out");
+
+        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
+
+        String cpp = CppTestSupport.generated(out, "src/np/C.cpp");
+        assertTrue("unresolved cast not emitted:\n" + cpp, cpp.contains("dynamic_cast"));
+    }
 }
