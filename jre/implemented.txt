@@ -5,3 +5,5 @@ java.lang.Boolean
 java.lang.String
 java.util.List
 java.util.ArrayList
+java.lang.System
+java.io.PrintStream

@@ -15,7 +15,8 @@ public final class JreRuntime {
     private static final String[] FILES = {
             "implemented.txt",
             "java/lang/Object.h", "java/lang/Number.h", "java/lang/Integer.h",
-            "java/lang/Boolean.h", "java/lang/String.h",
+            "java/lang/Boolean.h", "java/lang/String.h", "java/lang/System.h",
+            "java/io/PrintStream.h",
             "java/util/List.h", "java/util/ArrayList.h"
     };
 
