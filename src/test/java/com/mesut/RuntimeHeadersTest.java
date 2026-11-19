@@ -2,6 +2,7 @@ package com.mesut;
 
 import com.mesut.j2cpp.Cmd;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -19,6 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /** The runtime helpers are split into domain headers; each must stand alone. */
+@Category(SlowTest.class)
 public class RuntimeHeadersTest {
 
     private static final List<String> HEADERS = Arrays.asList(

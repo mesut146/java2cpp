@@ -40,6 +40,15 @@ mvn clean package
 
 The runnable jar is `target/java2cpp-1.0-jar-with-dependencies.jar`. CI runs the same command.
 
+By default the compile-everything smoke tests are excluded for faster iteration:
+
+```sh
+mvn test                  # fast profile (behavior tests)
+mvn clean package -Pfull  # all tests, before committing
+```
+
+Install `ccache` to speed up repeated C++ compilation; the test harness uses it automatically when present (disable with `J2CPP_NO_CCACHE=1`). Compilation is capped at two parallel jobs.
+
 ## Command line
 
 ```

@@ -3,6 +3,7 @@ package com.mesut;
 import com.mesut.j2cpp.Cmd;
 import org.junit.Assume;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -14,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /** Verifies that the generated CMakeLists.txt lists all sources and builds. */
+@Category(SlowTest.class)
 public class CMakeBuildTest {
 
     @Test

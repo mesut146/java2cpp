@@ -15,6 +15,8 @@
         <cmdClass>com.mesut.j2cpp.Cmd</cmdClass>
         <maven.compiler.source>16</maven.compiler.source>
         <maven.compiler.target>16</maven.compiler.target>
+        <!-- set to a non-existent category by -Pfull to run every test -->
+        <excludedGroups>com.mesut.SlowTest</excludedGroups>
     </properties>
 
     <dependencies>
@@ -90,6 +92,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.0</version>
+                <configuration>
+                    <excludedGroups>${excludedGroups}</excludedGroups>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -109,5 +114,13 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>full</id>
+            <properties>
+                <excludedGroups>com.mesut.NoSuchCategory</excludedGroups>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>

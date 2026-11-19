@@ -3,6 +3,7 @@ package com.mesut;
 import com.mesut.j2cpp.Cmd;
 import com.mesut.j2cpp.Config;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,6 +18,7 @@ import java.util.stream.Stream;
 import static org.junit.Assert.assertTrue;
 
 /** The -no-mappers legacy path must still produce self-contained, compilable C++. */
+@Category(SlowTest.class)
 public class NoMappersCompileTest {
 
     @Test

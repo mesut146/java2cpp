@@ -1,7 +1,9 @@
 package com.mesut;
 
 import com.mesut.j2cpp.Cmd;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -21,22 +23,51 @@ import static org.junit.Assert.assertTrue;
  * Compiles generated C++ to verify that mapper includes, the generated header and
  * the runtime helper header are wired up correctly.
  */
+@Category(SlowTest.class)
 public class CppCompileTest {
 
     private static Path cachedSamples;
+    private static Path fixturesOut;
 
-    private Path generateAndCompile(String className, String source) throws Exception {
-        Path compiler = CppTestSupport.compiler();
-
+    @BeforeClass
+    public static void convertSmallFixtures() throws Exception {
         Path src = Files.createTempDirectory("j2cpp-compile-src");
         Files.createDirectories(src.resolve("demo"));
-        Files.write(src.resolve("demo/" + className + ".java"), source.getBytes(StandardCharsets.UTF_8));
-        Path out = Files.createTempDirectory("j2cpp-compile-out");
-        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
+        Files.createDirectories(src.resolve("p"));
+        Files.write(src.resolve("demo/HelperUse.java"), (
+                "package demo;\n" +
+                "public class HelperUse {\n" +
+                "    public String test(String s) {\n" +
+                "        String a = s.toUpperCase();\n" +
+                "        String b = s.replace(\"x\", \"y\");\n" +
+                "        String[] parts = s.split(\",\");\n" +
+                "        return b;\n" +
+                "    }\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(src.resolve("demo/StrFeatures.java"), (
+                "package demo;\n" +
+                "public class StrFeatures {\n" +
+                "    public String test(String s, int n) {\n" +
+                "        String joined = s + \"x\" + n;\n" +
+                "        String formatted = String.format(\"%s\", s);\n" +
+                "        return joined;\n" +
+                "    }\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(src.resolve("p/A.java"), (
+                "package p;\n" +
+                "public class A {\n" +
+                "    void m() {\n" +
+                "        int[] xs = new int[5];\n" +
+                "        int[][] ys = new int[2][3];\n" +
+                "        xs[0] = 1;\n" +
+                "    }\n" +
+                "}\n").getBytes(StandardCharsets.UTF_8));
+        fixturesOut = Files.createTempDirectory("j2cpp-compile-out");
+        Cmd.main(new String[]{"-src", src.toString(), "-out", fixturesOut.toString()});
+    }
 
-        Path generated = out.resolve("src/demo/" + className + ".cpp");
-        compile(compiler, out, generated);
-        return generated;
+    private Path generated(String pkg, String className) {
+        return fixturesOut.resolve("src/" + pkg + "/" + className + ".cpp");
     }
 
     private void compile(Path compiler, Path out, Path generated) throws Exception {
@@ -53,32 +84,16 @@ public class CppCompileTest {
 
     @Test
     public void generatedSourceCompiles() throws Exception {
-        generateAndCompile("HelperUse",
-                "package demo;\n" +
-                        "public class HelperUse {\n" +
-                        "    public String test(String s) {\n" +
-                        "        String a = s.toUpperCase();\n" +
-                        "        String b = s.replace(\"x\", \"y\");\n" +
-                        "        String[] parts = s.split(\",\");\n" +
-                        "        return b;\n" +
-                        "    }\n" +
-                        "}\n");
+        compile(CppTestSupport.compiler(), fixturesOut, generated("demo", "HelperUse"));
     }
 
     @Test
     public void stringConcatAndStaticCallCompile() throws Exception {
-        Path generated = generateAndCompile("StrFeatures",
-                "package demo;\n" +
-                        "public class StrFeatures {\n" +
-                        "    public String test(String s, int n) {\n" +
-                        "        String joined = s + \"x\" + n;\n" +
-                        "        String formatted = String.format(\"%s\", s);\n" +
-                        "        return joined;\n" +
-                        "    }\n" +
-                        "}\n");
+        Path generated = generated("demo", "StrFeatures");
         String cpp = new String(Files.readAllBytes(generated), StandardCharsets.UTF_8);
         assertTrue("string concat was not rewritten: " + cpp, cpp.contains("CppHelper::concat"));
         assertTrue("static call was not mapped: " + cpp, cpp.contains("CppHelper::format"));
+        compile(CppTestSupport.compiler(), fixturesOut, generated);
     }
 
     private static synchronized Path convertSamples() throws Exception {
@@ -110,20 +125,8 @@ public class CppCompileTest {
     public void arrayCreationCompiles() throws Exception {
         Path compiler = CppTestSupport.compiler();
 
-        Path src = Files.createTempDirectory("j2cpp-arr-src");
-        Files.createDirectories(src.resolve("p"));
-        Files.write(src.resolve("p/A.java"),
-                ("package p;\n" +
-                        "public class A {\n" +
-                        "    void m() {\n" +
-                        "        int[] xs = new int[5];\n" +
-                        "        int[][] ys = new int[2][3];\n" +
-                        "        xs[0] = 1;\n" +
-                        "    }\n" +
-                        "}\n").getBytes(StandardCharsets.UTF_8));
-        Path out = Files.createTempDirectory("j2cpp-arr-out");
-        Cmd.main(new String[]{"-src", src.toString(), "-out", out.toString()});
-        Path generated = out.resolve("src/p/A.cpp");
+        Path out = fixturesOut;
+        Path generated = generated("p", "A");
         String cpp = new String(Files.readAllBytes(generated), StandardCharsets.UTF_8);
         assertTrue("make1 not emitted: " + cpp, cpp.contains("arrays::make1"));
         assertTrue("make2 not emitted: " + cpp, cpp.contains("arrays::make2"));

@@ -57,6 +57,7 @@ final class CppTestSupport {
             Path dir = Files.createTempDirectory("j2cpp-ccache");
             Path wrapper = dir.resolve("g++");
             Files.write(wrapper, ("#!/bin/sh\nexport CCACHE_NOHASHDIR=1\n"
+                    + "export CCACHE_SLOPPINESS=include_file_mtime,include_file_ctime,time_macros\n"
                     + "exec " + ccache + " " + compiler + " \"$@\"\n")
                     .getBytes(StandardCharsets.UTF_8));
             wrapper.toFile().setExecutable(true);
