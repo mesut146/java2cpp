@@ -200,15 +200,9 @@ public class TypeVisitor {
                 //some JDT bindings expose a raw mapped type without reporting
                 //it as generic (e.g. legacy List-returning APIs)
                 Mapper.ClassInfo info = Mapper.instance.findClass(binding);
-                int arity = Math.max(binding.getTypeParameters().length, Mapper.typeVarCount(info));
-                boolean templateTarget = info == null || info.target == null
-                        || info.target.type.equals("vector")
-                        || info.target.type.equals("unordered_map")
-                        || info.target.type.equals("optional")
-                        || info.target.type.equals("set")
-                        || info.target.type.equals("list")
-                        || info.target.type.equals("deque");
-                if (arity > 0 && templateTarget) {
+                int arity = Math.max(binding.getTypeParameters().length,
+                        Math.max(Mapper.typeVarCount(info), TypeHelper.genericArity(binding)));
+                if (arity > 0) {
                     for (int i = 0; i < arity; i++) {
                         CType object = TypeHelper.getObjectType();
                         object.isTypeArg = true;

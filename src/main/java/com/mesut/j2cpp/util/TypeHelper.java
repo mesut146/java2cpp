@@ -11,9 +11,44 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class TypeHelper {
+
+    //JDT often exposes legacy JDK APIs as raw generic types; the generated
+    //stubs are templates, so a raw use still needs Object type arguments
+    private static final Map<String, Integer> GENERIC_ARITIES = new HashMap<>();
+
+    static {
+        String[] one = {
+                "java.lang.Class", "java.lang.Comparable", "java.lang.Iterable",
+                "java.lang.constant.DynamicConstantDesc",
+                "java.util.Iterator", "java.util.Collection", "java.util.List",
+                "java.util.Set", "java.util.Queue", "java.util.Deque", "java.util.Optional",
+                "java.util.function.Supplier", "java.util.function.Consumer",
+                "java.util.function.Predicate", "java.util.function.Function",
+                "java.util.function.UnaryOperator", "java.util.stream.Stream"
+        };
+        for (String name : one) {
+            GENERIC_ARITIES.put(name, 1);
+        }
+        GENERIC_ARITIES.put("java.util.Map", 2);
+        GENERIC_ARITIES.put("java.util.Map.Entry", 2);
+        GENERIC_ARITIES.put("java.util.function.BiFunction", 3);
+        GENERIC_ARITIES.put("java.util.function.BiConsumer", 2);
+        GENERIC_ARITIES.put("java.util.function.BiPredicate", 2);
+        GENERIC_ARITIES.put("java.util.stream.Collector", 3);
+    }
+
+    public static int genericArity(ITypeBinding binding) {
+        if (binding == null) return 0;
+        ITypeBinding erasure = binding.getErasure();
+        String name = erasure.getQualifiedName();
+        if (name == null) return 0;
+        Integer arity = GENERIC_ARITIES.get(name);
+        return arity == null ? 0 : arity;
+    }
 
     static HashMap<String, String> prims = new HashMap<>();
 
