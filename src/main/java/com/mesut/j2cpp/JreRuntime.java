@@ -15,10 +15,15 @@ public final class JreRuntime {
     private static final String[] FILES = {
             "implemented.txt",
             "java/lang/Object.h", "java/lang/Number.h", "java/lang/Integer.h",
-            "java/lang/Boolean.h", "java/lang/String.h", "java/lang/System.h",
+            "java/lang/Boolean.h", "java/lang/Long.h", "java/lang/Double.h",
+            "java/lang/Float.h", "java/lang/Short.h", "java/lang/Byte.h",
+            "java/lang/Character.h", "java/lang/String.h", "java/lang/StringBuilder.h",
+            "java/lang/StringBuffer.h", "java/lang/Math.h", "java/lang/System.h",
             "java/io/PrintStream.h",
-            "java/util/List.h", "java/util/ArrayList.h",
-            "java/util/Map.h", "java/util/HashMap.h"
+            "java/util/List.h", "java/util/ArrayList.h", "java/util/Set.h",
+            "java/util/HashSet.h", "java/util/Map.h", "java/util/HashMap.h",
+            "java/util/Arrays.h", "java/util/Objects.h", "java/util/Optional.h",
+            "java/util/Random.h", "java/util/UUID.h"
     };
 
     private static final Set<String> IMPLEMENTED = new LinkedHashSet<>();
